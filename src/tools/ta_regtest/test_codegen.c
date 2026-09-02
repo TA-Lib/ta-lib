@@ -2060,6 +2060,8 @@ typedef struct {
     int               streamPeekFunctions; /* funcs that ran the peek-idempotence probe */
     long long         streamPeekProbes;    /* probes run (peek, other bar, peek again) */
     int               streamUFillFunctions;/* funcs whose UpdateAndFill == batch over the same bars (#246) */
+    int               streamFillBars;      /* bars the OpenAndFill leg actually value-compared */
+    int               streamUFillBars;     /* bars the UpdateAndFill leg actually value-compared */
     int               streamStateFunctions; /* funcs whose handle state matched Open(n) (#240) */
     int               streamStateLegs;      /* legs that compared handle state (#240) */
     int               streamRangeFunctions; /* funcs whose handle OutRange matched batch (#241) */
@@ -3742,7 +3744,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * server-side too, so it fails even if this check regresses. */
             if( stream_flag(ctx->responseBuf, "\"fill_checked\":") == 1 )
             {
+                int bars = stream_flag(ctx->responseBuf, "\"fill_bars\":");
                 fillChecked = 1;
+                if( bars >= 0 )
+                    ctx->streamFillBars = (ctx->streamFillBars < 0 ? 0 : ctx->streamFillBars) + bars;
                 if( stream_flag(ctx->responseBuf, "\"fill_ok\":") != 1 )
                 {
                     printf("STREAM FILL MISMATCH [TA_%s] vector=%d K=%d compat=%d "
@@ -3763,7 +3768,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * too, so it fails even if this check regresses. */
             if( stream_flag(ctx->responseBuf, "\"ufill_checked\":") == 1 )
             {
+                int ubars = stream_flag(ctx->responseBuf, "\"ufill_bars\":");
                 ufillChecked = 1;
+                if( ubars >= 0 )
+                    ctx->streamUFillBars = (ctx->streamUFillBars < 0 ? 0 : ctx->streamUFillBars) + ubars;
                 if( stream_flag(ctx->responseBuf, "\"ufill_ok\":") != 1 )
                 {
                     printf("STREAM UPDATEFILL MISMATCH [TA_%s] vector=%d K=%d compat=%d "
@@ -4768,6 +4776,8 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamPeekFunctions = 0;
             ctx.streamPeekProbes = 0;
             ctx.streamUFillFunctions = 0;
+            ctx.streamFillBars = -1;
+            ctx.streamUFillBars = -1;
             ctx.streamStateFunctions = 0;
             ctx.streamStateLegs     = 0;
             ctx.streamRangeFunctions = 0;
@@ -4794,6 +4804,37 @@ static ErrorNumber test_codegen_for_language(
                        "verified OpenAndFill — every streamable function must also "
                        "gate-verify its fill array\n",
                        ctx.streamFillFunctions, ctx.streamFunctions);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* A leg that RAN is not a leg that COMPARED. `fill_checked` is set
+             * before the comparison loop, so an emitter that walks the loop zero
+             * times satisfies the floor above while checking no value at all --
+             * which is exactly what a dangling `else` did to the C server between
+             * #287 and #331: the loop bound to the wrong `if`, and every bar of
+             * every function went uncompared for four releases with all gates
+             * green. Count the bars, not the visits.
+             *
+             * C only. The other three servers build the same comparison as a
+             * structured `else { }` whose block cannot re-bind when a statement
+             * is inserted above it; C assembles it as text, which is what made
+             * the re-binding possible and invisible. A server reporting no count
+             * leaves this at -1 and is not measured here rather than passing a
+             * floor it never answered. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamFillBars >= 0 &&
+                ctx.streamFillBars < ctx.streamFunctions )
+            {
+                printf("STREAM FILL VACUOUS: the OpenAndFill leg ran for %d function(s) "
+                       "but value-compared only %d bar(s) -- a leg that reports checked "
+                       "while comparing nothing\n",
+                       ctx.streamFunctions, ctx.streamFillBars);
+                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            if( ctx.error == TA_TEST_PASS && ctx.streamUFillBars >= 0 &&
+                ctx.streamUFillBars < ctx.streamFunctions )
+            {
+                printf("STREAM UPDATEFILL VACUOUS: the UpdateAndFill leg ran for %d "
+                       "function(s) but value-compared only %d bar(s)\n",
+                       ctx.streamFunctions, ctx.streamUFillBars);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* The same ratchet for UpdateAndFill (#246). It has the same shape

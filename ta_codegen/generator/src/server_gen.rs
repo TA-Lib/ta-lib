@@ -1856,7 +1856,7 @@ fn emit_sv_update_fill_leg(
         &fbuf.iter().map(|b| format!("{b}[svN - P - 1]")).collect::<Vec<_>>(),
         "Value after UpdateAndFill is not the last bar it committed",
     );
-    s.push_str("                else for( ut = P; ufillOk && ut < svN; ut++ ) {\n");
+    s.push_str("                for( ut = P; ufillOk && ut < svN; ut++ ) {\n");
     for (i, is_int) in out_is_int.iter().enumerate() {
         if *is_int {
             let _ = writeln!(
@@ -1872,6 +1872,7 @@ fn emit_sv_update_fill_leg(
             );
         }
     }
+    s.push_str("                    ufillBars++;\n");
     s.push_str("                }\n");
     // Nothing above bar svN-1 may be written: the call was handed exactly
     // svN - P bars.
@@ -2378,12 +2379,12 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        const char *valueBad = \"-\";\n");
         s.push_str("        const char *cloneBad = \"-\";\n");
         s.push_str("        const char *peekBad = \"-\";\n");
-        s.push_str("        int fillOk = 1, fillChecked = 0;\n");
+        s.push_str("        int fillOk = 1, fillChecked = 0, fillBars = 0;\n");
         emit_sv_state_decls(&mut s, name, steq);
         emit_sv_range_decls(&mut s);
         // The n-bar filler's own leg (issue #246), reported separately from the
         // open-time fill so a regression names the entry point it is in.
-        s.push_str("        int ufillChecked = 0, ufillOk = 1;\n");
+        s.push_str("        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;\n");
         // Benign +/-0 cases across every cross-tier compare in this request.
         s.push_str("        int svZsign = 0;\n");
         s.push_str("        int pref[4]; int pc[4];\n");
@@ -2534,13 +2535,21 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;\n");
             // OpenAndFill seeds `cur_` through the STRIDED index, a different
             // expression from the scalar Open's, and read by nothing else.
+            //
+            // The array comparison below is a SEPARATE statement, not this
+            // probe's `else`. It was one until #287 inserted this `if` above it:
+            // the `else` silently re-bound from the shape check to this probe,
+            // and since a NULL handle already forces `fillOk = 0`, reaching it
+            // implied the loop's own `fillOk &&` guard would stop it. Both arms
+            // went dead and every gate stayed green. The loop carries its own
+            // guard; do not give it an `else`.
             s.push_str("            if( fillOk && stf )\n");
             emit_sv_value_probe(
                 &mut s, name, &out_is_int, "            ", "stf",
                 &fbuf.iter().map(|b| format!("{b}[svNb - 1]")).collect::<Vec<_>>(),
                 "Value after OpenAndFill is not the last filled bar",
             );
-            s.push_str("            else for( ft = 0; fillOk && ft < svNb; ft++ ) {\n");
+            s.push_str("            for( ft = 0; fillOk && ft < svNb; ft++ ) {\n");
             for (i, is_int) in out_is_int.iter().enumerate() {
                 if *is_int {
                     s.push_str(&format!(
@@ -2554,6 +2563,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
                     ));
                 }
             }
+            s.push_str("                fillBars++;\n");
             s.push_str("            }\n");
             // The slack above the produced range must still hold the canary.
             // Nothing else in the tree checks it: every gate sizes the fill
@@ -2793,9 +2803,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ufill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ufill_checked\\\":%d,\\\"ufill_ok\\\":%d,\\\"ufill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");

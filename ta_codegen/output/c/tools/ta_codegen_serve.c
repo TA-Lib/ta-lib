@@ -5549,13 +5549,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AC_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AC(0, svN - 1, sv_h, sv_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, &svBeg, &svNb, sv_b0);
@@ -5585,8 +5585,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_AC_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -5698,8 +5699,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_AC_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -5807,7 +5809,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_ACCBANDS", 11) == 0 ) {
@@ -5820,13 +5822,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ACCBANDS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ACCBANDS(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0, sv_b1, sv_b2);
@@ -5860,10 +5862,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -6000,10 +6003,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -6125,7 +6129,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ACOS", 7) == 0 ) {
@@ -6137,13 +6141,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ACOS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ACOS(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -6173,8 +6177,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ACOS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -6286,8 +6291,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ACOS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -6395,7 +6401,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_AD", 5) == 0 ) {
@@ -6407,13 +6413,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AD(0, svN - 1, sv_h, sv_l, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -6443,8 +6449,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_AD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -6556,8 +6563,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_AD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -6665,7 +6673,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ADD", 6) == 0 ) {
@@ -6677,13 +6685,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ADD(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -6713,8 +6721,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ADD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -6826,8 +6835,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ADD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -6935,7 +6945,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_ADOSC", 8) == 0 ) {
@@ -6949,13 +6959,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADOSC_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -6987,8 +6997,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ADOSC_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -7100,8 +7111,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ADOSC_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -7210,7 +7222,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ADX", 6) == 0 ) {
@@ -7223,13 +7235,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(0, (unsigned int)svK);
@@ -7261,8 +7273,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ADX_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -7374,8 +7387,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ADX_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -7484,7 +7498,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ADXR", 7) == 0 ) {
@@ -7497,13 +7511,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ADXR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(0, (unsigned int)svK);
@@ -7535,8 +7549,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ADXR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -7648,8 +7663,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ADXR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -7758,7 +7774,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_AO", 5) == 0 ) {
@@ -7772,13 +7788,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AO_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AO(0, svN - 1, sv_h, sv_l, optInFastPeriod, optInSlowPeriod, &svBeg, &svNb, sv_b0);
@@ -7808,8 +7824,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_AO_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -7921,8 +7938,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_AO_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -8030,7 +8048,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_APO", 6) == 0 ) {
@@ -8045,13 +8063,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_APO_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -8089,8 +8107,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_APO_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -8202,8 +8221,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_APO_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -8315,7 +8335,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_AROON", 8) == 0 ) {
@@ -8328,13 +8348,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AROON_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AROON(0, svN - 1, sv_h, sv_l, optInTimePeriod, &svBeg, &svNb, sv_b0, sv_b1);
@@ -8366,9 +8386,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -8496,9 +8517,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -8613,7 +8635,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_AROONOSC", 11) == 0 ) {
@@ -8626,13 +8648,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AROONOSC_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AROONOSC(0, svN - 1, sv_h, sv_l, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -8662,8 +8684,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_AROONOSC_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -8775,8 +8798,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_AROONOSC_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -8884,7 +8908,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ASIN", 7) == 0 ) {
@@ -8896,13 +8920,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ASIN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ASIN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -8932,8 +8956,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ASIN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -9045,8 +9070,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ASIN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -9154,7 +9180,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ATAN", 7) == 0 ) {
@@ -9166,13 +9192,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ATAN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ATAN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -9202,8 +9228,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ATAN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -9315,8 +9342,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ATAN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -9424,7 +9452,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ATR", 6) == 0 ) {
@@ -9437,13 +9465,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ATR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(2, (unsigned int)svK);
@@ -9475,8 +9503,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ATR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -9588,8 +9617,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ATR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -9698,7 +9728,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_AVGDEV", 9) == 0 ) {
@@ -9711,13 +9741,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AVGDEV_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AVGDEV(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -9747,8 +9777,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_AVGDEV_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -9860,8 +9891,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_AVGDEV_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -9969,7 +10001,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_AVGPRICE", 11) == 0 ) {
@@ -9981,13 +10013,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_AVGPRICE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_AVGPRICE(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -10017,8 +10049,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_AVGPRICE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -10130,8 +10163,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_AVGPRICE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -10239,7 +10273,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_BBANDS", 9) == 0 ) {
@@ -10255,13 +10289,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_BBANDS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -10303,10 +10337,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -10443,10 +10478,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -10572,7 +10608,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_BETA", 7) == 0 ) {
@@ -10585,13 +10621,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_BETA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_BETA(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -10621,8 +10657,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_BETA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -10734,8 +10771,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_BETA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -10843,7 +10881,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_BOP", 6) == 0 ) {
@@ -10855,13 +10893,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_BOP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_BOP(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -10891,8 +10929,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_BOP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -11004,8 +11043,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_BOP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -11113,7 +11153,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CCI", 6) == 0 ) {
@@ -11126,13 +11166,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CCI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CCI(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -11162,8 +11202,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CCI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -11275,8 +11316,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CCI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -11384,7 +11426,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDL2CROWS", 12) == 0 ) {
@@ -11396,13 +11438,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL2CROWS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -11440,8 +11482,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL2CROWS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -11545,8 +11588,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL2CROWS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -11656,7 +11700,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDL3BLACKCROWS", 17) == 0 ) {
@@ -11668,13 +11712,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3BLACKCROWS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -11712,8 +11756,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL3BLACKCROWS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -11817,8 +11862,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL3BLACKCROWS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -11928,7 +11974,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDL3INSIDE", 13) == 0 ) {
@@ -11940,13 +11986,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3INSIDE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -11984,8 +12030,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL3INSIDE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -12089,8 +12136,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL3INSIDE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -12200,7 +12248,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDL3LINESTRIKE", 17) == 0 ) {
@@ -12212,13 +12260,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3LINESTRIKE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -12256,8 +12304,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL3LINESTRIKE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -12361,8 +12410,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL3LINESTRIKE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -12472,7 +12522,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDL3OUTSIDE", 14) == 0 ) {
@@ -12484,13 +12534,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3OUTSIDE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -12528,8 +12578,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL3OUTSIDE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -12633,8 +12684,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL3OUTSIDE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -12744,7 +12796,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDL3STARSINSOUTH", 19) == 0 ) {
@@ -12756,13 +12808,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3STARSINSOUTH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -12800,8 +12852,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL3STARSINSOUTH_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -12905,8 +12958,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL3STARSINSOUTH_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -13016,7 +13070,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDL3WHITESOLDIERS", 20) == 0 ) {
@@ -13028,13 +13082,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDL3WHITESOLDIERS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -13072,8 +13126,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDL3WHITESOLDIERS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -13177,8 +13232,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDL3WHITESOLDIERS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -13288,7 +13344,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLABANDONEDBABY", 19) == 0 ) {
@@ -13301,13 +13357,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLABANDONEDBABY_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -13345,8 +13401,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLABANDONEDBABY_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -13450,8 +13507,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLABANDONEDBABY_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -13561,7 +13619,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLADVANCEBLOCK", 18) == 0 ) {
@@ -13573,13 +13631,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLADVANCEBLOCK_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -13617,8 +13675,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLADVANCEBLOCK_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -13722,8 +13781,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLADVANCEBLOCK_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -13833,7 +13893,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLBELTHOLD", 14) == 0 ) {
@@ -13845,13 +13905,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLBELTHOLD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -13889,8 +13949,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLBELTHOLD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -13994,8 +14055,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLBELTHOLD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -14105,7 +14167,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLBREAKAWAY", 15) == 0 ) {
@@ -14117,13 +14179,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLBREAKAWAY_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -14161,8 +14223,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLBREAKAWAY_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -14266,8 +14329,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLBREAKAWAY_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -14377,7 +14441,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLCLOSINGMARUBOZU", 21) == 0 ) {
@@ -14389,13 +14453,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLCLOSINGMARUBOZU_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -14433,8 +14497,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLCLOSINGMARUBOZU_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -14538,8 +14603,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLCLOSINGMARUBOZU_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -14649,7 +14715,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLCONCEALBABYSWALL", 22) == 0 ) {
@@ -14661,13 +14727,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLCONCEALBABYSWALL_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -14705,8 +14771,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLCONCEALBABYSWALL_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -14810,8 +14877,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLCONCEALBABYSWALL_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -14921,7 +14989,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLCOUNTERATTACK", 19) == 0 ) {
@@ -14933,13 +15001,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLCOUNTERATTACK_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -14977,8 +15045,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLCOUNTERATTACK_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -15082,8 +15151,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLCOUNTERATTACK_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -15193,7 +15263,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLDARKCLOUDCOVER", 20) == 0 ) {
@@ -15206,13 +15276,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDARKCLOUDCOVER_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -15250,8 +15320,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLDARKCLOUDCOVER_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -15355,8 +15426,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLDARKCLOUDCOVER_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -15466,7 +15538,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_CDLDOJI", 10) == 0 ) {
@@ -15478,13 +15550,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDOJI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -15522,8 +15594,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLDOJI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -15627,8 +15700,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLDOJI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -15738,7 +15812,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLDOJISTAR", 14) == 0 ) {
@@ -15750,13 +15824,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDOJISTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -15794,8 +15868,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLDOJISTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -15899,8 +15974,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLDOJISTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -16010,7 +16086,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLDRAGONFLYDOJI", 19) == 0 ) {
@@ -16022,13 +16098,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLDRAGONFLYDOJI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -16066,8 +16142,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLDRAGONFLYDOJI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -16171,8 +16248,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLDRAGONFLYDOJI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -16282,7 +16360,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLENGULFING", 15) == 0 ) {
@@ -16294,13 +16372,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLENGULFING_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -16338,8 +16416,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLENGULFING_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -16443,8 +16522,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLENGULFING_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -16554,7 +16634,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLEVENINGDOJISTAR", 21) == 0 ) {
@@ -16567,13 +16647,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLEVENINGDOJISTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -16611,8 +16691,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLEVENINGDOJISTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -16716,8 +16797,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLEVENINGDOJISTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -16827,7 +16909,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLEVENINGSTAR", 17) == 0 ) {
@@ -16840,13 +16922,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLEVENINGSTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -16884,8 +16966,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLEVENINGSTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -16989,8 +17072,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLEVENINGSTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -17100,7 +17184,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLGAPSIDESIDEWHITE", 22) == 0 ) {
@@ -17112,13 +17196,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLGAPSIDESIDEWHITE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -17156,8 +17240,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLGAPSIDESIDEWHITE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -17261,8 +17346,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLGAPSIDESIDEWHITE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -17372,7 +17458,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLGRAVESTONEDOJI", 20) == 0 ) {
@@ -17384,13 +17470,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLGRAVESTONEDOJI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -17428,8 +17514,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLGRAVESTONEDOJI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -17533,8 +17620,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLGRAVESTONEDOJI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -17644,7 +17732,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLHAMMER", 12) == 0 ) {
@@ -17656,13 +17744,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHAMMER_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -17700,8 +17788,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHAMMER_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -17805,8 +17894,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHAMMER_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -17916,7 +18006,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 16 && strncmp(fn, "TA_CDLHANGINGMAN", 16) == 0 ) {
@@ -17928,13 +18018,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHANGINGMAN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -17972,8 +18062,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHANGINGMAN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -18077,8 +18168,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHANGINGMAN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -18188,7 +18280,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLHARAMI", 12) == 0 ) {
@@ -18200,13 +18292,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHARAMI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -18244,8 +18336,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHARAMI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -18349,8 +18442,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHARAMI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -18460,7 +18554,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLHARAMICROSS", 17) == 0 ) {
@@ -18472,13 +18566,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHARAMICROSS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -18516,8 +18610,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHARAMICROSS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -18621,8 +18716,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHARAMICROSS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -18732,7 +18828,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLHIGHWAVE", 14) == 0 ) {
@@ -18744,13 +18840,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHIGHWAVE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -18788,8 +18884,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHIGHWAVE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -18893,8 +18990,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHIGHWAVE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -19004,7 +19102,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLHIKKAKE", 13) == 0 ) {
@@ -19016,13 +19114,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHIKKAKE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -19060,8 +19158,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHIKKAKE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -19165,8 +19264,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHIKKAKE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -19276,7 +19376,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 16 && strncmp(fn, "TA_CDLHIKKAKEMOD", 16) == 0 ) {
@@ -19288,13 +19388,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHIKKAKEMOD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -19332,8 +19432,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHIKKAKEMOD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -19437,8 +19538,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHIKKAKEMOD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -19548,7 +19650,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLHOMINGPIGEON", 18) == 0 ) {
@@ -19560,13 +19662,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLHOMINGPIGEON_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -19604,8 +19706,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLHOMINGPIGEON_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -19709,8 +19812,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLHOMINGPIGEON_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -19820,7 +19924,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLIDENTICAL3CROWS", 21) == 0 ) {
@@ -19832,13 +19936,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLIDENTICAL3CROWS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -19876,8 +19980,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLIDENTICAL3CROWS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -19981,8 +20086,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLIDENTICAL3CROWS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -20092,7 +20198,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLINNECK", 12) == 0 ) {
@@ -20104,13 +20210,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLINNECK_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -20148,8 +20254,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLINNECK_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -20253,8 +20360,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLINNECK_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -20364,7 +20472,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLINVERTEDHAMMER", 20) == 0 ) {
@@ -20376,13 +20484,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLINVERTEDHAMMER_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -20420,8 +20528,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLINVERTEDHAMMER_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -20525,8 +20634,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLINVERTEDHAMMER_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -20636,7 +20746,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLKICKING", 13) == 0 ) {
@@ -20648,13 +20758,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLKICKING_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -20692,8 +20802,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLKICKING_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -20797,8 +20908,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLKICKING_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -20908,7 +21020,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLKICKINGBYLENGTH", 21) == 0 ) {
@@ -20920,13 +21032,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLKICKINGBYLENGTH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -20964,8 +21076,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLKICKINGBYLENGTH_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -21069,8 +21182,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLKICKINGBYLENGTH_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -21180,7 +21294,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLLADDERBOTTOM", 18) == 0 ) {
@@ -21192,13 +21306,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLLADDERBOTTOM_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -21236,8 +21350,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLLADDERBOTTOM_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -21341,8 +21456,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLLADDERBOTTOM_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -21452,7 +21568,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLLONGLEGGEDDOJI", 20) == 0 ) {
@@ -21464,13 +21580,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLLONGLEGGEDDOJI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -21508,8 +21624,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLLONGLEGGEDDOJI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -21613,8 +21730,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLLONGLEGGEDDOJI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -21724,7 +21842,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLLONGLINE", 14) == 0 ) {
@@ -21736,13 +21854,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLLONGLINE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -21780,8 +21898,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLLONGLINE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -21885,8 +22004,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLLONGLINE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -21996,7 +22116,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLMARUBOZU", 14) == 0 ) {
@@ -22008,13 +22128,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMARUBOZU_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -22052,8 +22172,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLMARUBOZU_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -22157,8 +22278,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLMARUBOZU_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -22268,7 +22390,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLMATCHINGLOW", 17) == 0 ) {
@@ -22280,13 +22402,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMATCHINGLOW_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -22324,8 +22446,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLMATCHINGLOW_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -22429,8 +22552,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLMATCHINGLOW_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -22540,7 +22664,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLMATHOLD", 13) == 0 ) {
@@ -22553,13 +22677,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMATHOLD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -22597,8 +22721,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLMATHOLD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -22702,8 +22827,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLMATHOLD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -22813,7 +22939,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLMORNINGDOJISTAR", 21) == 0 ) {
@@ -22826,13 +22952,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMORNINGDOJISTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -22870,8 +22996,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLMORNINGDOJISTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -22975,8 +23102,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLMORNINGDOJISTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -23086,7 +23214,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLMORNINGSTAR", 17) == 0 ) {
@@ -23099,13 +23227,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLMORNINGSTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -23143,8 +23271,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLMORNINGSTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -23248,8 +23377,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLMORNINGSTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -23359,7 +23489,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLONNECK", 12) == 0 ) {
@@ -23371,13 +23501,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLONNECK_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -23415,8 +23545,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLONNECK_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -23520,8 +23651,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLONNECK_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -23631,7 +23763,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_CDLPIERCING", 14) == 0 ) {
@@ -23643,13 +23775,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLPIERCING_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -23687,8 +23819,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLPIERCING_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -23792,8 +23925,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLPIERCING_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -23903,7 +24037,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLRICKSHAWMAN", 17) == 0 ) {
@@ -23915,13 +24049,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLRICKSHAWMAN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -23959,8 +24093,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLRICKSHAWMAN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -24064,8 +24199,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLRICKSHAWMAN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -24175,7 +24311,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLRISEFALL3METHODS", 22) == 0 ) {
@@ -24187,13 +24323,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLRISEFALL3METHODS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -24231,8 +24367,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLRISEFALL3METHODS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -24336,8 +24473,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLRISEFALL3METHODS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -24447,7 +24585,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLSEPARATINGLINES", 21) == 0 ) {
@@ -24459,13 +24597,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSEPARATINGLINES_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -24503,8 +24641,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLSEPARATINGLINES_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -24608,8 +24747,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLSEPARATINGLINES_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -24719,7 +24859,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLSHOOTINGSTAR", 18) == 0 ) {
@@ -24731,13 +24871,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSHOOTINGSTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -24775,8 +24915,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLSHOOTINGSTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -24880,8 +25021,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLSHOOTINGSTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -24991,7 +25133,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLSHORTLINE", 15) == 0 ) {
@@ -25003,13 +25145,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSHORTLINE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -25047,8 +25189,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLSHORTLINE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -25152,8 +25295,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLSHORTLINE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -25263,7 +25407,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 17 && strncmp(fn, "TA_CDLSPINNINGTOP", 17) == 0 ) {
@@ -25275,13 +25419,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSPINNINGTOP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -25319,8 +25463,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLSPINNINGTOP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -25424,8 +25569,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLSPINNINGTOP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -25535,7 +25681,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 20 && strncmp(fn, "TA_CDLSTALLEDPATTERN", 20) == 0 ) {
@@ -25547,13 +25693,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSTALLEDPATTERN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -25591,8 +25737,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLSTALLEDPATTERN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -25696,8 +25843,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLSTALLEDPATTERN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -25807,7 +25955,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 19 && strncmp(fn, "TA_CDLSTICKSANDWICH", 19) == 0 ) {
@@ -25819,13 +25967,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLSTICKSANDWICH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -25863,8 +26011,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLSTICKSANDWICH_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -25968,8 +26117,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLSTICKSANDWICH_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -26079,7 +26229,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_CDLTAKURI", 12) == 0 ) {
@@ -26091,13 +26241,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTAKURI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -26135,8 +26285,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLTAKURI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -26240,8 +26391,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLTAKURI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -26351,7 +26503,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLTASUKIGAP", 15) == 0 ) {
@@ -26363,13 +26515,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTASUKIGAP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -26407,8 +26559,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLTASUKIGAP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -26512,8 +26665,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLTASUKIGAP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -26623,7 +26777,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_CDLTHRUSTING", 15) == 0 ) {
@@ -26635,13 +26789,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTHRUSTING_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -26679,8 +26833,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLTHRUSTING_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -26784,8 +26939,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLTHRUSTING_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -26895,7 +27051,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_CDLTRISTAR", 13) == 0 ) {
@@ -26907,13 +27063,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLTRISTAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -26951,8 +27107,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLTRISTAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -27056,8 +27213,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLTRISTAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -27167,7 +27325,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_CDLUNIQUE3RIVER", 18) == 0 ) {
@@ -27179,13 +27337,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLUNIQUE3RIVER_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -27223,8 +27381,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLUNIQUE3RIVER_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -27328,8 +27487,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLUNIQUE3RIVER_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -27439,7 +27599,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 21 && strncmp(fn, "TA_CDLUPSIDEGAP2CROWS", 21) == 0 ) {
@@ -27451,13 +27611,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLUPSIDEGAP2CROWS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -27495,8 +27655,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLUPSIDEGAP2CROWS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -27600,8 +27761,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLUPSIDEGAP2CROWS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -27711,7 +27873,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_CDLXSIDEGAP3METHODS", 22) == 0 ) {
@@ -27723,13 +27885,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CDLXSIDEGAP3METHODS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         int rounds = svCandle ? 4 : 1; int rd, lgi = 0;
@@ -27767,8 +27929,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CDLXSIDEGAP3METHODS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -27872,8 +28035,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CDLXSIDEGAP3METHODS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -27983,7 +28147,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"beg\":%d,\"nb\":%d,\"legs\":%d,\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_CEIL", 7) == 0 ) {
@@ -27995,13 +28159,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CEIL_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CEIL(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -28031,8 +28195,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CEIL_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -28144,8 +28309,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CEIL_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -28253,7 +28419,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CMF", 6) == 0 ) {
@@ -28266,13 +28432,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CMF_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CMF(0, svN - 1, sv_h, sv_l, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -28302,8 +28468,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CMF_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -28415,8 +28582,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CMF_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -28524,7 +28692,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_CMO", 6) == 0 ) {
@@ -28537,13 +28705,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CMO_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(3, (unsigned int)svK);
@@ -28575,8 +28743,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CMO_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -28688,8 +28857,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CMO_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -28798,7 +28968,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_CMOU", 7) == 0 ) {
@@ -28811,13 +28981,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CMOU_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CMOU(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -28847,8 +29017,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CMOU_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -28960,8 +29131,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CMOU_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -29069,7 +29241,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_CORREL", 9) == 0 ) {
@@ -29082,13 +29254,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_CORREL_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_CORREL(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -29118,8 +29290,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_CORREL_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -29231,8 +29404,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_CORREL_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -29340,7 +29514,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_COS", 6) == 0 ) {
@@ -29352,13 +29526,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_COS_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_COS(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -29388,8 +29562,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_COS_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -29501,8 +29676,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_COS_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -29610,7 +29786,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_COSH", 7) == 0 ) {
@@ -29622,13 +29798,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_COSH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_COSH(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -29658,8 +29834,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_COSH_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -29771,8 +29948,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_COSH_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -29880,7 +30058,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_DEMA", 7) == 0 ) {
@@ -29893,13 +30071,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_DEMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -29931,8 +30109,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_DEMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -30044,8 +30223,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_DEMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -30154,7 +30334,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_DIV", 6) == 0 ) {
@@ -30166,13 +30346,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_DIV_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_DIV(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -30202,8 +30382,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_DIV_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -30315,8 +30496,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_DIV_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -30424,7 +30606,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_DX", 5) == 0 ) {
@@ -30437,13 +30619,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_DX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(4, (unsigned int)svK);
@@ -30475,8 +30657,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_DX_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -30588,8 +30771,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_DX_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -30698,7 +30882,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EFI", 6) == 0 ) {
@@ -30711,13 +30895,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_EFI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_EFI(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -30747,8 +30931,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_EFI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -30860,8 +31045,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_EFI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -30969,7 +31155,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EMA", 6) == 0 ) {
@@ -30982,13 +31168,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_EMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -31020,8 +31206,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_EMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -31133,8 +31320,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_EMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -31243,7 +31431,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_EXP", 6) == 0 ) {
@@ -31255,13 +31443,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_EXP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_EXP(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -31291,8 +31479,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_EXP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -31404,8 +31593,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_EXP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -31513,7 +31703,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_FLOOR", 8) == 0 ) {
@@ -31525,13 +31715,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_FLOOR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_FLOOR(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -31561,8 +31751,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_FLOOR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -31674,8 +31865,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_FLOOR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -31783,7 +31975,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_HMA", 6) == 0 ) {
@@ -31796,13 +31988,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_HMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -31832,8 +32024,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_HMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -31945,8 +32138,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_HMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -32054,7 +32248,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_HT_DCPERIOD", 14) == 0 ) {
@@ -32066,13 +32260,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_DCPERIOD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(6, (unsigned int)svK);
@@ -32104,8 +32298,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_HT_DCPERIOD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -32217,8 +32412,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_HT_DCPERIOD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -32327,7 +32523,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_HT_DCPHASE", 13) == 0 ) {
@@ -32339,13 +32535,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_DCPHASE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(7, (unsigned int)svK);
@@ -32377,8 +32573,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_HT_DCPHASE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -32490,8 +32687,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_HT_DCPHASE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -32600,7 +32798,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_HT_PHASOR", 12) == 0 ) {
@@ -32612,13 +32810,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_PHASOR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(8, (unsigned int)svK);
@@ -32652,9 +32850,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -32782,9 +32981,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -32900,7 +33100,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_HT_SINE", 10) == 0 ) {
@@ -32912,13 +33112,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_SINE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(9, (unsigned int)svK);
@@ -32952,9 +33152,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -33082,9 +33283,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -33200,7 +33402,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_HT_TRENDLINE", 15) == 0 ) {
@@ -33212,13 +33414,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_TRENDLINE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(10, (unsigned int)svK);
@@ -33250,8 +33452,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_HT_TRENDLINE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -33363,8 +33566,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_HT_TRENDLINE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -33473,7 +33677,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 15 && strncmp(fn, "TA_HT_TRENDMODE", 15) == 0 ) {
@@ -33485,13 +33689,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_HT_TRENDMODE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(11, (unsigned int)svK);
@@ -33523,8 +33727,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_HT_TRENDMODE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -33628,8 +33833,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_HT_TRENDMODE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -33738,7 +33944,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_IMI", 6) == 0 ) {
@@ -33751,13 +33957,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_IMI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_IMI(0, svN - 1, sv_o, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -33787,8 +33993,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_IMI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -33900,8 +34107,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_IMI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -34009,7 +34217,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_KAMA", 7) == 0 ) {
@@ -34022,13 +34230,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_KAMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(13, (unsigned int)svK);
@@ -34060,8 +34268,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_KAMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -34173,8 +34382,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_KAMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -34283,7 +34493,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_KC", 5) == 0 ) {
@@ -34298,13 +34508,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_KC_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(2, (unsigned int)svK);
@@ -34342,10 +34552,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -34482,10 +34693,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -34609,7 +34821,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 12 && strncmp(fn, "TA_LINEARREG", 12) == 0 ) {
@@ -34622,13 +34834,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -34658,8 +34870,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_LINEARREG_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -34771,8 +34984,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_LINEARREG_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -34880,7 +35094,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_LINEARREG_ANGLE", 18) == 0 ) {
@@ -34893,13 +35107,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_ANGLE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG_ANGLE(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -34929,8 +35143,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_LINEARREG_ANGLE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -35042,8 +35257,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_LINEARREG_ANGLE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -35151,7 +35367,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 22 && strncmp(fn, "TA_LINEARREG_INTERCEPT", 22) == 0 ) {
@@ -35164,13 +35380,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_INTERCEPT_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG_INTERCEPT(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -35200,8 +35416,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_LINEARREG_INTERCEPT_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -35313,8 +35530,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_LINEARREG_INTERCEPT_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -35422,7 +35640,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 18 && strncmp(fn, "TA_LINEARREG_SLOPE", 18) == 0 ) {
@@ -35435,13 +35653,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LINEARREG_SLOPE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LINEARREG_SLOPE(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -35471,8 +35689,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_LINEARREG_SLOPE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -35584,8 +35803,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_LINEARREG_SLOPE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -35693,7 +35913,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_LN", 5) == 0 ) {
@@ -35705,13 +35925,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -35741,8 +35961,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_LN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -35854,8 +36075,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_LN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -35963,7 +36185,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_LOG10", 8) == 0 ) {
@@ -35975,13 +36197,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_LOG10_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_LOG10(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -36011,8 +36233,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_LOG10_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -36124,8 +36347,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_LOG10_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -36233,7 +36457,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_MA", 5) == 0 ) {
@@ -36247,13 +36471,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -36291,8 +36515,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -36404,8 +36629,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -36517,7 +36743,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MACD", 7) == 0 ) {
@@ -36532,13 +36758,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MACD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -36574,10 +36800,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -36714,10 +36941,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -36840,7 +37068,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_MACDEXT", 10) == 0 ) {
@@ -36858,13 +37086,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MACDEXT_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -36906,10 +37134,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -37046,10 +37275,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -37175,7 +37405,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_MACDFIX", 10) == 0 ) {
@@ -37188,13 +37418,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MACDFIX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -37230,10 +37460,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -37370,10 +37601,11 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -37496,7 +37728,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MAMA", 7) == 0 ) {
@@ -37510,13 +37742,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -37550,9 +37782,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -37680,9 +37913,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -37798,7 +38032,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MARKETFI", 11) == 0 ) {
@@ -37810,13 +38044,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MARKETFI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MARKETFI(0, svN - 1, sv_h, sv_l, sv_v, &svBeg, &svNb, sv_b0);
@@ -37846,8 +38080,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MARKETFI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -37959,8 +38194,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MARKETFI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -38068,7 +38304,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MAVP", 7) == 0 ) {
@@ -38084,13 +38320,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAVP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -38128,8 +38364,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MAVP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -38241,8 +38478,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MAVP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -38354,7 +38592,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MAX", 6) == 0 ) {
@@ -38367,13 +38605,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MAX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -38403,8 +38641,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MAX_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -38516,8 +38755,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MAX_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -38625,7 +38865,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MAXINDEX", 11) == 0 ) {
@@ -38638,13 +38878,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MAXINDEX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MAXINDEX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_ib0);
@@ -38674,8 +38914,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MAXINDEX_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -38779,8 +39020,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MAXINDEX_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -38888,7 +39130,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MEDPRICE", 11) == 0 ) {
@@ -38900,13 +39142,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MEDPRICE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MEDPRICE(0, svN - 1, sv_h, sv_l, &svBeg, &svNb, sv_b0);
@@ -38936,8 +39178,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MEDPRICE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -39049,8 +39292,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MEDPRICE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -39158,7 +39402,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MFI", 6) == 0 ) {
@@ -39171,13 +39415,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MFI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MFI(0, svN - 1, sv_h, sv_l, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -39207,8 +39451,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MFI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -39320,8 +39565,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MFI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -39429,7 +39675,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MIDPOINT", 11) == 0 ) {
@@ -39442,13 +39688,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MIDPOINT_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MIDPOINT(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -39478,8 +39724,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MIDPOINT_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -39591,8 +39838,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MIDPOINT_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -39700,7 +39948,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MIDPRICE", 11) == 0 ) {
@@ -39713,13 +39961,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MIDPRICE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MIDPRICE(0, svN - 1, sv_h, sv_l, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -39749,8 +39997,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MIDPRICE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -39862,8 +40111,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MIDPRICE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -39971,7 +40221,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MIN", 6) == 0 ) {
@@ -39984,13 +40234,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MIN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MIN(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -40020,8 +40270,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MIN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -40133,8 +40384,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MIN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -40242,7 +40494,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MININDEX", 11) == 0 ) {
@@ -40255,13 +40507,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MININDEX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MININDEX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_ib0);
@@ -40291,8 +40543,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MININDEX_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -40396,8 +40649,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MININDEX_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -40505,7 +40759,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_MINMAX", 9) == 0 ) {
@@ -40518,13 +40772,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINMAX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MINMAX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0, sv_b1);
@@ -40556,9 +40810,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -40686,9 +40941,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -40803,7 +41059,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 14 && strncmp(fn, "TA_MINMAXINDEX", 14) == 0 ) {
@@ -40816,13 +41072,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINMAXINDEX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MINMAXINDEX(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_ib0, sv_ib1);
@@ -40854,9 +41110,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( vq1 != sv_if1[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
                 if( sv_if1[ft] != sv_ib1[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -40976,9 +41233,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( vq1 != sv_if1[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
                     if( sv_if1[ut - P] != sv_ib1[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -41093,7 +41351,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MINUS_DI", 11) == 0 ) {
@@ -41106,13 +41364,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINUS_DI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(16, (unsigned int)svK);
@@ -41144,8 +41402,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MINUS_DI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -41257,8 +41516,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MINUS_DI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -41367,7 +41627,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_MINUS_DM", 11) == 0 ) {
@@ -41380,13 +41640,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MINUS_DM_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(17, (unsigned int)svK);
@@ -41418,8 +41678,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MINUS_DM_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -41531,8 +41792,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MINUS_DM_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -41641,7 +41903,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_MOM", 6) == 0 ) {
@@ -41654,13 +41916,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MOM_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MOM(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -41690,8 +41952,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MOM_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -41803,8 +42066,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MOM_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -41912,7 +42176,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_MULT", 7) == 0 ) {
@@ -41924,13 +42188,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_MULT_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_MULT(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -41960,8 +42224,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_MULT_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -42073,8 +42338,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_MULT_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -42182,7 +42448,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_NATR", 7) == 0 ) {
@@ -42195,13 +42461,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_NATR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(18, (unsigned int)svK);
@@ -42233,8 +42499,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_NATR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -42346,8 +42613,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_NATR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -42456,7 +42724,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_NVI", 6) == 0 ) {
@@ -42468,13 +42736,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_NVI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_NVI(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -42504,8 +42772,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_NVI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -42617,8 +42886,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_NVI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -42726,7 +42996,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_OBV", 6) == 0 ) {
@@ -42738,13 +43008,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_OBV_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_OBV(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -42774,8 +43044,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_OBV_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -42887,8 +43158,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_OBV_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -42996,7 +43268,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_PLUS_DI", 10) == 0 ) {
@@ -43009,13 +43281,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PLUS_DI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(19, (unsigned int)svK);
@@ -43047,8 +43319,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_PLUS_DI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -43160,8 +43433,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_PLUS_DI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -43270,7 +43544,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_PLUS_DM", 10) == 0 ) {
@@ -43283,13 +43557,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PLUS_DM_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(20, (unsigned int)svK);
@@ -43321,8 +43595,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_PLUS_DM_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -43434,8 +43709,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_PLUS_DM_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -43544,7 +43820,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PPO", 6) == 0 ) {
@@ -43559,13 +43835,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PPO_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -43603,8 +43879,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_PPO_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -43716,8 +43993,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_PPO_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -43829,7 +44107,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PVI", 6) == 0 ) {
@@ -43841,13 +44119,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PVI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_PVI(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -43877,8 +44155,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_PVI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -43990,8 +44269,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_PVI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -44099,7 +44379,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_PVO", 6) == 0 ) {
@@ -44114,13 +44394,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_PVO_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -44158,8 +44438,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_PVO_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -44271,8 +44552,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_PVO_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -44384,7 +44666,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_QSTICK", 9) == 0 ) {
@@ -44397,13 +44679,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_QSTICK_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_QSTICK(0, svN - 1, sv_o, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -44433,8 +44715,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_QSTICK_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -44546,8 +44829,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_QSTICK_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -44655,7 +44939,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_ROC", 6) == 0 ) {
@@ -44668,13 +44952,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROC_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROC(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -44704,8 +44988,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ROC_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -44817,8 +45102,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ROC_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -44926,7 +45212,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ROCP", 7) == 0 ) {
@@ -44939,13 +45225,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROCP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROCP(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -44975,8 +45261,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ROCP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -45088,8 +45375,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ROCP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -45197,7 +45485,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_ROCR", 7) == 0 ) {
@@ -45210,13 +45498,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROCR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROCR(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -45246,8 +45534,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ROCR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -45359,8 +45648,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ROCR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -45468,7 +45758,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 10 && strncmp(fn, "TA_ROCR100", 10) == 0 ) {
@@ -45481,13 +45771,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ROCR100_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ROCR100(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -45517,8 +45807,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ROCR100_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -45630,8 +45921,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ROCR100_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -45739,7 +46031,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_RSI", 6) == 0 ) {
@@ -45752,13 +46044,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_RSI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(21, (unsigned int)svK);
@@ -45790,8 +46082,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_RSI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -45903,8 +46196,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_RSI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -46013,7 +46307,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SAR", 6) == 0 ) {
@@ -46027,13 +46321,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SAR(0, svN - 1, sv_h, sv_l, optInAcceleration, optInMaximum, &svBeg, &svNb, sv_b0);
@@ -46063,8 +46357,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -46176,8 +46471,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -46285,7 +46581,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_SAREXT", 9) == 0 ) {
@@ -46305,13 +46601,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SAREXT_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SAREXT(0, svN - 1, sv_h, sv_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, &svBeg, &svNb, sv_b0);
@@ -46341,8 +46637,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SAREXT_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -46454,8 +46751,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SAREXT_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -46563,7 +46861,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SIN", 6) == 0 ) {
@@ -46575,13 +46873,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SIN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SIN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -46611,8 +46909,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SIN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -46724,8 +47023,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SIN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -46833,7 +47133,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_SINH", 7) == 0 ) {
@@ -46845,13 +47145,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SINH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SINH(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -46881,8 +47181,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SINH_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -46994,8 +47295,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SINH_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -47103,7 +47405,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SMA", 6) == 0 ) {
@@ -47116,13 +47418,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -47152,8 +47454,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -47265,8 +47568,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -47374,7 +47678,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SMI", 6) == 0 ) {
@@ -47390,13 +47694,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SMI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -47430,9 +47734,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -47560,9 +47865,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -47678,7 +47984,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_SQRT", 7) == 0 ) {
@@ -47690,13 +47996,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SQRT_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SQRT(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -47726,8 +48032,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SQRT_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -47839,8 +48146,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SQRT_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -47948,7 +48256,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_STDDEV", 9) == 0 ) {
@@ -47962,13 +48270,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STDDEV_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_STDDEV(0, svN - 1, sv_c, optInTimePeriod, optInNbDev, &svBeg, &svNb, sv_b0);
@@ -47998,8 +48306,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_STDDEV_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -48111,8 +48420,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_STDDEV_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -48220,7 +48530,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_STOCH", 8) == 0 ) {
@@ -48237,13 +48547,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STOCH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -48283,9 +48593,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -48413,9 +48724,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -48534,7 +48846,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_STOCHF", 9) == 0 ) {
@@ -48549,13 +48861,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STOCHF_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -48595,9 +48907,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -48725,9 +49038,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -48846,7 +49160,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_STOCHRSI", 11) == 0 ) {
@@ -48862,13 +49176,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_STOCHRSI_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -48910,9 +49224,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -49040,9 +49355,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -49162,7 +49478,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SUB", 6) == 0 ) {
@@ -49174,13 +49490,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SUB_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SUB(0, svN - 1, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -49210,8 +49526,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SUB_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -49323,8 +49640,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SUB_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -49432,7 +49750,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_SUM", 6) == 0 ) {
@@ -49445,13 +49763,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SUM_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_SUM(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -49481,8 +49799,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_SUM_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -49594,8 +49913,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_SUM_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -49703,7 +50023,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 13 && strncmp(fn, "TA_SUPERTREND", 13) == 0 ) {
@@ -49717,13 +50037,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_SUPERTREND_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(2, (unsigned int)svK);
@@ -49757,9 +50077,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
                if( vq1 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
                 if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -49880,9 +50201,10 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                    if( vq1 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
                     if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -49998,7 +50320,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 5 && strncmp(fn, "TA_T3", 5) == 0 ) {
@@ -50012,13 +50334,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_T3_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(23, (unsigned int)svK);
@@ -50050,8 +50372,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_T3_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -50163,8 +50486,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_T3_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -50273,7 +50597,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_TAN", 6) == 0 ) {
@@ -50285,13 +50609,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TAN_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TAN(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -50321,8 +50645,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TAN_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -50434,8 +50759,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TAN_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -50543,7 +50869,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TANH", 7) == 0 ) {
@@ -50555,13 +50881,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TANH_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TANH(0, svN - 1, sv_c, &svBeg, &svNb, sv_b0);
@@ -50591,8 +50917,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TANH_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -50704,8 +51031,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TANH_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -50813,7 +51141,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TEMA", 7) == 0 ) {
@@ -50826,13 +51154,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TEMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -50864,8 +51192,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TEMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -50977,8 +51306,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TEMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -51087,7 +51417,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_TRANGE", 9) == 0 ) {
@@ -51099,13 +51429,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TRANGE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TRANGE(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -51135,8 +51465,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TRANGE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -51248,8 +51579,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TRANGE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -51357,7 +51689,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_TRIMA", 8) == 0 ) {
@@ -51370,13 +51702,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TRIMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TRIMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -51406,8 +51738,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TRIMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -51519,8 +51852,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TRIMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -51628,7 +51962,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_TRIX", 7) == 0 ) {
@@ -51641,13 +51975,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TRIX_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         TA_SetUnstablePeriod(5, (unsigned int)svK);
@@ -51679,8 +52013,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TRIX_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -51792,8 +52127,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TRIX_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -51902,7 +52238,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_TSF", 6) == 0 ) {
@@ -51915,13 +52251,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TSF_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TSF(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -51951,8 +52287,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TSF_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -52064,8 +52401,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TSF_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -52173,7 +52511,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_TYPPRICE", 11) == 0 ) {
@@ -52185,13 +52523,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_TYPPRICE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_TYPPRICE(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -52221,8 +52559,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_TYPPRICE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -52334,8 +52673,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_TYPPRICE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -52443,7 +52783,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 9 && strncmp(fn, "TA_ULTOSC", 9) == 0 ) {
@@ -52458,13 +52798,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_ULTOSC_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_ULTOSC(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, &svBeg, &svNb, sv_b0);
@@ -52494,8 +52834,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_ULTOSC_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -52607,8 +52948,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_ULTOSC_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -52716,7 +53058,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_VAR", 6) == 0 ) {
@@ -52730,13 +53072,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_VAR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_VAR(0, svN - 1, sv_c, optInTimePeriod, optInNbDev, &svBeg, &svNb, sv_b0);
@@ -52766,8 +53108,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_VAR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -52879,8 +53222,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_VAR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -52988,7 +53332,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_VWAP", 7) == 0 ) {
@@ -53000,13 +53344,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_VWAP_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_VWAP(0, svN - 1, sv_h, sv_l, sv_c, sv_v, &svBeg, &svNb, sv_b0);
@@ -53036,8 +53380,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_VWAP_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -53149,8 +53494,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_VWAP_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -53258,7 +53604,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 7 && strncmp(fn, "TA_VWMA", 7) == 0 ) {
@@ -53271,13 +53617,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_VWMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_VWMA(0, svN - 1, sv_c, sv_v, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -53307,8 +53653,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_VWMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -53420,8 +53767,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_VWMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -53529,7 +53877,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_WAD", 6) == 0 ) {
@@ -53541,13 +53889,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WAD_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WAD(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -53577,8 +53925,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_WAD_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -53690,8 +54039,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_WAD_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -53799,7 +54149,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 11 && strncmp(fn, "TA_WCLPRICE", 11) == 0 ) {
@@ -53811,13 +54161,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WCLPRICE_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WCLPRICE(0, svN - 1, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0);
@@ -53847,8 +54197,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_WCLPRICE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -53960,8 +54311,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_WCLPRICE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -54069,7 +54421,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 8 && strncmp(fn, "TA_WILLR", 8) == 0 ) {
@@ -54082,13 +54434,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WILLR_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WILLR(0, svN - 1, sv_h, sv_l, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -54118,8 +54470,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_WILLR_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -54231,8 +54584,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_WILLR_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -54340,7 +54694,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     else if( fnLen == 6 && strncmp(fn, "TA_WMA", 6) == 0 ) {
@@ -54353,13 +54707,13 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         const char *valueBad = "-";
         const char *cloneBad = "-";
         const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0;
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
         int stateChecked = 0, stateOk = 1, stateLegs = 0;
         const char *stateWhat = "-";
         TA_WMA_Stream *stEq = NULL;
         int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
         int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
         rc = TA_WMA(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
@@ -54389,8 +54743,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                if( TA_WMA_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
                if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
             }
-            else for( ft = 0; fillOk && ft < svNb; ft++ ) {
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
                 if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
             }
             if( frc == TA_SUCCESS )
                for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
@@ -54502,8 +54857,9 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                    if( TA_WMA_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
                    if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
                 }
-                else for( ut = P; ufillOk && ut < svN; ut++ ) {
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
                     if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
                 }
                 if( urc == TA_SUCCESS )
                     for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
@@ -54611,7 +54967,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
         if( rangeChecked && !rangeOk ) allOk = 0;
         pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, ufillChecked, ufillOk, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
     TA_SetCompatibility((TA_Compatibility)savedCompat);
