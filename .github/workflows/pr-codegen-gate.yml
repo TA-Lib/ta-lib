@@ -158,27 +158,15 @@ jobs:
             exit 1
           fi
 
-  # The same question for C#, which nothing on this gate asked either: the whole
-  # managed C# tree reaches dev on generation alone, and only the nightly ever
-  # compiles it.
+  # The same hole for C#: the whole managed tree reaches dev on generation alone.
   #
-  # Three units again, and none of the three is redundant — each one is the only
-  # step that fails for its own class of defect:
-  #   * the library carries the doc gate. TreatWarningsAsErrors +
-  #     GenerateDocumentationFile makes CS1591 (a public member with no XML doc)
-  #     an ERROR, which is C#'s -Xdoclint. Delete a generated member's doc
-  #     comment and this step is red while the other two, which compile the same
-  #     sources without GenerateDocumentationFile, stay green.
-  #   * the suites are hand-written (ta_codegen/output/csharp/library/test/) and
-  #     the generator preserves them, so an API change reaches them only by hand.
-  #   * the server is a DIFFERENT emitter, server_gen.rs, not csharp*.rs, and it
-  #     calls the stream verbs and the internal `_Impl` tier at thousands of
-  #     sites. A defect in its own output — one identifier out of step — is
-  #     invisible to the other two units.
-  #
-  # -c Release is what ships and what the nightly measures, and warnings are
-  # errors in both configurations, so this is not a stricter build than the one a
-  # contributor runs. Compile only: no `dotnet run`, no suites executed.
+  # None of the three units is redundant — each is the only one that fails for
+  # its own class of defect. Only the library project sets
+  # GenerateDocumentationFile, so only it makes CS1591 (a public member with no
+  # XML doc) an error — C#'s -Xdoclint. The suites are hand-written, so an API
+  # change reaches them only if someone carries it. The server is a different
+  # emitter (server_gen.rs, not csharp*.rs), so a defect in its own output is
+  # invisible to the other two. Compile only; running them stays in the nightly.
   csharp-compiles:
     name: Generated C# compiles
     runs-on: ubuntu-latest
@@ -187,15 +175,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # net10.0 is the library's single TFM and the runner image ships an older
-      # SDK, so this download is the job's real bill — the compiling is ~30s.
+      # The runner image's SDK predates the library's net10.0 TFM, so this
+      # download — not the ~30s of compiling — is the job's bill.
       - name: Install .NET SDK
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "10.0.x"
 
-      # The committed sources, not a fresh `generate`: regen-check already proves
-      # those are the same tree, so this job needs no cargo.
+      # The committed sources, not a fresh `generate` — regen-check already
+      # proves they match, so this job needs no cargo.
       - name: Build the shipped library, with the csproj's doc gate
         shell: bash
         run: |
@@ -214,8 +202,6 @@ jobs:
             exit 1
           fi
 
-      # Same sources `ta_codegen build --backend=csharp` compiles, so a failure
-      # here reproduces with `scripts/build.py servers --language=csharp`.
       - name: Build the JSON-RPC server
         shell: bash
         run: |
