@@ -7888,26 +7888,29 @@ fn drop_stores_no_load_reaches(
     out
 }
 
-/// Whether removing `e` would remove an effect: an increment, or a call — this
-/// layer cannot know whether a call is pure.
-///
-/// The fused multiply-add is not one. It is a rendered [`Expr::BinOp`] and never
-/// an [`Expr::FuncCall`], so a dead store carrying one is purged like any other.
-pub(crate) fn expr_has_effect(e: &Expr) -> bool {
+/// Whether removing `e` would remove an effect: an increment, or a call `pure`
+/// does not vouch for — this layer cannot tell on its own.
+fn expr_effect(e: &Expr, pure: &dyn Fn(&str) -> bool) -> bool {
     let mut found = false;
     walk_expr(e, &mut |x| {
-        if matches!(
-            x,
+        found |= match x {
             Expr::PostIncrement(_)
-                | Expr::PreIncrement(_)
-                | Expr::PostDecrement(_)
-                | Expr::PreDecrement(_)
-                | Expr::FuncCall(..)
-        ) {
-            found = true;
-        }
+            | Expr::PreIncrement(_)
+            | Expr::PostDecrement(_)
+            | Expr::PreDecrement(_) => true,
+            Expr::FuncCall(n, _) => !pure(n),
+            _ => false,
+        };
     });
     found
+}
+
+/// [`expr_effect`] vouching for no call at all.
+///
+/// The fused multiply-add needs no vouching: it is a rendered [`Expr::BinOp`]
+/// and never an [`Expr::FuncCall`].
+pub(crate) fn expr_has_effect(e: &Expr) -> bool {
+    expr_effect(e, &|_| false)
 }
 
 /// Every name `stmts` READS, which for a store to a bare variable is neither
@@ -7950,12 +7953,15 @@ fn names_read(stmts: &[Statement], out: &mut BTreeSet<String>) {
 ///
 /// `temps` is the frame's own scratch list, never a shape test: an output sink
 /// is a bare [`Expr::Var`] in two of the four backends, and state is one in all
-/// four.
+/// four. A call is refused unless [`pure_helper_names`] vouches for it, so an
+/// unlisted callee costs a store that stays, never one that should not have
+/// gone.
 fn purge_dead_temp_stores(
     transition: &[Statement],
     temps: &[(String, VarType)],
 ) -> Vec<Statement> {
     let named: BTreeSet<&str> = temps.iter().map(|(n, _)| n.as_str()).collect();
+    let pure = pure_helper_names();
     let mut out = transition.to_vec();
     loop {
         let mut read: BTreeSet<String> = BTreeSet::new();
@@ -7968,7 +7974,8 @@ fn purge_dead_temp_stores(
         let hit = std::cell::Cell::new(false);
         let next = strip_stmts(&out, &|s| {
             let drop = matches!(s, Statement::Assign { target: Expr::Var(v), value, .. }
-                if dead.contains(v.as_str()) && !expr_has_effect(value));
+                if dead.contains(v.as_str())
+                    && !expr_effect(value, &|n| pure.contains(n)));
             hit.set(hit.get() | drop);
             drop
         });
@@ -9426,6 +9433,18 @@ mod tests {
             assign(Expr::PointerDeref("out_outReal".into()), var("acc")),
         ];
         assert_eq!(purge_dead_temp_stores(&stmts, &temps(&["acc", "feed"])).len(), 3);
+    }
+
+    /// A vouched helper is a value and nothing else, so a dead store carrying
+    /// one goes. SYNTH8 is the fixture that reaches this; no shipped function
+    /// does.
+    #[test]
+    fn purge_drops_a_dead_store_whose_value_calls_a_vouched_helper() {
+        let stmts = vec![assign(
+            var("dead"),
+            Expr::FuncCall("ta_candlerange".into(), vec![var("inHigh"), var("inLow")]),
+        )];
+        assert!(purge_dead_temp_stores(&stmts, &temps(&["dead"])).is_empty());
     }
 
     /// Both refusals on the value, neither reachable from the shipped corpus.
