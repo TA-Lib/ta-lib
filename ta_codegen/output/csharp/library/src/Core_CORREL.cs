@@ -883,9 +883,6 @@ public partial class Core
                ssY = 0.0;
             }
          }
-         /* Save the trailing values before writing the output, since the input
-          * and output might be the same array.
-          */
          trailingIdx += 1;
          /* Output the new coefficient.
           *

@@ -73370,9 +73370,6 @@ class Core {
                    ssY = 0.0;
                 }
              }
-             /* Save the trailing values before writing the output, since the input
-              * and output might be the same array.
-              */
              trailingIdx += 1;
              /* Output the new coefficient.
               *
@@ -163271,7 +163268,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4f9b721aa7b1c8ad";
+    static final String SPLICED_GENCODE_DIGEST = "10a850eef8ab98ef";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

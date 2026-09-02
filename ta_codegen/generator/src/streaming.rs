@@ -7464,11 +7464,19 @@ fn peek_tail_trimmed(
 /// place, which is the trade #328 records.
 ///
 /// One pass, top level only, single-mention only: a name written twice (one
-/// store per branch arm) or read anywhere in the kept frame is left alone, and
-/// no fixpoint is attempted — a store this pass removes cannot orphan another,
-/// because a right side with no reads of prunable locals was required to begin
-/// with. That last claim is enforced rather than assumed: candidates whose
-/// right side mentions ANOTHER candidate are kept.
+/// store per branch arm) or read anywhere in the kept frame is left alone. The
+/// single mention a candidate is allowed IS its own assignment target — the
+/// count includes targets — so nothing else in the frame reads it, and no
+/// candidate can appear in another candidate's right side. That is what makes
+/// one pass sound rather than merely cheap: dropping every candidate at once
+/// can never delete a store that some other kept statement still reads.
+///
+/// What one pass does give up is the SECOND-ORDER orphan. Dropping `y = x` was
+/// x's last read, so a `x = ...` that only y read is dead too and stays —
+/// `prune_leaves_the_second_order_orphan_it_creates` pins that. A fixpoint
+/// would collect it, and moves no byte of today's corpus: the four stores left
+/// after this pass are the Hilbert fused ones, which the guard above holds
+/// back, not orphans a second pass would reach.
 fn prune_orphaned_stores(kept: Vec<Statement>) -> Vec<Statement> {
     fn count_stmt(s: &Statement, out: &mut std::collections::BTreeMap<String, usize>) {
         walk_stmt_exprs(s, &mut |top| {
@@ -7527,26 +7535,28 @@ fn prune_orphaned_stores(kept: Vec<Statement>) -> Vec<Statement> {
         }
         None
     };
-    let names: BTreeSet<String> = kept.iter().filter_map(candidate).collect();
+    let doomed: Vec<bool> = kept.iter().map(|s| candidate(s).is_some()).collect();
 
-    kept.into_iter()
-        .filter(|s| {
-            let Some(n) = candidate(s) else { return true };
-            // Keep a candidate whose right side reads another candidate: removing
-            // both in one pass would change which of the two this pass proved dead.
-            let mut reads_candidate = false;
-            if let Statement::Assign { value, .. } = s {
-                walk_expr(value, &mut |e| {
-                    if let Expr::Var(v) = e {
-                        if v != &n && names.contains(v) {
-                            reads_candidate = true;
-                        }
-                    }
-                });
-            }
-            reads_candidate
-        })
-        .collect()
+    let mut out = Vec::with_capacity(kept.len());
+    for (i, s) in kept.into_iter().enumerate() {
+        if doomed[i] {
+            continue;
+        }
+        // A comment introduces the statement under it, so when that statement
+        // goes the comment re-attaches to whatever moves up and describes it
+        // wrongly: CORREL's "Save the trailing values before writing the
+        // output" landing on `trailingIdx += 1`, in the shipped library, with
+        // nothing saved and no output written. Take it with the store. The
+        // guidance is not lost -- update and batch keep both -- and a comment
+        // that also covered live statements below is the cost, paid because a
+        // reader who believes a stale comment is worse off than one who has
+        // none.
+        if matches!(s, Statement::Comment(_)) && doomed.get(i + 1) == Some(&true) {
+            continue;
+        }
+        out.push(s);
+    }
+    out
 }
 
 /// Whether `s`, or anything nested in it, assigns to one of `sinks`.
@@ -10026,14 +10036,51 @@ mod tests {
     }
 
     #[test]
-    fn prune_keeps_a_candidate_that_reads_another_candidate() {
-        // Both are top-level, single-mention, fusion-free -- but y reads x, so
-        // deleting both in one pass would have proved y dead with x still there.
+    fn prune_leaves_the_second_order_orphan_it_creates() {
+        // `y = x` is y's only mention, so it goes -- and it was x's only read,
+        // which leaves `x = a` dead. One pass leaves it: the miss is a store
+        // kept, never a live store taken out. Asserting WHICH survivor is the
+        // point; a length alone passes whichever one this drops.
         let kept = vec![
             st_assign("y", Expr::Var("x".into())),
             st_assign("x", Expr::Var("a".into())),
         ];
         let out = prune_orphaned_stores(kept);
-        assert_eq!(out.len(), 1, "x goes; y is kept because it reads a candidate");
+        assert_eq!(out.len(), 1);
+        assert!(
+            matches!(&out[0], Statement::Assign { target: Expr::Var(n), .. } if n == "x"),
+            "the second-order orphan is what stays, not the store with no reader: {out:?}"
+        );
+    }
+
+    #[test]
+    fn prune_takes_the_comment_that_introduced_the_orphan() {
+        let kept = vec![
+            Statement::Comment(vec!["Save the trailing values".into()]),
+            st_assign("trailingX", Expr::BinOp(
+                Box::new(Expr::Var("a".into())),
+                BinOp::Sub,
+                Box::new(Expr::Var("b".into())),
+            )),
+            st_assign("sp->trailingIdx", Expr::Var("a".into())),
+        ];
+        let out = prune_orphaned_stores(kept);
+        assert_eq!(out.len(), 1, "the comment goes with its only subject: {out:?}");
+        assert!(
+            matches!(&out[0], Statement::Assign { target: Expr::Var(n), .. } if n == "sp->trailingIdx"),
+            "{out:?}"
+        );
+    }
+
+    #[test]
+    fn prune_keeps_a_comment_whose_subject_stays() {
+        // Same shape, one difference: the store under the comment has a reader,
+        // so nothing is pruned and the comment still describes what follows it.
+        let kept = vec![
+            Statement::Comment(vec!["Save the trailing values".into()]),
+            st_assign("trailingX", Expr::Var("a".into())),
+            st_assign("sp->out", Expr::Var("trailingX".into())),
+        ];
+        assert_eq!(prune_orphaned_stores(kept).len(), 3);
     }
 }
