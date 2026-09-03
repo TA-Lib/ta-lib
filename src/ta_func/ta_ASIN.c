@@ -136,7 +136,6 @@ struct TA_ASIN_Stream {
 /* Private function, not in public API. */
 static void TA_ASIN_StepImpl( struct TA_ASIN_Stream *sp, double inReal, double *outReal )
 {
-   (void)sp;
    *outReal= asin(inReal);
    sp->cur_outReal = *outReal;
 }
@@ -163,7 +162,7 @@ static TA_RetCode TA_ASIN_OpenImpl( struct TA_ASIN_Stream **stream, const double
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;
@@ -244,11 +243,8 @@ TA_LIB_API TA_RetCode TA_ASIN_Update( TA_ASIN_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_ASIN_Peek( const TA_ASIN_Stream *stream, double inReal, double *outReal )
 {
-   const struct TA_ASIN_Stream *sp = stream;
-
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   (void)sp;
    *outReal= asin(inReal);
    return TA_SUCCESS;
 }

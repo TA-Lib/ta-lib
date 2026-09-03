@@ -572,7 +572,7 @@ static TA_RetCode TA_AC_OpenImpl( struct TA_AC_Stream **stream, const double inH
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       double sumFast = 0.0;

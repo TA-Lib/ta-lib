@@ -344,7 +344,7 @@ static TA_RetCode TA_CDLBREAKAWAY_OpenImpl( struct TA_CDLBREAKAWAY_Stream **stre
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;

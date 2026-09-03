@@ -350,7 +350,7 @@ static TA_RetCode TA_APO_OpenImpl( struct TA_APO_Stream **stream, const double i
    subOpenDummy = 0.0;
    sub0 = NULL;
    sub1 = NULL;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   (void)subOpenDummy;
    if( outStride ) sc_outReal = outReal;
    else
    {

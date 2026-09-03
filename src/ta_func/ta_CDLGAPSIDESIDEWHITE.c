@@ -368,7 +368,7 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;

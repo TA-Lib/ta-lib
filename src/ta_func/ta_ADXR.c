@@ -313,7 +313,7 @@ static TA_RetCode TA_ADXR_OpenImpl( struct TA_ADXR_Stream **stream, const double
    subRc = TA_SUCCESS;
    subOpenDummy = 0.0;
    sub0 = NULL;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   (void)subOpenDummy;
    if( outStride ) sc_outReal = outReal;
    else
    {

@@ -1377,10 +1377,15 @@ fn peek_frame_arm(
 
 /// The scaffolding every frame sits in: a block, so the `&mut` output
 /// rebindings end before the method returns them by value.
-fn peek_frame_head(func: &FuncDef) -> String {
+///
+/// `body` is the rest of the frame, already rendered: a stateless one reads
+/// nothing out of the handle, and binding it anyway is an unused local.
+fn peek_frame_head(func: &FuncDef, body: &str) -> String {
     let mut out = String::new();
     let _ = writeln!(out, "        {{");
-    let _ = writeln!(out, "            let sp = &self.state;");
+    if body.contains("sp.") {
+        let _ = writeln!(out, "            let sp = &self.state;");
+    }
     // Rebinding each output as `&mut` keeps the body's `(*out) = …` spelling,
     // and with it every cast the step renders.
     for o in &func.outputs {
@@ -1402,7 +1407,7 @@ fn build_peek_frame(
     counter: &Cell<usize>,
 ) -> Option<String> {
     let arm = peek_frame_arm(func, model, &RustStreamNames, typing, ctx, enums, registry, helpers, counter, 12)?;
-    let mut out = peek_frame_head(func);
+    let mut out = peek_frame_head(func, &arm);
     out.push_str(&arm);
     let _ = writeln!(out, "        }}");
     Some(out)
@@ -1426,7 +1431,7 @@ fn build_peek_frame_dual(
     let (ma, mb) = (&dmp.mode_a, &dmp.mode_b);
     let a = peek_frame_arm(func, ma, &RustStreamNames, typing, ctx, enums, registry, helpers, counter, 16)?;
     let b = peek_frame_arm(func, mb, &RustStreamNames, typing, ctx, enums, registry, helpers, counter, 16)?;
-    let mut out = peek_frame_head(func);
+    let mut rest = String::new();
     // Identity (HMA period 1) short-circuits ahead of the predicate, as it does
     // in the batch and in Open: it is a property of the function, not of a mode.
     if let Some(st) = streaming::identity_peek_branch(ma, &RustStreamNames) {
@@ -1434,7 +1439,7 @@ fn build_peek_frame_dual(
         let var_inits: HashMap<String, &Expr> = HashMap::new();
         let output_names: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
         for s in &st {
-            out.push_str(&render_statement(
+            rest.push_str(&render_statement(
                 s, 12, ctx, &[], &var_inits, &output_names, opt_real_params, enums, registry,
                 helpers, counter,
             ));
@@ -1442,12 +1447,14 @@ fn build_peek_frame_dual(
     }
     let pred = params_on_state(func, &dmp.predicate);
     let pred = render_expr(&pred, ctx, opt_real_params, registry, helpers);
-    let _ = writeln!(out, "            if {pred} {{");
-    out.push_str(&a);
-    let _ = writeln!(out, "            }} else {{");
-    out.push_str(&b);
-    let _ = writeln!(out, "            }}");
-    let _ = writeln!(out, "        }}");
+    let _ = writeln!(rest, "            if {pred} {{");
+    rest.push_str(&a);
+    let _ = writeln!(rest, "            }} else {{");
+    rest.push_str(&b);
+    let _ = writeln!(rest, "            }}");
+    let _ = writeln!(rest, "        }}");
+    let mut out = peek_frame_head(func, &rest);
+    out.push_str(&rest);
     Some(out)
 }
 
@@ -5079,7 +5086,7 @@ fn emit_composed(
             true,
         )
         .map(|body| {
-            let mut f = peek_frame_head(func);
+            let mut f = peek_frame_head(func, &body);
             f.push_str(&body);
             let _ = writeln!(f, "        }}");
             f

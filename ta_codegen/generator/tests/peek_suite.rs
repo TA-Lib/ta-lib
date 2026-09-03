@@ -578,12 +578,15 @@ fn subsequence<T: PartialEq>(small: &[T], big: &[T]) -> Result<(), usize> {
 /// C compiler and does not belong here. What this pins is that the binding is
 /// still the one the compiler can enforce.
 ///
-/// MA and MAVP are the two exemptions and are exempt by SHAPE, not by name:
-/// they dispatch to a sub-handle's own `Peek` and run no frame, so they declare
-/// no `sp` at all.
+/// Three shapes declare no `sp`, and all three are told apart by SHAPE, not by
+/// name: a DISPATCHER delegates to a sub-handle's own `Peek` and runs no frame
+/// (MA and MAVP); a STATELESS frame computes from its bar arguments alone and
+/// has no handle to read; anything else reaching the handle without the `const`
+/// binding is the defect, whatever it spells the access.
 #[test]
 fn no_c_peek_copies_the_handle() {
     let (mut swept, mut frames, mut dispatchers) = (0usize, 0usize, 0usize);
+    let mut stateless = 0usize;
     let (mut fixtures, mut bounded) = (0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
     for name in indicators() {
@@ -601,8 +604,15 @@ fn no_c_peek_copies_the_handle() {
             frames += 1;
         } else if names_word(&peek, "sp") {
             offenders.push(format!("{upper}: names `sp` without binding it to the caller's handle"));
-        } else {
+        } else if peek.contains("_Peek(") {
             dispatchers += 1;
+        } else if peek.contains("->") {
+            offenders.push(format!(
+                "{upper}: reaches the handle without the `const` binding, so the compiler \
+                 cannot enforce that the frame commits nothing"
+            ));
+        } else {
+            stateless += 1;
         }
         // The declared fixed-size arrays of this frame, read off the emitted
         // declaration so a period-sized buffer can never qualify.
@@ -649,11 +659,17 @@ fn no_c_peek_copies_the_handle() {
     }
     assert!(swept > 170, "only {swept} peek(s) swept");
     assert_eq!(
-        frames + dispatchers,
+        frames + dispatchers + stateless,
         swept,
-        "{frames} frame(s) + {dispatchers} dispatcher(s) do not account for {swept} peek(s)"
+        "{frames} frame(s) + {dispatchers} dispatcher(s) + {stateless} stateless do not account \
+         for {swept} peek(s)"
     );
-    assert_eq!(dispatchers, 2, "{dispatchers} peek(s) run no frame — MA and MAVP are the two");
+    assert_eq!(dispatchers, 2, "{dispatchers} peek(s) delegate — MA and MAVP are the two");
+    assert!(
+        stateless > 0,
+        "no peek computes from its bars alone — the arm that must NOT bind `sp` is unreachable \
+         and this sweep no longer says the binding follows the frame's actual reads"
+    );
     assert!(offenders.is_empty(), "a C peek copies the handle:\n{}", offenders.join("\n"));
     // The shipped corpus reaches the bounded copy never, so its arm proves
     // nothing without the fixtures — assert it only where it can fire.

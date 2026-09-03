@@ -439,7 +439,7 @@ static TA_RetCode TA_CDLABANDONEDBABY_OpenImpl( struct TA_CDLABANDONEDBABY_Strea
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;

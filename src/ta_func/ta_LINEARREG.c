@@ -564,7 +564,7 @@ static TA_RetCode TA_LINEARREG_OpenImpl( struct TA_LINEARREG_Stream **stream, co
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;

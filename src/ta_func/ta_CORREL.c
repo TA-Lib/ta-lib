@@ -779,7 +779,7 @@ static TA_RetCode TA_CORREL_OpenImpl( struct TA_CORREL_Stream **stream, const do
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       double sumXY = 0.0;

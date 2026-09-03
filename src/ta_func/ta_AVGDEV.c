@@ -272,7 +272,7 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int today;

@@ -1,6 +1,7 @@
 pub mod abstract_rows;
 pub mod builtins;
 pub mod c;
+pub mod c_hygiene;
 pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;

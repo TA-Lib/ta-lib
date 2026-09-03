@@ -136,7 +136,6 @@ struct TA_TANH_Stream {
 /* Private function, not in public API. */
 static void TA_TANH_StepImpl( struct TA_TANH_Stream *sp, double inReal, double *outReal )
 {
-   (void)sp;
    *outReal= tanh(inReal);
    sp->cur_outReal = *outReal;
 }
@@ -163,7 +162,7 @@ static TA_RetCode TA_TANH_OpenImpl( struct TA_TANH_Stream **stream, const double
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;
@@ -244,11 +243,8 @@ TA_LIB_API TA_RetCode TA_TANH_Update( TA_TANH_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_TANH_Peek( const TA_TANH_Stream *stream, double inReal, double *outReal )
 {
-   const struct TA_TANH_Stream *sp = stream;
-
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   (void)sp;
    *outReal= tanh(inReal);
    return TA_SUCCESS;
 }

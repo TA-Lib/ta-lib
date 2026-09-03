@@ -781,7 +781,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
    subOpenDummy = 0.0;
    sub0 = NULL;
    sub1 = NULL;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
    if( outStride ) sc_outSlowK = outSlowK;
    else
    {

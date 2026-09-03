@@ -704,7 +704,7 @@ static TA_RetCode TA_STOCHF_OpenImpl( struct TA_STOCHF_Stream **stream, const do
    subRc = TA_SUCCESS;
    subOpenDummy = 0.0;
    sub0 = NULL;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;
+   (void)subOpenDummy;
    if( outStride ) sc_outFastK = outFastK;
    else
    {

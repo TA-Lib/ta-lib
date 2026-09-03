@@ -421,7 +421,9 @@ pub fn generate(
     if func.streaming {
         out.push_str(&super::c_stream::generate(func, enums, registry, helpers));
     }
-    out
+    // Last, over the finished file: the emitters above place their `(void)x;`
+    // before they know what the body will read (see `c_hygiene`).
+    super::c_hygiene::scrub_void_casts(&out)
 }
 
 /// Render a C variable declaration (`type name`, including pointer and array

@@ -554,7 +554,7 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_OpenImpl( struct TA_LINEARREG_INTERCEPT
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;

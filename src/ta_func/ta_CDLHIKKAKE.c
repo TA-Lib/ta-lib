@@ -371,7 +371,7 @@ static TA_RetCode TA_CDLHIKKAKE_OpenImpl( struct TA_CDLHIKKAKE_Stream **stream, 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int i;

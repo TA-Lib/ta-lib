@@ -143,7 +143,6 @@ struct TA_SUB_Stream {
 /* Private function, not in public API. */
 static void TA_SUB_StepImpl( struct TA_SUB_Stream *sp, double inReal0, double inReal1, double *outReal )
 {
-   (void)sp;
    *outReal= inReal0 - inReal1;
    sp->cur_outReal = *outReal;
 }
@@ -170,7 +169,7 @@ static TA_RetCode TA_SUB_OpenImpl( struct TA_SUB_Stream **stream, const double i
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;
@@ -252,11 +251,8 @@ TA_LIB_API TA_RetCode TA_SUB_Update( TA_SUB_Stream *stream, double inReal0, doub
 
 TA_LIB_API TA_RetCode TA_SUB_Peek( const TA_SUB_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
-   const struct TA_SUB_Stream *sp = stream;
-
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
-   (void)sp;
    *outReal= inReal0 - inReal1;
    return TA_SUCCESS;
 }

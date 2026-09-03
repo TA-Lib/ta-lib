@@ -471,7 +471,6 @@ impl LnStream {
         }
         let mut outReal: f64 = 0.0_f64;
         {
-            let sp = &self.state;
             let outReal = &mut outReal;
             (*outReal) = (inReal).ln();
         }

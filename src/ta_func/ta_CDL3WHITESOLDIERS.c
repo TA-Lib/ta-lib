@@ -514,7 +514,7 @@ static TA_RetCode TA_CDL3WHITESOLDIERS_OpenImpl( struct TA_CDL3WHITESOLDIERS_Str
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;

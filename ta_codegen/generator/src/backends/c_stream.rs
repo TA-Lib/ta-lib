@@ -3293,7 +3293,7 @@ fn emit_dual_frame_body(
             let _ = writeln!(o, "   }}\n   else\n   {{");
         }
         let (mut decls, mut body) = (String::new(), String::new());
-        emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 6, false, frame);
+        emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 6, frame);
         o.push_str(&decls);
         if !decls.is_empty() {
             let _ = writeln!(o);
@@ -3608,16 +3608,12 @@ fn emit_step(
     let n = uname(func);
     let bars = bar_params_sig(func);
     let outs = out_params_sig(func);
-    let void_sp = model.state.is_empty()
-        && func.optional_inputs.is_empty()
-        && func.private_extra_params.is_empty()
-        && model.lags.is_empty();
     let _ = writeln!(
         o,
         "/* Private function, not in public API. */\nstatic void TA_{n}_StepImpl( struct TA_{n}_Stream *sp, {bars}{outs} )\n{{"
     );
     let (mut decls, mut body) = (String::new(), String::new());
-    emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 3, void_sp, StepFrame::Commit);
+    emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 3, StepFrame::Commit);
     o.push_str(&decls);
     if !decls.is_empty() {
         let _ = writeln!(o);
@@ -4197,7 +4193,7 @@ fn peek_localized(
 /// halves, and C89 wants every declaration in a block ahead of every statement
 /// in it. Shared by the single-model [`emit_step`] and the dual-mode step
 /// (called once per arm inside the `if (sp->param ...)` branch, at a deeper
-/// indent, with `void_sp = false` since a mode always has state).
+/// indent).
 ///
 /// A carried scalar's load is a STATEMENT here (`x = sp->x;`) rather than an
 /// initializer, because `Peek` has not yet rejected a null handle where the
@@ -4211,7 +4207,6 @@ fn emit_step_inner(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     indent: usize,
-    void_sp: bool,
     frame: StepFrame,
 ) {
     let pad = " ".repeat(indent);
@@ -4266,8 +4261,10 @@ fn emit_step_inner(
     }
     // Read off the rendered text, not off the model: a peek frame can localize
     // its last written field and purge its last read, leaving `sp` unused where
-    // the structural predicate still says it is needed.
-    if void_sp || !(body.contains("sp->") || body_c.contains("sp->")) {
+    // the structural predicate still says it is needed. Only the commit frame
+    // needs the cast — `sp` is its parameter; the peek frame's is a local
+    // [`emit_peek`] leaves out instead.
+    if frame == StepFrame::Commit && !(body.contains("sp->") || body_c.contains("sp->")) {
         body.insert_str(0, &format!("{pad}(void)sp;\n"));
     }
     // Candle settings are read where batch reads them (per step, from the
@@ -5583,9 +5580,17 @@ fn emit_peek(
     let n = uname(func);
     let guard_frame = if fallible { Frame::StepEveryOutput } else { Frame::Step };
     let _ = writeln!(o, "{}\n{{", peek_signature(func));
-    let _ = writeln!(o, "   const struct TA_{n}_Stream *sp = stream;");
+    // Bind what the frame reads: a stateless one reads nothing out of the
+    // handle, and an unused local is what binding it anyway would leave.
+    let bind_sp = frame_decls.contains("sp->") || frame_body.contains("sp->");
+    if bind_sp {
+        let _ = writeln!(o, "   const struct TA_{n}_Stream *sp = stream;");
+    }
     o.push_str(frame_decls);
-    let _ = write!(o, "\n{}", presence_guard(func, guard_frame));
+    if bind_sp || !frame_decls.is_empty() {
+        let _ = writeln!(o);
+    }
+    o.push_str(&presence_guard(func, guard_frame));
     o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", None));
     o.push_str(frame_body);
     if !fallible {
@@ -5605,12 +5610,8 @@ fn emit_peek_loop(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    let void_sp = model.state.is_empty()
-        && func.optional_inputs.is_empty()
-        && func.private_extra_params.is_empty()
-        && model.lags.is_empty();
     let (mut decls, mut body) = (String::new(), String::new());
-    emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 3, void_sp, StepFrame::Peek);
+    emit_step_inner(&mut decls, &mut body, model, enums, registry, helpers, counter, 3, StepFrame::Peek);
     emit_peek(o, func, &decls, &body, false);
 }
 

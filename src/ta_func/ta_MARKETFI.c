@@ -189,7 +189,6 @@ struct TA_MARKETFI_Stream {
 /* Private function, not in public API. */
 static void TA_MARKETFI_StepImpl( struct TA_MARKETFI_Stream *sp, double inHigh, double inLow, double inVolume, double *outReal )
 {
-   (void)sp;
    /* A zero-volume bar would divide by zero. Neither reference guards
     * it -- they emit +/-Inf, or NaN when the range is zero too -- but
     * issue #112 settled that a successful call never emits NaN or Inf,
@@ -232,7 +231,7 @@ static TA_RetCode TA_MARKETFI_OpenImpl( struct TA_MARKETFI_Stream **stream, cons
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;
@@ -344,11 +343,8 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Update( TA_MARKETFI_Stream *stream, double inH
 
 TA_LIB_API TA_RetCode TA_MARKETFI_Peek( const TA_MARKETFI_Stream *stream, double inHigh, double inLow, double inVolume, double *outReal )
 {
-   const struct TA_MARKETFI_Stream *sp = stream;
-
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   (void)sp;
    /* A zero-volume bar would divide by zero. Neither reference guards
     * it -- they emit +/-Inf, or NaN when the range is zero too -- but
     * issue #112 settled that a successful call never emits NaN or Inf,

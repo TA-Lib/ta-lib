@@ -548,7 +548,6 @@ impl BopStream {
         }
         let mut outReal: f64 = 0.0_f64;
         {
-            let sp = &self.state;
             let outReal = &mut outReal;
             let mut tempReal: f64 = 0.0_f64;
             // BOP is a fraction of the bar's own range, so it is scale-free and the

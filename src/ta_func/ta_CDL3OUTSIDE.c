@@ -264,7 +264,7 @@ static TA_RetCode TA_CDL3OUTSIDE_OpenImpl( struct TA_CDL3OUTSIDE_Stream **stream
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int i;

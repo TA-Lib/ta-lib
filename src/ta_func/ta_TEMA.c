@@ -485,7 +485,7 @@ static TA_RetCode TA_TEMA_OpenImpl( struct TA_TEMA_Stream **stream, const double
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    if( optInTimePeriod == 1 )
    {

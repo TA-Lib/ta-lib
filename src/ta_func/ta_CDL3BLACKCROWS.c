@@ -372,7 +372,7 @@ static TA_RetCode TA_CDL3BLACKCROWS_OpenImpl( struct TA_CDL3BLACKCROWS_Stream **
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int ShadowVeryShort_avgPeriod = TA_Globals->candleSettings[TA_ShadowVeryShort].avgPeriod;

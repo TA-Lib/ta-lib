@@ -508,6 +508,7 @@ fn rust_accumulator_fields(section: &str) -> BTreeSet<String> {
 fn no_rust_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
+    let mut stateless = 0usize;
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
@@ -518,6 +519,12 @@ fn no_rust_peek_copies_the_handle() {
         swept += 1;
         if peek.contains("let sp = &self.state;") {
             frames += 1;
+        } else if peek.contains("self.state") {
+            offenders.push(format!("{name}: reaches the state without the shared `&` binding"));
+        } else {
+            // Computes from its bar arguments alone, so there is no handle to
+            // bind — the one shape that legitimately runs a frame without `sp`.
+            stateless += 1;
         }
         for needle in ["self.clone()", "self.state.clone()", "PEEK_SCRATCH", "restore_from"] {
             if peek.contains(needle) {
@@ -535,10 +542,16 @@ fn no_rust_peek_copies_the_handle() {
         }
     }
     assert!(swept > 170, "only {swept} peek(s) swept");
+    assert_eq!(
+        frames + stateless,
+        swept,
+        "{frames} frame(s) + {stateless} stateless do not account for {swept} peek(s) — the \
+         rest copy something"
+    );
     assert!(
-        frames == swept,
-        "{} of {swept} peek(s) run a frame — the rest copy something",
-        frames
+        stateless > 0,
+        "no peek computes from its bars alone — the arm that must NOT bind the state is \
+         unreachable and this sweep no longer says the binding follows the frame's reads"
     );
     assert!(
         fully_shadowed.len() >= 21,

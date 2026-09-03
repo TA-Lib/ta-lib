@@ -448,7 +448,7 @@ static TA_RetCode TA_CDLHAMMER_OpenImpl( struct TA_CDLHAMMER_Stream **stream, co
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyShort_avgPeriod = TA_Globals->candleSettings[TA_BodyShort].avgPeriod;

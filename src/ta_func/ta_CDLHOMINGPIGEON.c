@@ -362,7 +362,7 @@ static TA_RetCode TA_CDLHOMINGPIGEON_OpenImpl( struct TA_CDLHOMINGPIGEON_Stream 
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;

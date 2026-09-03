@@ -534,7 +534,6 @@ impl WclpriceStream {
         }
         let mut outReal: f64 = 0.0_f64;
         {
-            let sp = &self.state;
             let outReal = &mut outReal;
             (*outReal) = ((inClose as f64).mul_add(2.0, inHigh + inLow)) / 4.0;
         }

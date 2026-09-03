@@ -684,7 +684,7 @@ static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_St
 static int sv_steq_TA_AC( const struct TA_AC_Stream *a, const struct TA_AC_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -721,7 +721,7 @@ static int sv_steq_TA_AC( const struct TA_AC_Stream *a, const struct TA_AC_Strea
 static int sv_steq_TA_ACCBANDS( const struct TA_ACCBANDS_Stream *a, const struct TA_ACCBANDS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outRealUpperBand, b->cur_outRealUpperBand, z) ) { *w = "cur_outRealUpperBand"; return 1; }
@@ -759,7 +759,7 @@ static int sv_steq_TA_ACCBANDS( const struct TA_ACCBANDS_Stream *a, const struct
 static int sv_steq_TA_ACOS( const struct TA_ACOS_Stream *a, const struct TA_ACOS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -769,7 +769,7 @@ static int sv_steq_TA_ACOS( const struct TA_ACOS_Stream *a, const struct TA_ACOS
 static int sv_steq_TA_AD( const struct TA_AD_Stream *a, const struct TA_AD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -780,7 +780,7 @@ static int sv_steq_TA_AD( const struct TA_AD_Stream *a, const struct TA_AD_Strea
 static int sv_steq_TA_ADD( const struct TA_ADD_Stream *a, const struct TA_ADD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -790,7 +790,7 @@ static int sv_steq_TA_ADD( const struct TA_ADD_Stream *a, const struct TA_ADD_St
 static int sv_steq_TA_ADOSC( const struct TA_ADOSC_Stream *a, const struct TA_ADOSC_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -809,7 +809,7 @@ static int sv_steq_TA_ADOSC( const struct TA_ADOSC_Stream *a, const struct TA_AD
 static int sv_steq_TA_ADX( const struct TA_ADX_Stream *a, const struct TA_ADX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -827,7 +827,7 @@ static int sv_steq_TA_ADX( const struct TA_ADX_Stream *a, const struct TA_ADX_St
 static int sv_steq_TA_ADXR( const struct TA_ADXR_Stream *a, const struct TA_ADXR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -848,7 +848,7 @@ static int sv_steq_TA_ADXR( const struct TA_ADXR_Stream *a, const struct TA_ADXR
 static int sv_steq_TA_AO( const struct TA_AO_Stream *a, const struct TA_AO_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -878,7 +878,7 @@ static int sv_steq_TA_AO( const struct TA_AO_Stream *a, const struct TA_AO_Strea
 static int sv_steq_TA_APO( const struct TA_APO_Stream *a, const struct TA_APO_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -895,7 +895,7 @@ static int sv_steq_TA_APO( const struct TA_APO_Stream *a, const struct TA_APO_St
 static int sv_steq_TA_AROON( const struct TA_AROON_Stream *a, const struct TA_AROON_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outAroonDown, b->cur_outAroonDown, z) ) { *w = "cur_outAroonDown"; return 1; }
@@ -930,7 +930,7 @@ static int sv_steq_TA_AROON( const struct TA_AROON_Stream *a, const struct TA_AR
 static int sv_steq_TA_AROONOSC( const struct TA_AROONOSC_Stream *a, const struct TA_AROONOSC_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -964,7 +964,7 @@ static int sv_steq_TA_AROONOSC( const struct TA_AROONOSC_Stream *a, const struct
 static int sv_steq_TA_ASIN( const struct TA_ASIN_Stream *a, const struct TA_ASIN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -974,7 +974,7 @@ static int sv_steq_TA_ASIN( const struct TA_ASIN_Stream *a, const struct TA_ASIN
 static int sv_steq_TA_ATAN( const struct TA_ATAN_Stream *a, const struct TA_ATAN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -984,7 +984,7 @@ static int sv_steq_TA_ATAN( const struct TA_ATAN_Stream *a, const struct TA_ATAN
 static int sv_steq_TA_ATR( const struct TA_ATR_Stream *a, const struct TA_ATR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -999,7 +999,7 @@ static int sv_steq_TA_ATR( const struct TA_ATR_Stream *a, const struct TA_ATR_St
 static int sv_steq_TA_AVGDEV( const struct TA_AVGDEV_Stream *a, const struct TA_AVGDEV_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -1018,7 +1018,7 @@ static int sv_steq_TA_AVGDEV( const struct TA_AVGDEV_Stream *a, const struct TA_
 static int sv_steq_TA_AVGPRICE( const struct TA_AVGPRICE_Stream *a, const struct TA_AVGPRICE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -1028,7 +1028,7 @@ static int sv_steq_TA_AVGPRICE( const struct TA_AVGPRICE_Stream *a, const struct
 static int sv_steq_TA_BBANDS( const struct TA_BBANDS_Stream *a, const struct TA_BBANDS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outRealUpperBand, b->cur_outRealUpperBand, z) ) { *w = "cur_outRealUpperBand"; return 1; }
@@ -1048,7 +1048,7 @@ static int sv_steq_TA_BBANDS( const struct TA_BBANDS_Stream *a, const struct TA_
 static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -1092,7 +1092,7 @@ static int sv_steq_TA_BETA( const struct TA_BETA_Stream *a, const struct TA_BETA
 static int sv_steq_TA_BOP( const struct TA_BOP_Stream *a, const struct TA_BOP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -1102,7 +1102,7 @@ static int sv_steq_TA_BOP( const struct TA_BOP_Stream *a, const struct TA_BOP_St
 static int sv_steq_TA_CCI( const struct TA_CCI_Stream *a, const struct TA_CCI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -1118,7 +1118,7 @@ static int sv_steq_TA_CCI( const struct TA_CCI_Stream *a, const struct TA_CCI_St
 static int sv_steq_TA_CDL2CROWS( const struct TA_CDL2CROWS_Stream *a, const struct TA_CDL2CROWS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1145,7 +1145,7 @@ static int sv_steq_TA_CDL2CROWS( const struct TA_CDL2CROWS_Stream *a, const stru
 static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, const struct TA_CDL3BLACKCROWS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1176,7 +1176,7 @@ static int sv_steq_TA_CDL3BLACKCROWS( const struct TA_CDL3BLACKCROWS_Stream *a, 
 static int sv_steq_TA_CDL3INSIDE( const struct TA_CDL3INSIDE_Stream *a, const struct TA_CDL3INSIDE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1212,7 +1212,7 @@ static int sv_steq_TA_CDL3INSIDE( const struct TA_CDL3INSIDE_Stream *a, const st
 static int sv_steq_TA_CDL3LINESTRIKE( const struct TA_CDL3LINESTRIKE_Stream *a, const struct TA_CDL3LINESTRIKE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1244,7 +1244,7 @@ static int sv_steq_TA_CDL3LINESTRIKE( const struct TA_CDL3LINESTRIKE_Stream *a, 
 static int sv_steq_TA_CDL3OUTSIDE( const struct TA_CDL3OUTSIDE_Stream *a, const struct TA_CDL3OUTSIDE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1258,7 +1258,7 @@ static int sv_steq_TA_CDL3OUTSIDE( const struct TA_CDL3OUTSIDE_Stream *a, const 
 static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream *a, const struct TA_CDL3STARSINSOUTH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1315,7 +1315,7 @@ static int sv_steq_TA_CDL3STARSINSOUTH( const struct TA_CDL3STARSINSOUTH_Stream 
 static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Stream *a, const struct TA_CDL3WHITESOLDIERS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1372,7 +1372,7 @@ static int sv_steq_TA_CDL3WHITESOLDIERS( const struct TA_CDL3WHITESOLDIERS_Strea
 static int sv_steq_TA_CDLABANDONEDBABY( const struct TA_CDLABANDONEDBABY_Stream *a, const struct TA_CDLABANDONEDBABY_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1418,7 +1418,7 @@ static int sv_steq_TA_CDLABANDONEDBABY( const struct TA_CDLABANDONEDBABY_Stream 
 static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a, const struct TA_CDLADVANCEBLOCK_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1486,7 +1486,7 @@ static int sv_steq_TA_CDLADVANCEBLOCK( const struct TA_CDLADVANCEBLOCK_Stream *a
 static int sv_steq_TA_CDLBELTHOLD( const struct TA_CDLBELTHOLD_Stream *a, const struct TA_CDLBELTHOLD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1514,7 +1514,7 @@ static int sv_steq_TA_CDLBELTHOLD( const struct TA_CDLBELTHOLD_Stream *a, const 
 static int sv_steq_TA_CDLBREAKAWAY( const struct TA_CDLBREAKAWAY_Stream *a, const struct TA_CDLBREAKAWAY_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1550,7 +1550,7 @@ static int sv_steq_TA_CDLBREAKAWAY( const struct TA_CDLBREAKAWAY_Stream *a, cons
 static int sv_steq_TA_CDLCLOSINGMARUBOZU( const struct TA_CDLCLOSINGMARUBOZU_Stream *a, const struct TA_CDLCLOSINGMARUBOZU_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1578,7 +1578,7 @@ static int sv_steq_TA_CDLCLOSINGMARUBOZU( const struct TA_CDLCLOSINGMARUBOZU_Str
 static int sv_steq_TA_CDLCONCEALBABYSWALL( const struct TA_CDLCONCEALBABYSWALL_Stream *a, const struct TA_CDLCONCEALBABYSWALL_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1610,7 +1610,7 @@ static int sv_steq_TA_CDLCONCEALBABYSWALL( const struct TA_CDLCONCEALBABYSWALL_S
 static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream *a, const struct TA_CDLCOUNTERATTACK_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1644,7 +1644,7 @@ static int sv_steq_TA_CDLCOUNTERATTACK( const struct TA_CDLCOUNTERATTACK_Stream 
 static int sv_steq_TA_CDLDARKCLOUDCOVER( const struct TA_CDLDARKCLOUDCOVER_Stream *a, const struct TA_CDLDARKCLOUDCOVER_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1669,7 +1669,7 @@ static int sv_steq_TA_CDLDARKCLOUDCOVER( const struct TA_CDLDARKCLOUDCOVER_Strea
 static int sv_steq_TA_CDLDOJI( const struct TA_CDLDOJI_Stream *a, const struct TA_CDLDOJI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1688,7 +1688,7 @@ static int sv_steq_TA_CDLDOJI( const struct TA_CDLDOJI_Stream *a, const struct T
 static int sv_steq_TA_CDLDOJISTAR( const struct TA_CDLDOJISTAR_Stream *a, const struct TA_CDLDOJISTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1720,7 +1720,7 @@ static int sv_steq_TA_CDLDOJISTAR( const struct TA_CDLDOJISTAR_Stream *a, const 
 static int sv_steq_TA_CDLDRAGONFLYDOJI( const struct TA_CDLDRAGONFLYDOJI_Stream *a, const struct TA_CDLDRAGONFLYDOJI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1748,7 +1748,7 @@ static int sv_steq_TA_CDLDRAGONFLYDOJI( const struct TA_CDLDRAGONFLYDOJI_Stream 
 static int sv_steq_TA_CDLENGULFING( const struct TA_CDLENGULFING_Stream *a, const struct TA_CDLENGULFING_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1760,7 +1760,7 @@ static int sv_steq_TA_CDLENGULFING( const struct TA_CDLENGULFING_Stream *a, cons
 static int sv_steq_TA_CDLEVENINGDOJISTAR( const struct TA_CDLEVENINGDOJISTAR_Stream *a, const struct TA_CDLEVENINGDOJISTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1806,7 +1806,7 @@ static int sv_steq_TA_CDLEVENINGDOJISTAR( const struct TA_CDLEVENINGDOJISTAR_Str
 static int sv_steq_TA_CDLEVENINGSTAR( const struct TA_CDLEVENINGSTAR_Stream *a, const struct TA_CDLEVENINGSTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1845,7 +1845,7 @@ static int sv_steq_TA_CDLEVENINGSTAR( const struct TA_CDLEVENINGSTAR_Stream *a, 
 static int sv_steq_TA_CDLGAPSIDESIDEWHITE( const struct TA_CDLGAPSIDESIDEWHITE_Stream *a, const struct TA_CDLGAPSIDESIDEWHITE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1881,7 +1881,7 @@ static int sv_steq_TA_CDLGAPSIDESIDEWHITE( const struct TA_CDLGAPSIDESIDEWHITE_S
 static int sv_steq_TA_CDLGRAVESTONEDOJI( const struct TA_CDLGRAVESTONEDOJI_Stream *a, const struct TA_CDLGRAVESTONEDOJI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1909,7 +1909,7 @@ static int sv_steq_TA_CDLGRAVESTONEDOJI( const struct TA_CDLGRAVESTONEDOJI_Strea
 static int sv_steq_TA_CDLHAMMER( const struct TA_CDLHAMMER_Stream *a, const struct TA_CDLHAMMER_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -1959,7 +1959,7 @@ static int sv_steq_TA_CDLHAMMER( const struct TA_CDLHAMMER_Stream *a, const stru
 static int sv_steq_TA_CDLHANGINGMAN( const struct TA_CDLHANGINGMAN_Stream *a, const struct TA_CDLHANGINGMAN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2009,7 +2009,7 @@ static int sv_steq_TA_CDLHANGINGMAN( const struct TA_CDLHANGINGMAN_Stream *a, co
 static int sv_steq_TA_CDLHARAMI( const struct TA_CDLHARAMI_Stream *a, const struct TA_CDLHARAMI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2041,7 +2041,7 @@ static int sv_steq_TA_CDLHARAMI( const struct TA_CDLHARAMI_Stream *a, const stru
 static int sv_steq_TA_CDLHARAMICROSS( const struct TA_CDLHARAMICROSS_Stream *a, const struct TA_CDLHARAMICROSS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2073,7 +2073,7 @@ static int sv_steq_TA_CDLHARAMICROSS( const struct TA_CDLHARAMICROSS_Stream *a, 
 static int sv_steq_TA_CDLHIGHWAVE( const struct TA_CDLHIGHWAVE_Stream *a, const struct TA_CDLHIGHWAVE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2101,7 +2101,7 @@ static int sv_steq_TA_CDLHIGHWAVE( const struct TA_CDLHIGHWAVE_Stream *a, const 
 static int sv_steq_TA_CDLHIKKAKE( const struct TA_CDLHIKKAKE_Stream *a, const struct TA_CDLHIKKAKE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2119,7 +2119,7 @@ static int sv_steq_TA_CDLHIKKAKE( const struct TA_CDLHIKKAKE_Stream *a, const st
 static int sv_steq_TA_CDLHIKKAKEMOD( const struct TA_CDLHIKKAKEMOD_Stream *a, const struct TA_CDLHIKKAKEMOD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2153,7 +2153,7 @@ static int sv_steq_TA_CDLHIKKAKEMOD( const struct TA_CDLHIKKAKEMOD_Stream *a, co
 static int sv_steq_TA_CDLHOMINGPIGEON( const struct TA_CDLHOMINGPIGEON_Stream *a, const struct TA_CDLHOMINGPIGEON_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2186,7 +2186,7 @@ static int sv_steq_TA_CDLHOMINGPIGEON( const struct TA_CDLHOMINGPIGEON_Stream *a
 static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Stream *a, const struct TA_CDLIDENTICAL3CROWS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2224,7 +2224,7 @@ static int sv_steq_TA_CDLIDENTICAL3CROWS( const struct TA_CDLIDENTICAL3CROWS_Str
 static int sv_steq_TA_CDLINNECK( const struct TA_CDLINNECK_Stream *a, const struct TA_CDLINNECK_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2258,7 +2258,7 @@ static int sv_steq_TA_CDLINNECK( const struct TA_CDLINNECK_Stream *a, const stru
 static int sv_steq_TA_CDLINVERTEDHAMMER( const struct TA_CDLINVERTEDHAMMER_Stream *a, const struct TA_CDLINVERTEDHAMMER_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2297,7 +2297,7 @@ static int sv_steq_TA_CDLINVERTEDHAMMER( const struct TA_CDLINVERTEDHAMMER_Strea
 static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const struct TA_CDLKICKING_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2331,7 +2331,7 @@ static int sv_steq_TA_CDLKICKING( const struct TA_CDLKICKING_Stream *a, const st
 static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Stream *a, const struct TA_CDLKICKINGBYLENGTH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2365,7 +2365,7 @@ static int sv_steq_TA_CDLKICKINGBYLENGTH( const struct TA_CDLKICKINGBYLENGTH_Str
 static int sv_steq_TA_CDLLADDERBOTTOM( const struct TA_CDLLADDERBOTTOM_Stream *a, const struct TA_CDLLADDERBOTTOM_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2395,7 +2395,7 @@ static int sv_steq_TA_CDLLADDERBOTTOM( const struct TA_CDLLADDERBOTTOM_Stream *a
 static int sv_steq_TA_CDLLONGLEGGEDDOJI( const struct TA_CDLLONGLEGGEDDOJI_Stream *a, const struct TA_CDLLONGLEGGEDDOJI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2423,7 +2423,7 @@ static int sv_steq_TA_CDLLONGLEGGEDDOJI( const struct TA_CDLLONGLEGGEDDOJI_Strea
 static int sv_steq_TA_CDLLONGLINE( const struct TA_CDLLONGLINE_Stream *a, const struct TA_CDLLONGLINE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2451,7 +2451,7 @@ static int sv_steq_TA_CDLLONGLINE( const struct TA_CDLLONGLINE_Stream *a, const 
 static int sv_steq_TA_CDLMARUBOZU( const struct TA_CDLMARUBOZU_Stream *a, const struct TA_CDLMARUBOZU_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2479,7 +2479,7 @@ static int sv_steq_TA_CDLMARUBOZU( const struct TA_CDLMARUBOZU_Stream *a, const 
 static int sv_steq_TA_CDLMATCHINGLOW( const struct TA_CDLMATCHINGLOW_Stream *a, const struct TA_CDLMATCHINGLOW_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2503,7 +2503,7 @@ static int sv_steq_TA_CDLMATCHINGLOW( const struct TA_CDLMATCHINGLOW_Stream *a, 
 static int sv_steq_TA_CDLMATHOLD( const struct TA_CDLMATHOLD_Stream *a, const struct TA_CDLMATHOLD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2549,7 +2549,7 @@ static int sv_steq_TA_CDLMATHOLD( const struct TA_CDLMATHOLD_Stream *a, const st
 static int sv_steq_TA_CDLMORNINGDOJISTAR( const struct TA_CDLMORNINGDOJISTAR_Stream *a, const struct TA_CDLMORNINGDOJISTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2595,7 +2595,7 @@ static int sv_steq_TA_CDLMORNINGDOJISTAR( const struct TA_CDLMORNINGDOJISTAR_Str
 static int sv_steq_TA_CDLMORNINGSTAR( const struct TA_CDLMORNINGSTAR_Stream *a, const struct TA_CDLMORNINGSTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2634,7 +2634,7 @@ static int sv_steq_TA_CDLMORNINGSTAR( const struct TA_CDLMORNINGSTAR_Stream *a, 
 static int sv_steq_TA_CDLONNECK( const struct TA_CDLONNECK_Stream *a, const struct TA_CDLONNECK_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2668,7 +2668,7 @@ static int sv_steq_TA_CDLONNECK( const struct TA_CDLONNECK_Stream *a, const stru
 static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const struct TA_CDLPIERCING_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2692,7 +2692,7 @@ static int sv_steq_TA_CDLPIERCING( const struct TA_CDLPIERCING_Stream *a, const 
 static int sv_steq_TA_CDLRICKSHAWMAN( const struct TA_CDLRICKSHAWMAN_Stream *a, const struct TA_CDLRICKSHAWMAN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2729,7 +2729,7 @@ static int sv_steq_TA_CDLRICKSHAWMAN( const struct TA_CDLRICKSHAWMAN_Stream *a, 
 static int sv_steq_TA_CDLRISEFALL3METHODS( const struct TA_CDLRISEFALL3METHODS_Stream *a, const struct TA_CDLRISEFALL3METHODS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2774,7 +2774,7 @@ static int sv_steq_TA_CDLRISEFALL3METHODS( const struct TA_CDLRISEFALL3METHODS_S
 static int sv_steq_TA_CDLSEPARATINGLINES( const struct TA_CDLSEPARATINGLINES_Stream *a, const struct TA_CDLSEPARATINGLINES_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2816,7 +2816,7 @@ static int sv_steq_TA_CDLSEPARATINGLINES( const struct TA_CDLSEPARATINGLINES_Str
 static int sv_steq_TA_CDLSHOOTINGSTAR( const struct TA_CDLSHOOTINGSTAR_Stream *a, const struct TA_CDLSHOOTINGSTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2855,7 +2855,7 @@ static int sv_steq_TA_CDLSHOOTINGSTAR( const struct TA_CDLSHOOTINGSTAR_Stream *a
 static int sv_steq_TA_CDLSHORTLINE( const struct TA_CDLSHORTLINE_Stream *a, const struct TA_CDLSHORTLINE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2883,7 +2883,7 @@ static int sv_steq_TA_CDLSHORTLINE( const struct TA_CDLSHORTLINE_Stream *a, cons
 static int sv_steq_TA_CDLSPINNINGTOP( const struct TA_CDLSPINNINGTOP_Stream *a, const struct TA_CDLSPINNINGTOP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2902,7 +2902,7 @@ static int sv_steq_TA_CDLSPINNINGTOP( const struct TA_CDLSPINNINGTOP_Stream *a, 
 static int sv_steq_TA_CDLSTALLEDPATTERN( const struct TA_CDLSTALLEDPATTERN_Stream *a, const struct TA_CDLSTALLEDPATTERN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2959,7 +2959,7 @@ static int sv_steq_TA_CDLSTALLEDPATTERN( const struct TA_CDLSTALLEDPATTERN_Strea
 static int sv_steq_TA_CDLSTICKSANDWICH( const struct TA_CDLSTICKSANDWICH_Stream *a, const struct TA_CDLSTICKSANDWICH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -2987,7 +2987,7 @@ static int sv_steq_TA_CDLSTICKSANDWICH( const struct TA_CDLSTICKSANDWICH_Stream 
 static int sv_steq_TA_CDLTAKURI( const struct TA_CDLTAKURI_Stream *a, const struct TA_CDLTAKURI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3024,7 +3024,7 @@ static int sv_steq_TA_CDLTAKURI( const struct TA_CDLTAKURI_Stream *a, const stru
 static int sv_steq_TA_CDLTASUKIGAP( const struct TA_CDLTASUKIGAP_Stream *a, const struct TA_CDLTASUKIGAP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3050,7 +3050,7 @@ static int sv_steq_TA_CDLTASUKIGAP( const struct TA_CDLTASUKIGAP_Stream *a, cons
 static int sv_steq_TA_CDLTHRUSTING( const struct TA_CDLTHRUSTING_Stream *a, const struct TA_CDLTHRUSTING_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3084,7 +3084,7 @@ static int sv_steq_TA_CDLTHRUSTING( const struct TA_CDLTHRUSTING_Stream *a, cons
 static int sv_steq_TA_CDLTRISTAR( const struct TA_CDLTRISTAR_Stream *a, const struct TA_CDLTRISTAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3111,7 +3111,7 @@ static int sv_steq_TA_CDLTRISTAR( const struct TA_CDLTRISTAR_Stream *a, const st
 static int sv_steq_TA_CDLUNIQUE3RIVER( const struct TA_CDLUNIQUE3RIVER_Stream *a, const struct TA_CDLUNIQUE3RIVER_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3147,7 +3147,7 @@ static int sv_steq_TA_CDLUNIQUE3RIVER( const struct TA_CDLUNIQUE3RIVER_Stream *a
 static int sv_steq_TA_CDLUPSIDEGAP2CROWS( const struct TA_CDLUPSIDEGAP2CROWS_Stream *a, const struct TA_CDLUPSIDEGAP2CROWS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3183,7 +3183,7 @@ static int sv_steq_TA_CDLUPSIDEGAP2CROWS( const struct TA_CDLUPSIDEGAP2CROWS_Str
 static int sv_steq_TA_CDLXSIDEGAP3METHODS( const struct TA_CDLXSIDEGAP3METHODS_Stream *a, const struct TA_CDLXSIDEGAP3METHODS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3197,7 +3197,7 @@ static int sv_steq_TA_CDLXSIDEGAP3METHODS( const struct TA_CDLXSIDEGAP3METHODS_S
 static int sv_steq_TA_CEIL( const struct TA_CEIL_Stream *a, const struct TA_CEIL_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3207,7 +3207,7 @@ static int sv_steq_TA_CEIL( const struct TA_CEIL_Stream *a, const struct TA_CEIL
 static int sv_steq_TA_CMF( const struct TA_CMF_Stream *a, const struct TA_CMF_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3227,7 +3227,7 @@ static int sv_steq_TA_CMF( const struct TA_CMF_Stream *a, const struct TA_CMF_St
 static int sv_steq_TA_CMO( const struct TA_CMO_Stream *a, const struct TA_CMO_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3241,7 +3241,7 @@ static int sv_steq_TA_CMO( const struct TA_CMO_Stream *a, const struct TA_CMO_St
 static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3265,7 +3265,7 @@ static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU
 static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_CORREL_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3306,7 +3306,7 @@ static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_
 static int sv_steq_TA_COS( const struct TA_COS_Stream *a, const struct TA_COS_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3316,7 +3316,7 @@ static int sv_steq_TA_COS( const struct TA_COS_Stream *a, const struct TA_COS_St
 static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3326,7 +3326,7 @@ static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH
 static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3340,7 +3340,7 @@ static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA
 static int sv_steq_TA_DIV( const struct TA_DIV_Stream *a, const struct TA_DIV_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3350,7 +3350,7 @@ static int sv_steq_TA_DIV( const struct TA_DIV_Stream *a, const struct TA_DIV_St
 static int sv_steq_TA_DONCHIAN( const struct TA_DONCHIAN_Stream *a, const struct TA_DONCHIAN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outRealUpperBand, b->cur_outRealUpperBand, z) ) { *w = "cur_outRealUpperBand"; return 1; }
@@ -3385,7 +3385,7 @@ static int sv_steq_TA_DONCHIAN( const struct TA_DONCHIAN_Stream *a, const struct
 static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3403,7 +3403,7 @@ static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Strea
 static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3417,7 +3417,7 @@ static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_St
 static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3430,7 +3430,7 @@ static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_St
 static int sv_steq_TA_EXP( const struct TA_EXP_Stream *a, const struct TA_EXP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3440,7 +3440,7 @@ static int sv_steq_TA_EXP( const struct TA_EXP_Stream *a, const struct TA_EXP_St
 static int sv_steq_TA_FLOOR( const struct TA_FLOOR_Stream *a, const struct TA_FLOOR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3450,7 +3450,7 @@ static int sv_steq_TA_FLOOR( const struct TA_FLOOR_Stream *a, const struct TA_FL
 static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3518,7 +3518,7 @@ static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_St
 static int sv_steq_TA_HT_DCPERIOD( const struct TA_HT_DCPERIOD_Stream *a, const struct TA_HT_DCPERIOD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3578,7 +3578,7 @@ static int sv_steq_TA_HT_DCPERIOD( const struct TA_HT_DCPERIOD_Stream *a, const 
 static int sv_steq_TA_HT_DCPHASE( const struct TA_HT_DCPHASE_Stream *a, const struct TA_HT_DCPHASE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3645,7 +3645,7 @@ static int sv_steq_TA_HT_DCPHASE( const struct TA_HT_DCPHASE_Stream *a, const st
 static int sv_steq_TA_HT_PHASOR( const struct TA_HT_PHASOR_Stream *a, const struct TA_HT_PHASOR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outInPhase, b->cur_outInPhase, z) ) { *w = "cur_outInPhase"; return 1; }
@@ -3705,7 +3705,7 @@ static int sv_steq_TA_HT_PHASOR( const struct TA_HT_PHASOR_Stream *a, const stru
 static int sv_steq_TA_HT_SINE( const struct TA_HT_SINE_Stream *a, const struct TA_HT_SINE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outSine, b->cur_outSine, z) ) { *w = "cur_outSine"; return 1; }
@@ -3774,7 +3774,7 @@ static int sv_steq_TA_HT_SINE( const struct TA_HT_SINE_Stream *a, const struct T
 static int sv_steq_TA_HT_TRENDLINE( const struct TA_HT_TRENDLINE_Stream *a, const struct TA_HT_TRENDLINE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3845,7 +3845,7 @@ static int sv_steq_TA_HT_TRENDLINE( const struct TA_HT_TRENDLINE_Stream *a, cons
 static int sv_steq_TA_HT_TRENDMODE( const struct TA_HT_TRENDMODE_Stream *a, const struct TA_HT_TRENDMODE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -3927,7 +3927,7 @@ static int sv_steq_TA_HT_TRENDMODE( const struct TA_HT_TRENDMODE_Stream *a, cons
 static int sv_steq_TA_IMI( const struct TA_IMI_Stream *a, const struct TA_IMI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3953,7 +3953,7 @@ static int sv_steq_TA_IMI( const struct TA_IMI_Stream *a, const struct TA_IMI_St
 static int sv_steq_TA_KAMA( const struct TA_KAMA_Stream *a, const struct TA_KAMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -3979,7 +3979,7 @@ static int sv_steq_TA_KAMA( const struct TA_KAMA_Stream *a, const struct TA_KAMA
 static int sv_steq_TA_KC( const struct TA_KC_Stream *a, const struct TA_KC_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outRealUpperBand, b->cur_outRealUpperBand, z) ) { *w = "cur_outRealUpperBand"; return 1; }
@@ -4000,7 +4000,7 @@ static int sv_steq_TA_KC( const struct TA_KC_Stream *a, const struct TA_KC_Strea
 static int sv_steq_TA_LINEARREG( const struct TA_LINEARREG_Stream *a, const struct TA_LINEARREG_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4031,7 +4031,7 @@ static int sv_steq_TA_LINEARREG( const struct TA_LINEARREG_Stream *a, const stru
 static int sv_steq_TA_LINEARREG_ANGLE( const struct TA_LINEARREG_ANGLE_Stream *a, const struct TA_LINEARREG_ANGLE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4062,7 +4062,7 @@ static int sv_steq_TA_LINEARREG_ANGLE( const struct TA_LINEARREG_ANGLE_Stream *a
 static int sv_steq_TA_LINEARREG_INTERCEPT( const struct TA_LINEARREG_INTERCEPT_Stream *a, const struct TA_LINEARREG_INTERCEPT_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4093,7 +4093,7 @@ static int sv_steq_TA_LINEARREG_INTERCEPT( const struct TA_LINEARREG_INTERCEPT_S
 static int sv_steq_TA_LINEARREG_SLOPE( const struct TA_LINEARREG_SLOPE_Stream *a, const struct TA_LINEARREG_SLOPE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4124,7 +4124,7 @@ static int sv_steq_TA_LINEARREG_SLOPE( const struct TA_LINEARREG_SLOPE_Stream *a
 static int sv_steq_TA_LN( const struct TA_LN_Stream *a, const struct TA_LN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4134,7 +4134,7 @@ static int sv_steq_TA_LN( const struct TA_LN_Stream *a, const struct TA_LN_Strea
 static int sv_steq_TA_LOG10( const struct TA_LOG10_Stream *a, const struct TA_LOG10_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4144,7 +4144,7 @@ static int sv_steq_TA_LOG10( const struct TA_LOG10_Stream *a, const struct TA_LO
 static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4193,7 +4193,7 @@ static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Strea
 static int sv_steq_TA_MACD( const struct TA_MACD_Stream *a, const struct TA_MACD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outMACD, b->cur_outMACD, z) ) { *w = "cur_outMACD"; return 1; }
@@ -4214,7 +4214,7 @@ static int sv_steq_TA_MACD( const struct TA_MACD_Stream *a, const struct TA_MACD
 static int sv_steq_TA_MACDEXT( const struct TA_MACDEXT_Stream *a, const struct TA_MACDEXT_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outMACD, b->cur_outMACD, z) ) { *w = "cur_outMACD"; return 1; }
@@ -4238,7 +4238,7 @@ static int sv_steq_TA_MACDEXT( const struct TA_MACDEXT_Stream *a, const struct T
 static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct TA_MACDFIX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outMACD, b->cur_outMACD, z) ) { *w = "cur_outMACD"; return 1; }
@@ -4257,7 +4257,7 @@ static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct T
 static int sv_steq_TA_MAMA( const struct TA_MAMA_Stream *a, const struct TA_MAMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outMAMA, b->cur_outMAMA, z) ) { *w = "cur_outMAMA"; return 1; }
@@ -4322,7 +4322,7 @@ static int sv_steq_TA_MAMA( const struct TA_MAMA_Stream *a, const struct TA_MAMA
 static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct TA_MARKETFI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4332,7 +4332,7 @@ static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct
 static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4354,7 +4354,7 @@ static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP
 static int sv_steq_TA_MAX( const struct TA_MAX_Stream *a, const struct TA_MAX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4379,7 +4379,7 @@ static int sv_steq_TA_MAX( const struct TA_MAX_Stream *a, const struct TA_MAX_St
 static int sv_steq_TA_MAXINDEX( const struct TA_MAXINDEX_Stream *a, const struct TA_MAXINDEX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -4404,7 +4404,7 @@ static int sv_steq_TA_MAXINDEX( const struct TA_MAXINDEX_Stream *a, const struct
 static int sv_steq_TA_MEDPRICE( const struct TA_MEDPRICE_Stream *a, const struct TA_MEDPRICE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4414,7 +4414,7 @@ static int sv_steq_TA_MEDPRICE( const struct TA_MEDPRICE_Stream *a, const struct
 static int sv_steq_TA_MFI( const struct TA_MFI_Stream *a, const struct TA_MFI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4436,7 +4436,7 @@ static int sv_steq_TA_MFI( const struct TA_MFI_Stream *a, const struct TA_MFI_St
 static int sv_steq_TA_MIDPOINT( const struct TA_MIDPOINT_Stream *a, const struct TA_MIDPOINT_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4463,7 +4463,7 @@ static int sv_steq_TA_MIDPOINT( const struct TA_MIDPOINT_Stream *a, const struct
 static int sv_steq_TA_MIDPRICE( const struct TA_MIDPRICE_Stream *a, const struct TA_MIDPRICE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4496,7 +4496,7 @@ static int sv_steq_TA_MIDPRICE( const struct TA_MIDPRICE_Stream *a, const struct
 static int sv_steq_TA_MIN( const struct TA_MIN_Stream *a, const struct TA_MIN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4521,7 +4521,7 @@ static int sv_steq_TA_MIN( const struct TA_MIN_Stream *a, const struct TA_MIN_St
 static int sv_steq_TA_MININDEX( const struct TA_MININDEX_Stream *a, const struct TA_MININDEX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
@@ -4546,7 +4546,7 @@ static int sv_steq_TA_MININDEX( const struct TA_MININDEX_Stream *a, const struct
 static int sv_steq_TA_MINMAX( const struct TA_MINMAX_Stream *a, const struct TA_MINMAX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outMin, b->cur_outMin, z) ) { *w = "cur_outMin"; return 1; }
@@ -4574,7 +4574,7 @@ static int sv_steq_TA_MINMAX( const struct TA_MINMAX_Stream *a, const struct TA_
 static int sv_steq_TA_MINMAXINDEX( const struct TA_MINMAXINDEX_Stream *a, const struct TA_MINMAXINDEX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( a->cur_outMinIdx != b->cur_outMinIdx ) { *w = "cur_outMinIdx"; return 1; }
@@ -4602,7 +4602,7 @@ static int sv_steq_TA_MINMAXINDEX( const struct TA_MINMAXINDEX_Stream *a, const 
 static int sv_steq_TA_MINUS_DI( const struct TA_MINUS_DI_Stream *a, const struct TA_MINUS_DI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4618,7 +4618,7 @@ static int sv_steq_TA_MINUS_DI( const struct TA_MINUS_DI_Stream *a, const struct
 static int sv_steq_TA_MINUS_DM( const struct TA_MINUS_DM_Stream *a, const struct TA_MINUS_DM_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4632,7 +4632,7 @@ static int sv_steq_TA_MINUS_DM( const struct TA_MINUS_DM_Stream *a, const struct
 static int sv_steq_TA_MOM( const struct TA_MOM_Stream *a, const struct TA_MOM_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4651,7 +4651,7 @@ static int sv_steq_TA_MOM( const struct TA_MOM_Stream *a, const struct TA_MOM_St
 static int sv_steq_TA_MULT( const struct TA_MULT_Stream *a, const struct TA_MULT_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4661,7 +4661,7 @@ static int sv_steq_TA_MULT( const struct TA_MULT_Stream *a, const struct TA_MULT
 static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4676,7 +4676,7 @@ static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR
 static int sv_steq_TA_NVI( const struct TA_NVI_Stream *a, const struct TA_NVI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4689,7 +4689,7 @@ static int sv_steq_TA_NVI( const struct TA_NVI_Stream *a, const struct TA_NVI_St
 static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4701,7 +4701,7 @@ static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_St
 static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct TA_PLUS_DI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4717,7 +4717,7 @@ static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct T
 static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct TA_PLUS_DM_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4731,7 +4731,7 @@ static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct T
 static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4748,7 +4748,7 @@ static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_St
 static int sv_steq_TA_PVI( const struct TA_PVI_Stream *a, const struct TA_PVI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4761,7 +4761,7 @@ static int sv_steq_TA_PVI( const struct TA_PVI_Stream *a, const struct TA_PVI_St
 static int sv_steq_TA_PVO( const struct TA_PVO_Stream *a, const struct TA_PVO_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4778,7 +4778,7 @@ static int sv_steq_TA_PVO( const struct TA_PVO_Stream *a, const struct TA_PVO_St
 static int sv_steq_TA_QSTICK( const struct TA_QSTICK_Stream *a, const struct TA_QSTICK_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4798,7 +4798,7 @@ static int sv_steq_TA_QSTICK( const struct TA_QSTICK_Stream *a, const struct TA_
 static int sv_steq_TA_ROC( const struct TA_ROC_Stream *a, const struct TA_ROC_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4817,7 +4817,7 @@ static int sv_steq_TA_ROC( const struct TA_ROC_Stream *a, const struct TA_ROC_St
 static int sv_steq_TA_ROCP( const struct TA_ROCP_Stream *a, const struct TA_ROCP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4836,7 +4836,7 @@ static int sv_steq_TA_ROCP( const struct TA_ROCP_Stream *a, const struct TA_ROCP
 static int sv_steq_TA_ROCR( const struct TA_ROCR_Stream *a, const struct TA_ROCR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4855,7 +4855,7 @@ static int sv_steq_TA_ROCR( const struct TA_ROCR_Stream *a, const struct TA_ROCR
 static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct TA_ROCR100_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4874,7 +4874,7 @@ static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct T
 static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4888,7 +4888,7 @@ static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_St
 static int sv_steq_TA_SAR( const struct TA_SAR_Stream *a, const struct TA_SAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4906,7 +4906,7 @@ static int sv_steq_TA_SAR( const struct TA_SAR_Stream *a, const struct TA_SAR_St
 static int sv_steq_TA_SAREXT( const struct TA_SAREXT_Stream *a, const struct TA_SAREXT_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4931,7 +4931,7 @@ static int sv_steq_TA_SAREXT( const struct TA_SAREXT_Stream *a, const struct TA_
 static int sv_steq_TA_SIN( const struct TA_SIN_Stream *a, const struct TA_SIN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4941,7 +4941,7 @@ static int sv_steq_TA_SIN( const struct TA_SIN_Stream *a, const struct TA_SIN_St
 static int sv_steq_TA_SINH( const struct TA_SINH_Stream *a, const struct TA_SINH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4951,7 +4951,7 @@ static int sv_steq_TA_SINH( const struct TA_SINH_Stream *a, const struct TA_SINH
 static int sv_steq_TA_SMA( const struct TA_SMA_Stream *a, const struct TA_SMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -4971,7 +4971,7 @@ static int sv_steq_TA_SMA( const struct TA_SMA_Stream *a, const struct TA_SMA_St
 static int sv_steq_TA_SMI( const struct TA_SMI_Stream *a, const struct TA_SMI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outSMI, b->cur_outSMI, z) ) { *w = "cur_outSMI"; return 1; }
@@ -5022,7 +5022,7 @@ static int sv_steq_TA_SMI( const struct TA_SMI_Stream *a, const struct TA_SMI_St
 static int sv_steq_TA_SQRT( const struct TA_SQRT_Stream *a, const struct TA_SQRT_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5032,7 +5032,7 @@ static int sv_steq_TA_SQRT( const struct TA_SQRT_Stream *a, const struct TA_SQRT
 static int sv_steq_TA_STDDEV( const struct TA_STDDEV_Stream *a, const struct TA_STDDEV_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5046,7 +5046,7 @@ static int sv_steq_TA_STDDEV( const struct TA_STDDEV_Stream *a, const struct TA_
 static int sv_steq_TA_STOCH( const struct TA_STOCH_Stream *a, const struct TA_STOCH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outSlowK, b->cur_outSlowK, z) ) { *w = "cur_outSlowK"; return 1; }
@@ -5095,7 +5095,7 @@ static int sv_steq_TA_STOCH( const struct TA_STOCH_Stream *a, const struct TA_ST
 static int sv_steq_TA_STOCHF( const struct TA_STOCHF_Stream *a, const struct TA_STOCHF_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outFastK, b->cur_outFastK, z) ) { *w = "cur_outFastK"; return 1; }
@@ -5140,7 +5140,7 @@ static int sv_steq_TA_STOCHF( const struct TA_STOCHF_Stream *a, const struct TA_
 static int sv_steq_TA_STOCHRSI( const struct TA_STOCHRSI_Stream *a, const struct TA_STOCHRSI_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outFastK, b->cur_outFastK, z) ) { *w = "cur_outFastK"; return 1; }
@@ -5159,7 +5159,7 @@ static int sv_steq_TA_STOCHRSI( const struct TA_STOCHRSI_Stream *a, const struct
 static int sv_steq_TA_SUB( const struct TA_SUB_Stream *a, const struct TA_SUB_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5169,7 +5169,7 @@ static int sv_steq_TA_SUB( const struct TA_SUB_Stream *a, const struct TA_SUB_St
 static int sv_steq_TA_SUM( const struct TA_SUM_Stream *a, const struct TA_SUM_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5189,7 +5189,7 @@ static int sv_steq_TA_SUM( const struct TA_SUM_Stream *a, const struct TA_SUM_St
 static int sv_steq_TA_SUPERTREND( const struct TA_SUPERTREND_Stream *a, const struct TA_SUPERTREND_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5210,7 +5210,7 @@ static int sv_steq_TA_SUPERTREND( const struct TA_SUPERTREND_Stream *a, const st
 static int sv_steq_TA_T3( const struct TA_T3_Stream *a, const struct TA_T3_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5234,7 +5234,7 @@ static int sv_steq_TA_T3( const struct TA_T3_Stream *a, const struct TA_T3_Strea
 static int sv_steq_TA_TAN( const struct TA_TAN_Stream *a, const struct TA_TAN_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5244,7 +5244,7 @@ static int sv_steq_TA_TAN( const struct TA_TAN_Stream *a, const struct TA_TAN_St
 static int sv_steq_TA_TANH( const struct TA_TANH_Stream *a, const struct TA_TANH_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5254,7 +5254,7 @@ static int sv_steq_TA_TANH( const struct TA_TANH_Stream *a, const struct TA_TANH
 static int sv_steq_TA_TEMA( const struct TA_TEMA_Stream *a, const struct TA_TEMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5269,7 +5269,7 @@ static int sv_steq_TA_TEMA( const struct TA_TEMA_Stream *a, const struct TA_TEMA
 static int sv_steq_TA_TRANGE( const struct TA_TRANGE_Stream *a, const struct TA_TRANGE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5280,7 +5280,7 @@ static int sv_steq_TA_TRANGE( const struct TA_TRANGE_Stream *a, const struct TA_
 static int sv_steq_TA_TRIMA( const struct TA_TRIMA_Stream *a, const struct TA_TRIMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5312,7 +5312,7 @@ static int sv_steq_TA_TRIMA( const struct TA_TRIMA_Stream *a, const struct TA_TR
 static int sv_steq_TA_TRIX( const struct TA_TRIX_Stream *a, const struct TA_TRIX_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5327,7 +5327,7 @@ static int sv_steq_TA_TRIX( const struct TA_TRIX_Stream *a, const struct TA_TRIX
 static int sv_steq_TA_TSF( const struct TA_TSF_Stream *a, const struct TA_TSF_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5358,7 +5358,7 @@ static int sv_steq_TA_TSF( const struct TA_TSF_Stream *a, const struct TA_TSF_St
 static int sv_steq_TA_TYPPRICE( const struct TA_TYPPRICE_Stream *a, const struct TA_TYPPRICE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5368,7 +5368,7 @@ static int sv_steq_TA_TYPPRICE( const struct TA_TYPPRICE_Stream *a, const struct
 static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_ULTOSC_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5398,7 +5398,7 @@ static int sv_steq_TA_ULTOSC( const struct TA_ULTOSC_Stream *a, const struct TA_
 static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5429,7 +5429,7 @@ static int sv_steq_TA_VAR( const struct TA_VAR_Stream *a, const struct TA_VAR_St
 static int sv_steq_TA_VWAP( const struct TA_VWAP_Stream *a, const struct TA_VWAP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5442,7 +5442,7 @@ static int sv_steq_TA_VWAP( const struct TA_VWAP_Stream *a, const struct TA_VWAP
 static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5470,7 +5470,7 @@ static int sv_steq_TA_VWMA( const struct TA_VWMA_Stream *a, const struct TA_VWMA
 static int sv_steq_TA_WAD( const struct TA_WAD_Stream *a, const struct TA_WAD_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5482,7 +5482,7 @@ static int sv_steq_TA_WAD( const struct TA_WAD_Stream *a, const struct TA_WAD_St
 static int sv_steq_TA_WCLPRICE( const struct TA_WCLPRICE_Stream *a, const struct TA_WCLPRICE_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5492,7 +5492,7 @@ static int sv_steq_TA_WCLPRICE( const struct TA_WCLPRICE_Stream *a, const struct
 static int sv_steq_TA_WILLR( const struct TA_WILLR_Stream *a, const struct TA_WILLR_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5532,7 +5532,7 @@ static int sv_steq_TA_WILLR( const struct TA_WILLR_Stream *a, const struct TA_WI
 static int sv_steq_TA_WMA( const struct TA_WMA_Stream *a, const struct TA_WMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)a; (void)b; (void)w; (void)z; (void)k; (void)ix; (void)ia; (void)ib;
+   (void)ix;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
@@ -5571,9 +5571,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
     int svK      = json_find_int(json, "unstablePeriod");
     int svCompat = json_find_int(json, "compatibility");
     int svCandle = json_find_int(json, "candleLegs");
-    (void)svCandle;
     int savedCompat = (int)TA_GetCompatibility();
-    (void)svK;
     if( !fn ) { snprintf(resp, resp_size, "{\"error\":\"missing funcName\"}"); return; }
     if( svN < 2 ) svN = 2;
     if( svN > SV_MAXN ) svN = SV_MAXN;

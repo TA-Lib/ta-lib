@@ -436,7 +436,7 @@ static TA_RetCode TA_CDLRISEFALL3METHODS_OpenImpl( struct TA_CDLRISEFALL3METHODS
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;

@@ -668,7 +668,7 @@ static TA_RetCode TA_MIDPRICE_OpenImpl( struct TA_MIDPRICE_Stream **stream, cons
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       double lowest = 0.0;

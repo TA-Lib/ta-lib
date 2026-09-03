@@ -396,7 +396,9 @@ pub fn generate_c_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) ->
     s.push_str("    return 0;\n");
     s.push_str("}\n");
 
-    s
+    // Same phase the indicator files run: the per-function handlers declare a
+    // block's names before they know which arms will read them.
+    crate::backends::c_hygiene::scrub_void_casts(&s)
 }
 
 #[allow(clippy::too_many_lines)]

@@ -136,7 +136,6 @@ struct TA_LOG10_Stream {
 /* Private function, not in public API. */
 static void TA_LOG10_StepImpl( struct TA_LOG10_Stream *sp, double inReal, double *outReal )
 {
-   (void)sp;
    *outReal= log10(inReal);
    sp->cur_outReal = *outReal;
 }
@@ -163,7 +162,7 @@ static TA_RetCode TA_LOG10_OpenImpl( struct TA_LOG10_Stream **stream, const doub
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;
@@ -244,11 +243,8 @@ TA_LIB_API TA_RetCode TA_LOG10_Update( TA_LOG10_Stream *stream, double inReal, d
 
 TA_LIB_API TA_RetCode TA_LOG10_Peek( const TA_LOG10_Stream *stream, double inReal, double *outReal )
 {
-   const struct TA_LOG10_Stream *sp = stream;
-
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   (void)sp;
    *outReal= log10(inReal);
    return TA_SUCCESS;
 }

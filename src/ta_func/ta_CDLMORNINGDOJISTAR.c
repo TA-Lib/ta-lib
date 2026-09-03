@@ -443,7 +443,7 @@ static TA_RetCode TA_CDLMORNINGDOJISTAR_OpenImpl( struct TA_CDLMORNINGDOJISTAR_S
    endIdx = historyLen - 1;
    dummyBegIdx = 0;
    dummyNBElement = 0;
-   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;
