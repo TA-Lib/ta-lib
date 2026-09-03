@@ -935,13 +935,28 @@ public class NoPhantomIoTest {
                 }
             }
         }
-        // Discovery, not a list: the streaming tier reaches every function, so a
-        // core without an openAndFill is a generator regression rather than an
-        // exemption. Checked before the sweep so an empty discovery cannot pass.
-        check(fills.keySet().equals(cores.keySet()),
-              "every core has a double[] openAndFill (" + fills.size() + " of "
-              + cores.size() + "; missing "
-              + missing(new ArrayList<>(cores.keySet()), new ArrayList<>(fills.keySet()))
+        // Discovery, not a list: the streaming tier reaches every function whose
+        // metadata carries FuncFlags.STREAMING, so a streaming core without an
+        // openAndFill is a generator regression rather than an exemption -- and
+        // an openAndFill on a batch-only core means the flag and the generated
+        // surface disagree, which is the same class of bug from the other side.
+        // Checked before the sweep so an empty discovery cannot pass.
+        java.util.Set<String> streamingCores = new TreeSet<>();
+        for (String name : cores.keySet()) {
+            FunctionInfo sInfo = Functions.byName(name);
+            if (sInfo != null && sInfo.hasFlags(io.github.talib.metadata.FuncFlags.STREAMING)) {
+                streamingCores.add(name);
+            }
+        }
+        check(!streamingCores.isEmpty(),
+              "the STREAMING flag discovers a non-empty core set");
+        check(fills.keySet().equals(streamingCores),
+              "the double[] openAndFill set equals the STREAMING-flagged set ("
+              + fills.size() + " fills vs " + streamingCores.size()
+              + " flagged; flagged-without-fill "
+              + missing(new ArrayList<>(streamingCores), new ArrayList<>(fills.keySet()))
+              + ", fill-without-flag "
+              + missing(new ArrayList<>(fills.keySet()), new ArrayList<>(streamingCores))
               + ")");
 
         for (Map.Entry<String, Method> e : fills.entrySet()) {

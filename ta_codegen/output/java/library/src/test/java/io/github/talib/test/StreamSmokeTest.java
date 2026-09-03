@@ -107,6 +107,20 @@ public class StreamSmokeTest {
      * <p>Zero-lookback functions (ACOS, AD, OBV, …) succeed on one bar and are
      * counted, not asserted.
      */
+    /** Functions whose metadata carries the STREAMING flag -- the set every
+     * streaming sweep here is measured against. A batch-only function (no
+     * flag) has no opener or handle to reach, and its ABSENCE is asserted
+     * inside each sweep so a flag/surface disagreement still fails. */
+    private static int streamingCount() {
+        int n = 0;
+        for (io.github.talib.metadata.FunctionInfo f : io.github.talib.metadata.Functions.all()) {
+            if (f.hasFlags(io.github.talib.metadata.FuncFlags.STREAMING)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
     private static void openMessagesNameTheirOwnFunction(Core core) {
         int own = 0, noThrow = 0;
         java.util.List<String> substage = new java.util.ArrayList<String>();
@@ -119,6 +133,13 @@ public class StreamSmokeTest {
                     open = m;
                     break;
                 }
+            }
+            if (!f.hasFlags(io.github.talib.metadata.FuncFlags.STREAMING)) {
+                if (open != null) {
+                    unexpected.add(f.name() + ": batch-only by flags, but "
+                                   + camelCase(f.name()) + "Open exists");
+                }
+                continue;
             }
             if (open == null) {
                 unexpected.add(f.name() + ": no " + camelCase(f.name()) + "Open");
@@ -172,9 +193,9 @@ public class StreamSmokeTest {
             System.out.println("  (reports a sub-stage's name: " + s + ")");
         }
         check(unexpected.isEmpty(), "every opener is reachable and rejects as documented");
-        int registered = io.github.talib.metadata.Functions.all().size();
+        int registered = streamingCount();
         check(own + noThrow + substage.size() == registered,
-              "the sweep covered every registered function (saw "
+              "the sweep covered every registered streaming function (saw "
               + (own + noThrow + substage.size()) + "/" + registered + ")");
         /* No allowlist. Until the composed shape got its own-lookback precheck,
          * APO/BBANDS/PPO/PVO reported "MA open:" and STDDEV "VAR open:" — the
@@ -1226,6 +1247,12 @@ public class StreamSmokeTest {
                     break;
                 }
             }
+            if (!f.hasFlags(io.github.talib.metadata.FuncFlags.STREAMING)) {
+                if (handle != null) {
+                    unhandled.add(name + ": batch-only by flags, but " + handleName + " exists");
+                }
+                continue;
+            }
             if (handle == null) {
                 unhandled.add(name + ": no " + handleName);
                 continue;
@@ -1407,9 +1434,9 @@ public class StreamSmokeTest {
             System.out.println("  (not swept: " + u + ")");
         }
         check(unhandled.isEmpty(), "every registered handle is reachable and opens on its own lookback");
-        int registered = io.github.talib.metadata.Functions.all().size();
+        int registered = streamingCount();
         check(swept == registered,
-              "the peek/copy sweep covered every registered handle (" + swept + "/" + registered + ")");
+              "the peek/copy sweep covered every registered streaming handle (" + swept + "/" + registered + ")");
         /* Non-vacuity. The counters are incremented at their assertions, and
          * swMoved is the one that says the corpus discriminates at all: a series
          * that left every handle's value where the open put it would satisfy
