@@ -17,6 +17,8 @@
  *  082326 MF,CC  Fix #253. Test the close exactly instead of against the fixed
  *                TA_IS_ZERO band, which zeroed the output for any instrument
  *                quoted small enough to fall under it.
+ *  090326 MF,CC  #338 Two-coefficient Wilder step; no divide in the
+ *                loop-carried chain.
  */
 
 int natr_lookback(int optInTimePeriod)
@@ -42,7 +44,7 @@ TA_RetCode natr(int startIdx, int endIdx,
    int i, outIdx, today, lookbackTotal;
    int nbATR;
 
-   double prevATR, periodTotal, tempValue;
+   double prevATR, periodTotal, tempValue, wAlpha, wBeta;
    double val2, val3, greatest;
    double tempCY, tempLT, tempHT;
 
@@ -85,25 +87,27 @@ TA_RetCode natr(int startIdx, int endIdx,
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-    * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
-    * At period 1 the output is left as that raw True Range (unnormalized),
-    * matching the historical TRANGE-delegation behavior; every period > 1 is
-    * normalized by the close. The single general path handles all period >= 1.
+   /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
+    * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+    * measures closer to the exact recursion than the 1/period-first spelling
+    * at nearly every period. Swapping them reddens nothing.
     */
+   wBeta  = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
 
    /* The True Range of each bar is computed inline in a single
     * pass. No temporary buffer is needed.
     *
     * The arithmetic order below is the bit-exactness contract
-    * (do not reorder or fuse operations):
+    * (do not reorder):
     *  - True Range: start from high-low, then compare/replace
     *    with the two previous-close distances, in that order.
     *  - Seed: the first 'period' True Range values are summed,
     *    accumulated from 0.0 in input order, then divided by
     *    the period.
-    *  - Wilder smoothing: multiply by period-1, add the True
-    *    Range, divide by period, as three separate statements.
+    *  - Wilder smoothing: ONE statement. Splitting it back
+    *    unfuses the multiply-add and puts a second latency on
+    *    the recurrence's dependency chain.
     *
     * Each output is normalized by the close of its own bar; a
     * close of zero yields 0.0.
@@ -145,13 +149,6 @@ TA_RetCode natr(int startIdx, int endIdx,
    }
    prevATR = periodTotal / optInTimePeriod;
 
-   /* Subsequent value are smoothed using the
-    * previous ATR value (Wilder's approach).
-    *  1) Multiply the previous ATR by 'period-1'.
-    *  2) Add today TR value.
-    *  3) Divide by 'period'.
-    */
-
    /* Skip the unstable period. */
    i = TA_GetUnstablePeriod(TA_FUNC_UNST_NATR);
    while( i != 0 )
@@ -170,9 +167,7 @@ TA_RetCode natr(int startIdx, int endIdx,
       if( val3 > greatest )
          greatest = val3;
 
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = wAlpha * greatest + wBeta * prevATR;
       today++;
       i--;
    }
@@ -183,7 +178,8 @@ TA_RetCode natr(int startIdx, int endIdx,
    outIdx = 1;
    if( optInTimePeriod <= 1 )
    {
-      /* No smoothing: emit the raw True Range (unnormalized). */
+      /* Period 1 is the raw True Range and is deliberately NOT normalized,
+       * which is the TRANGE delegation this path replaced. */
       outReal[0] = prevATR;
    }
    else
@@ -219,12 +215,9 @@ TA_RetCode natr(int startIdx, int endIdx,
       if( val3 > greatest )
          greatest = val3;
 
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = wAlpha * greatest + wBeta * prevATR;
       if( optInTimePeriod <= 1 )
       {
-         /* No smoothing: emit the raw True Range (unnormalized). */
          outReal[outIdx] = prevATR;
       }
       else

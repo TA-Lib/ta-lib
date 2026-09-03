@@ -55,6 +55,8 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070626 MF,CC  Speed optimization: True Range computed inline in a
  *                single pass (bit-exact, no temporary buffer).
+ *  090326 MF,CC  #338 Two-coefficient Wilder step; no divide in the
+ *                loop-carried chain.
  */
 
 // Import types from parent module
@@ -104,6 +106,40 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         inClose: &[f64],
+        optInTimePeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, ATR_Impl_fma, ATR_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.ATR_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn ATR_Impl_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInTimePeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.ATR_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn ATR_Impl_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
         mut optInTimePeriod: i32,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
@@ -134,6 +170,8 @@ impl Core {
         let mut nbATR: usize = 0_usize;
         let mut prevATR: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
+        let mut wAlpha: f64 = 0.0_f64;
+        let mut wBeta: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -160,21 +198,26 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        // Period 1 needs no smoothing: the Wilder recursion below degenerates
-        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-        // so the single general path handles every period >= 1.
+        // wAlpha is derived FROM wBeta, never the reverse: only that order makes
+        // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+        // measures closer to the exact recursion than the 1/period-first spelling
+        // at nearly every period. Swapping them reddens nothing.
+        // The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
+        wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
+        wAlpha = 1.0 - wBeta;
         // The True Range of each bar is computed inline in a single
         // pass. No temporary buffer is needed.
         //
         // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
+        // (do not reorder):
         //  - True Range: start from high-low, then compare/replace
         //    with the two previous-close distances, in that order.
         //  - Seed: the first 'period' True Range values are summed,
         //    accumulated from 0.0 in input order, then divided by
         //    the period.
-        //  - Wilder smoothing: multiply by period-1, add the True
-        //    Range, divide by period, as three separate statements.
+        //  - Wilder smoothing: ONE statement. Splitting it back
+        //    unfuses the multiply-add and puts a second latency on
+        //    the recurrence's dependency chain.
         //
         // In-place (outReal being one of the input arrays) is
         // supported: each output is written only after every input
@@ -206,11 +249,6 @@ impl Core {
             today += 1;
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Subsequent value are smoothed using the
-        // previous ATR value (Wilder's approach).
-        //  1) Multiply the previous ATR by 'period-1'.
-        //  2) Add today TR value.
-        //  3) Divide by 'period'.
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::ATR as usize]) as usize;
         while i != 0 {
@@ -228,9 +266,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -255,9 +291,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             outReal[outIdx] = prevATR;
             outIdx += 1;
             today += 1;
@@ -403,6 +437,8 @@ pub struct AtrStream {
 struct AtrStreamState {
     optInTimePeriod: i32,
     prevATR: f64,
+    wAlpha: f64,
+    wBeta: f64,
     lag1_inClose: f64,
     cur_outReal: f64,
 }
@@ -434,9 +470,7 @@ impl Core {
         if val3 > greatest {
             greatest = val3;
         }
-        sp.prevATR *= ((sp.optInTimePeriod - 1) as f64);
-        sp.prevATR += greatest;
-        sp.prevATR /= ((sp.optInTimePeriod) as f64);
+        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
         (*outReal) = sp.prevATR;
         sp.cur_outReal = (*outReal);
         sp.lag1_inClose = inClose;
@@ -478,6 +512,8 @@ impl Core {
         let mut nbATR: usize = 0_usize;
         let mut prevATR: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
+        let mut wAlpha: f64 = 0.0_f64;
+        let mut wBeta: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -504,21 +540,26 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
-        // Period 1 needs no smoothing: the Wilder recursion below degenerates
-        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-        // so the single general path handles every period >= 1.
+        // wAlpha is derived FROM wBeta, never the reverse: only that order makes
+        // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+        // measures closer to the exact recursion than the 1/period-first spelling
+        // at nearly every period. Swapping them reddens nothing.
+        // The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
+        wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
+        wAlpha = 1.0 - wBeta;
         // The True Range of each bar is computed inline in a single
         // pass. No temporary buffer is needed.
         //
         // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
+        // (do not reorder):
         //  - True Range: start from high-low, then compare/replace
         //    with the two previous-close distances, in that order.
         //  - Seed: the first 'period' True Range values are summed,
         //    accumulated from 0.0 in input order, then divided by
         //    the period.
-        //  - Wilder smoothing: multiply by period-1, add the True
-        //    Range, divide by period, as three separate statements.
+        //  - Wilder smoothing: ONE statement. Splitting it back
+        //    unfuses the multiply-add and puts a second latency on
+        //    the recurrence's dependency chain.
         //
         // In-place (outReal being one of the input arrays) is
         // supported: each output is written only after every input
@@ -550,11 +591,6 @@ impl Core {
             today += 1;
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Subsequent value are smoothed using the
-        // previous ATR value (Wilder's approach).
-        //  1) Multiply the previous ATR by 'period-1'.
-        //  2) Add today TR value.
-        //  3) Divide by 'period'.
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::ATR as usize]) as usize;
         while i != 0 {
@@ -572,9 +608,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -599,9 +633,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = prevATR;
             today += 1;
         }
@@ -612,6 +644,8 @@ impl Core {
         let state = AtrStreamState {
             optInTimePeriod,
             prevATR,
+            wAlpha,
+            wBeta,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inClose: inClose[historyLen - 1],
         };
@@ -848,9 +882,7 @@ impl AtrStream {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((sp.optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((sp.optInTimePeriod) as f64);
+            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
             (*outReal) = prevATR;
         }
         Ok(outReal)

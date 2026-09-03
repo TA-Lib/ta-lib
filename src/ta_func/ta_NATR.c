@@ -61,6 +61,8 @@
  *  082326 MF,CC  Fix #253. Test the close exactly instead of against the fixed
  *                TA_IS_ZERO band, which zeroed the output for any instrument
  *                quoted small enough to fall under it.
+ *  090326 MF,CC  #338 Two-coefficient Wilder step; no divide in the
+ *                loop-carried chain.
  */
 
 TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
@@ -79,6 +81,7 @@ TA_LIB_API int TA_NATR_Lookback( int optInTimePeriod )
    return optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
                                int    endIdx,
                                const double inHigh[],
@@ -97,6 +100,8 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
    double prevATR;
    double periodTotal;
    double tempValue;
+   double wAlpha;
+   double wBeta;
    double val2;
    double val3;
    double greatest;
@@ -162,24 +167,26 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-    * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
-    * At period 1 the output is left as that raw True Range (unnormalized),
-    * matching the historical TRANGE-delegation behavior; every period > 1 is
-    * normalized by the close. The single general path handles all period >= 1.
+   /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
+    * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+    * measures closer to the exact recursion than the 1/period-first spelling
+    * at nearly every period. Swapping them reddens nothing.
     */
+   wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
    /* The True Range of each bar is computed inline in a single
     * pass. No temporary buffer is needed.
     *
     * The arithmetic order below is the bit-exactness contract
-    * (do not reorder or fuse operations):
+    * (do not reorder):
     *  - True Range: start from high-low, then compare/replace
     *    with the two previous-close distances, in that order.
     *  - Seed: the first 'period' True Range values are summed,
     *    accumulated from 0.0 in input order, then divided by
     *    the period.
-    *  - Wilder smoothing: multiply by period-1, add the True
-    *    Range, divide by period, as three separate statements.
+    *  - Wilder smoothing: ONE statement. Splitting it back
+    *    unfuses the multiply-add and puts a second latency on
+    *    the recurrence's dependency chain.
     *
     * Each output is normalized by the close of its own bar; a
     * close of zero yields 0.0.
@@ -220,12 +227,6 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
       today += 1;
    }
    prevATR = periodTotal / optInTimePeriod;
-   /* Subsequent value are smoothed using the
-    * previous ATR value (Wilder's approach).
-    *  1) Multiply the previous ATR by 'period-1'.
-    *  2) Add today TR value.
-    *  3) Divide by 'period'.
-    */
    /* Skip the unstable period. */
    i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
    while( i != 0 )
@@ -246,9 +247,7 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       today += 1;
       i -= 1;
    }
@@ -258,7 +257,9 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
    outIdx = 1;
    if( optInTimePeriod <= 1 )
    {
-      /* No smoothing: emit the raw True Range (unnormalized). */
+      /* Period 1 is the raw True Range and is deliberately NOT normalized,
+       * which is the TRANGE delegation this path replaced.
+       */
       outReal[0] = prevATR;
    } else 
    {
@@ -296,12 +297,9 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       if( optInTimePeriod <= 1 )
       {
-         /* No smoothing: emit the raw True Range (unnormalized). */
          outReal[outIdx] = prevATR;
       } else 
       {
@@ -322,6 +320,7 @@ TA_LIB_API TA_RetCode TA_NATR( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_NATR( int    startIdx,
                       int    endIdx,
                       const float inHigh[],
@@ -340,6 +339,8 @@ TA_RetCode TA_S_NATR( int    startIdx,
    double prevATR;
    double periodTotal;
    double tempValue;
+   double wAlpha;
+   double wBeta;
    double val2;
    double val3;
    double greatest;
@@ -378,6 +379,8 @@ TA_RetCode TA_S_NATR( int    startIdx,
    {
       return TA_SUCCESS;
    }
+   wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
    today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
@@ -418,9 +421,7 @@ TA_RetCode TA_S_NATR( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       today += 1;
       i -= 1;
    }
@@ -456,9 +457,7 @@ TA_RetCode TA_S_NATR( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       if( optInTimePeriod <= 1 )
       {
          outReal[outIdx] = prevATR;
@@ -492,6 +491,8 @@ struct TA_NATR_Stream {
    double cur_outReal;
    int optInTimePeriod;
    double prevATR;
+   double wAlpha;
+   double wBeta;
    double lag1_inClose;
 };
 
@@ -522,12 +523,9 @@ static void TA_NATR_StepImpl( struct TA_NATR_Stream *sp, double inHigh, double i
    {
       greatest = val3;
    }
-   sp->prevATR *= sp->optInTimePeriod - 1;
-   sp->prevATR += greatest;
-   sp->prevATR /= sp->optInTimePeriod;
+   sp->prevATR = fma(sp->wBeta, sp->prevATR, sp->wAlpha * greatest);
    if( sp->optInTimePeriod <= 1 )
    {
-      /* No smoothing: emit the raw True Range (unnormalized). */
       *outReal= sp->prevATR;
    } else 
    {
@@ -581,6 +579,8 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       double prevATR = 0.0;
       double periodTotal;
       double tempValue;
+      double wAlpha = 0.0;
+      double wBeta = 0.0;
       double val2;
       double val3;
       double greatest;
@@ -625,24 +625,26 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       {
          return TA_INSUFFICIENT_HISTORY;
       }
-      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
-       * At period 1 the output is left as that raw True Range (unnormalized),
-       * matching the historical TRANGE-delegation behavior; every period > 1 is
-       * normalized by the close. The single general path handles all period >= 1.
+      /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
+       * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+       * measures closer to the exact recursion than the 1/period-first spelling
+       * at nearly every period. Swapping them reddens nothing.
        */
+      wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+      wAlpha = 1.0 - wBeta;
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
        * The arithmetic order below is the bit-exactness contract
-       * (do not reorder or fuse operations):
+       * (do not reorder):
        *  - True Range: start from high-low, then compare/replace
        *    with the two previous-close distances, in that order.
        *  - Seed: the first 'period' True Range values are summed,
        *    accumulated from 0.0 in input order, then divided by
        *    the period.
-       *  - Wilder smoothing: multiply by period-1, add the True
-       *    Range, divide by period, as three separate statements.
+       *  - Wilder smoothing: ONE statement. Splitting it back
+       *    unfuses the multiply-add and puts a second latency on
+       *    the recurrence's dependency chain.
        *
        * Each output is normalized by the close of its own bar; a
        * close of zero yields 0.0.
@@ -683,12 +685,6 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Subsequent value are smoothed using the
-       * previous ATR value (Wilder's approach).
-       *  1) Multiply the previous ATR by 'period-1'.
-       *  2) Add today TR value.
-       *  3) Divide by 'period'.
-       */
       /* Skip the unstable period. */
       i = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_NATR,Natr);
       while( i != 0 )
@@ -709,9 +705,7 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
          {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = fma(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
       }
@@ -721,7 +715,9 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       outIdx = 1;
       if( optInTimePeriod <= 1 )
       {
-         /* No smoothing: emit the raw True Range (unnormalized). */
+         /* Period 1 is the raw True Range and is deliberately NOT normalized,
+          * which is the TRANGE delegation this path replaced.
+          */
          outReal[0 * outStride] = prevATR;
       } else 
       {
@@ -759,12 +755,9 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
          {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = fma(wBeta, prevATR, wAlpha * greatest);
          if( optInTimePeriod <= 1 )
          {
-            /* No smoothing: emit the raw True Range (unnormalized). */
             outReal[outIdx * outStride] = prevATR;
          } else 
          {
@@ -789,6 +782,8 @@ static TA_RetCode TA_NATR_OpenImpl( struct TA_NATR_Stream **stream, const double
       memset( sp, 0, sizeof(*sp) );
       sp->optInTimePeriod = optInTimePeriod;
       sp->prevATR = prevATR;
+      sp->wAlpha = wAlpha;
+      sp->wBeta = wBeta;
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
@@ -853,6 +848,7 @@ TA_LIB_API TA_RetCode TA_NATR_Update( TA_NATR_Stream *stream, double inHigh, dou
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
    const struct TA_NATR_Stream *sp = stream;
@@ -884,12 +880,9 @@ TA_LIB_API TA_RetCode TA_NATR_Peek( const TA_NATR_Stream *stream, double inHigh,
    {
       greatest = val3;
    }
-   prevATR *= sp->optInTimePeriod - 1;
-   prevATR += greatest;
-   prevATR /= sp->optInTimePeriod;
+   prevATR = fma(sp->wBeta, prevATR, sp->wAlpha * greatest);
    if( sp->optInTimePeriod <= 1 )
    {
-      /* No smoothing: emit the raw True Range (unnormalized). */
       *outReal= prevATR;
    } else 
    {

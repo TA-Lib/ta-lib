@@ -988,6 +988,8 @@ static int sv_steq_TA_ATR( const struct TA_ATR_Stream *a, const struct TA_ATR_St
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
+   if( sv_xtier_ne(a->wAlpha, b->wAlpha, z) ) { *w = "wAlpha"; return 1; }
+   if( sv_xtier_ne(a->wBeta, b->wBeta, z) ) { *w = "wBeta"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    return 0;
 }
@@ -4628,6 +4630,8 @@ static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
+   if( sv_xtier_ne(a->wAlpha, b->wAlpha, z) ) { *w = "wAlpha"; return 1; }
+   if( sv_xtier_ne(a->wBeta, b->wBeta, z) ) { *w = "wBeta"; return 1; }
    if( sv_xtier_ne(a->lag1_inClose, b->lag1_inClose, z) ) { *w = "lag1_inClose"; return 1; }
    return 0;
 }
@@ -5157,6 +5161,8 @@ static int sv_steq_TA_SUPERTREND( const struct TA_SUPERTREND_Stream *a, const st
    if( sv_xtier_ne(a->optInMultiplier, b->optInMultiplier, z) ) { *w = "optInMultiplier"; return 1; }
    if( a->isUptrend != b->isUptrend ) { *w = "isUptrend"; return 1; }
    if( sv_xtier_ne(a->prevATR, b->prevATR, z) ) { *w = "prevATR"; return 1; }
+   if( sv_xtier_ne(a->wAlpha, b->wAlpha, z) ) { *w = "wAlpha"; return 1; }
+   if( sv_xtier_ne(a->wBeta, b->wBeta, z) ) { *w = "wBeta"; return 1; }
    if( sv_xtier_ne(a->finalUpper, b->finalUpper, z) ) { *w = "finalUpper"; return 1; }
    if( sv_xtier_ne(a->finalLower, b->finalLower, z) ) { *w = "finalLower"; return 1; }
    if( sv_xtier_ne(a->prevClose, b->prevClose, z) ) { *w = "prevClose"; return 1; }

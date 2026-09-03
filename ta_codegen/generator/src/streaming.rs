@@ -1075,8 +1075,8 @@ pub fn input_array_names(func: &FuncDef) -> Vec<String> {
 /// - `return <retCodeVar>` error propagation (mapped verbatim).
 ///
 /// Anything else — an early success path that produces outputs (T3's
-/// period==1 identity loop) or a delegating `return other_func(...)`
-/// (ATR/NATR period<=1 → TRANGE) — computes values the transition function
+/// period==1 identity loop) or a delegating `return other_func(...)` —
+/// computes values the transition function
 /// cannot reproduce, so the function is rejected until it gets explicit
 /// stream support (the "open-time delegation" class in the proposal).
 /// `<param> == 1` / `<param> <= 1` — the classic period-1 no-smoothing guard.

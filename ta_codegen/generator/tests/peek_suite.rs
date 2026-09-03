@@ -755,6 +755,40 @@ fn no_peek_frame_reads_a_field_it_has_bound() {
     assert!(offenders.is_empty(), "a peek frame reads what it has bound:\n{}", offenders.join("\n"));
 }
 
+/// The hardware-FMA clone on `Peek` (#337) is attached by a TEXT search
+/// (`c_stream::mark_fma_multiversion`) that returns silently when the signature
+/// or the closing brace moves, so a rename drops the clone with every value gate
+/// still green -- the Peek keeps calling libm and only a benchmark would notice.
+/// Pinned both ways: attributed exactly when the emitted Peek fuses.
+#[test]
+fn a_fused_peek_carries_the_fma_multiversion_attribute() {
+    let (mut peeks, mut fused, mut attributed) = (0usize, 0usize, 0usize);
+    let mut drifted: Vec<String> = Vec::new();
+
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let sig = format!("TA_RetCode TA_{upper}_Peek(");
+        let (Some(at), Some(body)) = (src.find(&sig), body_of(&src, &sig)) else { continue };
+        peeks += 1;
+
+        let line = src[..at].rfind('\n').map_or(0, |i| i + 1);
+        let has_attr = src[..line].ends_with("TA_FMA_MULTIVERSION\n");
+        let fuses = body.contains("fma(");
+        fused += usize::from(fuses);
+        attributed += usize::from(has_attr);
+        if fuses != has_attr {
+            drifted.push(format!("{upper} (fuses={fuses}, attributed={has_attr})"));
+        }
+    }
+
+    assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused peeks: {drifted:?}");
+    assert!(peeks > 170, "only {peeks} peek frame(s) rendered -- the signature moved");
+    assert!(fused > 0, "no peek fuses, so this sweep proved nothing");
+    assert_eq!(fused, attributed, "{fused} fused peek(s) but {attributed} attributed");
+}
+
 /// Peek renders every multiply-add it still EVALUATES exactly as update renders
 /// it, and fuses nothing update does not.
 ///

@@ -57,6 +57,8 @@ public partial class Core
     *  052603 MF     Adapt code to compile with .NET Managed C++
     *  070626 MF,CC  Speed optimization: True Range computed inline in a
     *                single pass (bit-exact, no temporary buffer).
+    *  090326 MF,CC  #338 Two-coefficient Wilder step; no divide in the
+    *                loop-carried chain.
     */
    /// <summary>
    /// Number of leading input bars <c>ATR</c> consumes before it can produce its
@@ -110,6 +112,8 @@ public partial class Core
       int nbATR = 0;
       double prevATR = 0;
       double periodTotal = 0;
+      double wAlpha = 0;
+      double wBeta = 0;
       double val2 = 0;
       double val3 = 0;
       double greatest = 0;
@@ -151,22 +155,27 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
-      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-       * so the single general path handles every period >= 1.
+      /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
+       * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+       * measures closer to the exact recursion than the 1/period-first spelling
+       * at nearly every period. Swapping them reddens nothing.
+       * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
        */
+      wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+      wAlpha = 1.0 - wBeta;
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
        * The arithmetic order below is the bit-exactness contract
-       * (do not reorder or fuse operations):
+       * (do not reorder):
        *  - True Range: start from high-low, then compare/replace
        *    with the two previous-close distances, in that order.
        *  - Seed: the first 'period' True Range values are summed,
        *    accumulated from 0.0 in input order, then divided by
        *    the period.
-       *  - Wilder smoothing: multiply by period-1, add the True
-       *    Range, divide by period, as three separate statements.
+       *  - Wilder smoothing: ONE statement. Splitting it back
+       *    unfuses the multiply-add and puts a second latency on
+       *    the recurrence's dependency chain.
        *
        * In-place (outReal being one of the input arrays) is
        * supported: each output is written only after every input
@@ -201,12 +210,6 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Subsequent value are smoothed using the
-       * previous ATR value (Wilder's approach).
-       *  1) Multiply the previous ATR by 'period-1'.
-       *  2) Add today TR value.
-       *  3) Divide by 'period'.
-       */
       /* Skip the unstable period. */
       i = this.unstablePeriod[(int)FuncUnstId.ATR];
       while( i != 0 ) {
@@ -224,9 +227,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
       }
@@ -252,9 +253,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          outReal[outIdx++] = prevATR;
          today += 1;
       }
@@ -281,6 +280,8 @@ public partial class Core
       int nbATR = 0;
       double prevATR = 0;
       double periodTotal = 0;
+      double wAlpha = 0;
+      double wBeta = 0;
       double val2 = 0;
       double val3 = 0;
       double greatest = 0;
@@ -307,6 +308,8 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.Success ;
       }
+      wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+      wAlpha = 1.0 - wBeta;
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -341,9 +344,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
       }
@@ -363,9 +364,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          outReal[outIdx++] = prevATR;
          today += 1;
       }
@@ -538,6 +537,8 @@ public partial class Core
       internal Core core;
       internal int optInTimePeriod;
       internal double prevATR;
+      internal double wAlpha;
+      internal double wBeta;
       internal double lag1_inClose;
       internal double cur_outReal;
       internal int outRangeBegIdx;
@@ -562,6 +563,8 @@ public partial class Core
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
+         this.wAlpha = other.wAlpha;
+         this.wBeta = other.wBeta;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -638,9 +641,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= sp.optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= sp.optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(sp.wBeta, prevATR, sp.wAlpha * greatest);
          cur_outReal = prevATR;
          return cur_outReal;
       }
@@ -718,9 +719,7 @@ public partial class Core
       if( val3 > greatest ) {
          greatest = val3;
       }
-      sp.prevATR *= sp.optInTimePeriod - 1;
-      sp.prevATR += greatest;
-      sp.prevATR /= sp.optInTimePeriod;
+      sp.prevATR = Math.FusedMultiplyAdd(sp.wBeta, sp.prevATR, sp.wAlpha * greatest);
       sp.cur_outReal = sp.prevATR;
       sp.lag1_inClose = inClose;
    }
@@ -736,6 +735,8 @@ public partial class Core
       int nbATR = 0;
       double prevATR = 0;
       double periodTotal = 0;
+      double wAlpha = 0;
+      double wBeta = 0;
       double val2 = 0;
       double val3 = 0;
       double greatest = 0;
@@ -784,22 +785,27 @@ public partial class Core
       if( startIdx > endIdx ) {
          return RetCode.InsufficientHistory ;
       }
-      /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-       * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-       * so the single general path handles every period >= 1.
+      /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
+       * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+       * measures closer to the exact recursion than the 1/period-first spelling
+       * at nearly every period. Swapping them reddens nothing.
+       * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
        */
+      wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+      wAlpha = 1.0 - wBeta;
       /* The True Range of each bar is computed inline in a single
        * pass. No temporary buffer is needed.
        *
        * The arithmetic order below is the bit-exactness contract
-       * (do not reorder or fuse operations):
+       * (do not reorder):
        *  - True Range: start from high-low, then compare/replace
        *    with the two previous-close distances, in that order.
        *  - Seed: the first 'period' True Range values are summed,
        *    accumulated from 0.0 in input order, then divided by
        *    the period.
-       *  - Wilder smoothing: multiply by period-1, add the True
-       *    Range, divide by period, as three separate statements.
+       *  - Wilder smoothing: ONE statement. Splitting it back
+       *    unfuses the multiply-add and puts a second latency on
+       *    the recurrence's dependency chain.
        *
        * In-place (outReal being one of the input arrays) is
        * supported: each output is written only after every input
@@ -834,12 +840,6 @@ public partial class Core
          today += 1;
       }
       prevATR = periodTotal / optInTimePeriod;
-      /* Subsequent value are smoothed using the
-       * previous ATR value (Wilder's approach).
-       *  1) Multiply the previous ATR by 'period-1'.
-       *  2) Add today TR value.
-       *  3) Divide by 'period'.
-       */
       /* Skip the unstable period. */
       i = this.unstablePeriod[(int)FuncUnstId.ATR];
       while( i != 0 ) {
@@ -857,9 +857,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
       }
@@ -885,9 +883,7 @@ public partial class Core
          if( val3 > greatest ) {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = Math.FusedMultiplyAdd(wBeta, prevATR, wAlpha * greatest);
          outReal[outIdx++ * outStride] = prevATR;
          today += 1;
       }
@@ -896,6 +892,8 @@ public partial class Core
       /* Capture the live batch state into the handle. */
       sp.optInTimePeriod = optInTimePeriod;
       sp.prevATR = prevATR;
+      sp.wAlpha = wAlpha;
+      sp.wBeta = wBeta;
       sp.lag1_inClose = inClose[historyLen - 1];
       sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
       return RetCode.Success;

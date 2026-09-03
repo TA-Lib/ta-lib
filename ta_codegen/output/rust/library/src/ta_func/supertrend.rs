@@ -52,6 +52,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090126 MF,CC  First version (issue #272).
+ *  090326 MF,CC  #338 Two-coefficient Wilder step, in lockstep with TA_ATR.
  */
 
 // Import types from parent module
@@ -107,6 +108,44 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         inClose: &[f64],
+        optInTimePeriod: i32,
+        optInMultiplier: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, SUPERTREND_Impl_fma, SUPERTREND_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn SUPERTREND_Impl_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInTimePeriod: i32,
+        optInMultiplier: f64,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+        outInteger: &mut [i32],
+    ) -> RetCode {
+        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger)
+    }
+    #[inline(always)]
+    fn SUPERTREND_Impl_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
         mut optInTimePeriod: i32,
         mut optInMultiplier: f64,
         outBegIdx: &mut usize,
@@ -145,6 +184,8 @@ impl Core {
         let mut isUptrend: usize = 0_usize;
         let mut prevATR: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
+        let mut wAlpha: f64 = 0.0_f64;
+        let mut wBeta: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -174,10 +215,12 @@ impl Core {
         // whole-range buffer between them would not stream.
         //
         // The arithmetic order below is the bit-exactness contract with TA_ATR (do
-        // not reorder or fuse operations): True Range from high-low, then the two
-        // previous-close distances in that order; the seed summed from 0.0 over the
-        // first 'period' True Ranges and divided once; Wilder smoothing as three
-        // separate statements.
+        // not reorder): True Range from high-low, then the two previous-close
+        // distances in that order; the seed summed from 0.0 over the first 'period'
+        // True Ranges and divided once; the same two Wilder coefficients, wBeta
+        // rounded and wAlpha derived from it, in one fused statement.
+        wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
+        wAlpha = 1.0 - wBeta;
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
         i = (optInTimePeriod) as usize;
@@ -216,9 +259,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -252,9 +293,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((optInMultiplier) as f64) * prevATR;
             basicUpper = medianPrice + band;
@@ -466,6 +505,8 @@ struct SupertrendStreamState {
     optInMultiplier: f64,
     isUptrend: usize,
     prevATR: f64,
+    wAlpha: f64,
+    wBeta: f64,
     finalUpper: f64,
     finalLower: f64,
     prevClose: f64,
@@ -505,9 +546,7 @@ impl Core {
         if val3 > greatest {
             greatest = val3;
         }
-        sp.prevATR *= ((sp.optInTimePeriod - 1) as f64);
-        sp.prevATR += greatest;
-        sp.prevATR /= ((sp.optInTimePeriod) as f64);
+        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
         medianPrice = (tempHT + tempLT) / 2.0;
         band = ((sp.optInMultiplier) as f64) * sp.prevATR;
         basicUpper = medianPrice + band;
@@ -593,6 +632,8 @@ impl Core {
         let mut isUptrend: usize = 0_usize;
         let mut prevATR: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
+        let mut wAlpha: f64 = 0.0_f64;
+        let mut wBeta: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -622,10 +663,12 @@ impl Core {
         // whole-range buffer between them would not stream.
         //
         // The arithmetic order below is the bit-exactness contract with TA_ATR (do
-        // not reorder or fuse operations): True Range from high-low, then the two
-        // previous-close distances in that order; the seed summed from 0.0 over the
-        // first 'period' True Ranges and divided once; Wilder smoothing as three
-        // separate statements.
+        // not reorder): True Range from high-low, then the two previous-close
+        // distances in that order; the seed summed from 0.0 over the first 'period'
+        // True Ranges and divided once; the same two Wilder coefficients, wBeta
+        // rounded and wAlpha derived from it, in one fused statement.
+        wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
+        wAlpha = 1.0 - wBeta;
         today = startIdx - lookbackTotal + 1;
         periodTotal = 0.0;
         i = (optInTimePeriod) as usize;
@@ -664,9 +707,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -700,9 +741,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((optInMultiplier) as f64) * prevATR;
             basicUpper = medianPrice + band;
@@ -754,6 +793,8 @@ impl Core {
             optInMultiplier,
             isUptrend,
             prevATR,
+            wAlpha,
+            wBeta,
             finalUpper,
             finalLower,
             prevClose,
@@ -1012,9 +1053,7 @@ impl SupertrendStream {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((sp.optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((sp.optInTimePeriod) as f64);
+            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
             medianPrice = (tempHT + tempLT) / 2.0;
             band = ((sp.optInMultiplier) as f64) * prevATR;
             basicUpper = medianPrice + band;

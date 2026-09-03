@@ -75,20 +75,22 @@
  * is the genuine error floor, not headroom, and still ~8 orders tighter than the
  * 0.01 absolute window the hand-written tables use at those magnitudes.
  *
- * Two causes, both bounded and both pre-existing:
+ * Two causes, both bounded:
  *
  *   (a) explicit fma() adoption; v0.6.4 predates the contract, so a fused site
  *       differs from it in the last bits.
  *
  *   (b) an algorithm deliberately changed after v0.6.4 and pinned elsewhere: the
  *       cancellation-free variance form (VAR, STDDEV, BBANDS), the same
- *       treatment in CORREL and BETA, the O(1) sliding-sum LINEARREG family, and
+ *       treatment in CORREL and BETA, the O(1) sliding-sum LINEARREG family,
  *       TA_WMA's re-anchored weighted totals -- which APO and PPO inherit
  *       through TA_MA(TA_MAType_WMA), the only two rows here that move for a
- *       change to a function they merely dispatch to.
+ *       change to a function they merely dispatch to -- and the two-coefficient
+ *       Wilder step (ATR, NATR), which is (a) and (b) at once: the arithmetic
+ *       form changed AND the result fuses.
  *
  * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD,
- * MACDEXT, APO, PPO and STOCHF are all bit-exact against v0.6.4 on this series,
+ * MACDEXT and STOCHF are all bit-exact against v0.6.4 on this series,
  * their divergences needing the fuzz corpus's extreme magnitudes to appear.
  *
  * ONE PRINCIPLED EXCEPTION TO "3x MEASURED": a function reaching a libm routine
@@ -133,6 +135,11 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "APO",                 1e-13 },  /* #255  measured 4.26e-14            */
    { "PPO",                 1e-13 },  /* #255  measured 3.90e-14            */
    { "LINEARREG_SLOPE",     2e-12 },  /* #103  measured 3.49e-13             */
+   /* Sized at the frozen periods (14 and 19) and only there: unlike the rows
+    * above, this divergence is output-proportional and grows with the period,
+    * so a re-freeze that adds a longer-period case has to re-measure. */
+   { "ATR",                 3e-15 },  /* #338  measured 8.88e-16             */
+   { "NATR",                2e-15 },  /* #338  measured 4.44e-16             */
 
    /* --- (a) explicit fma() adoption, PR #96 ------------------------------
     * Verified per row: ADOSC, T3, TEMA, DEMA, SAREXT, EMA, SAR, TRIX, MACDFIX

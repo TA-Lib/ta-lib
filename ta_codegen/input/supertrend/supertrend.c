@@ -10,6 +10,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090126 MF,CC  First version (issue #272).
+ *  090326 MF,CC  #338 Two-coefficient Wilder step, in lockstep with TA_ATR.
  */
 
 int supertrend_lookback(int optInTimePeriod, double optInMultiplier)
@@ -36,7 +37,7 @@ TA_RetCode supertrend(int startIdx, int endIdx,
    int i, today, outIdx, lookbackTotal;
    int isUptrend;
 
-   double prevATR, periodTotal;
+   double prevATR, periodTotal, wAlpha, wBeta;
    double val2, val3, greatest;
    double tempCY, tempLT, tempHT;
    double medianPrice, band, basicUpper, basicLower;
@@ -59,11 +60,14 @@ TA_RetCode supertrend(int startIdx, int endIdx,
     * whole-range buffer between them would not stream.
     *
     * The arithmetic order below is the bit-exactness contract with TA_ATR (do
-    * not reorder or fuse operations): True Range from high-low, then the two
-    * previous-close distances in that order; the seed summed from 0.0 over the
-    * first 'period' True Ranges and divided once; Wilder smoothing as three
-    * separate statements.
+    * not reorder): True Range from high-low, then the two previous-close
+    * distances in that order; the seed summed from 0.0 over the first 'period'
+    * True Ranges and divided once; the same two Wilder coefficients, wBeta
+    * rounded and wAlpha derived from it, in one fused statement.
     */
+   wBeta  = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
+
    today = startIdx - lookbackTotal + 1;
 
    periodTotal = 0.0;
@@ -107,9 +111,7 @@ TA_RetCode supertrend(int startIdx, int endIdx,
       if( val3 > greatest )
          greatest = val3;
 
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = wAlpha * greatest + wBeta * prevATR;
       today++;
       i--;
    }
@@ -149,9 +151,7 @@ TA_RetCode supertrend(int startIdx, int endIdx,
       if( val3 > greatest )
          greatest = val3;
 
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = wAlpha * greatest + wBeta * prevATR;
 
       medianPrice = (tempHT+tempLT)/2.0;
       band = optInMultiplier * prevATR;

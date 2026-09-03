@@ -44,12 +44,16 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - ~30%: MAVP (#143). Thanks @dexhunter !
 - ~27% Apple, ~8% GCC: MIN, MAX, MINMAX, MININDEX, MAXINDEX, MINMAXINDEX, MIDPOINT, MIDPRICE, AROON, AROONOSC and WILLR (#128). Thanks @dexhunter !
 - ~20%: VAR, STDDEV, BBANDS
-- ~10%: ATR and NATR
+- ~3x to 4.7x: ATR and NATR (#338), and ~1.4x SUPERTREND / ~1.3x KC with them. The upper end needs the gcc/glibc/x86_64 hardware-FMA clone; elsewhere it is ~2x.
 
 ### Changed
 - (#133) BBANDS default `optInTimePeriod` changed from 5 to 20, as intended by John Bollinger.
 - (#120) PPO and APO now default `optInMAType` to EMA (was SMA), matching Gerald Appel's original PPO/MACD definition. Pass `TA_MAType_SMA` explicitly to keep the previous behavior.
 - (#96) Fused multiply-add and other floating-point re-ordering produce minor output differences; an intentional modernization.
+- (#338) ATR, NATR and SUPERTREND smooth the true range with a fused two-coefficient step
+  instead of multiply, add, divide, which takes the divide out of the loop-carried chain.
+  Values move by at most 1.3e-15 relative from the reference series, and KC inherits the
+  same shift through its ATR. Period 1 and 2 are unchanged.
 - (#183) EMA now uses a fused multiply-add in its recursion, as the EMA cascades inside
   DEMA, TEMA, TRIX, MACD and MACDFIX already did. Values move by at most 2.8e-16 relative
   from the reference series, and the same shift reaches MA, BBANDS, APO, PPO, PVO, MAVP,

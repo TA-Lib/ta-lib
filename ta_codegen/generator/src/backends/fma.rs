@@ -24,7 +24,7 @@
 /// check this inventory from opposite ends and they had already drifted apart.
 /// `fma_suite::fma_fusion_fires_for_known_candidates` runs the IR-level
 /// detector over each name and demands at least one site, which catches the
-/// detector going dark. `backend_suite::rust_fma_dispatch_fires_for_exactly_the_fusing_functions`
+/// detector going dark. `enums_suite::rust_fma_dispatch_fires_for_exactly_the_fusing_functions`
 /// derives the set from rendered Rust and compares it to this list, which
 /// additionally catches an UNEXPECTED entry. Only the second is exact-set, so
 /// only it fails when a new function starts fusing -- which is how `efi` came
@@ -33,11 +33,12 @@
 /// Deliberately not accompanied by a count: a number written next to a list
 /// that grows is a comment that goes stale on the next indicator.
 pub const FUSING_INVENTORY: &[&str] = &[
-    "adosc", "bbands", "cdlabandonedbaby", "cdlmorningdojistar", "cdlmorningstar",
-    "cdlpiercing", "cdlthrusting", "dema", "efi", "ema", "ht_dcperiod", "ht_dcphase",
-    "ht_phasor", "ht_sine", "ht_trendline", "ht_trendmode", "kama", "linearreg",
-    "macd", "macdfix", "mama", "sar", "sarext", "smi", "t3", "tema", "trix",
-    "tsf", "wclprice",
+    "adosc", "atr", "bbands", "cdlabandonedbaby", "cdlmorningdojistar",
+    "cdlmorningstar", "cdlpiercing", "cdlthrusting", "dema", "efi", "ema",
+    "ht_dcperiod", "ht_dcphase", "ht_phasor", "ht_sine", "ht_trendline",
+    "ht_trendmode", "kama", "linearreg", "macd", "macdfix", "mama", "natr",
+    "sar", "sarext", "smi", "supertrend", "t3", "tema", "trix", "tsf",
+    "wclprice",
 ];
 
 use std::collections::HashSet;

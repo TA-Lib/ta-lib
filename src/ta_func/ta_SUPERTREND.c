@@ -54,6 +54,7 @@
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090126 MF,CC  First version (issue #272).
+ *  090326 MF,CC  #338 Two-coefficient Wilder step, in lockstep with TA_ATR.
  */
 
 TA_LIB_API int TA_SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
@@ -73,6 +74,7 @@ TA_LIB_API int TA_SUPERTREND_Lookback( int optInTimePeriod, double optInMultipli
    return TA_ATR_Lookback(optInTimePeriod);
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
                                      int    endIdx,
                                      const double inHigh[],
@@ -92,6 +94,8 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
    int isUptrend;
    double prevATR;
    double periodTotal;
+   double wAlpha;
+   double wBeta;
    double val2;
    double val3;
    double greatest;
@@ -152,11 +156,13 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
     * whole-range buffer between them would not stream.
     *
     * The arithmetic order below is the bit-exactness contract with TA_ATR (do
-    * not reorder or fuse operations): True Range from high-low, then the two
-    * previous-close distances in that order; the seed summed from 0.0 over the
-    * first 'period' True Ranges and divided once; Wilder smoothing as three
-    * separate statements.
+    * not reorder): True Range from high-low, then the two previous-close
+    * distances in that order; the seed summed from 0.0 over the first 'period'
+    * True Ranges and divided once; the same two Wilder coefficients, wBeta
+    * rounded and wAlpha derived from it, in one fused statement.
     */
+   wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
    today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
@@ -202,9 +208,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       today += 1;
       i -= 1;
    }
@@ -242,9 +246,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       medianPrice = (tempHT + tempLT) / 2.0;
       band = optInMultiplier * prevATR;
       basicUpper = medianPrice + band;
@@ -301,6 +303,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_RetCode TA_S_SUPERTREND( int    startIdx,
                             int    endIdx,
                             const float inHigh[],
@@ -320,6 +323,8 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
    int isUptrend;
    double prevATR;
    double periodTotal;
+   double wAlpha;
+   double wBeta;
    double val2;
    double val3;
    double greatest;
@@ -374,6 +379,8 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
    {
       return TA_SUCCESS;
    }
+   wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
    today = startIdx - lookbackTotal + 1;
    periodTotal = 0.0;
    i = optInTimePeriod;
@@ -414,9 +421,7 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       today += 1;
       i -= 1;
    }
@@ -446,9 +451,7 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
       {
          greatest = val3;
       }
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = fma(wBeta, prevATR, wAlpha * greatest);
       medianPrice = (tempHT + tempLT) / 2.0;
       band = optInMultiplier * prevATR;
       basicUpper = medianPrice + band;
@@ -504,6 +507,8 @@ struct TA_SUPERTREND_Stream {
    double optInMultiplier;
    int isUptrend;
    double prevATR;
+   double wAlpha;
+   double wBeta;
    double finalUpper;
    double finalLower;
    double prevClose;
@@ -540,9 +545,7 @@ static void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stream *sp, double inHi
    {
       greatest = val3;
    }
-   sp->prevATR *= sp->optInTimePeriod - 1;
-   sp->prevATR += greatest;
-   sp->prevATR /= sp->optInTimePeriod;
+   sp->prevATR = fma(sp->wBeta, sp->prevATR, sp->wAlpha * greatest);
    medianPrice = (tempHT + tempLT) / 2.0;
    band = sp->optInMultiplier * sp->prevATR;
    basicUpper = medianPrice + band;
@@ -636,6 +639,8 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
       int isUptrend = 0;
       double prevATR = 0.0;
       double periodTotal;
+      double wAlpha = 0.0;
+      double wBeta = 0.0;
       double val2;
       double val3;
       double greatest;
@@ -667,11 +672,13 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
        * whole-range buffer between them would not stream.
        *
        * The arithmetic order below is the bit-exactness contract with TA_ATR (do
-       * not reorder or fuse operations): True Range from high-low, then the two
-       * previous-close distances in that order; the seed summed from 0.0 over the
-       * first 'period' True Ranges and divided once; Wilder smoothing as three
-       * separate statements.
+       * not reorder): True Range from high-low, then the two previous-close
+       * distances in that order; the seed summed from 0.0 over the first 'period'
+       * True Ranges and divided once; the same two Wilder coefficients, wBeta
+       * rounded and wAlpha derived from it, in one fused statement.
        */
+      wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+      wAlpha = 1.0 - wBeta;
       today = startIdx - lookbackTotal + 1;
       periodTotal = 0.0;
       i = optInTimePeriod;
@@ -717,9 +724,7 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
          {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = fma(wBeta, prevATR, wAlpha * greatest);
          today += 1;
          i -= 1;
       }
@@ -757,9 +762,7 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
          {
             greatest = val3;
          }
-         prevATR *= optInTimePeriod - 1;
-         prevATR += greatest;
-         prevATR /= optInTimePeriod;
+         prevATR = fma(wBeta, prevATR, wAlpha * greatest);
          medianPrice = (tempHT + tempLT) / 2.0;
          band = optInMultiplier * prevATR;
          basicUpper = medianPrice + band;
@@ -822,6 +825,8 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
       sp->optInMultiplier = optInMultiplier;
       sp->isUptrend = isUptrend;
       sp->prevATR = prevATR;
+      sp->wAlpha = wAlpha;
+      sp->wBeta = wBeta;
       sp->finalUpper = finalUpper;
       sp->finalLower = finalLower;
       sp->prevClose = prevClose;
@@ -892,6 +897,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outReal, int *outInteger )
 {
    const struct TA_SUPERTREND_Stream *sp = stream;
@@ -932,9 +938,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
    {
       greatest = val3;
    }
-   prevATR *= sp->optInTimePeriod - 1;
-   prevATR += greatest;
-   prevATR /= sp->optInTimePeriod;
+   prevATR = fma(sp->wBeta, prevATR, sp->wAlpha * greatest);
    medianPrice = (tempHT + tempLT) / 2.0;
    band = sp->optInMultiplier * prevATR;
    basicUpper = medianPrice + band;

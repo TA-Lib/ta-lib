@@ -13,6 +13,8 @@
  *  052603 MF     Adapt code to compile with .NET Managed C++
  *  070626 MF,CC  Speed optimization: True Range computed inline in a
  *                single pass (bit-exact, no temporary buffer).
+ *  090326 MF,CC  #338 Two-coefficient Wilder step; no divide in the
+ *                loop-carried chain.
  *
  */
 
@@ -39,7 +41,7 @@ TA_RetCode atr(int startIdx, int endIdx,
    int i, outIdx, today, lookbackTotal;
    int nbATR;
 
-   double prevATR, periodTotal;
+   double prevATR, periodTotal, wAlpha, wBeta;
    double val2, val3, greatest;
    double tempCY, tempLT, tempHT;
 
@@ -66,23 +68,28 @@ TA_RetCode atr(int startIdx, int endIdx,
    if( startIdx > endIdx )
       return TA_SUCCESS;
 
-   /* Period 1 needs no smoothing: the Wilder recursion below degenerates
-    * to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR),
-    * so the single general path handles every period >= 1.
+   /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
+    * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+    * measures closer to the exact recursion than the 1/period-first spelling
+    * at nearly every period. Swapping them reddens nothing.
+    * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
     */
+   wBeta  = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+   wAlpha = 1.0 - wBeta;
 
    /* The True Range of each bar is computed inline in a single
     * pass. No temporary buffer is needed.
     *
     * The arithmetic order below is the bit-exactness contract
-    * (do not reorder or fuse operations):
+    * (do not reorder):
     *  - True Range: start from high-low, then compare/replace
     *    with the two previous-close distances, in that order.
     *  - Seed: the first 'period' True Range values are summed,
     *    accumulated from 0.0 in input order, then divided by
     *    the period.
-    *  - Wilder smoothing: multiply by period-1, add the True
-    *    Range, divide by period, as three separate statements.
+    *  - Wilder smoothing: ONE statement. Splitting it back
+    *    unfuses the multiply-add and puts a second latency on
+    *    the recurrence's dependency chain.
     *
     * In-place (outReal being one of the input arrays) is
     * supported: each output is written only after every input
@@ -121,13 +128,6 @@ TA_RetCode atr(int startIdx, int endIdx,
    }
    prevATR = periodTotal / optInTimePeriod;
 
-   /* Subsequent value are smoothed using the
-    * previous ATR value (Wilder's approach).
-    *  1) Multiply the previous ATR by 'period-1'.
-    *  2) Add today TR value.
-    *  3) Divide by 'period'.
-    */
-
    /* Skip the unstable period. */
    i = TA_GetUnstablePeriod(TA_FUNC_UNST_ATR);
    while( i != 0 )
@@ -146,9 +146,7 @@ TA_RetCode atr(int startIdx, int endIdx,
       if( val3 > greatest )
          greatest = val3;
 
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = wAlpha * greatest + wBeta * prevATR;
       today++;
       i--;
    }
@@ -178,9 +176,7 @@ TA_RetCode atr(int startIdx, int endIdx,
       if( val3 > greatest )
          greatest = val3;
 
-      prevATR *= optInTimePeriod - 1;
-      prevATR += greatest;
-      prevATR /= optInTimePeriod;
+      prevATR = wAlpha * greatest + wBeta * prevATR;
       outReal[outIdx++] = prevATR;
       today++;
    }

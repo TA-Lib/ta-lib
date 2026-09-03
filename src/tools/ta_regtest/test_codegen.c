@@ -5868,6 +5868,13 @@ static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
     { "WMA",                 TOL_REL_IN, 1e-9, 0.0 },  /* #255                               */
     { "STOCH",               TOL_REL_IN, 1e-9, 0.0 },  /* #255  via TA_MAType_WMA            */
     { "STOCHF",              TOL_REL_IN, 1e-9, 0.0 },  /* #255  via TA_MAType_WMA            */
+    /* #338 the two-coefficient Wilder step. Named rather than left to the FMA
+     * transition bucket, whose 1e-9 is six orders looser than these two need
+     * and would swallow a real ATR regression whole. Input-relative because an
+     * ATR is a convex combination of true ranges; NATR divides by a close, so
+     * it is a percentage and output-relative. */
+    { "ATR",                 TOL_REL_IN,  2e-15, 0.0 }, /* #338  measured 5.19e-16 */
+    { "NATR",                TOL_REL_OUT, 4e-15, 0.0 }, /* #338  measured 1.29e-15 */
     { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
 
@@ -6767,7 +6774,8 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                ctx.skipped98);
     if( ctx.cciTol > 0 )
         printf("manifest-tolerated: %lld case(s) under an authorized latest->0.6.4 entry "
-               "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum; IMI #112 NaN->50.0)\n", ctx.cciTol);
+               "(CCI #7 near-zero; LINEARREG family + TSF #103 sliding-sum; IMI #112 NaN->50.0; "
+               "ATR/NATR #338 two-coefficient Wilder step)\n", ctx.cciTol);
 #if FMA_TRANSITION_TOLERANCE
     if( ctx.fmaTol > 0 )
         printf("fma-rebaseline: %lld case(s) within the 1e-9 relative FMA contract vs 0.6.4 "

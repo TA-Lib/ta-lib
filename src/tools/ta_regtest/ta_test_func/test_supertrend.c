@@ -141,7 +141,7 @@ extern double gDataClose[];
  * TOLERANCE. Over every row below, measured: the sixteen gData rows agree with
  * ta4j BIT-FOR-BIT, and the worst of the six TA_SREF rows is 3.9e-15 relative
  * (the residual is the two libraries' different Wilder arithmetic order --
- * prev + (tr - prev)/M against prev *= M-1; prev += tr; prev /= M -- which is
+ * prev + (tr - prev)/M against the fused wAlpha*tr + wBeta*prev -- which is
  * algebraically equal and not numerically). 1e-12 leaves ~250x headroom over
  * that and stays ~1e10 tighter than the rival ratchet variant, which differs by
  * percent. Do NOT tighten it to a bitwise comparison: the gData rows agree

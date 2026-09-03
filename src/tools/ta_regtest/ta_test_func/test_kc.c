@@ -114,13 +114,13 @@ extern double gDataClose[];
  * which is why the 252-bar corpus cannot pin the default parameter set at all,
  * and leg 1 uses a 1000-bar corpus instead. Past convergence the residual is a
  * stable one-ulp arithmetic-path difference, not a transient: ta4j's Wilder
- * step is (v - prev)/M + prev, TA-Lib's is prev *= M-1; prev += tr; prev /= M,
+ * step is (v - prev)/M + prev, TA-Lib's is the fused wAlpha*tr + wBeta*prev,
  * which are algebraically equal and numerically not.
  *
  * That one-ulp floor is what the tolerance is sized against. Over every bar
  * from the first pinned bar to the end of its corpus, across all six parameter
  * sets and all three outputs, the worst measured relative disagreement is
- * 1.64e-16 (exactly 0.0 for five of the six sets). A 1e-12 relative bound
+ * 1.61e-16 (exactly 0.0 for four of the six sets). A 1e-12 relative bound
  * therefore carries ~6000x headroom, while remaining ~1e10 tighter than any of
  * the competing Keltner formulas, which differ by percent. Do NOT tighten this
  * to a bitwise comparison: the sets agree bit-for-bit at these particular bars

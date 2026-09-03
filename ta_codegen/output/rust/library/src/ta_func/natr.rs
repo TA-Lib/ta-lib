@@ -59,6 +59,8 @@
  *  082326 MF,CC  Fix #253. Test the close exactly instead of against the fixed
  *                TA_IS_ZERO band, which zeroed the output for any instrument
  *                quoted small enough to fall under it.
+ *  090326 MF,CC  #338 Two-coefficient Wilder step; no divide in the
+ *                loop-carried chain.
  */
 
 // Import types from parent module
@@ -109,6 +111,40 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         inClose: &[f64],
+        optInTimePeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        #[cfg(target_arch = "x86_64")]
+        return ta_lib_dispatch::dispatch_fma!(self, NATR_Impl_fma, NATR_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal));
+        #[cfg(not(target_arch = "x86_64"))]
+        self.NATR_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal)
+    }
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "fma")]
+    fn NATR_Impl_fma(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
+        optInTimePeriod: i32,
+        outBegIdx: &mut usize,
+        outNBElement: &mut usize,
+        outReal: &mut [f64],
+    ) -> RetCode {
+        self.NATR_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outReal)
+    }
+    #[inline(always)]
+    fn NATR_Impl_impl(
+        &self,
+        startIdx: usize,
+        endIdx: usize,
+        inHigh: &[f64],
+        inLow: &[f64],
+        inClose: &[f64],
         mut optInTimePeriod: i32,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
@@ -140,6 +176,8 @@ impl Core {
         let mut prevATR: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
         let mut tempValue: f64 = 0.0_f64;
+        let mut wAlpha: f64 = 0.0_f64;
+        let mut wBeta: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -180,23 +218,25 @@ impl Core {
         if startIdx > endIdx {
             return RetCode::Success;
         }
-        // Period 1 needs no smoothing: the Wilder recursion below degenerates
-        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
-        // At period 1 the output is left as that raw True Range (unnormalized),
-        // matching the historical TRANGE-delegation behavior; every period > 1 is
-        // normalized by the close. The single general path handles all period >= 1.
+        // wAlpha is derived FROM wBeta, never the reverse: only that order makes
+        // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+        // measures closer to the exact recursion than the 1/period-first spelling
+        // at nearly every period. Swapping them reddens nothing.
+        wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
+        wAlpha = 1.0 - wBeta;
         // The True Range of each bar is computed inline in a single
         // pass. No temporary buffer is needed.
         //
         // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
+        // (do not reorder):
         //  - True Range: start from high-low, then compare/replace
         //    with the two previous-close distances, in that order.
         //  - Seed: the first 'period' True Range values are summed,
         //    accumulated from 0.0 in input order, then divided by
         //    the period.
-        //  - Wilder smoothing: multiply by period-1, add the True
-        //    Range, divide by period, as three separate statements.
+        //  - Wilder smoothing: ONE statement. Splitting it back
+        //    unfuses the multiply-add and puts a second latency on
+        //    the recurrence's dependency chain.
         //
         // Each output is normalized by the close of its own bar; a
         // close of zero yields 0.0.
@@ -231,11 +271,6 @@ impl Core {
             today += 1;
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Subsequent value are smoothed using the
-        // previous ATR value (Wilder's approach).
-        //  1) Multiply the previous ATR by 'period-1'.
-        //  2) Add today TR value.
-        //  3) Divide by 'period'.
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::NATR as usize]) as usize;
         while i != 0 {
@@ -253,9 +288,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -263,7 +296,8 @@ impl Core {
         // provided outReal.
         outIdx = 1;
         if optInTimePeriod <= 1 {
-            // No smoothing: emit the raw True Range (unnormalized).
+            // Period 1 is the raw True Range and is deliberately NOT normalized,
+            // which is the TRANGE delegation this path replaced.
             outReal[0] = prevATR;
         } else {
             // NATR is the ATR as a percentage of the close, so it is scale-free and
@@ -294,11 +328,8 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             if optInTimePeriod <= 1 {
-                // No smoothing: emit the raw True Range (unnormalized).
                 outReal[outIdx] = prevATR;
             } else {
                 tempValue = inClose[today];
@@ -453,6 +484,8 @@ pub struct NatrStream {
 struct NatrStreamState {
     optInTimePeriod: i32,
     prevATR: f64,
+    wAlpha: f64,
+    wBeta: f64,
     lag1_inClose: f64,
     cur_outReal: f64,
 }
@@ -485,11 +518,8 @@ impl Core {
         if val3 > greatest {
             greatest = val3;
         }
-        sp.prevATR *= ((sp.optInTimePeriod - 1) as f64);
-        sp.prevATR += greatest;
-        sp.prevATR /= ((sp.optInTimePeriod) as f64);
+        sp.prevATR = (sp.wBeta as f64).mul_add(sp.prevATR, sp.wAlpha * greatest);
         if sp.optInTimePeriod <= 1 {
-            // No smoothing: emit the raw True Range (unnormalized).
             (*outReal) = sp.prevATR;
         } else {
             tempValue = inClose;
@@ -540,6 +570,8 @@ impl Core {
         let mut prevATR: f64 = 0.0_f64;
         let mut periodTotal: f64 = 0.0_f64;
         let mut tempValue: f64 = 0.0_f64;
+        let mut wAlpha: f64 = 0.0_f64;
+        let mut wBeta: f64 = 0.0_f64;
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -580,23 +612,25 @@ impl Core {
         if startIdx > endIdx {
             return Err(RetCode::InsufficientHistory);
         }
-        // Period 1 needs no smoothing: the Wilder recursion below degenerates
-        // to the raw True Range at every bar (prevATR = (prevATR*0 + TR)/1 = TR).
-        // At period 1 the output is left as that raw True Range (unnormalized),
-        // matching the historical TRANGE-delegation behavior; every period > 1 is
-        // normalized by the close. The single general path handles all period >= 1.
+        // wAlpha is derived FROM wBeta, never the reverse: only that order makes
+        // wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
+        // measures closer to the exact recursion than the 1/period-first spelling
+        // at nearly every period. Swapping them reddens nothing.
+        wBeta = ((optInTimePeriod - 1) as f64) / (optInTimePeriod as f64);
+        wAlpha = 1.0 - wBeta;
         // The True Range of each bar is computed inline in a single
         // pass. No temporary buffer is needed.
         //
         // The arithmetic order below is the bit-exactness contract
-        // (do not reorder or fuse operations):
+        // (do not reorder):
         //  - True Range: start from high-low, then compare/replace
         //    with the two previous-close distances, in that order.
         //  - Seed: the first 'period' True Range values are summed,
         //    accumulated from 0.0 in input order, then divided by
         //    the period.
-        //  - Wilder smoothing: multiply by period-1, add the True
-        //    Range, divide by period, as three separate statements.
+        //  - Wilder smoothing: ONE statement. Splitting it back
+        //    unfuses the multiply-add and puts a second latency on
+        //    the recurrence's dependency chain.
         //
         // Each output is normalized by the close of its own bar; a
         // close of zero yields 0.0.
@@ -631,11 +665,6 @@ impl Core {
             today += 1;
         }
         prevATR = periodTotal / ((optInTimePeriod) as f64);
-        // Subsequent value are smoothed using the
-        // previous ATR value (Wilder's approach).
-        //  1) Multiply the previous ATR by 'period-1'.
-        //  2) Add today TR value.
-        //  3) Divide by 'period'.
         // Skip the unstable period.
         i = (self.unstable_period[FuncUnstId::NATR as usize]) as usize;
         while i != 0 {
@@ -653,9 +682,7 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             today += 1;
             i -= 1;
         }
@@ -663,7 +690,8 @@ impl Core {
         // provided outReal.
         outIdx = 1;
         if optInTimePeriod <= 1 {
-            // No smoothing: emit the raw True Range (unnormalized).
+            // Period 1 is the raw True Range and is deliberately NOT normalized,
+            // which is the TRANGE delegation this path replaced.
             outReal[(0 * outStride) as usize] = prevATR;
         } else {
             // NATR is the ATR as a percentage of the close, so it is scale-free and
@@ -694,11 +722,8 @@ impl Core {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((optInTimePeriod) as f64);
+            prevATR = (wBeta as f64).mul_add(prevATR, wAlpha * greatest);
             if optInTimePeriod <= 1 {
-                // No smoothing: emit the raw True Range (unnormalized).
                 outReal[(outIdx * outStride) as usize] = prevATR;
             } else {
                 tempValue = inClose[today];
@@ -718,6 +743,8 @@ impl Core {
         let state = NatrStreamState {
             optInTimePeriod,
             prevATR,
+            wAlpha,
+            wBeta,
             cur_outReal: outReal[(*outNBElement - 1) * outStride],
             lag1_inClose: inClose[historyLen - 1],
         };
@@ -955,11 +982,8 @@ impl NatrStream {
             if val3 > greatest {
                 greatest = val3;
             }
-            prevATR *= ((sp.optInTimePeriod - 1) as f64);
-            prevATR += greatest;
-            prevATR /= ((sp.optInTimePeriod) as f64);
+            prevATR = (sp.wBeta as f64).mul_add(prevATR, sp.wAlpha * greatest);
             if sp.optInTimePeriod <= 1 {
-                // No smoothing: emit the raw True Range (unnormalized).
                 (*outReal) = prevATR;
             } else {
                 tempValue = inClose;
