@@ -662,6 +662,7 @@ TA_LIB_API TA_RetCode TA_EFI_Update( TA_EFI_Stream *stream, double inClose, doub
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
    const struct TA_EFI_Stream *sp = stream;

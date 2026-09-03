@@ -2110,6 +2110,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Update( TA_HT_TRENDMODE_Stream *stream, do
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Peek( const TA_HT_TRENDMODE_Stream *stream, double inReal, int *outInteger )
 {
    const struct TA_HT_TRENDMODE_Stream *sp = stream;

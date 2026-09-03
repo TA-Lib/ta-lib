@@ -1450,6 +1450,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Update( TA_HT_DCPERIOD_Stream *stream, doub
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Peek( const TA_HT_DCPERIOD_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_HT_DCPERIOD_Stream *sp = stream;

@@ -1637,6 +1637,7 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Update( TA_HT_TRENDLINE_Stream *stream, do
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Peek( const TA_HT_TRENDLINE_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_HT_TRENDLINE_Stream *sp = stream;

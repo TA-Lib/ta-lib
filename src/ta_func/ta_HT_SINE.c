@@ -1796,6 +1796,7 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Update( TA_HT_SINE_Stream *stream, double inRea
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_HT_SINE_Peek( const TA_HT_SINE_Stream *stream, double inReal, double *outSine, double *outLeadSine )
 {
    const struct TA_HT_SINE_Stream *sp = stream;

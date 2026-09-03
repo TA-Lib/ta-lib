@@ -1201,7 +1201,38 @@ pub fn generate(
     // cannot be added without one.
     emit_clone(&mut o, func, &plan, enums);
 
+    mark_fma_multiversion(&mut o, func);
+
     o
+}
+
+/// FMA runtime CPU dispatch for `Peek` (#337) — the same rule the batch tiers
+/// carry, applied to the one streaming tier where it pays.
+///
+/// `Peek` inlines its own copy of the step, so the fused arithmetic is already
+/// inside the function being attributed and `target_clones` gives it a hardware
+/// clone. The other four streaming tiers delegate to `static`
+/// `_StepImpl`/`_OpenImpl` bodies that usually exceed
+/// `--param max-inline-insns-auto` (30 at `-O3`), so the clone is emitted empty
+/// and costs bytes for nothing; attributing the static instead would only make
+/// it un-inlinable. Peek is 25% of the byte cost of attributing all five, for
+/// every measured win and no measured regression.
+fn mark_fma_multiversion(o: &mut String, func: &FuncDef) {
+    if !fma::EMIT_FMA {
+        return;
+    }
+    let sig = peek_signature(func);
+    let Some(start) = o.find(&sig) else {
+        return;
+    };
+    let line = o[..start].rfind('\n').map_or(0, |i| i + 1);
+    // Every generated body indents, so `"\n}\n"` closes this definition.
+    let Some(end) = o[start..].find("\n}\n").map(|e| start + e + 3) else {
+        return;
+    };
+    if o[line..end].contains("fma(") {
+        o.insert_str(line, "TA_FMA_MULTIVERSION\n");
+    }
 }
 
 /// The `struct TA_<N>_Stream { ... };` text for one streaming function —

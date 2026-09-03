@@ -839,6 +839,7 @@ TA_LIB_API TA_RetCode TA_TSF_Update( TA_TSF_Stream *stream, double inReal, doubl
    return TA_SUCCESS;
 }
 
+TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_TSF_Peek( const TA_TSF_Stream *stream, double inReal, double *outReal )
 {
    const struct TA_TSF_Stream *sp = stream;
