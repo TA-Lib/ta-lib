@@ -434,6 +434,7 @@ public partial class Core
    /// <b>Formula</b>
    /// <code>
    /// MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
+   /// This is the Donchian Channel centerline in its inclusive form: `DONCHIAN` with `optInLag=0` emits this line as its middle output, alongside the two extrema.
    /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -497,6 +498,7 @@ public partial class Core
    /// <b>Formula</b>
    /// <code>
    /// MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
+   /// This is the Donchian Channel centerline in its inclusive form: `DONCHIAN` with `optInLag=0` emits this line as its middle output, alongside the two extrema.
    /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

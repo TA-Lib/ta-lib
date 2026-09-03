@@ -87,6 +87,66 @@ DEF_FUNCTION( DIV,
              );
 /* DIV END */
 
+/* DONCHIAN BEGIN */
+static const TA_IntegerRange TA_DEF_DONCHIAN_Lag =
+{
+   0,
+   100000,
+   0,
+   1,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_DONCHIAN_Lag =
+{
+   TA_OptInput_IntegerRange,
+   "optInLag",
+   0,
+
+   "Lag",
+   (const void *)&TA_DEF_DONCHIAN_Lag,
+   1,
+   "Bars the window is held back from the current bar (0 includes the current bar)",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DONCHIAN_UpperBand =
+                               { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DONCHIAN_MiddleBand =
+                               { TA_Output_Real, "outRealMiddleBand", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DONCHIAN_LowerBand =
+                               { TA_Output_Real, "outRealLowerBand", TA_OUT_LOWER_LIMIT };
+
+static const TA_InputParameterInfo    *TA_DONCHIAN_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_DONCHIAN_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_DONCHIAN_UpperBand,
+  &TA_DEF_UI_Output_Real_DONCHIAN_MiddleBand,
+  &TA_DEF_UI_Output_Real_DONCHIAN_LowerBand,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_DONCHIAN_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_20_MINIMUM2,
+  &TA_DEF_UI_D_DONCHIAN_Lag,
+  NULL
+};
+
+DEF_FUNCTION( DONCHIAN,
+              TA_GroupId_OverlapStudies,
+              "Donchian Channels",
+              TA_FUNC_FLG_OVERLAP
+             );
+/* DONCHIAN END */
+
 /* DX BEGIN */
 static const TA_InputParameterInfo    *TA_DX_Inputs[]    =
 {
@@ -120,6 +180,7 @@ const TA_FuncDef *TA_DEF_TableD[] =
 {
    ADD_TO_TABLE(DEMA),
    ADD_TO_TABLE(DIV),
+   ADD_TO_TABLE(DONCHIAN),
    ADD_TO_TABLE(DX),
    NULL
 };

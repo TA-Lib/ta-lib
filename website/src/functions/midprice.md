@@ -11,6 +11,8 @@ Midpoint of the price range over a rolling window: the average of the highest hi
 
 MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
 
+This is the Donchian Channel centerline in its inclusive form: `DONCHIAN` with `optInLag=0` emits this line as its middle output, alongside the two extrema.
+
 ## Inputs
 
 - `inHigh` — High price of each bar

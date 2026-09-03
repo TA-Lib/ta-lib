@@ -212,6 +212,7 @@ public class TaCodegenServe {
             else if (method == "TA_COSH") return Handle_COSH(p, startIdx, endIdx);
             else if (method == "TA_DEMA") return Handle_DEMA(p, startIdx, endIdx);
             else if (method == "TA_DIV") return Handle_DIV(p, startIdx, endIdx);
+            else if (method == "TA_DONCHIAN") return Handle_DONCHIAN(p, startIdx, endIdx);
             else if (method == "TA_DX") return Handle_DX(p, startIdx, endIdx);
             else if (method == "TA_EFI") return Handle_EFI(p, startIdx, endIdx);
             else if (method == "TA_EMA") return Handle_EMA(p, startIdx, endIdx);
@@ -482,6 +483,8 @@ public class TaCodegenServe {
                 sb.Append("\"TA_DEMA\"");
                 sb.Append(",");
                 sb.Append("\"TA_DIV\"");
+                sb.Append(",");
+                sb.Append("\"TA_DONCHIAN\"");
                 sb.Append(",");
                 sb.Append("\"TA_DX\"");
                 sb.Append(",");
@@ -40172,6 +40175,11 @@ public class TaCodegenServe {
         case "DIV": {
             return core.DIV_Lookback();
         }
+        case "DONCHIAN": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            int optInLag = GetInt(p, "optInLag", 0);
+            return core.DONCHIAN_Lookback(optInTimePeriod, optInLag);
+        }
         case "DX": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             return core.DX_Lookback(optInTimePeriod);
@@ -52984,6 +52992,123 @@ public class TaCodegenServe {
         sb.Append($",\"out_len\":{_outLen}");
         if (GetInt(p, "no_output", 0) == 0) {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_DONCHIAN(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        if (bench_mode != 0) return "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}";
+        double[] inHigh;
+        double[] inLow;
+        if (use_preloaded != 0 && refN > 0) {
+            inHigh = new double[refN]; Array.Copy(refHigh, inHigh, refN);
+            inLow = new double[refN]; Array.Copy(refLow, inLow, refN);
+        } else {
+            inHigh = GetDoubleArray(p, "inHigh");
+            inLow = GetDoubleArray(p, "inLow");
+        }
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        int optInLag = GetInt(p, "optInLag", 0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.DONCHIAN_Lookback(optInTimePeriod, optInLag);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        double[] outArr2 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInLag, out outBegIdx, out outNBElement, outArr0, outArr1, outArr2);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.DONCHIAN(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInLag, outArr0, outArr1, outArr2);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inHigh = new float[inHigh.Length];
+            for (int _fi = 0; _fi < inHigh.Length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            var f_inLow = new float[inLow.Length];
+            for (int _fi = 0; _fi < inLow.Length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            try {
+                OutRange _fr = core.DONCHIAN(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, optInLag, outArr0, outArr1, outArr2);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITaLibFailure) {
+                rc = ((ITaLibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+                _h = SvHashF64(_h, outArr1, outNBElement);
+                _h = SvHashF64(_h, outArr2, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+            sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
+            sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
         }
         sb.Append($",\"used_float\":{usedFloat}");
         sb.Append($",\"timing_ns\":{elapsedNs}");

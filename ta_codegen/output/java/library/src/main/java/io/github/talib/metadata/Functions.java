@@ -211,6 +211,7 @@ public final class Functions {
       put(m, f_COSH());
       put(m, f_DEMA());
       put(m, f_DIV());
+      put(m, f_DONCHIAN());
       put(m, f_DX());
       put(m, f_EFI());
       put(m, f_EMA());
@@ -1604,6 +1605,31 @@ public final class Functions {
          List.of(),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_DONCHIAN() {
+      return new FunctionInfo(
+         "DONCHIAN", "Overlap Studies", "Donchian Channels", 0x01000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInLag", 0x00000000,
+               "Lag", "Bars the window is held back from the current bar (0 includes the current bar)", 1.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 100000, 0, 1, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
+            new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
          ));
    }
 
