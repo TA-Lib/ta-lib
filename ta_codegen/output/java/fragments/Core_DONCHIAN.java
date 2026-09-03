@@ -9,7 +9,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  090526 KL     First version (proposal-drafts #38).
+ *  090526 KL     First version (issue #342).
  *  090326 MF     Drop optInLag; the window ends at the current bar.
  */
 

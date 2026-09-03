@@ -76159,7 +76159,7 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
-     *  090526 KL     First version (proposal-drafts #38).
+     *  090526 KL     First version (issue #342).
      *  090326 MF     Drop optInLag; the window ends at the current bar.
      */
 
@@ -164198,7 +164198,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "a41cdf263d1803fa";
+    static final String SPLICED_GENCODE_DIGEST = "c6beffa2c163b194";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

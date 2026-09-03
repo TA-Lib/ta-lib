@@ -41,7 +41,7 @@
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
- *  090526 KL     First version (proposal-drafts #38).
+ *  090526 KL     First version (issue #342).
  */
 
 /* Description:
