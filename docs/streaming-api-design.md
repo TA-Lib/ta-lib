@@ -53,8 +53,10 @@ it is the same numbers in the same order.
 What that buys is the cost model. No backend copies a handle's BUFFERS: peek's
 overhead is a fixed number of bytes where the buffers are a function of the
 period, which is the difference between a peek that is flat in the period and
-one that is not. C still copies the struct itself — the fixed-size part, nothing
-behind a pointer. Java and C# additionally offer the accumulators to the shadow
+one that is not. No backend copies the struct either: a state field the frame
+writes becomes a local of the same name, seeded from the handle, and in C the
+handle is bound `const` so a frame that stored through it would not compile.
+Java and C# additionally offer the accumulators to the shadow
 rewrite, because a managed array field is a reference and localizing one means
 cloning it; what survives is a clone only where the rewrite refuses, which today
 is an accumulator the batch body sums inside a loop. The offer is made from all
@@ -76,10 +78,13 @@ Each backend therefore carries its own sweep over every streamable function —
 that a frame is what runs, that it allocates nothing growing with the period, and
 that the accumulators it still copies are the ones the shadow rewrite refused.
 
-Two things Rust needs that C does not, because its renderer keys on how a name is
-spelled and a frame's locals drop the `sp.` qualifier: a localized field inherits
-the classification the QUALIFIED name carried, and the `while i <= n` → `for i in
-..` lowering is off inside a frame, since it rebinds the counter as `usize`.
+Every backend's frame drops the handle qualifier on a localized field, so each
+renderer that keys on how a name is spelled has to classify the bare name as it
+classified the qualified one — `fma::stream_base` does that for C and Rust
+alike, and a spelling that classified differently would move a fused site by
+about one ULP with nothing pointing at it. Rust needs one thing more: the
+`while i <= n` → `for i in ..` lowering is off inside a frame, since it rebinds
+the counter as `usize`.
 
 ## `OpenAndFill` — the warm-up output `open` would have thrown away
 

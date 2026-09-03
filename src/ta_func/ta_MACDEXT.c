@@ -879,8 +879,7 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Update( TA_MACDEXT_Stream *stream, double inRea
 
 TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double inReal, double *outMACD, double *outMACDSignal, double *outMACDHist )
 {
-   struct TA_MACDEXT_Stream scratch;
-   struct TA_MACDEXT_Stream *sp = &scratch;
+   const struct TA_MACDEXT_Stream *sp = stream;
    double cur_slowMABuffer = 0.0;
    double cur_fastMABuffer = 0.0;
    double cur_outMACDSignal = 0.0;
@@ -888,7 +887,6 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Peek( const TA_MACDEXT_Stream *stream, double i
 
    if( !stream || !outMACD || !outMACDSignal || !outMACDHist ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

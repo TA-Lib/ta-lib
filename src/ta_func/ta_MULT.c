@@ -262,12 +262,10 @@ TA_LIB_API TA_RetCode TA_MULT_Update( TA_MULT_Stream *stream, double inReal0, do
 
 TA_LIB_API TA_RetCode TA_MULT_Peek( const TA_MULT_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
-   struct TA_MULT_Stream scratch;
-   struct TA_MULT_Stream *sp = &scratch;
+   const struct TA_MULT_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= inReal0 * inReal1;
    return TA_SUCCESS;

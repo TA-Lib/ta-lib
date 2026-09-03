@@ -1768,8 +1768,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Update( TA_HT_DCPHASE_Stream *stream, double
 
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_HT_DCPHASE_Stream scratch;
-   struct TA_HT_DCPHASE_Stream *sp = &scratch;
+   const struct TA_HT_DCPHASE_Stream *sp = stream;
    int i;
    double tempReal;
    double tempReal2;
@@ -1788,6 +1787,39 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    double DCPeriod;
    double imagPart;
    double realPart;
+   double DCPhase;
+   double I1ForEvenPrev2;
+   double I1ForEvenPrev3;
+   double I1ForOddPrev2;
+   double I1ForOddPrev3;
+   double Im;
+   double Re;
+   int hilbertIdx;
+   double period;
+   double periodWMASub;
+   double periodWMASum;
+   double prevI2;
+   double prevQ2;
+   double prev_Q1_Even;
+   double prev_Q1_Odd;
+   double prev_Q1_input_Even;
+   double prev_Q1_input_Odd;
+   double prev_detrender_Even;
+   double prev_detrender_Odd;
+   double prev_detrender_input_Even;
+   double prev_detrender_input_Odd;
+   double prev_jI_Even;
+   double prev_jI_Odd;
+   double prev_jI_input_Even;
+   double prev_jI_input_Odd;
+   double prev_jQ_Even;
+   double prev_jQ_Odd;
+   double prev_jQ_input_Even;
+   double prev_jQ_input_Odd;
+   double smoothPeriod;
+   double trailingWMAValue;
+   double *cb_smoothPrice;
+   double *ring_trailingWMAIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -1795,20 +1827,52 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   DCPhase = sp->DCPhase;
+   I1ForEvenPrev2 = sp->I1ForEvenPrev2;
+   I1ForEvenPrev3 = sp->I1ForEvenPrev3;
+   I1ForOddPrev2 = sp->I1ForOddPrev2;
+   I1ForOddPrev3 = sp->I1ForOddPrev3;
+   Im = sp->Im;
+   Re = sp->Re;
+   hilbertIdx = sp->hilbertIdx;
+   period = sp->period;
+   periodWMASub = sp->periodWMASub;
+   periodWMASum = sp->periodWMASum;
+   prevI2 = sp->prevI2;
+   prevQ2 = sp->prevQ2;
+   prev_Q1_Even = sp->prev_Q1_Even;
+   prev_Q1_Odd = sp->prev_Q1_Odd;
+   prev_Q1_input_Even = sp->prev_Q1_input_Even;
+   prev_Q1_input_Odd = sp->prev_Q1_input_Odd;
+   prev_detrender_Even = sp->prev_detrender_Even;
+   prev_detrender_Odd = sp->prev_detrender_Odd;
+   prev_detrender_input_Even = sp->prev_detrender_input_Even;
+   prev_detrender_input_Odd = sp->prev_detrender_input_Odd;
+   prev_jI_Even = sp->prev_jI_Even;
+   prev_jI_Odd = sp->prev_jI_Odd;
+   prev_jI_input_Even = sp->prev_jI_input_Even;
+   prev_jI_input_Odd = sp->prev_jI_input_Odd;
+   prev_jQ_Even = sp->prev_jQ_Even;
+   prev_jQ_Odd = sp->prev_jQ_Odd;
+   prev_jQ_input_Even = sp->prev_jQ_input_Even;
+   prev_jQ_input_Odd = sp->prev_jQ_input_Odd;
+   smoothPeriod = sp->smoothPeriod;
+   trailingWMAValue = sp->trailingWMAValue;
+   cb_smoothPrice = sp->cb_smoothPrice;
+   ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
    if( sp->ringCap_trailingWMAIdx == 0 )
    {
       pkSlot0 = 0;
       pkVal0 = inReal;
    }
-   adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
+   adjustedPrevPeriod = fma(0.075, period, 0.54);
    todayValue = inReal;
-   sp->periodWMASub += todayValue;
-   sp->periodWMASub -= sp->trailingWMAValue;
-   sp->periodWMASum += todayValue * 4.0;
-   sp->trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
-   smoothedValue = sp->periodWMASum * 0.1;
-   sp->periodWMASum -= sp->periodWMASub;
+   periodWMASub += todayValue;
+   periodWMASub -= trailingWMAValue;
+   periodWMASum += todayValue * 4.0;
+   trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
+   smoothedValue = periodWMASum * 0.1;
+   periodWMASum -= periodWMASub;
    /* Remember the smoothedValue into the smoothPrice
     * circular buffer.
     */
@@ -1818,128 +1882,128 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    {
       /* Do the Hilbert Transforms for even price bar */
       hilbertTempReal = sp->a * smoothedValue;
-      detrender = 0 - sp->detrender_Even[sp->hilbertIdx];
+      detrender = 0 - sp->detrender_Even[hilbertIdx];
       detrender += hilbertTempReal;
-      detrender -= sp->prev_detrender_Even;
-      sp->prev_detrender_Even = sp->b * sp->prev_detrender_input_Even;
-      detrender += sp->prev_detrender_Even;
-      sp->prev_detrender_input_Even = smoothedValue;
+      detrender -= prev_detrender_Even;
+      prev_detrender_Even = sp->b * prev_detrender_input_Even;
+      detrender += prev_detrender_Even;
+      prev_detrender_input_Even = smoothedValue;
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
-      Q1 = 0 - sp->Q1_Even[sp->hilbertIdx];
+      Q1 = 0 - sp->Q1_Even[hilbertIdx];
       Q1 += hilbertTempReal;
-      Q1 -= sp->prev_Q1_Even;
-      sp->prev_Q1_Even = sp->b * sp->prev_Q1_input_Even;
-      Q1 += sp->prev_Q1_Even;
-      sp->prev_Q1_input_Even = detrender;
+      Q1 -= prev_Q1_Even;
+      prev_Q1_Even = sp->b * prev_Q1_input_Even;
+      Q1 += prev_Q1_Even;
+      prev_Q1_input_Even = detrender;
       Q1 *= adjustedPrevPeriod;
-      hilbertTempReal = sp->a * sp->I1ForEvenPrev3;
-      jI = 0 - sp->jI_Even[sp->hilbertIdx];
+      hilbertTempReal = sp->a * I1ForEvenPrev3;
+      jI = 0 - sp->jI_Even[hilbertIdx];
       jI += hilbertTempReal;
-      jI -= sp->prev_jI_Even;
-      sp->prev_jI_Even = sp->b * sp->prev_jI_input_Even;
-      jI += sp->prev_jI_Even;
-      sp->prev_jI_input_Even = sp->I1ForEvenPrev3;
+      jI -= prev_jI_Even;
+      prev_jI_Even = sp->b * prev_jI_input_Even;
+      jI += prev_jI_Even;
+      prev_jI_input_Even = I1ForEvenPrev3;
       jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
-      jQ = 0 - sp->jQ_Even[sp->hilbertIdx];
+      jQ = 0 - sp->jQ_Even[hilbertIdx];
       jQ += hilbertTempReal;
-      jQ -= sp->prev_jQ_Even;
-      sp->prev_jQ_Even = sp->b * sp->prev_jQ_input_Even;
-      jQ += sp->prev_jQ_Even;
-      sp->prev_jQ_input_Even = Q1;
+      jQ -= prev_jQ_Even;
+      prev_jQ_Even = sp->b * prev_jQ_input_Even;
+      jQ += prev_jQ_Even;
+      prev_jQ_input_Even = Q1;
       jQ *= adjustedPrevPeriod;
-      if( ++sp->hilbertIdx == 3 )
+      if( ++hilbertIdx == 3 )
       {
-         sp->hilbertIdx = 0;
+         hilbertIdx = 0;
       }
-      Q2 = fma(0.2, Q1 + jI, 0.8 * sp->prevQ2);
-      I2 = fma(0.2, sp->I1ForEvenPrev3 - jQ, 0.8 * sp->prevI2);
+      Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+      I2 = fma(0.2, I1ForEvenPrev3 - jQ, 0.8 * prevI2);
       /* The variable I1 is the detrender delayed for
        * 3 price bars.
        *
        * Save the current detrender value for being
        * used by the "odd" logic later.
        */
-      sp->I1ForOddPrev3 = sp->I1ForOddPrev2;
-      sp->I1ForOddPrev2 = detrender;
+      I1ForOddPrev3 = I1ForOddPrev2;
+      I1ForOddPrev2 = detrender;
    } else 
    {
       /* Do the Hilbert Transforms for odd price bar */
       hilbertTempReal = sp->a * smoothedValue;
-      detrender = 0 - sp->detrender_Odd[sp->hilbertIdx];
+      detrender = 0 - sp->detrender_Odd[hilbertIdx];
       detrender += hilbertTempReal;
-      detrender -= sp->prev_detrender_Odd;
-      sp->prev_detrender_Odd = sp->b * sp->prev_detrender_input_Odd;
-      detrender += sp->prev_detrender_Odd;
-      sp->prev_detrender_input_Odd = smoothedValue;
+      detrender -= prev_detrender_Odd;
+      prev_detrender_Odd = sp->b * prev_detrender_input_Odd;
+      detrender += prev_detrender_Odd;
+      prev_detrender_input_Odd = smoothedValue;
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
-      Q1 = 0 - sp->Q1_Odd[sp->hilbertIdx];
+      Q1 = 0 - sp->Q1_Odd[hilbertIdx];
       Q1 += hilbertTempReal;
-      Q1 -= sp->prev_Q1_Odd;
-      sp->prev_Q1_Odd = sp->b * sp->prev_Q1_input_Odd;
-      Q1 += sp->prev_Q1_Odd;
-      sp->prev_Q1_input_Odd = detrender;
+      Q1 -= prev_Q1_Odd;
+      prev_Q1_Odd = sp->b * prev_Q1_input_Odd;
+      Q1 += prev_Q1_Odd;
+      prev_Q1_input_Odd = detrender;
       Q1 *= adjustedPrevPeriod;
-      hilbertTempReal = sp->a * sp->I1ForOddPrev3;
-      jI = 0 - sp->jI_Odd[sp->hilbertIdx];
+      hilbertTempReal = sp->a * I1ForOddPrev3;
+      jI = 0 - sp->jI_Odd[hilbertIdx];
       jI += hilbertTempReal;
-      jI -= sp->prev_jI_Odd;
-      sp->prev_jI_Odd = sp->b * sp->prev_jI_input_Odd;
-      jI += sp->prev_jI_Odd;
-      sp->prev_jI_input_Odd = sp->I1ForOddPrev3;
+      jI -= prev_jI_Odd;
+      prev_jI_Odd = sp->b * prev_jI_input_Odd;
+      jI += prev_jI_Odd;
+      prev_jI_input_Odd = I1ForOddPrev3;
       jI *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * Q1;
-      jQ = 0 - sp->jQ_Odd[sp->hilbertIdx];
+      jQ = 0 - sp->jQ_Odd[hilbertIdx];
       jQ += hilbertTempReal;
-      jQ -= sp->prev_jQ_Odd;
-      sp->prev_jQ_Odd = sp->b * sp->prev_jQ_input_Odd;
-      jQ += sp->prev_jQ_Odd;
-      sp->prev_jQ_input_Odd = Q1;
+      jQ -= prev_jQ_Odd;
+      prev_jQ_Odd = sp->b * prev_jQ_input_Odd;
+      jQ += prev_jQ_Odd;
+      prev_jQ_input_Odd = Q1;
       jQ *= adjustedPrevPeriod;
-      Q2 = fma(0.2, Q1 + jI, 0.8 * sp->prevQ2);
-      I2 = fma(0.2, sp->I1ForOddPrev3 - jQ, 0.8 * sp->prevI2);
+      Q2 = fma(0.2, Q1 + jI, 0.8 * prevQ2);
+      I2 = fma(0.2, I1ForOddPrev3 - jQ, 0.8 * prevI2);
       /* The varaiable I1 is the detrender delayed for
        * 3 price bars.
        *
        * Save the current detrender value for being
        * used by the "even" logic later.
        */
-      sp->I1ForEvenPrev3 = sp->I1ForEvenPrev2;
-      sp->I1ForEvenPrev2 = detrender;
+      I1ForEvenPrev3 = I1ForEvenPrev2;
+      I1ForEvenPrev2 = detrender;
    }
    /* Adjust the period for next price bar */
-   sp->Re = fma(0.8, sp->Re, 0.2 * (fma(I2, sp->prevI2, Q2 * sp->prevQ2)));
-   sp->Im = fma(0.8, sp->Im, 0.2 * (I2 * sp->prevQ2 - Q2 * sp->prevI2));
-   sp->prevQ2 = Q2;
-   sp->prevI2 = I2;
-   tempReal = sp->period;
-   if( sp->Im != 0.0 && sp->Re != 0.0 )
+   Re = fma(0.8, Re, 0.2 * (fma(I2, prevI2, Q2 * prevQ2)));
+   Im = fma(0.8, Im, 0.2 * (I2 * prevQ2 - Q2 * prevI2));
+   prevQ2 = Q2;
+   prevI2 = I2;
+   tempReal = period;
+   if( Im != 0.0 && Re != 0.0 )
    {
-      sp->period = 360.0 / (atan(sp->Im / sp->Re) * sp->rad2Deg);
+      period = 360.0 / (atan(Im / Re) * sp->rad2Deg);
    }
    tempReal2 = 1.5 * tempReal;
-   if( sp->period > tempReal2 )
+   if( period > tempReal2 )
    {
-      sp->period = tempReal2;
+      period = tempReal2;
    }
    tempReal2 = 0.67 * tempReal;
-   if( sp->period < tempReal2 )
+   if( period < tempReal2 )
    {
-      sp->period = tempReal2;
+      period = tempReal2;
    }
-   if( sp->period < 6 )
+   if( period < 6 )
    {
-      sp->period = 6;
-   } else if( sp->period > 50 )
+      period = 6;
+   } else if( period > 50 )
    {
-      sp->period = 50;
+      period = 50;
    }
-   sp->period = fma(0.2, sp->period, 0.8 * tempReal);
-   sp->smoothPeriod = fma(0.67, sp->smoothPeriod, 0.33 * sp->period);
+   period = fma(0.2, period, 0.8 * tempReal);
+   smoothPeriod = fma(0.67, smoothPeriod, 0.33 * period);
    /* Compute Dominant Cycle Phase */
-   DCPeriod = sp->smoothPeriod + 0.5;
+   DCPeriod = smoothPeriod + 0.5;
    DCPeriodInt = (int)DCPeriod;
    realPart = 0.0;
    imagPart = 0.0;
@@ -1950,7 +2014,7 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    for( i = 0; i < DCPeriodInt; i += 1 )
    {
       tempReal = (double)i * sp->constDeg2RadBy360 / (double)DCPeriodInt;
-      tempReal2 = (idx != pkSlot1) ? sp->cb_smoothPrice[idx] : pkVal1;
+      tempReal2 = (idx != pkSlot1) ? cb_smoothPrice[idx] : pkVal1;
       realPart += sin(tempReal) * tempReal2;
       imagPart += cos(tempReal) * tempReal2;
       if( idx == 0 )
@@ -1964,29 +2028,29 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Peek( const TA_HT_DCPHASE_Stream *stream, do
    tempReal = fabs(imagPart);
    if( tempReal > 0.0 )
    {
-      sp->DCPhase = atan(realPart / imagPart) * sp->rad2Deg;
+      DCPhase = atan(realPart / imagPart) * sp->rad2Deg;
    } else if( tempReal <= 0.01 )
    {
       if( realPart < 0.0 )
       {
-         sp->DCPhase -= 90.0;
+         DCPhase -= 90.0;
       } else if( realPart > 0.0 )
       {
-         sp->DCPhase += 90.0;
+         DCPhase += 90.0;
       }
    }
-   sp->DCPhase += 90.0;
+   DCPhase += 90.0;
    /* Compensate for one bar lag of the weighted moving average */
-   sp->DCPhase += 360.0 / sp->smoothPeriod;
+   DCPhase += 360.0 / smoothPeriod;
    if( imagPart < 0.0 )
    {
-      sp->DCPhase += 180.0;
+      DCPhase += 180.0;
    }
-   if( sp->DCPhase > 315.0 )
+   if( DCPhase > 315.0 )
    {
-      sp->DCPhase -= 360.0;
+      DCPhase -= 360.0;
    }
-   *outReal= sp->DCPhase;
+   *outReal= DCPhase;
    return TA_SUCCESS;
 }
 

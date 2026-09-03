@@ -701,12 +701,17 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Update( TA_ACCBANDS_Stream *stream, double inH
 
 TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
-   struct TA_ACCBANDS_Stream scratch;
-   struct TA_ACCBANDS_Stream *sp = &scratch;
+   const struct TA_ACCBANDS_Stream *sp = stream;
    double tempUpper;
    double tempMiddle;
    double tempLower;
    double tempReal;
+   double periodTotalLower;
+   double periodTotalMiddle;
+   double periodTotalUpper;
+   double *ring_trailingIdx_inClose;
+   double *ring_trailingIdx_inHigh;
+   double *ring_trailingIdx_inLow;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -716,7 +721,12 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   periodTotalLower = sp->periodTotalLower;
+   periodTotalMiddle = sp->periodTotalMiddle;
+   periodTotalUpper = sp->periodTotalUpper;
+   ring_trailingIdx_inClose = sp->ring_trailingIdx_inClose;
+   ring_trailingIdx_inHigh = sp->ring_trailingIdx_inHigh;
+   ring_trailingIdx_inLow = sp->ring_trailingIdx_inLow;
    if( sp->ringCap_trailingIdx == 0 )
    {
       pkSlot0 = 0;
@@ -731,31 +741,31 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Peek( const TA_ACCBANDS_Stream *stream, double
    if( !TA_IS_ZERO_SCALED(tempReal, fabs(inHigh) + fabs(inLow)) )
    {
       tempReal = 4 * (inHigh - inLow) / tempReal;
-      sp->periodTotalUpper += inHigh * (1 + tempReal);
-      sp->periodTotalLower += inLow * (1 - tempReal);
+      periodTotalUpper += inHigh * (1 + tempReal);
+      periodTotalLower += inLow * (1 - tempReal);
    } else 
    {
-      sp->periodTotalUpper += inHigh;
-      sp->periodTotalLower += inLow;
+      periodTotalUpper += inHigh;
+      periodTotalLower += inLow;
    }
-   sp->periodTotalMiddle += inClose;
+   periodTotalMiddle += inClose;
    /* Record the current window sums. */
-   tempUpper = sp->periodTotalUpper;
-   tempMiddle = sp->periodTotalMiddle;
-   tempLower = sp->periodTotalLower;
+   tempUpper = periodTotalUpper;
+   tempMiddle = periodTotalMiddle;
+   tempLower = periodTotalLower;
    /* Remove the trailing bar from each running sum. */
-   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) + ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1);
-   if( !TA_IS_ZERO_SCALED(tempReal, fabs((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) + fabs((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1)) )
+   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) + ((sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1);
+   if( !TA_IS_ZERO_SCALED(tempReal, fabs((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) + fabs((sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1)) )
    {
-      tempReal = 4 * (((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) - ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1)) / tempReal;
-      sp->periodTotalUpper -= ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
-      sp->periodTotalLower -= ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
+      tempReal = 4 * (((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) - ((sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1)) / tempReal;
+      periodTotalUpper -= ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0) * (1 + tempReal);
+      periodTotalLower -= ((sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1) * (1 - tempReal);
    } else 
    {
-      sp->periodTotalUpper -= (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0;
-      sp->periodTotalLower -= (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1;
+      periodTotalUpper -= (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inHigh[sp->ringPos_trailingIdx] : pkVal0;
+      periodTotalLower -= (sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inLow[sp->ringPos_trailingIdx] : pkVal1;
    }
-   sp->periodTotalMiddle -= (sp->ringPos_trailingIdx != pkSlot2) ? sp->ring_trailingIdx_inClose[sp->ringPos_trailingIdx] : pkVal2;
+   periodTotalMiddle -= (sp->ringPos_trailingIdx != pkSlot2) ? ring_trailingIdx_inClose[sp->ringPos_trailingIdx] : pkVal2;
    /* Write the three bands. */
    *outRealUpperBand= tempUpper / (double)sp->optInTimePeriod;
    *outRealMiddleBand= tempMiddle / (double)sp->optInTimePeriod;

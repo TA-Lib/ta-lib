@@ -590,15 +590,13 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inR
 
 TA_LIB_API TA_RetCode TA_STOCHRSI_Peek( const TA_STOCHRSI_Stream *stream, double inReal, double *outFastK, double *outFastD )
 {
-   struct TA_STOCHRSI_Stream scratch;
-   struct TA_STOCHRSI_Stream *sp = &scratch;
+   const struct TA_STOCHRSI_Stream *sp = stream;
    double cur_tempRSIBuffer = 0.0;
    double cur_outFastK = 0.0;
    double cur_outFastD = 0.0;
 
    if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

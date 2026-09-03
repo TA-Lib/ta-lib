@@ -592,11 +592,14 @@ TA_LIB_API TA_RetCode TA_VWMA_Update( TA_VWMA_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal, double inVolume, double *outReal )
 {
-   struct TA_VWMA_Stream scratch;
-   struct TA_VWMA_Stream *sp = &scratch;
+   const struct TA_VWMA_Stream *sp = stream;
    double tempPV;
    double tempV;
    double tempReal;
+   double sumPV;
+   double sumV;
+   double *ring_trailingIdx_inReal;
+   double *ring_trailingIdx_inVolume;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -604,11 +607,13 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   sumPV = sp->sumPV;
+   sumV = sp->sumV;
+   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
+   ring_trailingIdx_inVolume = sp->ring_trailingIdx_inVolume;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
-      sp->cur_outReal = *outReal;
       return TA_SUCCESS;
    }
    if( sp->ringCap_trailingIdx == 0 )
@@ -619,20 +624,20 @@ TA_LIB_API TA_RetCode TA_VWMA_Peek( const TA_VWMA_Stream *stream, double inReal,
       pkVal1 = inVolume;
    }
    tempReal = inReal * inVolume;
-   sp->sumPV += tempReal;
-   sp->sumV += inVolume;
+   sumPV += tempReal;
+   sumV += inVolume;
    /* Snapshot both sums before removing the trailing bar, mirroring the
     * add-new / snapshot / subtract-old order of TA_SMA. That order is what
     * makes this bit-identical to SMA(inReal*inVolume)/SMA(inVolume).
     */
-   tempPV = sp->sumPV;
-   tempV = sp->sumV;
+   tempPV = sumPV;
+   tempV = sumV;
    /* Read the trailing values before writing the output, since the caller
     * may pass the same buffer for an input and the output.
     */
-   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) * ((sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1);
-   sp->sumPV -= tempReal;
-   sp->sumV -= (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1;
+   tempReal = ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0) * ((sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1);
+   sumPV -= tempReal;
+   sumV -= (sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inVolume[sp->ringPos_trailingIdx] : pkVal1;
    *outReal= tempPV / (double)sp->optInTimePeriod / (tempV / (double)sp->optInTimePeriod);
    return TA_SUCCESS;
 }

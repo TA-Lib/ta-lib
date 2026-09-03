@@ -606,12 +606,10 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Update( TA_CDLMORNINGSTAR_Stream *stream
 
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Peek( const TA_CDLMORNINGSTAR_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDLMORNINGSTAR_Stream scratch;
-   struct TA_CDLMORNINGSTAR_Stream *sp = &scratch;
+   const struct TA_CDLMORNINGSTAR_Stream *sp = stream;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* black */
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                       /* white real body */
        ((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* gapping down */

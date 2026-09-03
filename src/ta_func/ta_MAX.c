@@ -672,47 +672,57 @@ TA_LIB_API TA_RetCode TA_MAX_Update( TA_MAX_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_MAX_Peek( const TA_MAX_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_MAX_Stream scratch;
-   struct TA_MAX_Stream *sp = &scratch;
+   const struct TA_MAX_Stream *sp = stream;
    double tmp;
+   double highest;
+   int highestIdx;
+   int i;
+   int today;
+   int trailingIdx;
+   double *x_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   if( sp->today >= 1073741824 )
+   highest = sp->highest;
+   highestIdx = sp->highestIdx;
+   i = sp->i;
+   today = sp->today;
+   trailingIdx = sp->trailingIdx;
+   x_inReal = sp->x_inReal;
+   if( today >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      today -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      highestIdx -= rebaseShift;
+      i -= rebaseShift;
    }
-   pkSlot0 = sp->today & sp->xMask;
+   pkSlot0 = today & sp->xMask;
    pkVal0 = inReal;
-   tmp = ((sp->today & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->today & sp->xMask] : pkVal0;
-   if( sp->highestIdx < sp->trailingIdx )
+   tmp = ((today & sp->xMask) != pkSlot0) ? x_inReal[today & sp->xMask] : pkVal0;
+   if( highestIdx < trailingIdx )
    {
-      sp->highestIdx = sp->trailingIdx;
-      sp->highest = ((sp->highestIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->highestIdx & sp->xMask] : pkVal0;
-      sp->i = sp->highestIdx;
+      highestIdx = trailingIdx;
+      highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inReal[highestIdx & sp->xMask] : pkVal0;
+      i = highestIdx;
       TA_UNROLL(4)
-      while( ++sp->i <= sp->today )
+      while( ++i <= today )
       {
-         tmp = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->i & sp->xMask] : pkVal0;
-         if( tmp > sp->highest )
+         tmp = ((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0;
+         if( tmp > highest )
          {
-            sp->highestIdx = sp->i;
-            sp->highest = tmp;
+            highestIdx = i;
+            highest = tmp;
          }
       }
-   } else if( tmp >= sp->highest )
+   } else if( tmp >= highest )
    {
-      sp->highestIdx = sp->today;
-      sp->highest = tmp;
+      highestIdx = today;
+      highest = tmp;
    }
-   *outReal= sp->highest;
+   *outReal= highest;
    return TA_SUCCESS;
 }
 

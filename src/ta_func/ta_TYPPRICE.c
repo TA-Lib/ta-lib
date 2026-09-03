@@ -265,12 +265,10 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Update( TA_TYPPRICE_Stream *stream, double inH
 
 TA_LIB_API TA_RetCode TA_TYPPRICE_Peek( const TA_TYPPRICE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_TYPPRICE_Stream scratch;
-   struct TA_TYPPRICE_Stream *sp = &scratch;
+   const struct TA_TYPPRICE_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose) / 3.0;
    return TA_SUCCESS;

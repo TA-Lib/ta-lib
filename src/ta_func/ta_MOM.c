@@ -416,20 +416,20 @@ TA_LIB_API TA_RetCode TA_MOM_Update( TA_MOM_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_MOM_Peek( const TA_MOM_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_MOM_Stream scratch;
-   struct TA_MOM_Stream *sp = &scratch;
+   const struct TA_MOM_Stream *sp = stream;
+   double *ring_trailingIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    if( sp->ringCap_trailingIdx == 0 )
    {
       pkSlot0 = 0;
       pkVal0 = inReal;
    }
-   *outReal= inReal - ((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0);
+   *outReal= inReal - ((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0);
    return TA_SUCCESS;
 }
 

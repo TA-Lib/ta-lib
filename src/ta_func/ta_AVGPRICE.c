@@ -271,12 +271,10 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Update( TA_AVGPRICE_Stream *stream, double inO
 
 TA_LIB_API TA_RetCode TA_AVGPRICE_Peek( const TA_AVGPRICE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_AVGPRICE_Stream scratch;
-   struct TA_AVGPRICE_Stream *sp = &scratch;
+   const struct TA_AVGPRICE_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow + inClose + inOpen) / 4;
    return TA_SUCCESS;

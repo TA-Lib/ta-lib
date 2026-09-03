@@ -395,15 +395,15 @@ TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, doub
 
 TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
-   struct TA_NVI_Stream scratch;
-   struct TA_NVI_Stream *sp = &scratch;
+   const struct TA_NVI_Stream *sp = stream;
    double tempClose;
    double tempVolume;
    double tempNVI;
+   double prevNVI;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   prevNVI = sp->prevNVI;
    tempClose = inClose;
    tempVolume = inVolume;
    /* prevClose != 0 guards the percentage-change division: a zero previous
@@ -423,14 +423,14 @@ TA_LIB_API TA_RetCode TA_NVI_Peek( const TA_NVI_Stream *stream, double inClose, 
        * fusion detector and silently re-round every bar, not just the
        * overflowing one.
        */
-      tempNVI = sp->prevNVI;
+      tempNVI = prevNVI;
       tempNVI += (tempClose - sp->prevClose) / sp->prevClose * tempNVI;
       if( TA_IS_FINITE(tempNVI) )
       {
-         sp->prevNVI = tempNVI;
+         prevNVI = tempNVI;
       }
    }
-   *outReal= sp->prevNVI;
+   *outReal= prevNVI;
    return TA_SUCCESS;
 }
 

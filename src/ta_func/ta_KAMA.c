@@ -997,21 +997,28 @@ TA_LIB_API TA_RetCode TA_KAMA_Update( TA_KAMA_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_KAMA_Stream scratch;
-   struct TA_KAMA_Stream *sp = &scratch;
+   const struct TA_KAMA_Stream *sp = stream;
    double tempReal;
    double tempReal2;
    double periodROC;
+   int nullRun;
+   double prevKAMA;
+   double sumROC1;
+   double trailingValue;
+   double *ring_trailingIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   nullRun = sp->nullRun;
+   prevKAMA = sp->prevKAMA;
+   sumROC1 = sp->sumROC1;
+   trailingValue = sp->trailingValue;
+   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
-      sp->cur_outReal = *outReal;
       return TA_SUCCESS;
    }
    if( sp->ringCap_trailingIdx == 0 )
@@ -1020,14 +1027,14 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
       pkVal0 = inReal;
    }
    tempReal = inReal;
-   tempReal2 = (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   tempReal2 = (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
    periodROC = tempReal - tempReal2;
    /* Adjust sumROC1:
     *  - Remove trailing ROC1
     *  - Add new ROC1
     */
-   sp->sumROC1 -= fabs(sp->trailingValue - tempReal2);
-   sp->sumROC1 += fabs(tempReal - sp->lag1_inReal);
+   sumROC1 -= fabs(trailingValue - tempReal2);
+   sumROC1 += fabs(tempReal - sp->lag1_inReal);
    /* Once a whole window of flat bars has gone by, every 1-day change it
     * spans is exactly zero, so the sum is known to be exactly zero and the
     * residue can be dropped. That is what lets the efficiency ratio be
@@ -1036,27 +1043,27 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
     */
    if( tempReal - sp->lag1_inReal == 0.0 )
    {
-      sp->nullRun += 1;
+      nullRun += 1;
    } else 
    {
-      sp->nullRun = 0;
+      nullRun = 0;
    }
-   if( sp->nullRun >= sp->optInTimePeriod )
+   if( nullRun >= sp->optInTimePeriod )
    {
-      sp->nullRun = sp->optInTimePeriod;
-      sp->sumROC1 = 0.0;
+      nullRun = sp->optInTimePeriod;
+      sumROC1 = 0.0;
    }
    /* Save the trailing value. Do this because inReal
     * and outReal can be pointers to the same buffer.
     */
-   sp->trailingValue = tempReal2;
+   trailingValue = tempReal2;
    /* Calculate the efficiency ratio */
-   if( sp->sumROC1 <= periodROC )
+   if( sumROC1 <= periodROC )
    {
       tempReal = 1.0;
    } else 
    {
-      tempReal = fabs(periodROC / sp->sumROC1);
+      tempReal = fabs(periodROC / sumROC1);
    }
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
@@ -1064,8 +1071,8 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
    /* Calculate the KAMA like an EMA, using the
     * smoothing constant as the adaptive factor.
     */
-   sp->prevKAMA = fma(inReal - sp->prevKAMA, tempReal, sp->prevKAMA);
-   *outReal= sp->prevKAMA;
+   prevKAMA = fma(inReal - prevKAMA, tempReal, prevKAMA);
+   *outReal= prevKAMA;
    return TA_SUCCESS;
 }
 

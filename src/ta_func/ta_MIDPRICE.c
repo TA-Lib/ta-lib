@@ -881,10 +881,18 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Update( TA_MIDPRICE_Stream *stream, double inH
 
 TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
-   struct TA_MIDPRICE_Stream scratch;
-   struct TA_MIDPRICE_Stream *sp = &scratch;
+   const struct TA_MIDPRICE_Stream *sp = stream;
    double tmpLow;
    double tmpHigh;
+   double highest;
+   int highestIdx;
+   int i;
+   double lowest;
+   int lowestIdx;
+   int today;
+   int trailingIdx;
+   double *x_inHigh;
+   double *x_inLow;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -892,63 +900,71 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   if( sp->today >= 1073741824 )
+   highest = sp->highest;
+   highestIdx = sp->highestIdx;
+   i = sp->i;
+   lowest = sp->lowest;
+   lowestIdx = sp->lowestIdx;
+   today = sp->today;
+   trailingIdx = sp->trailingIdx;
+   x_inHigh = sp->x_inHigh;
+   x_inLow = sp->x_inLow;
+   if( today >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      today -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      highestIdx -= rebaseShift;
+      i -= rebaseShift;
+      lowestIdx -= rebaseShift;
    }
-   pkSlot0 = sp->today & sp->xMask;
+   pkSlot0 = today & sp->xMask;
    pkVal0 = inHigh;
-   pkSlot1 = sp->today & sp->xMask;
+   pkSlot1 = today & sp->xMask;
    pkVal1 = inLow;
-   tmpHigh = ((sp->today & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->today & sp->xMask] : pkVal0;
-   tmpLow = ((sp->today & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->today & sp->xMask] : pkVal1;
-   if( sp->highestIdx < sp->trailingIdx )
+   tmpHigh = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
+   tmpLow = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
+   if( highestIdx < trailingIdx )
    {
-      sp->highestIdx = sp->trailingIdx;
-      sp->highest = ((sp->highestIdx & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->highestIdx & sp->xMask] : pkVal0;
-      sp->i = sp->highestIdx;
+      highestIdx = trailingIdx;
+      highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
+      i = highestIdx;
       TA_UNROLL(4)
-      while( ++sp->i <= sp->today )
+      while( ++i <= today )
       {
-         tmpHigh = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->i & sp->xMask] : pkVal0;
-         if( tmpHigh > sp->highest )
+         tmpHigh = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
+         if( tmpHigh > highest )
          {
-            sp->highestIdx = sp->i;
-            sp->highest = tmpHigh;
+            highestIdx = i;
+            highest = tmpHigh;
          }
       }
-   } else if( tmpHigh >= sp->highest )
+   } else if( tmpHigh >= highest )
    {
-      sp->highestIdx = sp->today;
-      sp->highest = tmpHigh;
+      highestIdx = today;
+      highest = tmpHigh;
    }
-   if( sp->lowestIdx < sp->trailingIdx )
+   if( lowestIdx < trailingIdx )
    {
-      sp->lowestIdx = sp->trailingIdx;
-      sp->lowest = ((sp->lowestIdx & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->lowestIdx & sp->xMask] : pkVal1;
-      sp->i = sp->lowestIdx;
+      lowestIdx = trailingIdx;
+      lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
+      i = lowestIdx;
       TA_UNROLL(4)
-      while( ++sp->i <= sp->today )
+      while( ++i <= today )
       {
-         tmpLow = ((sp->i & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->i & sp->xMask] : pkVal1;
-         if( tmpLow < sp->lowest )
+         tmpLow = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
+         if( tmpLow < lowest )
          {
-            sp->lowestIdx = sp->i;
-            sp->lowest = tmpLow;
+            lowestIdx = i;
+            lowest = tmpLow;
          }
       }
-   } else if( tmpLow <= sp->lowest )
+   } else if( tmpLow <= lowest )
    {
-      sp->lowestIdx = sp->today;
-      sp->lowest = tmpLow;
+      lowestIdx = today;
+      lowest = tmpLow;
    }
-   *outReal= (sp->highest + sp->lowest) / 2.0;
+   *outReal= (highest + lowest) / 2.0;
    return TA_SUCCESS;
 }
 

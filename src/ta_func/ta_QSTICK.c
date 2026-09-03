@@ -471,23 +471,25 @@ TA_LIB_API TA_RetCode TA_QSTICK_Update( TA_QSTICK_Stream *stream, double inOpen,
 
 TA_LIB_API TA_RetCode TA_QSTICK_Peek( const TA_QSTICK_Stream *stream, double inOpen, double inClose, double *outReal )
 {
-   struct TA_QSTICK_Stream scratch;
-   struct TA_QSTICK_Stream *sp = &scratch;
+   const struct TA_QSTICK_Stream *sp = stream;
    double tempReal;
+   double periodTotal;
+   double *ring_trailingIdx_derived;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   periodTotal = sp->periodTotal;
+   ring_trailingIdx_derived = sp->ring_trailingIdx_derived;
    if( sp->ringCap_trailingIdx == 0 )
    {
       pkSlot0 = 0;
       pkVal0 = (double)(inClose - inOpen);
    }
-   sp->periodTotal += (double)(inClose - inOpen);
-   tempReal = sp->periodTotal;
-   sp->periodTotal -= (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_derived[sp->ringPos_trailingIdx] : pkVal0;
+   periodTotal += (double)(inClose - inOpen);
+   tempReal = periodTotal;
+   periodTotal -= (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_derived[sp->ringPos_trailingIdx] : pkVal0;
    *outReal= tempReal / (double)sp->optInTimePeriod;
    return TA_SUCCESS;
 }

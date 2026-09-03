@@ -841,33 +841,49 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Update( TA_LINEARREG_Stream *stream, double i
 
 TA_LIB_API TA_RetCode TA_LINEARREG_Peek( const TA_LINEARREG_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_LINEARREG_Stream scratch;
-   struct TA_LINEARREG_Stream *sp = &scratch;
+   const struct TA_LINEARREG_Stream *sp = stream;
    double m;
    double b;
    int windowStart;
    double tempValue1;
    double tempValue2;
    double weightedTrailing;
+   double SumXY;
+   double SumY;
+   int barsSinceReseed;
+   int j;
+   double sumAbs;
+   int today;
+   int trailingIdx;
+   double trailingValue;
+   double *x_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   if( sp->today >= 1073741824 )
+   SumXY = sp->SumXY;
+   SumY = sp->SumY;
+   barsSinceReseed = sp->barsSinceReseed;
+   j = sp->j;
+   sumAbs = sp->sumAbs;
+   today = sp->today;
+   trailingIdx = sp->trailingIdx;
+   trailingValue = sp->trailingValue;
+   x_inReal = sp->x_inReal;
+   if( today >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->j -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      today -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      j -= rebaseShift;
    }
-   pkSlot0 = sp->today & sp->xMask;
+   pkSlot0 = today & sp->xMask;
    pkVal0 = inReal;
-   weightedTrailing = (double)sp->optInTimePeriod * sp->trailingValue;
-   sp->SumXY = sp->SumXY + sp->SumY - weightedTrailing;
-   sp->SumY = sp->SumY - sp->trailingValue + (((sp->today & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->today & sp->xMask] : pkVal0);
-   sp->sumAbs = sp->sumAbs - fabs(sp->trailingValue) + fabs(((sp->today & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->today & sp->xMask] : pkVal0);
+   weightedTrailing = (double)sp->optInTimePeriod * trailingValue;
+   SumXY = SumXY + SumY - weightedTrailing;
+   SumY = SumY - trailingValue + (((today & sp->xMask) != pkSlot0) ? x_inReal[today & sp->xMask] : pkVal0);
+   sumAbs = sumAbs - fabs(trailingValue) + fabs(((today & sp->xMask) != pkSlot0) ? x_inReal[today & sp->xMask] : pkVal0);
    /* Re-anchor: rebuild both sums from the window itself. #103 left them as
     * running totals that are never rebuilt, so each bar's rounding joins a
     * residue no later bar can subtract -- unbounded in the length of the
@@ -927,28 +943,28 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Peek( const TA_LINEARREG_Stream *stream, doub
     * today-lookbackTotal, which is >= outIdx because startIdx was clamped
     * to at least lookbackTotal.
     */
-   sp->barsSinceReseed -= 1;
-   if( sp->barsSinceReseed <= 0 || fabs(weightedTrailing) > 100.0 * sp->sumAbs )
+   barsSinceReseed -= 1;
+   if( barsSinceReseed <= 0 || fabs(weightedTrailing) > 100.0 * sumAbs )
    {
-      sp->barsSinceReseed = 32 * sp->optInTimePeriod;
-      windowStart = sp->today - sp->lookbackTotal;
-      sp->SumY = 0;
-      sp->SumXY = 0;
-      sp->sumAbs = 0;
+      barsSinceReseed = 32 * sp->optInTimePeriod;
+      windowStart = today - sp->lookbackTotal;
+      SumY = 0;
+      SumXY = 0;
+      sumAbs = 0;
       tempValue2 = (double)sp->lookbackTotal;
-      for( sp->j = windowStart; sp->j <= sp->today; sp->j += 1 )
+      for( j = windowStart; j <= today; j += 1 )
       {
-         tempValue1 = ((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->j & sp->xMask] : pkVal0;
-         sp->SumY += tempValue1;
-         sp->SumXY += tempValue2 * tempValue1;
-         sp->sumAbs += fabs(tempValue1);
+         tempValue1 = ((j & sp->xMask) != pkSlot0) ? x_inReal[j & sp->xMask] : pkVal0;
+         SumY += tempValue1;
+         SumXY += tempValue2 * tempValue1;
+         sumAbs += fabs(tempValue1);
          tempValue2 -= 1.0;
       }
    }
-   m = (sp->optInTimePeriod * sp->SumXY - sp->SumX * sp->SumY) / sp->Divisor;
-   b = (sp->SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
-   sp->trailingValue = ((sp->trailingIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->trailingIdx & sp->xMask] : pkVal0;
-   sp->trailingIdx += 1;
+   m = (sp->optInTimePeriod * SumXY - sp->SumX * SumY) / sp->Divisor;
+   b = (SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
+   trailingValue = ((trailingIdx & sp->xMask) != pkSlot0) ? x_inReal[trailingIdx & sp->xMask] : pkVal0;
+   trailingIdx += 1;
    *outReal= fma(m, (double)(sp->optInTimePeriod - 1), b);
    return TA_SUCCESS;
 }

@@ -395,15 +395,15 @@ TA_LIB_API TA_RetCode TA_PVI_Update( TA_PVI_Stream *stream, double inClose, doub
 
 TA_LIB_API TA_RetCode TA_PVI_Peek( const TA_PVI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
-   struct TA_PVI_Stream scratch;
-   struct TA_PVI_Stream *sp = &scratch;
+   const struct TA_PVI_Stream *sp = stream;
    double tempClose;
    double tempVolume;
    double tempPVI;
+   double prevPVI;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   prevPVI = sp->prevPVI;
    tempClose = inClose;
    tempVolume = inVolume;
    /* prevClose != 0 guards the percentage-change division: a zero previous
@@ -423,14 +423,14 @@ TA_LIB_API TA_RetCode TA_PVI_Peek( const TA_PVI_Stream *stream, double inClose, 
        * fusion detector and silently re-round every bar, not just the
        * overflowing one.
        */
-      tempPVI = sp->prevPVI;
+      tempPVI = prevPVI;
       tempPVI += (tempClose - sp->prevClose) / sp->prevClose * tempPVI;
       if( TA_IS_FINITE(tempPVI) )
       {
-         sp->prevPVI = tempPVI;
+         prevPVI = tempPVI;
       }
    }
-   *outReal= sp->prevPVI;
+   *outReal= prevPVI;
    return TA_SUCCESS;
 }
 

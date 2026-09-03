@@ -6,9 +6,8 @@
 //! - `struct TA_<NAME>_Stream` — params, carried scalars, lag slots;
 //! - `static void TA_<NAME>_StepImpl(...)` — the transition function (the batch
 //!   steady-loop body on rewritten IR) that `Update` runs on the live state;
-//!   `Peek` inlines the same transition rewritten to commit nothing into the
-//!   handle's BUFFERS, over a stack copy of the struct that carries the scalars
-//!   and the in-struct arrays;
+//!   `Peek` inlines the same transition rewritten to commit nothing, against a
+//!   `const` binding of the caller's own handle;
 //! - `TA_LIB_API TA_RetCode TA_<NAME>_Open/Update/Peek/Close` — the public
 //!   lifecycle (proposal §"API shape per backend").
 //!
@@ -25,7 +24,7 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 
 use crate::helper_registry::HelperRegistry;
-use crate::ir::{EnumDef, Expr, FuncDef, ParamType, Statement};
+use crate::ir::{EnumDef, Expr, FuncDef, ParamType, Statement, VarType};
 use crate::registry::Registry;
 use crate::streaming::{self, circ_storages, CircState, DispatchPlan, StreamModel, StreamPlan};
 
@@ -1498,14 +1497,15 @@ fn emit_composed_frame_body(
         };
         let transition = streaming::build_transition(model, &names)
             .unwrap_or_else(|e| panic!("streaming transition: {e}"));
-        let (transition, temps, shadow_decls) = match frame {
-            StepFrame::Commit => (transition, model.temps.clone(), String::new()),
+        let (transition, temps, shadow_decls, locals) = match frame {
+            StepFrame::Commit => (transition, model.temps.clone(), String::new(), Vec::new()),
             StepFrame::Peek => {
                 let pt = streaming::peek_transition_widest(model, &names, &transition, None)
                     .unwrap_or_else(|e| panic!("{}: {e}", func.name));
-                let body = answer_bare_returns(&pt.body);
-                let temps = streaming::temps_used(&model.temps, &body);
-                (body, temps, peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3))
+                let answered = answer_bare_returns(&pt.body);
+                let (locals, pt) = peek_localized(model, &names, pt, &answered);
+                let temps = streaming::temps_used(&model.temps, &pt.body);
+                (pt.body, temps, peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3), locals)
             }
         };
         // Into `decls`, both of them: the extrema rebase below is a STATEMENT,
@@ -1514,8 +1514,14 @@ fn emit_composed_frame_body(
         for (name, ty) in &temps {
             let _ = writeln!(decls, "   {};", c_decl(ty, name));
         }
+        for (name, ty) in &locals {
+            let _ = writeln!(decls, "   {};", c_decl(ty, name));
+        }
         decls.push_str(&shadow_decls);
-        emit_extrema_rebase(o, model);
+        for (name, ty) in &locals {
+            o.push_str(&peek_seed("   ", name, ty, &streaming::NameMap::state(&names, name)));
+        }
+        emit_extrema_rebase(o, model, frame);
         let mut body_c = String::new();
         for s in &transition {
             body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
@@ -1685,9 +1691,8 @@ fn emit_composed(
 
     // --- Update / Peek / Close ---------------------------------------------------
     emit_update(o, func, true);
-    // Peek: the scratch copy carries the scalars and the sub-handle pointers;
-    // the peek frame is what keeps every buffer behind those pointers read-only,
-    // and routes each sub-call to the callee's own `Peek`.
+    // Peek: the frame keeps every buffer behind the sub-handle pointers
+    // read-only, and routes each sub-call to the callee's own `Peek`.
     {
         let (mut decls, mut body) = (String::new(), String::new());
         emit_composed_frame_body(
@@ -2937,7 +2942,7 @@ fn emit_dual_state_struct(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: 
     // Union of the two modes' SCALAR state, mode-A order first, dedup by name.
     let mut seen: std::collections::BTreeMap<String, &crate::ir::VarType> =
         std::collections::BTreeMap::new();
-    let mut order: Vec<(String, crate::ir::VarType)> = Vec::new();
+    let mut order: Vec<(String, VarType)> = Vec::new();
     for (name, ty) in ma.state.iter().chain(mb.state.iter()) {
         if let Some(prev) = seen.get(name) {
             assert!(
@@ -3144,8 +3149,7 @@ fn collect_assigned_targets(s: &Statement, out: &mut std::collections::BTreeSet<
 
 /// Emit the full dual-mode stream section: one union struct, one predicate-
 /// branching StepImpl, one predicate-branching OpenInternal (+ public Open
-/// wrapper), and Update/Peek/Close reused from the loop tier (mode-independent
-/// for scalar modes — the stored param rides the struct copy through Peek).
+/// wrapper), and Update/Peek/Close reused from the loop tier.
 #[allow(clippy::too_many_arguments)]
 fn emit_dual_mode(
     o: &mut String,
@@ -3235,7 +3239,7 @@ fn emit_dual_mode(
 /// A dual-mode frame's statements: the identity short-circuit, then one arm per
 /// mode. Every declaration it needs lives inside an arm's own block, so unlike
 /// the single-model frame this emits statements only — which is what lets
-/// [`emit_peek`] drop it in after the handle copy.
+/// [`emit_peek`] drop it in below the argument guards.
 #[allow(clippy::too_many_arguments)]
 fn emit_dual_frame_body(
     o: &mut String,
@@ -3392,48 +3396,70 @@ fn emit_state_struct(o: &mut String, func: &FuncDef, model: &StreamModel) {
 /// non-scalar state — TRIMA's odd/even arms share the same rings — so the union
 /// emits one model's set).
 fn emit_nonscalar_struct_fields(o: &mut String, func: &FuncDef, model: &StreamModel) {
+    for (name, ty) in nonscalar_struct_fields(func, model) {
+        let _ = writeln!(o, "   {};", c_decl(&ty, &name));
+    }
+}
+
+/// The struct's non-`model.state` fields, in declaration order, with the type
+/// each is declared with.
+///
+/// One list, two readers: [`emit_nonscalar_struct_fields`] renders it, and the
+/// peek localizer types a local against it. A second hand-written type map
+/// would be a silent miscompile the first time the two disagreed about an
+/// `int`.
+fn nonscalar_struct_fields(func: &FuncDef, model: &StreamModel) -> Vec<(String, VarType)> {
+    let mut out: Vec<(String, VarType)> = Vec::new();
+    let out_ty = |n: &str| {
+        if out_c_type(func, n) == "int" { VarType::Integer } else { VarType::Real }
+    };
     for name in &model.out_feedback {
-        let _ = writeln!(o, "   {} lastOut_{name};", out_c_type(func, name));
+        out.push((format!("lastOut_{name}"), out_ty(name)));
     }
     for lag in &model.lags {
         for k in 1..=lag.depth {
-            let _ = writeln!(o, "   double {};", StreamModel::lag_field(&lag.array, k));
+            out.push((StreamModel::lag_field(&lag.array, k), VarType::Real));
         }
     }
     for ring in model.rings() {
         let v = &ring.var;
-        let _ = writeln!(o, "   int ringPos_{v};");
-        let _ = writeln!(o, "   int ringCap_{v};");
+        out.push((format!("ringPos_{v}"), VarType::Integer));
+        out.push((format!("ringCap_{v}"), VarType::Integer));
         if ring.back > 0 {
-            let _ = writeln!(o, "   int ringLag_{v};");
+            out.push((format!("ringLag_{v}"), VarType::Integer));
         }
         for arr in &ring.arrays {
-            let _ = writeln!(o, "   double *ring_{v}_{arr};");
+            out.push((format!("ring_{v}_{arr}"), VarType::RealPointer));
         }
     }
     for win in model.windows() {
         let v = &win.var;
-        let _ = writeln!(o, "   int winPos_{v};");
-        let _ = writeln!(o, "   int winCap_{v};");
+        out.push((format!("winPos_{v}"), VarType::Integer));
+        out.push((format!("winCap_{v}"), VarType::Integer));
         for arr in &win.arrays {
-            let _ = writeln!(o, "   double *win_{v}_{arr};");
+            out.push((format!("win_{v}_{arr}"), VarType::RealPointer));
         }
     }
     for circ in model.circs() {
-        let _ = writeln!(o, "   int cbSize_{};", circ.id);
+        out.push((format!("cbSize_{}", circ.id), VarType::Integer));
         for (storage, ty) in circ_storages(circ) {
-            let et = if matches!(ty, crate::ir::VarType::Integer) { "int" } else { "double" };
-            let _ = writeln!(o, "   {et} *cb_{storage};");
+            let elem = if matches!(ty, VarType::Integer) {
+                VarType::IntPointer
+            } else {
+                VarType::RealPointer
+            };
+            out.push((format!("cb_{storage}"), elem));
         }
     }
     if let Some(ex) = model.extrema() {
-        let _ = writeln!(o, "   int xCap;");
-        let _ = writeln!(o, "   int xPhys;");
-        let _ = writeln!(o, "   int xMask;");
+        out.push(("xCap".to_string(), VarType::Integer));
+        out.push(("xPhys".to_string(), VarType::Integer));
+        out.push(("xMask".to_string(), VarType::Integer));
         for arr in &ex.arrays {
-            let _ = writeln!(o, "   double *x_{arr};");
+            out.push((format!("x_{arr}"), VarType::RealPointer));
         }
     }
+    out
 }
 
 fn emit_state_struct_ex(o: &mut String, func: &FuncDef, model: &StreamModel, extra: &str) {
@@ -3525,11 +3551,10 @@ fn emit_release_dual(o: &mut String, func: &FuncDef, ma: &StreamModel, mb: &Stre
     emit_release_from(o, func, &lines);
 }
 
-/// Which of the two transitions a step body renders. They differ only in what
-/// they do with a handle buffer: `Commit` stores into it, `Peek` carries the
-/// store in two locals and selects them back on any load that could reach the
-/// slot — see [`streaming::peek_transition`]. Everything else, the election
-/// included, is identical, which is what keeps the two bit-for-bit equal.
+/// Which of the two transitions a step body renders. `Commit` stores into the
+/// handle; `Peek` carries every store in a local — a buffer element in the
+/// shadow pair [`streaming::peek_transition`] builds, a state field in a bind of
+/// its own name — so that nothing it computes reaches the caller's handle.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum StepFrame {
     Commit,
@@ -3885,17 +3910,267 @@ fn apply_step_scalars(transition: &[Statement], elected: &[String]) -> Vec<State
     )
 }
 
+/// What [`localize_peek_state_writes`] answers: the fields moved to a local, the
+/// buffer bases bound beside them, and the rewritten frame.
+type PeekLocals = (Vec<String>, Vec<(String, VarType)>, Vec<Statement>);
+
+/// The state fields a peek frame writes, and the frame with every mention of
+/// them moved to a bare local.
+///
+/// This is what lets `sp` point straight at the caller's handle: a frame that
+/// stores nothing through it cannot commit, so there is nothing to copy first.
+/// The local keeps the field's OWN name, because [`super::fma::stream_base`]
+/// strips `sp->` before classifying an operand — any other spelling would
+/// silently move an FMA site.
+///
+/// `None` where a written field's bare name would collide with a bar input or
+/// an output: the local would shadow the parameter instead of failing to
+/// compile.
+fn localize_peek_state_writes(
+    func: &FuncDef,
+    transition: &[Statement],
+    extra: &[String],
+    buffers: &[(String, bool)],
+) -> Option<PeekLocals> {
+    fn note(e: &Expr, out: &mut std::collections::BTreeSet<String>) {
+        if let Expr::Var(v) = e {
+            if let Some(bare) = v.strip_prefix("sp->") {
+                out.insert(bare.to_string());
+            }
+        }
+    }
+    fn targets(list: &[Statement], out: &mut std::collections::BTreeSet<String>) {
+        for st in list {
+            if let Statement::Assign { target, .. } = st {
+                note(target, out);
+                // A fixed-size array field is named through its subscript,
+                // which the `Var` arm never sees. Heap buffers are excluded by
+                // the caller — those the peek frame never writes at all.
+                if let Expr::ArrayAccess(n, _) = target {
+                    note(&Expr::Var(n.clone()), out);
+                }
+            }
+            for b in nested_stmt_bodies(st) {
+                targets(b, out);
+            }
+        }
+    }
+    let mut written: std::collections::BTreeSet<String> = extra.iter().cloned().collect();
+    for st in transition {
+        streaming::walk_stmt_exprs(st, &mut |top| {
+            streaming::walk_expr(top, &mut |e| match e {
+                Expr::PostIncrement(i)
+                | Expr::PostDecrement(i)
+                | Expr::PreIncrement(i)
+                | Expr::PreDecrement(i) => note(i, &mut written),
+                _ => {}
+            });
+        });
+    }
+    targets(transition, &mut written);
+    let mut names_read: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for st in transition {
+        streaming::walk_stmt_exprs(st, &mut |e| streaming::expr_var_names(e, &mut names_read));
+    }
+    for (b, _) in buffers {
+        if let Some(bare) = b.strip_prefix("sp->") {
+            written.remove(bare);
+        }
+    }
+
+    // The handle's BUFFER BASES, which the frame reads and — by the shadow
+    // rewrite's contract — never writes. The copy this replaces put them in
+    // front of SRA, so each was a register for the whole frame; read through a
+    // pointer instead, they are rematerialized once per unrolled arm of a
+    // rescan.
+    //
+    // Bases only: binding every field the frame reads spills, and lands ABOVE
+    // the instruction count the copy itself cost.
+    let mut bases: Vec<(String, VarType)> = buffers
+        .iter()
+        .filter_map(|(b, int_elem)| {
+            let bare = b.strip_prefix("sp->")?;
+            let ty = if *int_elem { VarType::IntPointer } else { VarType::RealPointer };
+            names_read.contains(b).then(|| (bare.to_string(), ty))
+        })
+        .collect();
+    bases.retain(|(n, _)| !written.contains(n));
+
+    let mut taken: std::collections::BTreeSet<String> =
+        streaming::input_array_names(func).into_iter().collect();
+    taken.extend(func.outputs.iter().map(|o| o.name.clone()));
+    if written.iter().any(|w| taken.contains(w)) {
+        return None;
+    }
+    bases.retain(|(n, _)| !taken.contains(n));
+    let bare: std::collections::BTreeMap<String, String> = written
+        .iter()
+        .chain(bases.iter().map(|(n, _)| n))
+        .map(|w| (format!("sp->{w}"), w.clone()))
+        .collect();
+    let out = streaming::rewrite_stmts(
+        transition,
+        &|e| match e {
+            Expr::Var(ref v) => bare.get(v).map_or(e, |b| Expr::Var(b.clone())),
+            Expr::ArrayAccess(ref v, ref i) => match bare.get(v) {
+                Some(b) => Expr::ArrayAccess(b.clone(), i.clone()),
+                None => e,
+            },
+            other => other,
+        },
+        &|st| Some(st),
+    );
+    Some((written.into_iter().collect(), bases, out))
+}
+
+/// The statement lists nested inside `st`.
+fn nested_stmt_bodies(st: &Statement) -> Vec<&[Statement]> {
+    match st {
+        Statement::While { body, .. }
+        | Statement::DoWhile { body, .. }
+        | Statement::For { body, .. }
+        | Statement::Block { body } => vec![body.as_slice()],
+        Statement::ForC { init, update, body, .. } => vec![
+            std::slice::from_ref(init.as_ref()),
+            std::slice::from_ref(update.as_ref()),
+            body.as_slice(),
+        ],
+        Statement::If { then_body, else_body, .. } => {
+            vec![then_body.as_slice(), else_body.as_slice()]
+        }
+        Statement::Switch { cases, default, .. } => {
+            let mut v: Vec<&[Statement]> = cases.iter().map(|(_, b)| b.as_slice()).collect();
+            v.push(default.as_slice());
+            v
+        }
+        _ => Vec::new(),
+    }
+}
+
+/// One localized field's bind, at the top of the frame.
+///
+/// A fixed-size array field takes a `memcpy` because C cannot bind an array by
+/// assignment. The copy is bounded — the dimension is the indicator's, never
+/// the period's — which is the whole of what a peek frame promises about its
+/// cost. A period-sized buffer never reaches here; the shadow rewrite has it.
+fn peek_seed(pad: &str, name: &str, ty: &VarType, from: &str) -> String {
+    match ty {
+        VarType::RealArray(_) | VarType::IntArray(_) => {
+            format!("{pad}memcpy( {name}, {from}, sizeof({name}) );\n")
+        }
+        _ => format!("{pad}{name} = {from};\n"),
+    }
+}
+
+/// The declared type of one localizable field. The state struct is the only
+/// authority: a field it does not declare has no local to move to, and reaching
+/// here with one means the transition writes something the handle never held.
+fn peek_field_type(model: &StreamModel, name: &str) -> Option<VarType> {
+    if let Some((_, ty)) = model.state.iter().find(|(n, _)| n == name) {
+        return Some(ty.clone());
+    }
+    if let Some(base) = name.strip_prefix("cur_") {
+        if model.func.outputs.iter().any(|o| o.name == base) {
+            return Some(if out_c_type(model.func, base) == "int" {
+                VarType::Integer
+            } else {
+                VarType::Real
+            });
+        }
+    }
+    nonscalar_struct_fields(model.func, model).into_iter().find(|(n, _)| n == name).map(|(_, t)| t)
+}
+
+/// [`peek_field_type`] for a field the frame WRITES, where not knowing the type
+/// is fatal: the write has to move to a local or the `const` binding rejects it,
+/// and a name that reaches here is one the struct never declared.
+fn peek_local_type(model: &StreamModel, name: &str) -> VarType {
+    peek_field_type(model, name).unwrap_or_else(|| {
+        panic!("{}: peek would localize {name}, which the stream struct does not declare", model.func.name)
+    })
+}
+
+/// One peek frame localized: every state field it writes bound to a local, and
+/// every store nothing reads dropped along with the declaration it would have
+/// needed.
+///
+/// The purge is not cosmetic here. Localizing turns a store into the handle
+/// that nothing read into a store to a local that nothing reads, which is
+/// `-Wunused-but-set-variable`; and a shadow whose only store goes with it
+/// leaves its `pkSlot`/`pkVal` pair unread in the same way.
+fn peek_localized(
+    model: &StreamModel,
+    names: &dyn streaming::NameMap,
+    pt: streaming::PeekTransition,
+    body: &[Statement],
+) -> (Vec<(String, VarType)>, streaming::PeekTransition) {
+
+    // The extrema rebase moves the cursor before the first store, so its
+    // targets are localized with the transition's own.
+    let mut rebased: Vec<String> = Vec::new();
+    if let Some(ex) = model.extrema() {
+        rebased.push(model.cursor.clone());
+        rebased.push(ex.trailing.clone());
+        rebased.extend(ex.index_vars.iter().cloned());
+    }
+    let bufs = streaming::transition_buffers(model, names);
+    let (written, bases, body) = localize_peek_state_writes(model.func, body, &rebased, &bufs)
+        .unwrap_or_else(|| {
+            panic!("{}: a peek local would shadow a bar input or an output", model.func.name)
+        });
+    let typed: Vec<(String, VarType)> =
+        written.iter().map(|n| (n.clone(), peek_local_type(model, n))).collect();
+    // Read-only binds carry no store, so the purge has nothing to say about
+    // them; `temps_used` still drops one whose only reader the purge deleted.
+    let bound = bases;
+    // The rebase is emitted as text beside the frame, so no statement shows the
+    // read that keeps its targets alive; hold them out of the purge entirely.
+    let pinned: std::collections::BTreeSet<&str> = rebased.iter().map(String::as_str).collect();
+    let mut purgeable: Vec<(String, VarType)> =
+        typed.iter().filter(|(n, _)| !pinned.contains(n.as_str())).cloned().collect();
+    for sh in &pt.shadows {
+        purgeable.push((sh.slot_var.clone(), VarType::Integer));
+        purgeable.push((
+            sh.val_var.clone(),
+            if sh.int_elem { VarType::Integer } else { VarType::Real },
+        ));
+    }
+    for t in &pt.slot_temps {
+        purgeable.push((t.clone(), VarType::Integer));
+    }
+    let body = streaming::purge_dead_temp_stores(&body, &purgeable);
+    let kept: std::collections::BTreeSet<String> =
+        streaming::temps_used(&purgeable, &body).into_iter().map(|(n, _)| n).collect();
+    let read_kept: std::collections::BTreeSet<String> =
+        streaming::temps_used(&bound, &body).into_iter().map(|(n, _)| n).collect();
+    let live: Vec<(String, VarType)> = typed
+        .into_iter()
+        .filter(|(n, _)| pinned.contains(n.as_str()) || kept.contains(n))
+        .chain(bound.into_iter().filter(|(n, _)| read_kept.contains(n)))
+        .collect();
+    let pt = streaming::PeekTransition {
+        body,
+        shadows: pt
+            .shadows
+            .into_iter()
+            .filter(|sh| kept.contains(&sh.slot_var) || kept.contains(&sh.val_var))
+            .collect(),
+        slot_temps: pt.slot_temps.into_iter().filter(|t| kept.contains(t)).collect(),
+    };
+    (live, pt)
+}
+
 /// The per-bar step body for ONE model at a given indent, split into the block's
 /// DECLARATIONS and its STATEMENTS. The peek frame is emitted straight into
-/// `Peek`, whose own `scratch`/`sp` declarations and argument guards sit between
-/// the two halves, and C89 wants every declaration in a block ahead of every
-/// statement in it. Shared by the single-model [`emit_step`] and the dual-mode
-/// step (called once per arm inside the `if (sp->param ...)` branch, at a deeper
+/// `Peek`, whose own `sp` binding and argument guards sit between the two
+/// halves, and C89 wants every declaration in a block ahead of every statement
+/// in it. Shared by the single-model [`emit_step`] and the dual-mode step
+/// (called once per arm inside the `if (sp->param ...)` branch, at a deeper
 /// indent, with `void_sp = false` since a mode always has state).
 ///
-/// An elected scalar's load is a STATEMENT here (`x = sp->x;`) rather than an
-/// initializer, because in `Peek` the copy it reads from has not happened yet
-/// where the declarations go.
+/// A carried scalar's load is a STATEMENT here (`x = sp->x;`) rather than an
+/// initializer, because `Peek` has not yet rejected a null handle where the
+/// declarations go.
 fn emit_step_inner(
     decls: &mut String,
     body: &mut String,
@@ -3911,17 +4186,22 @@ fn emit_step_inner(
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, &CNames)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
-    // The election is computed on the COMMITTING transition in both frames, so
-    // the two bodies name the same scalars the same way. `stream_base` makes
-    // `sp->x` and `x` classify alike, so which set is elected cannot move an
-    // FMA site — but only as long as both frames elect the SAME set.
-    let elected = elect_step_scalars(model, &transition);
-    let (transition, shadows, slot_temps) = match frame {
-        StepFrame::Commit => (transition, Vec::new(), Vec::new()),
+    // Peek localizes every field it writes instead, which is the stronger
+    // property — the reload the election removes cannot survive a store that
+    // never reaches the handle. `stream_base` makes `sp->x` and `x` classify
+    // alike, so neither rewrite can move an FMA site.
+    let elected = match frame {
+        StepFrame::Commit => elect_step_scalars(model, &transition),
+        StepFrame::Peek => Vec::new(),
+    };
+    let (transition, shadows, slot_temps, locals) = match frame {
+        StepFrame::Commit => (transition, Vec::new(), Vec::new(), Vec::new()),
         StepFrame::Peek => {
             let pt = streaming::peek_transition_widest(model, &CNames, &transition, None)
                 .unwrap_or_else(|e| panic!("{}: {e}", model.func.name));
-            (answer_bare_returns(&pt.body), pt.shadows, pt.slot_temps)
+            let answered = answer_bare_returns(&pt.body);
+            let (locals, pt) = peek_localized(model, &CNames, pt, &answered);
+            (pt.body, pt.shadows, pt.slot_temps, locals)
         }
     };
     let transition = apply_step_scalars(&transition, &elected);
@@ -3935,20 +4215,29 @@ fn emit_step_inner(
     for name in &elected {
         let _ = writeln!(decls, "{pad}double {name};");
     }
-    decls.push_str(&peek_shadow_decls(&shadows, &slot_temps, indent));
-    if void_sp {
-        let _ = writeln!(body, "{pad}(void)sp;");
+    for (name, ty) in &locals {
+        let _ = writeln!(decls, "{pad}{};", c_decl(ty, name));
     }
+    decls.push_str(&peek_shadow_decls(&shadows, &slot_temps, indent));
     for name in &elected {
         let _ = writeln!(body, "{pad}{name} = {};", streaming::NameMap::state(&CNames, name));
     }
-    emit_extrema_rebase(body, model);
+    for (name, ty) in &locals {
+        body.push_str(&peek_seed(&pad, name, ty, &streaming::NameMap::state(&CNames, name)));
+    }
+    emit_extrema_rebase(body, model, frame);
     let mut body_c = String::new();
     for s in &transition {
         body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter, &nullable_out_names(model.func)));
     }
     for name in &elected {
         let _ = writeln!(body_c, "{pad}{} = {name};", streaming::NameMap::state(&CNames, name));
+    }
+    // Read off the rendered text, not off the model: a peek frame can localize
+    // its last written field and purge its last read, leaving `sp` unused where
+    // the structural predicate still says it is needed.
+    if void_sp || !(body.contains("sp->") || body_c.contains("sp->")) {
+        body.insert_str(0, &format!("{pad}(void)sp;\n"));
     }
     // Candle settings are read where batch reads them (per step, from the
     // globals — the settings-stability rule). The TA_STREAM_CANDLE* macros
@@ -4007,19 +4296,24 @@ fn emit_identity_step_branch(
 /// itself bounded by int) is untouched. Index-observable outputs
 /// (MININDEX...) report the rebased position beyond ~2^30 bars — the
 /// batch contract is inherently vacuous past INT_MAX bars.
-fn emit_extrema_rebase(o: &mut String, model: &StreamModel) {
+fn emit_extrema_rebase(o: &mut String, model: &StreamModel, frame: StepFrame) {
     if let Some(ex) = model.extrema() {
+        // A peek frame has already moved every one of these to a local.
+        let q = match frame {
+            StepFrame::Commit => "sp->",
+            StepFrame::Peek => "",
+        };
         let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
         vars.extend(ex.index_vars.iter().cloned());
-        let _ = writeln!(o, "   if( sp->{} >= 1073741824 )", model.cursor);
+        let _ = writeln!(o, "   if( {q}{} >= 1073741824 )", model.cursor);
         let _ = writeln!(o, "   {{");
         let _ = writeln!(
             o,
-            "      int rebaseShift = sp->{} & ~sp->xMask;",
+            "      int rebaseShift = {q}{} & ~sp->xMask;",
             ex.trailing
         );
         for v in &vars {
-            let _ = writeln!(o, "      sp->{v} -= rebaseShift;");
+            let _ = writeln!(o, "      {q}{v} -= rebaseShift;");
         }
         let _ = writeln!(o, "   }}");
     }
@@ -4738,7 +5032,7 @@ fn alloc_and_capture(
                 let _ = writeln!(s, "{pad}sp->{name} = historyLen % 2;");
             } else if matches!(
                 ty,
-                crate::ir::VarType::RealArray(_) | crate::ir::VarType::IntArray(_)
+                VarType::RealArray(_) | VarType::IntArray(_)
             ) {
                 let _ = writeln!(
                     s,
@@ -5109,7 +5403,7 @@ fn build_open_body_from(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
                     crate::ir::VarType::Real => Expr::Literal(0.0),
                     // Renders as `= {0}` — aggregate zero-init for carried
                     // fixed-size array state.
-                    crate::ir::VarType::RealArray(_) | crate::ir::VarType::IntArray(_) => {
+                    VarType::RealArray(_) | VarType::IntArray(_) => {
                         Expr::Var("{0}".into())
                     }
                     _ => Expr::IntLiteral(0),
@@ -5238,19 +5532,16 @@ fn emit_update_and_fill(o: &mut String, func: &FuncDef, step_ret: bool) {
     let _ = writeln!(o, "   return TA_SUCCESS;\n}}\n");
 }
 
-/// `Peek` — the transition against a stack copy of the handle, inline.
+/// `Peek` — the transition against the caller's own handle, inline.
 ///
-/// The copy carries the scalars, and the in-struct arrays with them; the
-/// buffers it shares with the live handle are never written, because the peek
-/// frame carries every store in locals. So the copy is a fixed number of bytes
-/// per call where the buffers are a function of the period, which is the whole
-/// of why there is no mirror to memcpy any more.
+/// `sp` is `const`, which is the whole contract: every store the frame would
+/// make lives in a local (state scalars by [`peek_localized`], buffer elements
+/// by the shadow rewrite), so a peek that commits is not a bug to be caught at
+/// run time but a body that does not compile.
 ///
 /// The frame is inline rather than a second `_Impl` because it has exactly one
 /// caller and always will — a cross-indicator call enters the callee's PUBLIC
-/// `Peek`, never its frame. Inline, `&scratch` never crosses a call boundary,
-/// so the copy is scalarized by construction instead of by whether the inliner
-/// happened to fire on a body this large.
+/// `Peek`, never its frame.
 fn emit_peek(
     o: &mut String,
     func: &FuncDef,
@@ -5261,12 +5552,10 @@ fn emit_peek(
     let n = uname(func);
     let guard_frame = if fallible { Frame::StepEveryOutput } else { Frame::Step };
     let _ = writeln!(o, "{}\n{{", peek_signature(func));
-    let _ = writeln!(o, "   struct TA_{n}_Stream scratch;");
-    let _ = writeln!(o, "   struct TA_{n}_Stream *sp = &scratch;");
+    let _ = writeln!(o, "   const struct TA_{n}_Stream *sp = stream;");
     o.push_str(frame_decls);
     let _ = write!(o, "\n{}", presence_guard(func, guard_frame));
     o.push_str(&finite_bar_check(func, "   ", "TA_BAD_PARAM", None));
-    let _ = writeln!(o, "   scratch = *stream;");
     o.push_str(frame_body);
     if !fallible {
         let _ = writeln!(o, "   return TA_SUCCESS;");

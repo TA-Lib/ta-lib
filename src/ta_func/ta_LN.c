@@ -244,12 +244,10 @@ TA_LIB_API TA_RetCode TA_LN_Update( TA_LN_Stream *stream, double inReal, double 
 
 TA_LIB_API TA_RetCode TA_LN_Peek( const TA_LN_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_LN_Stream scratch;
-   struct TA_LN_Stream *sp = &scratch;
+   const struct TA_LN_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= log(inReal);
    return TA_SUCCESS;

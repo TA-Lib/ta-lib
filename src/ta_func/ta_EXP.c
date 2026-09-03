@@ -244,12 +244,10 @@ TA_LIB_API TA_RetCode TA_EXP_Update( TA_EXP_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_EXP_Peek( const TA_EXP_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_EXP_Stream scratch;
-   struct TA_EXP_Stream *sp = &scratch;
+   const struct TA_EXP_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= exp(inReal);
    return TA_SUCCESS;

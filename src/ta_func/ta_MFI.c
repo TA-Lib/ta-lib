@@ -878,8 +878,7 @@ TA_LIB_API TA_RetCode TA_MFI_Update( TA_MFI_Stream *stream, double inHigh, doubl
 
 TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
-   struct TA_MFI_Stream scratch;
-   struct TA_MFI_Stream *sp = &scratch;
+   const struct TA_MFI_Stream *sp = stream;
    double tempValue1;
    double tempValue2;
    double tempValue3;
@@ -887,33 +886,40 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    double posFlow;
    double negFlow;
    double posClamped;
-   double posSumMF;
    double negSumMF;
+   int nullRun;
+   double posSumMF;
+   double prevValue;
+   double *cb_mflow_negative;
+   double *cb_mflow_positive;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   posSumMF = sp->posSumMF;
    negSumMF = sp->negSumMF;
-   posSumMF -= sp->cb_mflow_positive[sp->mflow_Idx];
-   negSumMF -= sp->cb_mflow_negative[sp->mflow_Idx];
+   nullRun = sp->nullRun;
+   posSumMF = sp->posSumMF;
+   prevValue = sp->prevValue;
+   cb_mflow_negative = sp->cb_mflow_negative;
+   cb_mflow_positive = sp->cb_mflow_positive;
+   posSumMF -= cb_mflow_positive[sp->mflow_Idx];
+   negSumMF -= cb_mflow_negative[sp->mflow_Idx];
    tempValue1 = (inHigh + inLow + inClose) / 3.0;
-   tempValue2 = tempValue1 - sp->prevValue;
+   tempValue2 = tempValue1 - prevValue;
    /* Dead-zone scaled to the two typical prices being compared (issue #107).
     * Captured before prevValue/tempValue1 are repurposed below.
     */
-   tempValue3 = fabs(tempValue1) + fabs(sp->prevValue);
-   sp->prevValue = tempValue1;
+   tempValue3 = fabs(tempValue1) + fabs(prevValue);
+   prevValue = tempValue1;
    tempValue1 *= inVolume;
    moneyFlow = TA_IS_ZERO_SCALED(tempValue2, tempValue3) ? 0.0 : tempValue1;
    posFlow = (tempValue2 < 0.0) ? 0.0 : moneyFlow;
    negFlow = (tempValue2 < 0.0) ? moneyFlow : 0.0;
    posSumMF += posFlow;
    negSumMF += negFlow;
-   sp->nullRun = (moneyFlow == 0.0) ? sp->nullRun + 1 : 0;
-   if( sp->nullRun >= sp->optInTimePeriod )
+   nullRun = (moneyFlow == 0.0) ? nullRun + 1 : 0;
+   if( nullRun >= sp->optInTimePeriod )
    {
-      sp->nullRun = sp->optInTimePeriod;
+      nullRun = sp->optInTimePeriod;
       posSumMF = 0.0;
       negSumMF = 0.0;
    }
@@ -926,8 +932,6 @@ TA_LIB_API TA_RetCode TA_MFI_Peek( const TA_MFI_Stream *stream, double inHigh, d
    {
       *outReal= 100.0 * (posClamped / tempValue1);
    }
-   sp->posSumMF = posSumMF;
-   sp->negSumMF = negSumMF;
    return TA_SUCCESS;
 }
 

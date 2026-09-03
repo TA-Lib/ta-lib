@@ -559,12 +559,10 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Update( TA_CDLGAPSIDESIDEWHITE_Stre
 
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Peek( const TA_CDLGAPSIDESIDEWHITE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDLGAPSIDESIDEWHITE_Stream scratch;
-   struct TA_CDLGAPSIDESIDEWHITE_Stream *sp = &scratch;
+   const struct TA_CDLGAPSIDESIDEWHITE_Stream *sp = stream;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( ((((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((min(inOpen,inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) || (((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((max(inOpen,inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd: white */
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                   /* 3rd: white */

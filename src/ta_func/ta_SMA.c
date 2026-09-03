@@ -428,23 +428,25 @@ TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_SMA_Stream scratch;
-   struct TA_SMA_Stream *sp = &scratch;
+   const struct TA_SMA_Stream *sp = stream;
    double tempReal;
+   double periodTotal;
+   double *ring_trailingIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   periodTotal = sp->periodTotal;
+   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    if( sp->ringCap_trailingIdx == 0 )
    {
       pkSlot0 = 0;
       pkVal0 = inReal;
    }
-   sp->periodTotal += (double)inReal;
-   tempReal = sp->periodTotal;
-   sp->periodTotal -= (double)((sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0);
+   periodTotal += (double)inReal;
+   tempReal = periodTotal;
+   periodTotal -= (double)((sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0);
    *outReal= tempReal / (double)sp->optInTimePeriod;
    return TA_SUCCESS;
 }

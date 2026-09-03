@@ -1312,69 +1312,81 @@ TA_LIB_API TA_RetCode TA_ADX_Update( TA_ADX_Stream *stream, double inHigh, doubl
 
 TA_LIB_API TA_RetCode TA_ADX_Peek( const TA_ADX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_ADX_Stream scratch;
-   struct TA_ADX_Stream *sp = &scratch;
+   const struct TA_ADX_Stream *sp = stream;
    double tempReal;
    double diffP;
    double diffM;
    double minusDI;
    double plusDI;
+   double prevADX;
+   double prevClose;
+   double prevHigh;
+   double prevLow;
+   double prevMinusDM;
+   double prevPlusDM;
+   double prevTR;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   prevADX = sp->prevADX;
+   prevClose = sp->prevClose;
+   prevHigh = sp->prevHigh;
+   prevLow = sp->prevLow;
+   prevMinusDM = sp->prevMinusDM;
+   prevPlusDM = sp->prevPlusDM;
+   prevTR = sp->prevTR;
    /* Calculate the prevMinusDM and prevPlusDM */
    tempReal = inHigh;
-   diffP = tempReal - sp->prevHigh;
+   diffP = tempReal - prevHigh;
    /* Plus Delta */
-   sp->prevHigh = tempReal;
+   prevHigh = tempReal;
    tempReal = inLow;
-   diffM = sp->prevLow - tempReal;
+   diffM = prevLow - tempReal;
    /* Minus Delta */
-   sp->prevLow = tempReal;
-   sp->prevMinusDM -= sp->prevMinusDM / sp->optInTimePeriod;
-   sp->prevPlusDM -= sp->prevPlusDM / sp->optInTimePeriod;
+   prevLow = tempReal;
+   prevMinusDM -= prevMinusDM / sp->optInTimePeriod;
+   prevPlusDM -= prevPlusDM / sp->optInTimePeriod;
    if( diffM > 0 && diffP < diffM )
    {
       /* Case 2 and 4: +DM=0,-DM=diffM */
-      sp->prevMinusDM += diffM;
+      prevMinusDM += diffM;
    } else if( diffP > 0 && diffP > diffM )
    {
       /* Case 1 and 3: +DM=diffP,-DM=0 */
-      sp->prevPlusDM += diffP;
+      prevPlusDM += diffP;
    }
    /* Calculate the prevTR */
    double _true_range_5;
-   double range_5 = sp->prevHigh - sp->prevLow;
-   double tmp_5 = fabs(sp->prevHigh - sp->prevClose);
+   double range_5 = prevHigh - prevLow;
+   double tmp_5 = fabs(prevHigh - prevClose);
    if( tmp_5 > range_5 )
    {
       range_5 = tmp_5;
    }
-   tmp_5 = fabs(sp->prevLow - sp->prevClose);
+   tmp_5 = fabs(prevLow - prevClose);
    if( tmp_5 > range_5 )
    {
       range_5 = tmp_5;
    }
    _true_range_5 = range_5;
    tempReal = _true_range_5;
-   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
-   sp->prevClose = inClose;
-   if( sp->prevTR > 0.0 )
+   prevTR = prevTR - prevTR / sp->optInTimePeriod + tempReal;
+   prevClose = inClose;
+   if( prevTR > 0.0 )
    {
       /* Calculate the DX. The value is rounded (see Wilder book). */
-      minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
-      plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
+      minusDI = (100.0 * (prevMinusDM / prevTR));
+      plusDI = (100.0 * (prevPlusDM / prevTR));
       tempReal = minusDI + plusDI;
       if( !TA_IS_ZERO(tempReal) )
       {
          tempReal = (100.0 * (fabs(minusDI - plusDI) / tempReal));
          /* Calculate the ADX */
-         sp->prevADX = ((sp->prevADX * (sp->optInTimePeriod - 1) + tempReal) / sp->optInTimePeriod);
+         prevADX = ((prevADX * (sp->optInTimePeriod - 1) + tempReal) / sp->optInTimePeriod);
       }
    }
    /* Output the ADX */
-   *outReal= sp->prevADX;
+   *outReal= prevADX;
    return TA_SUCCESS;
 }
 

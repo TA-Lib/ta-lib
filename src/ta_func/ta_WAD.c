@@ -444,14 +444,14 @@ TA_LIB_API TA_RetCode TA_WAD_Update( TA_WAD_Stream *stream, double inHigh, doubl
 
 TA_LIB_API TA_RetCode TA_WAD_Peek( const TA_WAD_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_WAD_Stream scratch;
-   struct TA_WAD_Stream *sp = &scratch;
+   const struct TA_WAD_Stream *sp = stream;
    double close;
    double trueExtreme;
+   double sum;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   sum = sp->sum;
    close = inClose;
    if( close > sp->prevClose )
    {
@@ -460,7 +460,7 @@ TA_LIB_API TA_RetCode TA_WAD_Peek( const TA_WAD_Stream *stream, double inHigh, d
       {
          trueExtreme = sp->prevClose;
       }
-      sp->sum += close - trueExtreme;
+      sum += close - trueExtreme;
    } else if( close < sp->prevClose )
    {
       trueExtreme = inHigh;
@@ -468,9 +468,9 @@ TA_LIB_API TA_RetCode TA_WAD_Peek( const TA_WAD_Stream *stream, double inHigh, d
       {
          trueExtreme = sp->prevClose;
       }
-      sp->sum += close - trueExtreme;
+      sum += close - trueExtreme;
    }
-   *outReal= sp->sum;
+   *outReal= sum;
    return TA_SUCCESS;
 }
 

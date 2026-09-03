@@ -656,9 +656,17 @@ TA_LIB_API TA_RetCode TA_AROON_Update( TA_AROON_Stream *stream, double inHigh, d
 
 TA_LIB_API TA_RetCode TA_AROON_Peek( const TA_AROON_Stream *stream, double inHigh, double inLow, double *outAroonDown, double *outAroonUp )
 {
-   struct TA_AROON_Stream scratch;
-   struct TA_AROON_Stream *sp = &scratch;
+   const struct TA_AROON_Stream *sp = stream;
    double tmp;
+   double highest;
+   int highestIdx;
+   int i;
+   double lowest;
+   int lowestIdx;
+   int today;
+   int trailingIdx;
+   double *x_inHigh;
+   double *x_inLow;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -666,69 +674,77 @@ TA_LIB_API TA_RetCode TA_AROON_Peek( const TA_AROON_Stream *stream, double inHig
 
    if( !stream || !outAroonDown || !outAroonUp ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   if( sp->today >= 1073741824 )
+   highest = sp->highest;
+   highestIdx = sp->highestIdx;
+   i = sp->i;
+   lowest = sp->lowest;
+   lowestIdx = sp->lowestIdx;
+   today = sp->today;
+   trailingIdx = sp->trailingIdx;
+   x_inHigh = sp->x_inHigh;
+   x_inLow = sp->x_inLow;
+   if( today >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      today -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      highestIdx -= rebaseShift;
+      i -= rebaseShift;
+      lowestIdx -= rebaseShift;
    }
-   pkSlot0 = sp->today & sp->xMask;
+   pkSlot0 = today & sp->xMask;
    pkVal0 = inHigh;
-   pkSlot1 = sp->today & sp->xMask;
+   pkSlot1 = today & sp->xMask;
    pkVal1 = inLow;
    /* Keep track of the lowestIdx */
-   tmp = ((sp->today & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->today & sp->xMask] : pkVal1;
-   if( sp->lowestIdx < sp->trailingIdx )
+   tmp = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
+   if( lowestIdx < trailingIdx )
    {
-      sp->lowestIdx = sp->trailingIdx;
-      sp->lowest = ((sp->lowestIdx & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->lowestIdx & sp->xMask] : pkVal1;
-      sp->i = sp->lowestIdx;
+      lowestIdx = trailingIdx;
+      lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
+      i = lowestIdx;
       TA_UNROLL(4)
-      while( ++sp->i <= sp->today )
+      while( ++i <= today )
       {
-         tmp = ((sp->i & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->i & sp->xMask] : pkVal1;
-         if( tmp <= sp->lowest )
+         tmp = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
+         if( tmp <= lowest )
          {
-            sp->lowestIdx = sp->i;
-            sp->lowest = tmp;
+            lowestIdx = i;
+            lowest = tmp;
          }
       }
-   } else if( tmp <= sp->lowest )
+   } else if( tmp <= lowest )
    {
-      sp->lowestIdx = sp->today;
-      sp->lowest = tmp;
+      lowestIdx = today;
+      lowest = tmp;
    }
    /* Keep track of the highestIdx */
-   tmp = ((sp->today & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->today & sp->xMask] : pkVal0;
-   if( sp->highestIdx < sp->trailingIdx )
+   tmp = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
+   if( highestIdx < trailingIdx )
    {
-      sp->highestIdx = sp->trailingIdx;
-      sp->highest = ((sp->highestIdx & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->highestIdx & sp->xMask] : pkVal0;
-      sp->i = sp->highestIdx;
+      highestIdx = trailingIdx;
+      highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
+      i = highestIdx;
       TA_UNROLL(4)
-      while( ++sp->i <= sp->today )
+      while( ++i <= today )
       {
-         tmp = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->i & sp->xMask] : pkVal0;
-         if( tmp >= sp->highest )
+         tmp = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
+         if( tmp >= highest )
          {
-            sp->highestIdx = sp->i;
-            sp->highest = tmp;
+            highestIdx = i;
+            highest = tmp;
          }
       }
-   } else if( tmp >= sp->highest )
+   } else if( tmp >= highest )
    {
-      sp->highestIdx = sp->today;
-      sp->highest = tmp;
+      highestIdx = today;
+      highest = tmp;
    }
    /* Note: Do not forget that input and output buffer can be the same,
     *       so writing to the output is the last thing being done here.
     */
-   *outAroonUp= sp->factor * (sp->optInTimePeriod - (sp->today - sp->highestIdx));
-   *outAroonDown= sp->factor * (sp->optInTimePeriod - (sp->today - sp->lowestIdx));
+   *outAroonUp= sp->factor * (sp->optInTimePeriod - (today - highestIdx));
+   *outAroonDown= sp->factor * (sp->optInTimePeriod - (today - lowestIdx));
    return TA_SUCCESS;
 }
 

@@ -626,10 +626,13 @@ TA_LIB_API TA_RetCode TA_AO_Update( TA_AO_Stream *stream, double inHigh, double 
 
 TA_LIB_API TA_RetCode TA_AO_Peek( const TA_AO_Stream *stream, double inHigh, double inLow, double *outReal )
 {
-   struct TA_AO_Stream scratch;
-   struct TA_AO_Stream *sp = &scratch;
+   const struct TA_AO_Stream *sp = stream;
    double medianPrice;
    double tempReal;
+   double sumFast;
+   double sumSlow;
+   double *ring_trailingFastIdx_derived;
+   double *ring_trailingSlowIdx_derived;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -637,7 +640,10 @@ TA_LIB_API TA_RetCode TA_AO_Peek( const TA_AO_Stream *stream, double inHigh, dou
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   sumFast = sp->sumFast;
+   sumSlow = sp->sumSlow;
+   ring_trailingFastIdx_derived = sp->ring_trailingFastIdx_derived;
+   ring_trailingSlowIdx_derived = sp->ring_trailingSlowIdx_derived;
    if( sp->ringCap_trailingFastIdx == 0 )
    {
       pkSlot0 = 0;
@@ -649,20 +655,20 @@ TA_LIB_API TA_RetCode TA_AO_Peek( const TA_AO_Stream *stream, double inHigh, dou
       pkVal1 = (inHigh + inLow) / 2.0;
    }
    medianPrice = (inHigh + inLow) / 2.0;
-   sp->sumFast += medianPrice;
-   sp->sumSlow += medianPrice;
+   sumFast += medianPrice;
+   sumSlow += medianPrice;
    /* Snapshot the oscillator before either total drops its trailing bar,
     * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
     */
-   tempReal = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
+   tempReal = sumFast / (double)sp->optInFastPeriod - sumSlow / (double)sp->optInSlowPeriod;
    /* Read both trailing bars before writing the output. When startIdx is
     * clamped to the lookback the longer window's trailing index equals
     * outIdx exactly, so a store hoisted above this would read back the
     * value it had just overwritten whenever the caller aliases outReal
     * over inHigh or inLow.
     */
-   sp->sumFast -= (sp->ringPos_trailingFastIdx != pkSlot0) ? sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] : pkVal0;
-   sp->sumSlow -= (sp->ringPos_trailingSlowIdx != pkSlot1) ? sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] : pkVal1;
+   sumFast -= (sp->ringPos_trailingFastIdx != pkSlot0) ? ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] : pkVal0;
+   sumSlow -= (sp->ringPos_trailingSlowIdx != pkSlot1) ? ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] : pkVal1;
    *outReal= tempReal;
    return TA_SUCCESS;
 }

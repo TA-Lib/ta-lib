@@ -314,22 +314,22 @@ TA_LIB_API TA_RetCode TA_OBV_Update( TA_OBV_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_OBV_Peek( const TA_OBV_Stream *stream, double inReal, double inVolume, double *outReal )
 {
-   struct TA_OBV_Stream scratch;
-   struct TA_OBV_Stream *sp = &scratch;
+   const struct TA_OBV_Stream *sp = stream;
    double tempReal;
+   double prevOBV;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   prevOBV = sp->prevOBV;
    tempReal = inReal;
    if( tempReal > sp->prevReal )
    {
-      sp->prevOBV += inVolume;
+      prevOBV += inVolume;
    } else if( tempReal < sp->prevReal )
    {
-      sp->prevOBV -= inVolume;
+      prevOBV -= inVolume;
    }
-   *outReal= sp->prevOBV;
+   *outReal= prevOBV;
    return TA_SUCCESS;
 }
 

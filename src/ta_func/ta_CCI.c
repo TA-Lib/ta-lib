@@ -658,20 +658,20 @@ TA_LIB_API TA_RetCode TA_CCI_Update( TA_CCI_Stream *stream, double inHigh, doubl
 
 TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_CCI_Stream scratch;
-   struct TA_CCI_Stream *sp = &scratch;
+   const struct TA_CCI_Stream *sp = stream;
    double tempReal;
    double tempReal2;
    double tempReal3;
    double theAverage;
    double lastValue;
    int j;
+   double *cb_circBuffer;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   cb_circBuffer = sp->cb_circBuffer;
    lastValue = (inHigh + inLow + inClose) / 3;
    pkSlot0 = sp->circBuffer_Idx;
    pkVal0 = lastValue;
@@ -679,7 +679,7 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    theAverage = 0;
    for( j = 0; j < sp->optInTimePeriod; j += 1 )
    {
-      theAverage += (j != pkSlot0) ? sp->cb_circBuffer[j] : pkVal0;
+      theAverage += (j != pkSlot0) ? cb_circBuffer[j] : pkVal0;
    }
    theAverage /= sp->optInTimePeriod;
    /* Do the summation of the ABS(TypePrice-average)
@@ -688,7 +688,7 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    tempReal2 = 0;
    for( j = 0; j < sp->optInTimePeriod; j += 1 )
    {
-      tempReal2 += fabs(((j != pkSlot0) ? sp->cb_circBuffer[j] : pkVal0) - theAverage);
+      tempReal2 += fabs(((j != pkSlot0) ? cb_circBuffer[j] : pkVal0) - theAverage);
    }
    tempReal2 /= sp->optInTimePeriod;
    /* And finally, the CCI... */

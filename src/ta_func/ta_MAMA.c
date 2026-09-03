@@ -1713,8 +1713,7 @@ TA_LIB_API TA_RetCode TA_MAMA_Update( TA_MAMA_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal, double *outMAMA, double *outFAMA )
 {
-   struct TA_MAMA_Stream scratch;
-   struct TA_MAMA_Stream *sp = &scratch;
+   const struct TA_MAMA_Stream *sp = stream;
    double tempReal;
    double tempReal2;
    double adjustedPrevPeriod;
@@ -1723,16 +1722,51 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    double detrender;
    double Q1;
    double todayValue;
-   double mama;
+   double I1ForEvenPrev2;
+   double I1ForEvenPrev3;
+   double I1ForOddPrev2;
+   double I1ForOddPrev3;
    double fama;
+   int hilbertIdx;
+   double mama;
+   double periodWMASub;
+   double periodWMASum;
+   double prevPhase;
+   double prev_Q1_Even;
+   double prev_Q1_Odd;
+   double prev_Q1_input_Even;
+   double prev_Q1_input_Odd;
+   double prev_detrender_Even;
+   double prev_detrender_Odd;
+   double prev_detrender_input_Even;
+   double prev_detrender_input_Odd;
+   double trailingWMAValue;
+   double *ring_trailingWMAIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outMAMA ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   mama = sp->mama;
+   I1ForEvenPrev2 = sp->I1ForEvenPrev2;
+   I1ForEvenPrev3 = sp->I1ForEvenPrev3;
+   I1ForOddPrev2 = sp->I1ForOddPrev2;
+   I1ForOddPrev3 = sp->I1ForOddPrev3;
    fama = sp->fama;
+   hilbertIdx = sp->hilbertIdx;
+   mama = sp->mama;
+   periodWMASub = sp->periodWMASub;
+   periodWMASum = sp->periodWMASum;
+   prevPhase = sp->prevPhase;
+   prev_Q1_Even = sp->prev_Q1_Even;
+   prev_Q1_Odd = sp->prev_Q1_Odd;
+   prev_Q1_input_Even = sp->prev_Q1_input_Even;
+   prev_Q1_input_Odd = sp->prev_Q1_input_Odd;
+   prev_detrender_Even = sp->prev_detrender_Even;
+   prev_detrender_Odd = sp->prev_detrender_Odd;
+   prev_detrender_input_Even = sp->prev_detrender_input_Even;
+   prev_detrender_input_Odd = sp->prev_detrender_input_Odd;
+   trailingWMAValue = sp->trailingWMAValue;
+   ring_trailingWMAIdx_inReal = sp->ring_trailingWMAIdx_inReal;
    if( sp->ringCap_trailingWMAIdx == 0 )
    {
       pkSlot0 = 0;
@@ -1740,40 +1774,36 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    }
    adjustedPrevPeriod = fma(0.075, sp->period, 0.54);
    todayValue = inReal;
-   sp->periodWMASub += todayValue;
-   sp->periodWMASub -= sp->trailingWMAValue;
-   sp->periodWMASum += todayValue * 4.0;
-   sp->trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? sp->ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
-   smoothedValue = sp->periodWMASum * 0.1;
-   sp->periodWMASum -= sp->periodWMASub;
+   periodWMASub += todayValue;
+   periodWMASub -= trailingWMAValue;
+   periodWMASum += todayValue * 4.0;
+   trailingWMAValue = (sp->ringPos_trailingWMAIdx != pkSlot0) ? ring_trailingWMAIdx_inReal[sp->ringPos_trailingWMAIdx] : pkVal0;
+   smoothedValue = periodWMASum * 0.1;
+   periodWMASum -= periodWMASub;
    if( sp->streamParity == 0 )
    {
       /* Do the Hilbert Transforms for even price bar */
       hilbertTempReal = sp->a * smoothedValue;
-      detrender = 0 - sp->detrender_Even[sp->hilbertIdx];
+      detrender = 0 - sp->detrender_Even[hilbertIdx];
       detrender += hilbertTempReal;
-      detrender -= sp->prev_detrender_Even;
-      sp->prev_detrender_Even = sp->b * sp->prev_detrender_input_Even;
-      detrender += sp->prev_detrender_Even;
-      sp->prev_detrender_input_Even = smoothedValue;
+      detrender -= prev_detrender_Even;
+      prev_detrender_Even = sp->b * prev_detrender_input_Even;
+      detrender += prev_detrender_Even;
+      prev_detrender_input_Even = smoothedValue;
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
-      Q1 = 0 - sp->Q1_Even[sp->hilbertIdx];
+      Q1 = 0 - sp->Q1_Even[hilbertIdx];
       Q1 += hilbertTempReal;
-      Q1 -= sp->prev_Q1_Even;
-      sp->prev_Q1_Even = sp->b * sp->prev_Q1_input_Even;
-      Q1 += sp->prev_Q1_Even;
-      sp->prev_Q1_input_Even = detrender;
+      Q1 -= prev_Q1_Even;
+      prev_Q1_Even = sp->b * prev_Q1_input_Even;
+      Q1 += prev_Q1_Even;
+      prev_Q1_input_Even = detrender;
       Q1 *= adjustedPrevPeriod;
-      hilbertTempReal = sp->a * sp->I1ForEvenPrev3;
-      sp->prev_jI_Even = sp->b * sp->prev_jI_input_Even;
-      sp->prev_jI_input_Even = sp->I1ForEvenPrev3;
+      hilbertTempReal = sp->a * I1ForEvenPrev3;
       hilbertTempReal = sp->a * Q1;
-      sp->prev_jQ_Even = sp->b * sp->prev_jQ_input_Even;
-      sp->prev_jQ_input_Even = Q1;
-      if( ++sp->hilbertIdx == 3 )
+      if( ++hilbertIdx == 3 )
       {
-         sp->hilbertIdx = 0;
+         hilbertIdx = 0;
       }
       /* The variable I1 is the detrender delayed for
        * 3 price bars.
@@ -1781,12 +1811,12 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
        * Save the current detrender value for being
        * used by the "odd" logic later.
        */
-      sp->I1ForOddPrev3 = sp->I1ForOddPrev2;
-      sp->I1ForOddPrev2 = detrender;
+      I1ForOddPrev3 = I1ForOddPrev2;
+      I1ForOddPrev2 = detrender;
       /* Put Alpha in tempReal2 */
-      if( sp->I1ForEvenPrev3 != 0.0 )
+      if( I1ForEvenPrev3 != 0.0 )
       {
-         tempReal2 = atan(Q1 / sp->I1ForEvenPrev3) * sp->rad2Deg;
+         tempReal2 = atan(Q1 / I1ForEvenPrev3) * sp->rad2Deg;
       } else 
       {
          tempReal2 = 0.0;
@@ -1795,47 +1825,43 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    {
       /* Do the Hilbert Transforms for odd price bar */
       hilbertTempReal = sp->a * smoothedValue;
-      detrender = 0 - sp->detrender_Odd[sp->hilbertIdx];
+      detrender = 0 - sp->detrender_Odd[hilbertIdx];
       detrender += hilbertTempReal;
-      detrender -= sp->prev_detrender_Odd;
-      sp->prev_detrender_Odd = sp->b * sp->prev_detrender_input_Odd;
-      detrender += sp->prev_detrender_Odd;
-      sp->prev_detrender_input_Odd = smoothedValue;
+      detrender -= prev_detrender_Odd;
+      prev_detrender_Odd = sp->b * prev_detrender_input_Odd;
+      detrender += prev_detrender_Odd;
+      prev_detrender_input_Odd = smoothedValue;
       detrender *= adjustedPrevPeriod;
       hilbertTempReal = sp->a * detrender;
-      Q1 = 0 - sp->Q1_Odd[sp->hilbertIdx];
+      Q1 = 0 - sp->Q1_Odd[hilbertIdx];
       Q1 += hilbertTempReal;
-      Q1 -= sp->prev_Q1_Odd;
-      sp->prev_Q1_Odd = sp->b * sp->prev_Q1_input_Odd;
-      Q1 += sp->prev_Q1_Odd;
-      sp->prev_Q1_input_Odd = detrender;
+      Q1 -= prev_Q1_Odd;
+      prev_Q1_Odd = sp->b * prev_Q1_input_Odd;
+      Q1 += prev_Q1_Odd;
+      prev_Q1_input_Odd = detrender;
       Q1 *= adjustedPrevPeriod;
-      hilbertTempReal = sp->a * sp->I1ForOddPrev3;
-      sp->prev_jI_Odd = sp->b * sp->prev_jI_input_Odd;
-      sp->prev_jI_input_Odd = sp->I1ForOddPrev3;
+      hilbertTempReal = sp->a * I1ForOddPrev3;
       hilbertTempReal = sp->a * Q1;
-      sp->prev_jQ_Odd = sp->b * sp->prev_jQ_input_Odd;
-      sp->prev_jQ_input_Odd = Q1;
       /* The varaiable I1 is the detrender delayed for
        * 3 price bars.
        *
        * Save the current detrender value for being
        * used by the "odd" logic later.
        */
-      sp->I1ForEvenPrev3 = sp->I1ForEvenPrev2;
-      sp->I1ForEvenPrev2 = detrender;
+      I1ForEvenPrev3 = I1ForEvenPrev2;
+      I1ForEvenPrev2 = detrender;
       /* Put Alpha in tempReal2 */
-      if( sp->I1ForOddPrev3 != 0.0 )
+      if( I1ForOddPrev3 != 0.0 )
       {
-         tempReal2 = atan(Q1 / sp->I1ForOddPrev3) * sp->rad2Deg;
+         tempReal2 = atan(Q1 / I1ForOddPrev3) * sp->rad2Deg;
       } else 
       {
          tempReal2 = 0.0;
       }
    }
    /* Put Delta Phase into tempReal */
-   tempReal = sp->prevPhase - tempReal2;
-   sp->prevPhase = tempReal2;
+   tempReal = prevPhase - tempReal2;
+   prevPhase = tempReal2;
    if( tempReal < 1.0 )
    {
       tempReal = 1.0;
@@ -1862,8 +1888,6 @@ TA_LIB_API TA_RetCode TA_MAMA_Peek( const TA_MAMA_Stream *stream, double inReal,
    if( outFAMA != NULL )
       *outFAMA= fama;
    *outMAMA= mama;
-   sp->mama = mama;
-   sp->fama = fama;
    return TA_SUCCESS;
 }
 

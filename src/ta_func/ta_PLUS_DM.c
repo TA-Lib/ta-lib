@@ -953,26 +953,28 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Update( TA_PLUS_DM_Stream *stream, double inHig
 
 TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double inHigh, double inLow, double *outReal )
 {
-   struct TA_PLUS_DM_Stream scratch;
-   struct TA_PLUS_DM_Stream *sp = &scratch;
+   const struct TA_PLUS_DM_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( sp->optInTimePeriod <= 1 )
    {
       double tempReal;
       double diffP;
       double diffM;
+      double prevHigh;
+      double prevLow;
 
+      prevHigh = sp->prevHigh;
+      prevLow = sp->prevLow;
       tempReal = inHigh;
-      diffP = tempReal - sp->prevHigh;
+      diffP = tempReal - prevHigh;
       /* Plus Delta */
-      sp->prevHigh = tempReal;
+      prevHigh = tempReal;
       tempReal = inLow;
-      diffM = sp->prevLow - tempReal;
+      diffM = prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = tempReal;
+      prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
@@ -987,25 +989,31 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Peek( const TA_PLUS_DM_Stream *stream, double i
       double tempReal;
       double diffP;
       double diffM;
+      double prevHigh;
+      double prevLow;
+      double prevPlusDM;
 
+      prevHigh = sp->prevHigh;
+      prevLow = sp->prevLow;
+      prevPlusDM = sp->prevPlusDM;
       tempReal = inHigh;
-      diffP = tempReal - sp->prevHigh;
+      diffP = tempReal - prevHigh;
       /* Plus Delta */
-      sp->prevHigh = tempReal;
+      prevHigh = tempReal;
       tempReal = inLow;
-      diffM = sp->prevLow - tempReal;
+      diffM = prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = tempReal;
+      prevLow = tempReal;
       if( diffP > 0 && diffP > diffM )
       {
          /* Case 1 and 3: +DM=diffP,-DM=0 */
-         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod + diffP;
+         prevPlusDM = prevPlusDM - prevPlusDM / sp->optInTimePeriod + diffP;
       } else 
       {
          /* Case 2,4,5 and 7 */
-         sp->prevPlusDM = sp->prevPlusDM - sp->prevPlusDM / sp->optInTimePeriod;
+         prevPlusDM = prevPlusDM - prevPlusDM / sp->optInTimePeriod;
       }
-      *outReal= sp->prevPlusDM;
+      *outReal= prevPlusDM;
    }
    return TA_SUCCESS;
 }

@@ -269,12 +269,10 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Update( TA_MEDPRICE_Stream *stream, double inH
 
 TA_LIB_API TA_RetCode TA_MEDPRICE_Peek( const TA_MEDPRICE_Stream *stream, double inHigh, double inLow, double *outReal )
 {
-   struct TA_MEDPRICE_Stream scratch;
-   struct TA_MEDPRICE_Stream *sp = &scratch;
+   const struct TA_MEDPRICE_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= (inHigh + inLow) / 2.0;
    return TA_SUCCESS;

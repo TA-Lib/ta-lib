@@ -209,6 +209,40 @@ jobs:
             exit 1
           fi
 
+  # The same hole for C, and the shipped library is the one that lands in the
+  # tarball. Nothing on this gate compiled a line of it: regen-check writes the
+  # tree and stops, and the C build was nightly-only — so a generator change that
+  # makes 178 .c files unbuildable reached dev green, exactly the way #326's
+  # Java did before the job above existed.
+  #
+  # It is also the enforcement point for one contract no other gate can state:
+  # a peek frame binds the caller's handle `const`, so a frame that committed a
+  # SCALAR or in-struct-array field is `assignment of member '<field>' in
+  # read-only object` here rather than a store into memory the caller never
+  # reads. `const` says nothing about memory behind a pointer member, so a
+  # buffer-element store stays peek_suite's to catch.
+  #
+  # CMake + gcc, both preinstalled. Release is what ships; the tools build with
+  # the library, so ta_regtest and ta_bench are covered too. RUNNING them stays
+  # in the nightly.
+  c-compiles:
+    name: Generated C compiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # The committed sources, not a fresh `generate` — regen-check already
+      # proves they are the same tree, so this job needs no cargo.
+      - name: Build the shipped library and the C tools
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py; then
+            echo "::error::The generated C does not compile. Fix the emitter (ta_codegen/generator/src/backends/c*.rs), never the generated file. 'assignment of member ... in read-only object' inside a TA_<N>_Peek means the peek frame writes a state field the emitter failed to localize."
+            exit 1
+          fi
+
   # Clippy runs here as its own job, concurrently with regen-check, so it costs
   # the PR no wall-clock: ~50s finishing well inside that job's ~4m. That is
   # also why there is no `paths` filter on Rust — a filter would only save

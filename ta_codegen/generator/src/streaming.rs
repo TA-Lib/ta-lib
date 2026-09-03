@@ -486,9 +486,9 @@ pub struct SeriesFree {
 /// materializing an intermediate series, then a tail of whole-range
 /// sub-calls over materialized series + tail-aligning copies + guards/frees.
 /// Composition goes through the callees' PUBLIC stream handles. A peek frame
-/// calls sub-`Peek` where the update frame calls sub-`Update`: the sub-handles
-/// are heap pointers a struct copy shares rather than clones, so routing is the
-/// only thing that keeps a peek off them.
+/// calls sub-`Peek` where the update frame calls sub-`Update`: a sub-handle is a
+/// heap pointer the frame reads, so routing is the only thing that keeps a peek
+/// off it.
 #[derive(Debug)]
 pub struct ComposedPlan<'a> {
     pub func: &'a FuncDef,
@@ -7956,7 +7956,8 @@ fn names_read(stmts: &[Statement], out: &mut BTreeSet<String>) {
 /// four. A call is refused unless [`pure_helper_names`] vouches for it, so an
 /// unlisted callee costs a store that stays, never one that should not have
 /// gone.
-fn purge_dead_temp_stores(
+#[must_use]
+pub fn purge_dead_temp_stores(
     transition: &[Statement],
     temps: &[(String, VarType)],
 ) -> Vec<Statement> {

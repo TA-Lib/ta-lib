@@ -702,8 +702,7 @@ TA_LIB_API TA_RetCode TA_KC_Update( TA_KC_Stream *stream, double inHigh, double 
 
 TA_LIB_API TA_RetCode TA_KC_Peek( const TA_KC_Stream *stream, double inHigh, double inLow, double inClose, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
-   struct TA_KC_Stream scratch;
-   struct TA_KC_Stream *sp = &scratch;
+   const struct TA_KC_Stream *sp = stream;
    double middle;
    double tempReal;
    double cur_tempTP = 0.0;
@@ -714,7 +713,6 @@ TA_LIB_API TA_RetCode TA_KC_Peek( const TA_KC_Stream *stream, double inHigh, dou
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

@@ -411,12 +411,10 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Update( TA_CDLENGULFING_Stream *stream, do
 
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDLENGULFING_Stream scratch;
-   struct TA_CDLENGULFING_Stream *sp = &scratch;
+   const struct TA_CDLENGULFING_Stream *sp = stream;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= sp->lag1_inOpen && inOpen < sp->lag1_inClose) || (inClose > sp->lag1_inOpen && inOpen <= sp->lag1_inClose))) || (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inOpen >= sp->lag1_inClose && inClose < sp->lag1_inOpen) || (inOpen > sp->lag1_inClose && inClose <= sp->lag1_inOpen))) )
    {
       /* white engulfs black */

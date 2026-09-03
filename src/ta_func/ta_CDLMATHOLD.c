@@ -669,12 +669,10 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Update( TA_CDLMATHOLD_Stream *stream, double
 
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Peek( const TA_CDLMATHOLD_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDLMATHOLD_Stream scratch;
-   struct TA_CDLMATHOLD_Stream *sp = &scratch;
+   const struct TA_CDLMATHOLD_Stream *sp = stream;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( ((sp->lag4_inClose >= sp->lag4_inOpen) ? 1 : 0 - 1) == 1 &&            /* white, black, 2 black or white, white */
        ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&

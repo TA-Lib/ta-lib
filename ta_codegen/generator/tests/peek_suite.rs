@@ -1,12 +1,12 @@
 //! `Peek` commits nothing — swept over the REAL ta_codegen/input corpus.
 //!
-//! `Peek` runs the transition on a stack copy of the handle, inline — the frame
-//! has one caller and always will, since a cross-indicator call enters the
-//! callee's PUBLIC `Peek`. The copy carries the scalars and the in-struct
-//! arrays; it CANNOT carry the buffers, which are heap pointers it shares with
-//! the live handle. What keeps those read-only is the frame itself: each store
-//! lives in two locals and each load that could reach the stored slot selects
-//! them back.
+//! `Peek` runs the transition against a `const` binding of the caller's own
+//! handle, inline — the frame has one caller and always will, since a
+//! cross-indicator call enters the callee's PUBLIC `Peek`. Nothing it computes
+//! may reach that handle: a state field it writes moves to a local of the same
+//! name, and a buffer element it writes lives in two locals that each load
+//! reaching the stored slot selects back. `const` refuses the first class; only
+//! this file's sweeps see the second.
 //!
 //! Two properties are load-bearing and neither is visible at runtime:
 //!
@@ -222,9 +222,9 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
 }
 
 /// A peek frame never drives a sub-stream's `Update`. That call is the composed
-/// and dispatch tiers' only way to write the live handle — the sub-handles are
-/// heap pointers the struct copy shares — and it carries no subscript, so the
-/// store sweep above cannot see it.
+/// and dispatch tiers' only way to write the live handle — a sub-handle is a
+/// heap pointer, so `const` on the outer one says nothing about it — and it
+/// carries no subscript, so the store sweep above cannot see it.
 #[test]
 fn no_peek_entry_point_commits_a_sub_stream() {
     let mut with_subs = 0usize;
@@ -505,11 +505,19 @@ fn assignments_to(body: &str, targets: &BTreeSet<String>) -> Vec<String> {
 }
 
 /// A frame body with the peek rewrite undone: buffer subscripts masked to one
-/// token, selects collapsed to the arm update renders. Answers how many
-/// statements the collapse touched, which is the only thing that says it ran.
-fn unrewritten(body: &str, buffers: &BTreeSet<String>) -> (String, usize, usize) {
+/// token, selects collapsed to the arm update renders, and the handle
+/// qualifier dropped from what is left. Answers how many statements each of
+/// the last two touched, which is the only thing that says they ran.
+///
+/// Dropping `sp->` is what makes the two frames comparable at all: peek binds
+/// every field it writes to a local of the same name, and update binds the
+/// elected ones, so the same site is spelled `sp->x` in one body and `x` in
+/// the other. It is the same equivalence [`fma::stream_base`] classifies by,
+/// applied to BOTH bodies rather than to one, and the buffers are already
+/// masked by here, so nothing but a scalar field carries the prefix.
+fn unrewritten(body: &str, buffers: &BTreeSet<String>) -> (String, usize, usize, usize, usize) {
     let masked = mask_buffer_reads(body, buffers);
-    let (mut collapsed, mut unbalanced) = (0usize, 0usize);
+    let (mut collapsed, mut unbalanced, mut unqualified, mut binds) = (0, 0, 0, 0usize);
     let out: Vec<String> = masked
         .lines()
         .map(|l| {
@@ -519,10 +527,32 @@ fn unrewritten(body: &str, buffers: &BTreeSet<String>) -> (String, usize, usize)
             // balance. A count of CHANGED lines cannot tell a working collapse
             // from one that corrupts a fifth of them; this can.
             unbalanced += usize::from(paren_balance(&u) != paren_balance(l));
-            u
+            let q = u.replace("sp->", "");
+            if is_self_bind(&q) {
+                binds += 1;
+                return String::new();
+            }
+            // Counted AFTER the binds are gone: every seed carries the
+            // qualifier, so counting first made this a restatement of `binds`
+            // and left it unable to fail for the reason it states.
+            unqualified += usize::from(q != u);
+            q
         })
         .collect();
-    (out.join("\n"), collapsed, unbalanced)
+    (out.join("\n"), collapsed, unbalanced, unqualified, binds)
+}
+
+/// `x = x;` — what an elected or localized scalar's bind collapses to once the
+/// qualifier is gone. It carries no arithmetic, and only one of the two frames
+/// emits it for any given field, so it has to go before the frames are compared
+/// statement by statement.
+fn is_self_bind(line: &str) -> bool {
+    let l = line.trim().trim_end_matches(';');
+    let Some((a, b)) = l.split_once('=') else { return false };
+    if b.starts_with('=') || a.ends_with(['+', '-', '*', '/', '&', '|', '^', '%', '!', '<', '>', '=']) {
+        return false;
+    }
+    !a.trim().is_empty() && a.trim() == b.trim()
 }
 
 /// Whether `small` is a subsequence of `big`, answering the index in `small`
@@ -536,6 +566,193 @@ fn subsequence<T: PartialEq>(small: &[T], big: &[T]) -> Result<(), usize> {
         }
     }
     Ok(())
+}
+
+/// No C peek copies the handle: it binds the caller's own, `const`.
+///
+/// Structural, because no value gate can see it — a peek that copied and then
+/// wrote the copy would still answer correctly, which is what the whole-struct
+/// copy this replaces did. The `const` is the second half:
+/// with it, a frame that stored through `sp` is a compile error rather than a
+/// store into memory nobody reads, so the sweep for un-localized writes is the
+/// C compiler and does not belong here. What this pins is that the binding is
+/// still the one the compiler can enforce.
+///
+/// MA and MAVP are the two exemptions and are exempt by SHAPE, not by name:
+/// they dispatch to a sub-handle's own `Peek` and run no frame, so they declare
+/// no `sp` at all.
+#[test]
+fn no_c_peek_copies_the_handle() {
+    let (mut swept, mut frames, mut dispatchers) = (0usize, 0usize, 0usize);
+    let (mut fixtures, mut bounded) = (0usize, 0usize);
+    let mut offenders: Vec<String> = Vec::new();
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let Some(peek) = body_of(&src, &format!("TA_RetCode TA_{upper}_Peek(")) else { continue };
+        swept += 1;
+        // A `synth<n>` fixture is a construct probe scripts/synth_gate.py
+        // copies into input/, never a shipped function.
+        let fixture = name.starts_with("synth");
+        fixtures += usize::from(fixture);
+        let bind = format!("const struct TA_{upper}_Stream *sp = stream;");
+        if peek.contains(&bind) {
+            frames += 1;
+        } else if names_word(&peek, "sp") {
+            offenders.push(format!("{upper}: names `sp` without binding it to the caller's handle"));
+        } else {
+            dispatchers += 1;
+        }
+        // The declared fixed-size arrays of this frame, read off the emitted
+        // declaration so a period-sized buffer can never qualify.
+        let arrays: BTreeSet<&str> = peek
+            .lines()
+            .map(str::trim)
+            .filter_map(|l| l.strip_suffix(';'))
+            .filter_map(|d| d.split_once(' '))
+            .filter(|(ty, _)| matches!(*ty, "double" | "int"))
+            .filter_map(|(_, rest)| rest.split_once('['))
+            .filter_map(|(n, dim)| dim.strip_suffix(']').map(|d| (n, d)))
+            .filter(|(_, d)| !d.is_empty() && d.chars().all(|c| c.is_ascii_digit()))
+            .map(|(n, _)| n)
+            .collect();
+        for l in peek.lines().map(str::trim) {
+            if l.contains("_Stream scratch") || l.contains("= *stream") {
+                offenders.push(format!("{upper}: copies the handle: {l}"));
+            }
+            let Some(args) = l.strip_prefix("memcpy( ").and_then(|r| r.strip_suffix(" );")) else {
+                continue;
+            };
+            // The one copy the contract allows: a fixed-size array field bound
+            // to a local of the same name. Bounded by the indicator, never by
+            // the period — and still an offender for a SHIPPED function, where
+            // the emitter is expected to shadow the write in place instead.
+            let f: Vec<&str> = args.split(", ").collect();
+            let legal = f.len() == 3
+                && arrays.contains(f[0])
+                && f[1] == format!("sp->{}", f[0])
+                && f[2] == format!("sizeof({})", f[0]);
+            if !legal {
+                offenders.push(format!("{upper}: copies the handle: {l}"));
+            } else if fixture {
+                bounded += 1;
+            } else {
+                offenders.push(format!(
+                    "{upper}: a SHIPPED peek binds the array field {} by copy rather than \
+                     shadowing the write in place — decide whether the shadow set should \
+                     widen to reach it, do not just exempt it here",
+                    f[0]
+                ));
+            }
+        }
+    }
+    assert!(swept > 170, "only {swept} peek(s) swept");
+    assert_eq!(
+        frames + dispatchers,
+        swept,
+        "{frames} frame(s) + {dispatchers} dispatcher(s) do not account for {swept} peek(s)"
+    );
+    assert_eq!(dispatchers, 2, "{dispatchers} peek(s) run no frame — MA and MAVP are the two");
+    assert!(offenders.is_empty(), "a C peek copies the handle:\n{}", offenders.join("\n"));
+    // The shipped corpus reaches the bounded copy never, so its arm proves
+    // nothing without the fixtures — assert it only where it can fire.
+    if fixtures > 0 {
+        assert!(
+            bounded > 0,
+            "{fixtures} fixture(s) swept and none bound a fixed-size array field — the \
+             one legal copy is dead code and this sweep proves nothing about it"
+        );
+    }
+}
+
+/// No peek frame reads `sp->x` where it has bound a local `x` in scope.
+///
+/// This is the one defect the fusion sweep below cannot see, and it exists
+/// BECAUSE of that sweep: `unrewritten` drops the handle qualifier from both
+/// bodies so the two frames can be compared statement by statement, which makes
+/// `x` (the frame's running value) and `sp->x` (the caller's, one bar behind)
+/// the same text. A frame that read the field where it meant the local would
+/// answer a stale bar, bitwise, and only the nightly peek-vs-update leg would
+/// say so.
+///
+/// SCOPE-AWARE, not a whole-body scan: a dual-mode frame declares each arm's
+/// locals inside that arm's block, and `MINUS_DI`/`PLUS_DI` legitimately read
+/// `sp->prevClose` in the arm that does not bind it. Keying on the body would
+/// call those four lines offenders.
+///
+/// The bind itself is the one exempt shape — `x = sp->x;` and the array form
+/// `memcpy( x, sp->x, sizeof(x) );` are how the local gets its value.
+#[test]
+fn no_peek_frame_reads_a_field_it_has_bound() {
+    let (mut swept, mut binds, mut reads) = (0usize, 0usize, 0usize);
+    let mut offenders: Vec<String> = Vec::new();
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let Some(peek) = body_of(&src, &format!("TA_RetCode TA_{upper}_Peek(")) else { continue };
+        swept += 1;
+        let mut scopes: Vec<BTreeSet<String>> = vec![BTreeSet::new()];
+        for raw in peek.lines() {
+            let l = raw.trim();
+            for local in declared_scalars(l) {
+                scopes.last_mut().expect("one scope always open").insert(local);
+            }
+            // A fixed-size array local: `int ring[4];`.
+            if let Some(d) = l.strip_suffix(';') {
+                if let Some((ty, rest)) = d.split_once(' ') {
+                    if matches!(ty, "double" | "int") {
+                        if let Some((n, dim)) = rest.split_once('[') {
+                            if dim.strip_suffix(']').is_some_and(|k| {
+                                !k.is_empty() && k.chars().all(|c| c.is_ascii_digit())
+                            }) {
+                                scopes.last_mut().expect("one scope always open").insert(n.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+            let bound = |n: &str| scopes.iter().any(|s| s.contains(n));
+            let flat = l.replace(' ', "");
+            for (i, _) in l.match_indices("sp->") {
+                let rest = &l[i + 4..];
+                let end = rest
+                    .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+                    .unwrap_or(rest.len());
+                let field = &rest[..end];
+                if field.is_empty() || !bound(field) {
+                    continue;
+                }
+                binds += 1;
+                let seed = flat == format!("{field}=sp->{field};")
+                    || flat == format!("memcpy({field},sp->{field},sizeof({field}));");
+                if !seed {
+                    offenders.push(format!("{upper}: reads sp->{field} with a local {field} in scope: {l}"));
+                }
+            }
+            for c in l.chars() {
+                match c {
+                    '{' => scopes.push(BTreeSet::new()),
+                    '}' => {
+                        scopes.pop();
+                        if scopes.is_empty() {
+                            scopes.push(BTreeSet::new());
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            reads += l.matches("sp->").count();
+        }
+    }
+    assert!(swept > 170, "only {swept} peek(s) swept");
+    assert!(
+        reads > 700 && binds > 400,
+        "{reads} `sp->` read(s) over {binds} that name a bound local — too few for this \
+         to be measuring anything"
+    );
+    assert!(offenders.is_empty(), "a peek frame reads what it has bound:\n{}", offenders.join("\n"));
 }
 
 /// Peek renders every multiply-add it still EVALUATES exactly as update renders
@@ -572,6 +789,8 @@ fn subsequence<T: PartialEq>(small: &[T], big: &[T]) -> Result<(), usize> {
 fn a_peek_frame_fuses_every_multiply_add_it_still_evaluates() {
     let (mut pairs, mut fusing, mut sites, mut anchors) = (0usize, 0usize, 0usize, 0usize);
     let (mut aligned, mut unanchored, mut collapsed) = (0usize, 0usize, 0usize);
+    let (mut unqualified_step, mut unqualified_peek) = (0usize, 0usize);
+    let (mut binds_step, mut binds_peek) = (0usize, 0usize);
     let mut refused: Vec<String> = Vec::new();
     let mut mismatches: Vec<String> = Vec::new();
 
@@ -587,9 +806,13 @@ fn a_peek_frame_fuses_every_multiply_add_it_still_evaluates() {
         };
         pairs += 1;
         let buffers = handle_buffers(&src, &upper);
-        let (u, _, ub_step) = unrewritten(&step, &buffers);
-        let (p, n, ub_peek) = unrewritten(&peek, &buffers);
+        let (u, _, ub_step, q_step, b_step) = unrewritten(&step, &buffers);
+        let (p, n, ub_peek, q_peek, b_peek) = unrewritten(&peek, &buffers);
         collapsed += n;
+        unqualified_step += q_step;
+        unqualified_peek += q_peek;
+        binds_step += b_step;
+        binds_peek += b_peek;
         if ub_step + ub_peek > 0 {
             refused.push(format!("{upper}: undoing a select left {} line(s) unbalanced", ub_step + ub_peek));
         }
@@ -659,6 +882,18 @@ fn a_peek_frame_fuses_every_multiply_add_it_still_evaluates() {
          reads green"
     );
     assert!(
+        unqualified_step >= 900 && unqualified_peek >= 700,
+        "{unqualified_step} update and {unqualified_peek} peek line(s) still read state \
+         through `sp->` after their binds were dropped — a frame that read none would \
+         make the comparisons above trivially equal"
+    );
+    assert!(
+        binds_step >= 40 && binds_peek >= 200,
+        "{binds_step} update and {binds_peek} peek bind(s) dropped — the frames carry one \
+         per elected and per localized scalar, and dropping none would mean the \
+         unqualification above never fired"
+    );
+    assert!(
         mismatches.is_empty(),
         "a peek frame does not render a multiply-add the way its update frame does, which \
          is a silent ~1 ULP divergence in a comparison that must be bitwise:\n{}",
@@ -714,9 +949,16 @@ fn sma_shadows_the_store_its_own_bar_reads_and_deletes_the_one_it_does_not() {
         peek.contains("pkSlot0 = 0;") && peek.contains("pkVal0 = inReal;"),
         "the cap-0 guard becomes a shadow: {peek}"
     );
+    // The base is bound (`ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;`)
+    // and the cursor is not, so the two operands of the select are spelled
+    // differently — which is the point of pinning the whole expression here.
+    assert!(
+        peek.contains("ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;"),
+        "the buffer base is bound once rather than reloaded per read: {peek}"
+    );
     assert!(
         peek.contains(
-            "(sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0"
+            "(sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0"
         ),
         "the trailing read selects the shadow, with the array in the THEN arm so the \
          operand classifies as it does in update: {peek}"
@@ -726,9 +968,14 @@ fn sma_shadows_the_store_its_own_bar_reads_and_deletes_the_one_it_does_not() {
         "the tail push is loaded by nothing this bar, so it is deleted, not shadowed: {peek}"
     );
     assert_eq!(
-        peek.matches("sp->ring_trailingIdx_inReal[").count(),
+        peek.matches("ring_trailingIdx_inReal[").count(),
         1,
         "exactly one load survives, and it is a load: {peek}"
+    );
+    assert_eq!(
+        peek.matches("sp->ring_trailingIdx_inReal").count(),
+        1,
+        "and the only mention of the FIELD is the bind: {peek}"
     );
 }
 
@@ -847,11 +1094,10 @@ fn a_peek_frame_stops_at_its_last_output_store() {
         })
     }
 
-    let tail_marks = [
-        ("sp->ringPos_", 60usize),
-        ("sp->winPos_", 5),
-        ("sp->streamParity", 5),
-    ];
+    // Both spellings of each: a peek frame moves every field it WRITES to a
+    // bare local of the same name, so a needle carrying the handle qualifier
+    // would go blind on exactly the store this looks for.
+    let tail_marks = [("ringPos_", 60usize), ("winPos_", 5), ("streamParity", 5)];
     let mut in_step = [0usize; 3];
     let mut offenders: Vec<String> = Vec::new();
     let mut swept = 0usize;
@@ -866,10 +1112,12 @@ fn a_peek_frame_stops_at_its_last_output_store() {
         };
         swept += 1;
         for (k, (mark, _)) in tail_marks.iter().enumerate() {
-            if stores_to(&peek, mark) {
+            let q = format!("sp->{mark}");
+            if stores_to(&peek, &q) || stores_to(&peek, mark) {
                 offenders.push(format!("{upper}: a peek frame still carries `{mark}...=`"));
             }
-            if body_of(&src, &format!("TA_{upper}_StepImpl(")).is_some_and(|s| stores_to(&s, mark))
+            if body_of(&src, &format!("TA_{upper}_StepImpl("))
+                .is_some_and(|s| stores_to(&s, &q) || stores_to(&s, mark))
             {
                 in_step[k] += 1;
             }
@@ -934,14 +1182,23 @@ fn names_word(text: &str, word: &str) -> bool {
 /// the text right of the `=`, so `x += 1` and `x = f(x)` are told apart the way
 /// the purge tells them apart. The declaration is not a statement: counting it
 /// makes every local read and the sweep vacuous.
+///
+/// Nor is a localized field's SEED, `x = sp->x;`, for the same reason: it names
+/// `x` on both sides, so counting the right-hand one would make every localized
+/// local read itself into existence — which is precisely the class this sweep
+/// exists to catch (the identity arm's `cur_<out>` store, orphaned by the trim).
 fn body_reads(body: &str, name: &str) -> bool {
-    body.lines().filter(|l| declared_scalars(l).is_empty()).any(|l| {
-        let scan = match assignment(l) {
-            Some((t, _)) if t == name => l.split_once('=').map_or("", |(_, r)| r),
-            _ => l,
-        };
-        names_word(scan, name)
-    })
+    let seed = format!("{name}=sp->{name}");
+    body.lines()
+        .filter(|l| declared_scalars(l).is_empty())
+        .filter(|l| l.replace(' ', "").trim_end_matches(';') != seed)
+        .any(|l| {
+            let scan = match assignment(l) {
+                Some((t, _)) if t == name => l.split_once('=').map_or("", |(_, r)| r),
+                _ => l,
+            };
+            names_word(scan, name)
+        })
 }
 
 /// No peek frame declares a local nothing reads.
@@ -955,7 +1212,7 @@ fn body_reads(body: &str, name: &str) -> bool {
 /// non-constant, javac has no such diagnostic).
 #[test]
 fn no_peek_frame_declares_a_local_nothing_reads() {
-    let (mut swept, mut locals) = (0usize, 0usize);
+    let (mut swept, mut locals, mut seeded) = (0usize, 0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
 
     for name in indicators() {
@@ -966,6 +1223,9 @@ fn no_peek_frame_declares_a_local_nothing_reads() {
         swept += 1;
         for local in declared_scalars(&peek) {
             locals += 1;
+            if peek.replace(' ', "").contains(&format!("\n{local}=sp->{local};")) {
+                seeded += 1;
+            }
             if !body_reads(&peek, &local) {
                 offenders.push(format!("{upper}: {local}"));
             }
@@ -973,8 +1233,9 @@ fn no_peek_frame_declares_a_local_nothing_reads() {
     }
 
     assert!(
-        swept > 170 && locals > 350,
-        "{swept} peek frame(s) over {locals} local(s) — too few for this to be measuring anything"
+        swept > 170 && locals > 350 && seeded > 250,
+        "{swept} peek frame(s) over {locals} local(s), {seeded} of them a localized field — \
+         too few for this to be measuring anything"
     );
     assert!(
         offenders.is_empty(),

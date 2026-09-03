@@ -664,28 +664,32 @@ TA_LIB_API TA_RetCode TA_EFI_Update( TA_EFI_Stream *stream, double inClose, doub
 
 TA_LIB_API TA_RetCode TA_EFI_Peek( const TA_EFI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
-   struct TA_EFI_Stream scratch;
-   struct TA_EFI_Stream *sp = &scratch;
+   const struct TA_EFI_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( sp->optInTimePeriod == 1 )
    {
       double force;
+      double prevClose;
 
-      force = (inClose - sp->prevClose) * inVolume;
-      sp->prevClose = inClose;
+      prevClose = sp->prevClose;
+      force = (inClose - prevClose) * inVolume;
+      prevClose = inClose;
       *outReal= force;
    }
    else
    {
       double force;
+      double prevClose;
+      double prevMA;
 
-      force = (inClose - sp->prevClose) * inVolume;
-      sp->prevClose = inClose;
-      sp->prevMA = fma(force - sp->prevMA, sp->optInK_1, sp->prevMA);
-      *outReal= sp->prevMA;
+      prevClose = sp->prevClose;
+      prevMA = sp->prevMA;
+      force = (inClose - prevClose) * inVolume;
+      prevClose = inClose;
+      prevMA = fma(force - prevMA, sp->optInK_1, prevMA);
+      *outReal= prevMA;
    }
    return TA_SUCCESS;
 }

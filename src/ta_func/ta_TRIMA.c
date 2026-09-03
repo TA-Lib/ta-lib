@@ -1171,19 +1171,29 @@ TA_LIB_API TA_RetCode TA_TRIMA_Update( TA_TRIMA_Stream *stream, double inReal, d
 
 TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_TRIMA_Stream scratch;
-   struct TA_TRIMA_Stream *sp = &scratch;
+   const struct TA_TRIMA_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( sp->optInTimePeriod % 2 == 1 )
    {
+      double numerator;
+      double numeratorAdd;
+      double numeratorSub;
+      double tempReal;
+      double *ring_middleIdx_inReal;
+      double *ring_trailingIdx_inReal;
       int pkSlot0 = -1;
       double pkVal0 = 0.0;
       int pkSlot1 = -1;
       double pkVal1 = 0.0;
 
+      numerator = sp->numerator;
+      numeratorAdd = sp->numeratorAdd;
+      numeratorSub = sp->numeratorSub;
+      tempReal = sp->tempReal;
+      ring_middleIdx_inReal = sp->ring_middleIdx_inReal;
+      ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
       if( sp->ringCap_middleIdx == 0 )
       {
          pkSlot0 = 0;
@@ -1195,28 +1205,40 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
          pkVal1 = inReal;
       }
       /* Step (1) */
-      sp->numerator -= sp->numeratorSub;
-      sp->numeratorSub -= sp->tempReal;
-      sp->tempReal = (sp->ringPos_middleIdx != pkSlot0) ? sp->ring_middleIdx_inReal[sp->ringPos_middleIdx] : pkVal0;
-      sp->numeratorSub += sp->tempReal;
+      numerator -= numeratorSub;
+      numeratorSub -= tempReal;
+      tempReal = (sp->ringPos_middleIdx != pkSlot0) ? ring_middleIdx_inReal[sp->ringPos_middleIdx] : pkVal0;
+      numeratorSub += tempReal;
       /* Step (2) */
-      sp->numerator += sp->numeratorAdd;
-      sp->numeratorAdd -= sp->tempReal;
-      sp->tempReal = inReal;
-      sp->numeratorAdd += sp->tempReal;
+      numerator += numeratorAdd;
+      numeratorAdd -= tempReal;
+      tempReal = inReal;
+      numeratorAdd += tempReal;
       /* Step (3) */
-      sp->numerator += sp->tempReal;
+      numerator += tempReal;
       /* Step (4) */
-      sp->tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
-      *outReal= sp->numerator * sp->factor;
+      tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
+      *outReal= numerator * sp->factor;
    }
    else
    {
+      double numerator;
+      double numeratorAdd;
+      double numeratorSub;
+      double tempReal;
+      double *ring_middleIdx_inReal;
+      double *ring_trailingIdx_inReal;
       int pkSlot0 = -1;
       double pkVal0 = 0.0;
       int pkSlot1 = -1;
       double pkVal1 = 0.0;
 
+      numerator = sp->numerator;
+      numeratorAdd = sp->numeratorAdd;
+      numeratorSub = sp->numeratorSub;
+      tempReal = sp->tempReal;
+      ring_middleIdx_inReal = sp->ring_middleIdx_inReal;
+      ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
       if( sp->ringCap_middleIdx == 0 )
       {
          pkSlot0 = 0;
@@ -1228,20 +1250,20 @@ TA_LIB_API TA_RetCode TA_TRIMA_Peek( const TA_TRIMA_Stream *stream, double inRea
          pkVal1 = inReal;
       }
       /* Step (1) */
-      sp->numerator -= sp->numeratorSub;
-      sp->numeratorSub -= sp->tempReal;
-      sp->tempReal = (sp->ringPos_middleIdx != pkSlot0) ? sp->ring_middleIdx_inReal[sp->ringPos_middleIdx] : pkVal0;
-      sp->numeratorSub += sp->tempReal;
+      numerator -= numeratorSub;
+      numeratorSub -= tempReal;
+      tempReal = (sp->ringPos_middleIdx != pkSlot0) ? ring_middleIdx_inReal[sp->ringPos_middleIdx] : pkVal0;
+      numeratorSub += tempReal;
       /* Step (2) */
-      sp->numeratorAdd -= sp->tempReal;
-      sp->numerator += sp->numeratorAdd;
-      sp->tempReal = inReal;
-      sp->numeratorAdd += sp->tempReal;
+      numeratorAdd -= tempReal;
+      numerator += numeratorAdd;
+      tempReal = inReal;
+      numeratorAdd += tempReal;
       /* Step (3) */
-      sp->numerator += sp->tempReal;
+      numerator += tempReal;
       /* Step (4) */
-      sp->tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
-      *outReal= sp->numerator * sp->factor;
+      tempReal = (sp->ringPos_trailingIdx != pkSlot1) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal1;
+      *outReal= numerator * sp->factor;
    }
    return TA_SUCCESS;
 }

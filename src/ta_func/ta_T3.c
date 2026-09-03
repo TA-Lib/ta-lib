@@ -763,25 +763,34 @@ TA_LIB_API TA_RetCode TA_T3_Update( TA_T3_Stream *stream, double inReal, double 
 
 TA_LIB_API TA_RetCode TA_T3_Peek( const TA_T3_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_T3_Stream scratch;
-   struct TA_T3_Stream *sp = &scratch;
+   const struct TA_T3_Stream *sp = stream;
+   double e1;
+   double e2;
+   double e3;
+   double e4;
+   double e5;
+   double e6;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   e1 = sp->e1;
+   e2 = sp->e2;
+   e3 = sp->e3;
+   e4 = sp->e4;
+   e5 = sp->e5;
+   e6 = sp->e6;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
-      sp->cur_outReal = *outReal;
       return TA_SUCCESS;
    }
-   sp->e1 = fma(sp->one_minus_k, sp->e1, sp->k * inReal);
-   sp->e2 = fma(sp->one_minus_k, sp->e2, sp->k * sp->e1);
-   sp->e3 = fma(sp->one_minus_k, sp->e3, sp->k * sp->e2);
-   sp->e4 = fma(sp->one_minus_k, sp->e4, sp->k * sp->e3);
-   sp->e5 = fma(sp->one_minus_k, sp->e5, sp->k * sp->e4);
-   sp->e6 = fma(sp->one_minus_k, sp->e6, sp->k * sp->e5);
-   *outReal= fma(sp->c4, sp->e3, fma(sp->c3, sp->e4, fma(sp->c1, sp->e6, sp->c2 * sp->e5)));
+   e1 = fma(sp->one_minus_k, e1, sp->k * inReal);
+   e2 = fma(sp->one_minus_k, e2, sp->k * e1);
+   e3 = fma(sp->one_minus_k, e3, sp->k * e2);
+   e4 = fma(sp->one_minus_k, e4, sp->k * e3);
+   e5 = fma(sp->one_minus_k, e5, sp->k * e4);
+   e6 = fma(sp->one_minus_k, e6, sp->k * e5);
+   *outReal= fma(sp->c4, e3, fma(sp->c3, e4, fma(sp->c1, e6, sp->c2 * e5)));
    return TA_SUCCESS;
 }
 

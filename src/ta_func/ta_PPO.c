@@ -566,15 +566,13 @@ TA_LIB_API TA_RetCode TA_PPO_Update( TA_PPO_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_PPO_Peek( const TA_PPO_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_PPO_Stream scratch;
-   struct TA_PPO_Stream *sp = &scratch;
+   const struct TA_PPO_Stream *sp = stream;
    double tempReal;
    double cur_tempBuffer = 0.0;
    double cur_outReal = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

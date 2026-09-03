@@ -549,26 +549,32 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Update( TA_CDLHIKKAKE_Stream *stream, double
 
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Peek( const TA_CDLHIKKAKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDLHIKKAKE_Stream scratch;
-   struct TA_CDLHIKKAKE_Stream *sp = &scratch;
+   const struct TA_CDLHIKKAKE_Stream *sp = stream;
+   int cd;
+   int patternResult;
+   double savedHigh;
+   double savedLow;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   cd = sp->cd;
+   patternResult = sp->patternResult;
+   savedHigh = sp->savedHigh;
+   savedLow = sp->savedLow;
    if( sp->lag1_inHigh < sp->lag2_inHigh &&
        sp->lag1_inLow > sp->lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
        ((inHigh < sp->lag1_inHigh && inLow < sp->lag1_inLow) || (inHigh > sp->lag1_inHigh && inLow > sp->lag1_inLow)) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
    {
-      sp->patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
-      sp->savedHigh = sp->lag1_inHigh;
-      sp->savedLow = sp->lag1_inLow;
-      sp->cd = 4;
-      *outInteger= sp->patternResult;
-   } else if( sp->cd > 0 &&
-       ((sp->patternResult > 0 && inClose > sp->savedHigh) || (sp->patternResult < 0 && inClose < sp->savedLow)) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+      patternResult = 100 * ((inHigh < sp->lag1_inHigh) ? 1 : 0 - 1);
+      savedHigh = sp->lag1_inHigh;
+      savedLow = sp->lag1_inLow;
+      cd = 4;
+      *outInteger= patternResult;
+   } else if( cd > 0 &&
+       ((patternResult > 0 && inClose > savedHigh) || (patternResult < 0 && inClose < savedLow)) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
    {
-      *outInteger= sp->patternResult + 100 * ((sp->patternResult > 0) ? 1 : 0 - 1);
-      sp->cd = 0;
+      *outInteger= patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
+      cd = 0;
    } else 
    {
       *outInteger= 0;

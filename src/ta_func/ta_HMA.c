@@ -1723,12 +1723,10 @@ TA_LIB_API TA_RetCode TA_HMA_Update( TA_HMA_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_HMA_Stream scratch;
-   struct TA_HMA_Stream *sp = &scratch;
+   const struct TA_HMA_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
@@ -1741,11 +1739,23 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       int jFull;
       int rw;
       double tempReal2;
+      int barsSinceReseedFull;
+      double periodSubFull;
+      double periodSumFull;
+      double trailingFull;
+      double *ring_trailingIdxFull_inReal;
+      double *win_jFull_inReal;
       int pkSlot0 = -1;
       double pkVal0 = 0.0;
       int pkSlot1 = -1;
       double pkVal1 = 0.0;
 
+      barsSinceReseedFull = sp->barsSinceReseedFull;
+      periodSubFull = sp->periodSubFull;
+      periodSumFull = sp->periodSumFull;
+      trailingFull = sp->trailingFull;
+      ring_trailingIdxFull_inReal = sp->ring_trailingIdxFull_inReal;
+      win_jFull_inReal = sp->win_jFull_inReal;
       if( sp->ringCap_trailingIdxFull == 0 )
       {
          pkSlot0 = 0;
@@ -1754,27 +1764,27 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       pkSlot1 = sp->winPos_jFull;
       pkVal1 = inReal;
       tempReal = inReal;
-      sp->periodSubFull += tempReal;
-      sp->periodSubFull -= sp->trailingFull;
-      sp->periodSumFull += tempReal * sp->optInTimePeriod;
-      sp->barsSinceReseedFull -= 1;
-      if( sp->barsSinceReseedFull <= 0 )
+      periodSubFull += tempReal;
+      periodSubFull -= trailingFull;
+      periodSumFull += tempReal * sp->optInTimePeriod;
+      barsSinceReseedFull -= 1;
+      if( barsSinceReseedFull <= 0 )
       {
-         sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
-         sp->periodSubFull = 0.0;
-         sp->periodSumFull = 0.0;
+         barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         periodSubFull = 0.0;
+         periodSumFull = 0.0;
          rw = 1;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
-            tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot1) ? sp->win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal1;
-            sp->periodSubFull += tempReal2;
-            sp->periodSumFull += tempReal2 * rw;
+            tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot1) ? win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal1;
+            periodSubFull += tempReal2;
+            periodSumFull += tempReal2 * rw;
             rw += 1;
          }
       }
-      sp->trailingFull = (sp->ringPos_trailingIdxFull != pkSlot0) ? sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] : pkVal0;
-      fullOut = sp->periodSumFull / sp->dividerFull;
-      sp->periodSumFull -= sp->periodSubFull;
+      trailingFull = (sp->ringPos_trailingIdxFull != pkSlot0) ? ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] : pkVal0;
+      fullOut = periodSumFull / sp->dividerFull;
+      periodSumFull -= periodSubFull;
       *outReal= 2.0 * tempReal - fullOut;
    }
    else
@@ -1789,8 +1799,22 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       int rw;
       int ringWalk;
       double tempReal2;
-      double periodSubSqrt;
+      int barsSinceReseedFull;
+      int barsSinceReseedHalf;
+      int barsSinceReseedSqrt;
+      int dRing_Idx;
+      double periodSubFull;
+      double periodSubHalf;
+      double periodSumFull;
+      double periodSumHalf;
       double periodSumSqrt;
+      double trailingFull;
+      double trailingHalf;
+      double *cb_dRing;
+      double *ring_trailingIdxFull_inReal;
+      double *ring_trailingIdxHalf_inReal;
+      double *win_jFull_inReal;
+      double *win_jHalf_inReal;
       int pkSlot0 = -1;
       double pkVal0 = 0.0;
       int pkSlot1 = -1;
@@ -1800,8 +1824,22 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       int pkSlot3 = -1;
       double pkVal3 = 0.0;
 
-      periodSubSqrt = sp->periodSubSqrt;
+      barsSinceReseedFull = sp->barsSinceReseedFull;
+      barsSinceReseedHalf = sp->barsSinceReseedHalf;
+      barsSinceReseedSqrt = sp->barsSinceReseedSqrt;
+      dRing_Idx = sp->dRing_Idx;
+      periodSubFull = sp->periodSubFull;
+      periodSubHalf = sp->periodSubHalf;
+      periodSumFull = sp->periodSumFull;
+      periodSumHalf = sp->periodSumHalf;
       periodSumSqrt = sp->periodSumSqrt;
+      trailingFull = sp->trailingFull;
+      trailingHalf = sp->trailingHalf;
+      cb_dRing = sp->cb_dRing;
+      ring_trailingIdxFull_inReal = sp->ring_trailingIdxFull_inReal;
+      ring_trailingIdxHalf_inReal = sp->ring_trailingIdxHalf_inReal;
+      win_jFull_inReal = sp->win_jFull_inReal;
+      win_jHalf_inReal = sp->win_jHalf_inReal;
       if( sp->ringCap_trailingIdxFull == 0 )
       {
          pkSlot0 = 0;
@@ -1817,51 +1855,49 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
       pkSlot3 = sp->winPos_jHalf;
       pkVal3 = inReal;
       tempReal = inReal;
-      sp->periodSubFull += tempReal;
-      sp->periodSubFull -= sp->trailingFull;
-      sp->periodSumFull += tempReal * sp->optInTimePeriod;
-      sp->barsSinceReseedFull -= 1;
-      if( sp->barsSinceReseedFull <= 0 )
+      periodSubFull += tempReal;
+      periodSubFull -= trailingFull;
+      periodSumFull += tempReal * sp->optInTimePeriod;
+      barsSinceReseedFull -= 1;
+      if( barsSinceReseedFull <= 0 )
       {
-         sp->barsSinceReseedFull = 8 * sp->optInTimePeriod;
-         sp->periodSubFull = 0.0;
-         sp->periodSumFull = 0.0;
+         barsSinceReseedFull = 8 * sp->optInTimePeriod;
+         periodSubFull = 0.0;
+         periodSumFull = 0.0;
          rw = 1;
          for( jFull = sp->lookbackFull; jFull >= 0; jFull -= 1 )
          {
-            tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot2) ? sp->win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal2;
-            sp->periodSubFull += tempReal2;
-            sp->periodSumFull += tempReal2 * rw;
+            tempReal2 = (((sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull) != pkSlot2) ? win_jFull_inReal[(sp->winPos_jFull + sp->winCap_jFull - jFull >= sp->winCap_jFull) ? sp->winPos_jFull + sp->winCap_jFull - jFull - sp->winCap_jFull : sp->winPos_jFull + sp->winCap_jFull - jFull] : pkVal2;
+            periodSubFull += tempReal2;
+            periodSumFull += tempReal2 * rw;
             rw += 1;
          }
       }
-      sp->trailingFull = (sp->ringPos_trailingIdxFull != pkSlot0) ? sp->ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] : pkVal0;
-      fullOut = sp->periodSumFull / sp->dividerFull;
-      sp->periodSumFull -= sp->periodSubFull;
-      sp->periodSubHalf += tempReal;
-      sp->periodSubHalf -= sp->trailingHalf;
-      sp->periodSumHalf += tempReal * sp->halfPeriod;
-      sp->barsSinceReseedHalf -= 1;
-      if( sp->barsSinceReseedHalf <= 0 )
+      trailingFull = (sp->ringPos_trailingIdxFull != pkSlot0) ? ring_trailingIdxFull_inReal[sp->ringPos_trailingIdxFull] : pkVal0;
+      fullOut = periodSumFull / sp->dividerFull;
+      periodSumFull -= periodSubFull;
+      periodSubHalf += tempReal;
+      periodSubHalf -= trailingHalf;
+      periodSumHalf += tempReal * sp->halfPeriod;
+      barsSinceReseedHalf -= 1;
+      if( barsSinceReseedHalf <= 0 )
       {
-         sp->barsSinceReseedHalf = 8 * sp->halfPeriod;
-         sp->periodSubHalf = 0.0;
-         sp->periodSumHalf = 0.0;
+         barsSinceReseedHalf = 8 * sp->halfPeriod;
+         periodSubHalf = 0.0;
+         periodSumHalf = 0.0;
          rw = 1;
          for( jHalf = sp->lookbackHalf; jHalf >= 0; jHalf -= 1 )
          {
-            tempReal2 = (((sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf) != pkSlot3) ? sp->win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf] : pkVal3;
-            sp->periodSubHalf += tempReal2;
-            sp->periodSumHalf += tempReal2 * rw;
+            tempReal2 = (((sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf) != pkSlot3) ? win_jHalf_inReal[(sp->winPos_jHalf + sp->winCap_jHalf - jHalf >= sp->winCap_jHalf) ? sp->winPos_jHalf + sp->winCap_jHalf - jHalf - sp->winCap_jHalf : sp->winPos_jHalf + sp->winCap_jHalf - jHalf] : pkVal3;
+            periodSubHalf += tempReal2;
+            periodSumHalf += tempReal2 * rw;
             rw += 1;
          }
       }
-      sp->trailingHalf = (sp->ringPos_trailingIdxHalf != pkSlot1) ? sp->ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf] : pkVal1;
-      halfOut = sp->periodSumHalf / sp->dividerHalf;
-      sp->periodSumHalf -= sp->periodSubHalf;
+      trailingHalf = (sp->ringPos_trailingIdxHalf != pkSlot1) ? ring_trailingIdxHalf_inReal[sp->ringPos_trailingIdxHalf] : pkVal1;
+      halfOut = periodSumHalf / sp->dividerHalf;
+      periodSumHalf -= periodSubHalf;
       diffReal = 2.0 * halfOut - fullOut;
-      periodSubSqrt += diffReal;
-      periodSubSqrt -= sp->trailingSqrt;
       periodSumSqrt += diffReal * sp->sqrtPeriod;
       /* The outer WMA consumes a DERIVED series that is never
        * materialised, so its rescan walks the de-lag ring: dRing_Idx is
@@ -1869,18 +1905,16 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
        * newest value, which together are the whole window. Oldest first,
        * weight counting up from 1 -- the priming order above.
        */
-      sp->barsSinceReseedSqrt -= 1;
-      if( sp->barsSinceReseedSqrt <= 0 )
+      barsSinceReseedSqrt -= 1;
+      if( barsSinceReseedSqrt <= 0 )
       {
-         sp->barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
-         periodSubSqrt = 0.0;
+         barsSinceReseedSqrt = 8 * sp->sqrtPeriod;
          periodSumSqrt = 0.0;
          rw = 1;
-         ringWalk = sp->dRing_Idx;
+         ringWalk = dRing_Idx;
          for( q = 0; q < sp->ringSize; q += 1 )
          {
-            tempReal2 = sp->cb_dRing[ringWalk];
-            periodSubSqrt += tempReal2;
+            tempReal2 = cb_dRing[ringWalk];
             periodSumSqrt += tempReal2 * rw;
             rw += 1;
             ringWalk += 1;
@@ -1889,18 +1923,14 @@ TA_LIB_API TA_RetCode TA_HMA_Peek( const TA_HMA_Stream *stream, double inReal, d
                ringWalk = 0;
             }
          }
-         periodSubSqrt += diffReal;
          periodSumSqrt += diffReal * sp->sqrtPeriod;
       }
-      sp->trailingSqrt = sp->cb_dRing[sp->dRing_Idx];
-      sp->dRing_Idx = sp->dRing_Idx + 1;
-      if( sp->dRing_Idx > sp->maxIdx_dRing )
+      dRing_Idx = dRing_Idx + 1;
+      if( dRing_Idx > sp->maxIdx_dRing )
       {
-         sp->dRing_Idx = 0;
+         dRing_Idx = 0;
       }
       *outReal= periodSumSqrt / sp->dividerSqrt;
-      sp->periodSubSqrt = periodSubSqrt;
-      sp->periodSumSqrt = periodSumSqrt;
    }
    return TA_SUCCESS;
 }

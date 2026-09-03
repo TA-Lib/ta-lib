@@ -1474,8 +1474,7 @@ TA_LIB_API TA_RetCode TA_BETA_Update( TA_BETA_Stream *stream, double inReal0, do
 
 TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
-   struct TA_BETA_Stream scratch;
-   struct TA_BETA_Stream *sp = &scratch;
+   const struct TA_BETA_Stream *sp = stream;
    double tmp_real;
    double denom;
    double denom_scale;
@@ -1484,11 +1483,23 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    int windowStart;
    double x;
    double y;
+   double S_x;
    double S_xx;
    double S_xy;
-   double S_x;
    double S_y;
    double S_yy;
+   int barsSinceReseed;
+   int i;
+   int j;
+   double last_price_x;
+   double last_price_y;
+   double shift_x;
+   double shift_y;
+   int trailingIdx;
+   double trailing_last_price_x;
+   double trailing_last_price_y;
+   double *x_inReal0;
+   double *x_inReal1;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -1497,42 +1508,53 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   S_x = sp->S_x;
    S_xx = sp->S_xx;
    S_xy = sp->S_xy;
-   S_x = sp->S_x;
    S_y = sp->S_y;
    S_yy = sp->S_yy;
-   if( sp->i >= 1073741824 )
+   barsSinceReseed = sp->barsSinceReseed;
+   i = sp->i;
+   j = sp->j;
+   last_price_x = sp->last_price_x;
+   last_price_y = sp->last_price_y;
+   shift_x = sp->shift_x;
+   shift_y = sp->shift_y;
+   trailingIdx = sp->trailingIdx;
+   trailing_last_price_x = sp->trailing_last_price_x;
+   trailing_last_price_y = sp->trailing_last_price_y;
+   x_inReal0 = sp->x_inReal0;
+   x_inReal1 = sp->x_inReal1;
+   if( i >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->i -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->j -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      i -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      j -= rebaseShift;
    }
-   pkSlot0 = sp->i & sp->xMask;
+   pkSlot0 = i & sp->xMask;
    pkVal0 = inReal0;
-   pkSlot1 = sp->i & sp->xMask;
+   pkSlot1 = i & sp->xMask;
    pkVal1 = inReal1;
-   tmp_real = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inReal0[sp->i & sp->xMask] : pkVal0;
-   if( sp->last_price_x != 0.0 )
+   tmp_real = ((i & sp->xMask) != pkSlot0) ? x_inReal0[i & sp->xMask] : pkVal0;
+   if( last_price_x != 0.0 )
    {
-      x = (tmp_real - sp->last_price_x) / sp->last_price_x - sp->shift_x;
+      x = (tmp_real - last_price_x) / last_price_x - shift_x;
    } else 
    {
-      x = 0 - sp->shift_x;
+      x = 0 - shift_x;
    }
-   sp->last_price_x = tmp_real;
-   pkIdx0 = sp->i++ & sp->xMask;
-   tmp_real = (pkIdx0 != pkSlot1) ? sp->x_inReal1[pkIdx0] : pkVal1;
-   if( sp->last_price_y != 0.0 )
+   last_price_x = tmp_real;
+   pkIdx0 = i++ & sp->xMask;
+   tmp_real = (pkIdx0 != pkSlot1) ? x_inReal1[pkIdx0] : pkVal1;
+   if( last_price_y != 0.0 )
    {
-      y = (tmp_real - sp->last_price_y) / sp->last_price_y - sp->shift_y;
+      y = (tmp_real - last_price_y) / last_price_y - shift_y;
    } else 
    {
-      y = 0 - sp->shift_y;
+      y = 0 - shift_y;
    }
-   sp->last_price_y = tmp_real;
+   last_price_y = tmp_real;
    S_xx += x * x;
    S_yy += y * y;
    S_xy += x * y;
@@ -1585,11 +1607,11 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
     * outputs written so far occupy [0, outIdx-1] while windowStart-1 is
     * startIdx-optInTimePeriod+outIdx, which is >= outIdx.
     */
-   sp->barsSinceReseed -= 1;
-   if( denom < 0.000001 * denom_scale || sp->leaving_xx > 1000.0 * S_xx || sp->leaving_yy > 1000.0 * S_yy || sp->barsSinceReseed <= 0 )
+   barsSinceReseed -= 1;
+   if( denom < 0.000001 * denom_scale || sp->leaving_xx > 1000.0 * S_xx || sp->leaving_yy > 1000.0 * S_yy || barsSinceReseed <= 0 )
    {
-      sp->barsSinceReseed = 32 * sp->optInTimePeriod;
-      windowStart = sp->trailingIdx;
+      barsSinceReseed = 32 * sp->optInTimePeriod;
+      windowStart = trailingIdx;
       /* Walk the window forward from the price the trailing cursor already
        * carries. A return needs its predecessor, and reading inReal[j-1]
        * would reach one slot BEFORE the window -- which the batch can do and
@@ -1597,50 +1619,50 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
        * IS that predecessor, so carrying it forward keeps every read inside
        * [trailingIdx, i-1] and the two paths stay identical.
        */
-      prev_x = sp->trailing_last_price_x;
-      prev_y = sp->trailing_last_price_y;
+      prev_x = trailing_last_price_x;
+      prev_y = trailing_last_price_y;
       tmp_real = 0.0;
-      sp->shift_y = 0.0;
-      for( sp->j = windowStart; sp->j < sp->i; sp->j += 1 )
+      shift_y = 0.0;
+      for( j = windowStart; j < i; j += 1 )
       {
          if( prev_x != 0.0 )
          {
-            tmp_real += ((((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal0[sp->j & sp->xMask] : pkVal0) - prev_x) / prev_x;
+            tmp_real += ((((j & sp->xMask) != pkSlot0) ? x_inReal0[j & sp->xMask] : pkVal0) - prev_x) / prev_x;
          }
-         prev_x = ((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal0[sp->j & sp->xMask] : pkVal0;
+         prev_x = ((j & sp->xMask) != pkSlot0) ? x_inReal0[j & sp->xMask] : pkVal0;
          if( prev_y != 0.0 )
          {
-            sp->shift_y += ((((sp->j & sp->xMask) != pkSlot1) ? sp->x_inReal1[sp->j & sp->xMask] : pkVal1) - prev_y) / prev_y;
+            shift_y += ((((j & sp->xMask) != pkSlot1) ? x_inReal1[j & sp->xMask] : pkVal1) - prev_y) / prev_y;
          }
-         prev_y = ((sp->j & sp->xMask) != pkSlot1) ? sp->x_inReal1[sp->j & sp->xMask] : pkVal1;
+         prev_y = ((j & sp->xMask) != pkSlot1) ? x_inReal1[j & sp->xMask] : pkVal1;
       }
-      sp->shift_x = tmp_real / sp->n;
-      sp->shift_y = sp->shift_y / sp->n;
-      prev_x = sp->trailing_last_price_x;
-      prev_y = sp->trailing_last_price_y;
+      shift_x = tmp_real / sp->n;
+      shift_y = shift_y / sp->n;
+      prev_x = trailing_last_price_x;
+      prev_y = trailing_last_price_y;
       S_xx = 0.0;
       S_yy = 0.0;
       S_xy = 0.0;
       S_x = 0.0;
       S_y = 0.0;
-      for( sp->j = windowStart; sp->j < sp->i; sp->j += 1 )
+      for( j = windowStart; j < i; j += 1 )
       {
          if( prev_x != 0.0 )
          {
-            x = ((((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal0[sp->j & sp->xMask] : pkVal0) - prev_x) / prev_x - sp->shift_x;
+            x = ((((j & sp->xMask) != pkSlot0) ? x_inReal0[j & sp->xMask] : pkVal0) - prev_x) / prev_x - shift_x;
          } else 
          {
-            x = 0 - sp->shift_x;
+            x = 0 - shift_x;
          }
-         prev_x = ((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal0[sp->j & sp->xMask] : pkVal0;
+         prev_x = ((j & sp->xMask) != pkSlot0) ? x_inReal0[j & sp->xMask] : pkVal0;
          if( prev_y != 0.0 )
          {
-            y = ((((sp->j & sp->xMask) != pkSlot1) ? sp->x_inReal1[sp->j & sp->xMask] : pkVal1) - prev_y) / prev_y - sp->shift_y;
+            y = ((((j & sp->xMask) != pkSlot1) ? x_inReal1[j & sp->xMask] : pkVal1) - prev_y) / prev_y - shift_y;
          } else 
          {
-            y = 0 - sp->shift_y;
+            y = 0 - shift_y;
          }
-         prev_y = ((sp->j & sp->xMask) != pkSlot1) ? sp->x_inReal1[sp->j & sp->xMask] : pkVal1;
+         prev_y = ((j & sp->xMask) != pkSlot1) ? x_inReal1[j & sp->xMask] : pkVal1;
          S_xx += x * x;
          S_yy += y * y;
          S_xy += x * y;
@@ -1665,25 +1687,25 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    /* Always read the trailing before writing the output because the input and output
     * buffer can be the same.
     */
-   tmp_real = ((sp->trailingIdx & sp->xMask) != pkSlot0) ? sp->x_inReal0[sp->trailingIdx & sp->xMask] : pkVal0;
-   if( sp->trailing_last_price_x != 0.0 )
+   tmp_real = ((trailingIdx & sp->xMask) != pkSlot0) ? x_inReal0[trailingIdx & sp->xMask] : pkVal0;
+   if( trailing_last_price_x != 0.0 )
    {
-      x = (tmp_real - sp->trailing_last_price_x) / sp->trailing_last_price_x - sp->shift_x;
+      x = (tmp_real - trailing_last_price_x) / trailing_last_price_x - shift_x;
    } else 
    {
-      x = 0 - sp->shift_x;
+      x = 0 - shift_x;
    }
-   sp->trailing_last_price_x = tmp_real;
-   tmp_real = ((sp->trailingIdx & sp->xMask) != pkSlot1) ? sp->x_inReal1[sp->trailingIdx & sp->xMask] : pkVal1;
-   sp->trailingIdx += 1;
-   if( sp->trailing_last_price_y != 0.0 )
+   trailing_last_price_x = tmp_real;
+   tmp_real = ((trailingIdx & sp->xMask) != pkSlot1) ? x_inReal1[trailingIdx & sp->xMask] : pkVal1;
+   trailingIdx += 1;
+   if( trailing_last_price_y != 0.0 )
    {
-      y = (tmp_real - sp->trailing_last_price_y) / sp->trailing_last_price_y - sp->shift_y;
+      y = (tmp_real - trailing_last_price_y) / trailing_last_price_y - shift_y;
    } else 
    {
-      y = 0 - sp->shift_y;
+      y = 0 - shift_y;
    }
-   sp->trailing_last_price_y = tmp_real;
+   trailing_last_price_y = tmp_real;
    /* Write the output.
     *
     * The denominator is tested against ITS OWN scale, not a fixed band: it
@@ -1699,11 +1721,6 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    {
       *outReal= 0.0;
    }
-   sp->S_xx = S_xx;
-   sp->S_xy = S_xy;
-   sp->S_x = S_x;
-   sp->S_y = S_y;
-   sp->S_yy = S_yy;
    return TA_SUCCESS;
 }
 

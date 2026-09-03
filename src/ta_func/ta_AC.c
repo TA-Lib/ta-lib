@@ -850,11 +850,17 @@ TA_LIB_API TA_RetCode TA_AC_Update( TA_AC_Stream *stream, double inHigh, double 
 
 TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, double inLow, double *outReal )
 {
-   struct TA_AC_Stream scratch;
-   struct TA_AC_Stream *sp = &scratch;
+   const struct TA_AC_Stream *sp = stream;
    double medianPrice;
    double osc;
    double tempReal;
+   int oscBuffer_Idx;
+   double sumFast;
+   double sumSignal;
+   double sumSlow;
+   double *cb_oscBuffer;
+   double *ring_trailingFastIdx_derived;
+   double *ring_trailingSlowIdx_derived;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -864,7 +870,13 @@ TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, dou
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   oscBuffer_Idx = sp->oscBuffer_Idx;
+   sumFast = sp->sumFast;
+   sumSignal = sp->sumSignal;
+   sumSlow = sp->sumSlow;
+   cb_oscBuffer = sp->cb_oscBuffer;
+   ring_trailingFastIdx_derived = sp->ring_trailingFastIdx_derived;
+   ring_trailingSlowIdx_derived = sp->ring_trailingSlowIdx_derived;
    if( sp->ringCap_trailingFastIdx == 0 )
    {
       pkSlot0 = 0;
@@ -876,29 +888,29 @@ TA_LIB_API TA_RetCode TA_AC_Peek( const TA_AC_Stream *stream, double inHigh, dou
       pkVal1 = (inHigh + inLow) / 2.0;
    }
    medianPrice = (inHigh + inLow) / 2.0;
-   sp->sumFast += medianPrice;
-   sp->sumSlow += medianPrice;
+   sumFast += medianPrice;
+   sumSlow += medianPrice;
    /* Snapshot the oscillator before either total drops its trailing bar,
     * mirroring the add-new / snapshot / subtract-old order of TA_SMA.
     */
-   osc = sp->sumFast / (double)sp->optInFastPeriod - sp->sumSlow / (double)sp->optInSlowPeriod;
-   sp->sumFast -= (sp->ringPos_trailingFastIdx != pkSlot0) ? sp->ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] : pkVal0;
-   sp->sumSlow -= (sp->ringPos_trailingSlowIdx != pkSlot1) ? sp->ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] : pkVal1;
+   osc = sumFast / (double)sp->optInFastPeriod - sumSlow / (double)sp->optInSlowPeriod;
+   sumFast -= (sp->ringPos_trailingFastIdx != pkSlot0) ? ring_trailingFastIdx_derived[sp->ringPos_trailingFastIdx] : pkVal0;
+   sumSlow -= (sp->ringPos_trailingSlowIdx != pkSlot1) ? ring_trailingSlowIdx_derived[sp->ringPos_trailingSlowIdx] : pkVal1;
    /* Today's oscillator enters the signal window at its own slot, and the
     * bar leaving that window is read only after the ring has advanced onto
     * it -- writing first is what makes the slot the loop is about to
     * overwrite the newest value rather than the oldest one.
     */
-   pkSlot2 = sp->oscBuffer_Idx;
+   pkSlot2 = oscBuffer_Idx;
    pkVal2 = osc;
-   sp->sumSignal += osc;
-   tempReal = osc - sp->sumSignal / (double)sp->optInSignalPeriod;
-   sp->oscBuffer_Idx = sp->oscBuffer_Idx + 1;
-   if( sp->oscBuffer_Idx > sp->maxIdx_oscBuffer )
+   sumSignal += osc;
+   tempReal = osc - sumSignal / (double)sp->optInSignalPeriod;
+   oscBuffer_Idx = oscBuffer_Idx + 1;
+   if( oscBuffer_Idx > sp->maxIdx_oscBuffer )
    {
-      sp->oscBuffer_Idx = 0;
+      oscBuffer_Idx = 0;
    }
-   sp->sumSignal -= (sp->oscBuffer_Idx != pkSlot2) ? sp->cb_oscBuffer[sp->oscBuffer_Idx] : pkVal2;
+   sumSignal -= (oscBuffer_Idx != pkSlot2) ? cb_oscBuffer[oscBuffer_Idx] : pkVal2;
    /* Every input read for this bar is done above, so the store is safe
     * when the caller aliases outReal over inHigh or inLow. Unlike ao.c
     * there is slack here -- the signal window puts both trailing indices

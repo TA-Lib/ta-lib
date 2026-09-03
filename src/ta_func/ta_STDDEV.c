@@ -445,13 +445,11 @@ TA_LIB_API TA_RetCode TA_STDDEV_Update( TA_STDDEV_Stream *stream, double inReal,
 
 TA_LIB_API TA_RetCode TA_STDDEV_Peek( const TA_STDDEV_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_STDDEV_Stream scratch;
-   struct TA_STDDEV_Stream *sp = &scratch;
+   const struct TA_STDDEV_Stream *sp = stream;
    double cur_outReal = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

@@ -1422,17 +1422,23 @@ TA_LIB_API TA_RetCode TA_SAREXT_Update( TA_SAREXT_Stream *stream, double inHigh,
 
 TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inHigh, double inLow, double *outReal )
 {
-   struct TA_SAREXT_Stream scratch;
-   struct TA_SAREXT_Stream *sp = &scratch;
+   const struct TA_SAREXT_Stream *sp = stream;
    double prevHigh;
    double prevLow;
+   double afLong;
+   double afShort;
+   double ep;
+   int isLong;
    double newHigh;
    double newLow;
    double sar;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   afLong = sp->afLong;
+   afShort = sp->afShort;
+   ep = sp->ep;
+   isLong = sp->isLong;
    newHigh = sp->newHigh;
    newLow = sp->newLow;
    sar = sp->sar;
@@ -1440,14 +1446,14 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
    prevHigh = newHigh;
    newLow = inLow;
    newHigh = inHigh;
-   if( sp->isLong == 1 )
+   if( isLong == 1 )
    {
       /* Switch to short if the low penetrates the SAR value. */
       if( newLow <= sar )
       {
          /* Switch and Overide the SAR with the ep */
-         sp->isLong = 0;
-         sar = sp->ep;
+         isLong = 0;
+         sar = ep;
          /* Make sure the overide SAR is within
           * yesterday's and today's range.
           */
@@ -1466,10 +1472,10 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
          }
          *outReal= 0 - sar;
          /* Adjust afShort and ep */
-         sp->afShort = sp->optInAccelerationInitShort;
-         sp->ep = newLow;
+         afShort = sp->optInAccelerationInitShort;
+         ep = newLow;
          /* Calculate the new SAR */
-         sar = fma(sp->afShort, sp->ep - sar, sar);
+         sar = fma(afShort, ep - sar, sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
@@ -1487,17 +1493,17 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
          /* Output the SAR (was calculated in the previous iteration) */
          *outReal= sar;
          /* Adjust afLong and ep. */
-         if( newHigh > sp->ep )
+         if( newHigh > ep )
          {
-            sp->ep = newHigh;
-            sp->afLong += sp->optInAccelerationLong;
-            if( sp->afLong > sp->optInAccelerationMaxLong )
+            ep = newHigh;
+            afLong += sp->optInAccelerationLong;
+            if( afLong > sp->optInAccelerationMaxLong )
             {
-               sp->afLong = sp->optInAccelerationMaxLong;
+               afLong = sp->optInAccelerationMaxLong;
             }
          }
          /* Calculate the new SAR */
-         sar = fma(sp->afLong, sp->ep - sar, sar);
+         sar = fma(afLong, ep - sar, sar);
          /* Make sure the new SAR is within
           * yesterday's and today's range.
           */
@@ -1514,8 +1520,8 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
    } else if( newHigh >= sar )
    {
       /* Switch and Overide the SAR with the ep */
-      sp->isLong = 1;
-      sar = sp->ep;
+      isLong = 1;
+      sar = ep;
       /* Make sure the overide SAR is within
        * yesterday's and today's range.
        */
@@ -1534,10 +1540,10 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
       }
       *outReal= sar;
       /* Adjust afLong and ep */
-      sp->afLong = sp->optInAccelerationInitLong;
-      sp->ep = newHigh;
+      afLong = sp->optInAccelerationInitLong;
+      ep = newHigh;
       /* Calculate the new SAR */
-      sar = fma(sp->afLong, sp->ep - sar, sar);
+      sar = fma(afLong, ep - sar, sar);
       /* Make sure the new SAR is within
        * yesterday's and today's range.
        */
@@ -1555,17 +1561,17 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
       /* Output the SAR (was calculated in the previous iteration) */
       *outReal= 0 - sar;
       /* Adjust afShort and ep. */
-      if( newLow < sp->ep )
+      if( newLow < ep )
       {
-         sp->ep = newLow;
-         sp->afShort += sp->optInAccelerationShort;
-         if( sp->afShort > sp->optInAccelerationMaxShort )
+         ep = newLow;
+         afShort += sp->optInAccelerationShort;
+         if( afShort > sp->optInAccelerationMaxShort )
          {
-            sp->afShort = sp->optInAccelerationMaxShort;
+            afShort = sp->optInAccelerationMaxShort;
          }
       }
       /* Calculate the new SAR */
-      sar = fma(sp->afShort, sp->ep - sar, sar);
+      sar = fma(afShort, ep - sar, sar);
       /* Make sure the new SAR is within
        * yesterday's and today's range.
        */
@@ -1578,9 +1584,6 @@ TA_LIB_API TA_RetCode TA_SAREXT_Peek( const TA_SAREXT_Stream *stream, double inH
          sar = newHigh;
       }
    }
-   sp->newHigh = newHigh;
-   sp->newLow = newLow;
-   sp->sar = sar;
    return TA_SUCCESS;
 }
 

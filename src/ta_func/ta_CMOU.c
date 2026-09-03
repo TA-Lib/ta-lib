@@ -766,17 +766,27 @@ TA_LIB_API TA_RetCode TA_CMOU_Update( TA_CMOU_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_CMOU_Stream scratch;
-   struct TA_CMOU_Stream *sp = &scratch;
+   const struct TA_CMOU_Stream *sp = stream;
    double sum;
    double diff;
    double tempReal;
+   double downSum;
+   int nullRun;
+   double prevValue;
+   double trailingValue;
+   double upSum;
+   double *ring_trailingIdx_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   downSum = sp->downSum;
+   nullRun = sp->nullRun;
+   prevValue = sp->prevValue;
+   trailingValue = sp->trailingValue;
+   upSum = sp->upSum;
+   ring_trailingIdx_inReal = sp->ring_trailingIdx_inReal;
    if( sp->ringCap_trailingIdx == 0 )
    {
       pkSlot0 = 0;
@@ -787,26 +797,26 @@ TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal,
     * outReal == inReal); inReal[trailingIdx] is read here, before this
     * iteration writes outReal[outIdx], so it is still the original price.
     */
-   tempReal = (sp->ringPos_trailingIdx != pkSlot0) ? sp->ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
-   diff = tempReal - sp->trailingValue;
-   sp->trailingValue = tempReal;
+   tempReal = (sp->ringPos_trailingIdx != pkSlot0) ? ring_trailingIdx_inReal[sp->ringPos_trailingIdx] : pkVal0;
+   diff = tempReal - trailingValue;
+   trailingValue = tempReal;
    if( diff > 0.0 )
    {
-      sp->upSum -= diff;
+      upSum -= diff;
    } else if( diff < 0.0 )
    {
-      sp->downSum += diff;
+      downSum += diff;
    }
    /* Add the newest change: inReal[today] - inReal[today-1]. */
    tempReal = inReal;
-   diff = tempReal - sp->prevValue;
-   sp->prevValue = tempReal;
+   diff = tempReal - prevValue;
+   prevValue = tempReal;
    if( diff > 0.0 )
    {
-      sp->upSum += diff;
+      upSum += diff;
    } else if( diff < 0.0 )
    {
-      sp->downSum -= diff;
+      downSum -= diff;
    }
    /* Once a whole period of flat bars has gone by, every change in the
     * window is exactly zero, so both sums are known to be exactly zero and
@@ -814,21 +824,21 @@ TA_LIB_API TA_RetCode TA_CMOU_Peek( const TA_CMOU_Stream *stream, double inReal,
     */
    if( diff == 0.0 )
    {
-      sp->nullRun += 1;
+      nullRun += 1;
    } else 
    {
-      sp->nullRun = 0;
+      nullRun = 0;
    }
-   if( sp->nullRun >= sp->optInTimePeriod )
+   if( nullRun >= sp->optInTimePeriod )
    {
-      sp->nullRun = sp->optInTimePeriod;
-      sp->upSum = 0.0;
-      sp->downSum = 0.0;
+      nullRun = sp->optInTimePeriod;
+      upSum = 0.0;
+      downSum = 0.0;
    }
-   sum = sp->upSum + sp->downSum;
+   sum = upSum + downSum;
    if( sum > 0.0 )
    {
-      *outReal= 100.0 * (sp->upSum - sp->downSum) / sum;
+      *outReal= 100.0 * (upSum - downSum) / sum;
    } else 
    {
       *outReal= 0.0;

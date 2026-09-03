@@ -600,15 +600,19 @@ TA_LIB_API TA_RetCode TA_VWAP_Update( TA_VWAP_Stream *stream, double inHigh, dou
 
 TA_LIB_API TA_RetCode TA_VWAP_Peek( const TA_VWAP_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
-   struct TA_VWAP_Stream scratch;
-   struct TA_VWAP_Stream *sp = &scratch;
+   const struct TA_VWAP_Stream *sp = stream;
    double typPrice;
    double volume;
    double tempReal;
+   double sumPV;
+   double sumV;
+   double vwap;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   sumPV = sp->sumPV;
+   sumV = sp->sumV;
+   vwap = sp->vwap;
    /* The typical price is written exactly as in ta_TYPPRICE.c so that the
     * two agree bit for bit and this stays a true composite of it.
     */
@@ -669,8 +673,8 @@ TA_LIB_API TA_RetCode TA_VWAP_Peek( const TA_VWAP_Stream *stream, double inHigh,
    tempReal = typPrice * volume;
    if( TA_IS_FINITE(typPrice) && TA_IS_FINITE(volume) )
    {
-      sp->sumPV += tempReal;
-      sp->sumV += volume;
+      sumPV += tempReal;
+      sumV += volume;
    }
    /* Bars that traded nothing carry no weight, so a zero-volume bar in
     * the middle of a series leaves both sums untouched and repeats the
@@ -691,11 +695,11 @@ TA_LIB_API TA_RetCode TA_VWAP_Peek( const TA_VWAP_Stream *stream, double inHigh,
     * negative divisor -- which no non-negative volume series can
     * produce -- out of a price-scale output, as ta_CMF.c does.
     */
-   if( sp->sumV > 0.0 )
+   if( sumV > 0.0 )
    {
-      sp->vwap = sp->sumPV / sp->sumV;
+      vwap = sumPV / sumV;
    }
-   *outReal= sp->vwap;
+   *outReal= vwap;
    return TA_SUCCESS;
 }
 

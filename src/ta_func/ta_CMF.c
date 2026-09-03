@@ -725,8 +725,7 @@ TA_LIB_API TA_RetCode TA_CMF_Update( TA_CMF_Stream *stream, double inHigh, doubl
 
 TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, double inLow, double inClose, double inVolume, double *outReal )
 {
-   struct TA_CMF_Stream scratch;
-   struct TA_CMF_Stream *sp = &scratch;
+   const struct TA_CMF_Stream *sp = stream;
    double high;
    double low;
    double close;
@@ -734,14 +733,17 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    double mfv;
    double sumMFV;
    double sumVol;
+   double *cb_mfv_flow;
+   double *cb_mfv_volume;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    sumMFV = sp->sumMFV;
    sumVol = sp->sumVol;
-   sumMFV -= sp->cb_mfv_flow[sp->mfv_Idx];
-   sumVol -= sp->cb_mfv_volume[sp->mfv_Idx];
+   cb_mfv_flow = sp->cb_mfv_flow;
+   cb_mfv_volume = sp->cb_mfv_volume;
+   sumMFV -= cb_mfv_flow[sp->mfv_Idx];
+   sumVol -= cb_mfv_volume[sp->mfv_Idx];
    high = inHigh;
    low = inLow;
    close = inClose;
@@ -762,8 +764,6 @@ TA_LIB_API TA_RetCode TA_CMF_Peek( const TA_CMF_Stream *stream, double inHigh, d
    {
       *outReal= 0.0;
    }
-   sp->sumMFV = sumMFV;
-   sp->sumVol = sumVol;
    return TA_SUCCESS;
 }
 

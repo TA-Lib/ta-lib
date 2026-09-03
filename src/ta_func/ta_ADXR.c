@@ -485,14 +485,12 @@ TA_LIB_API TA_RetCode TA_ADXR_Update( TA_ADXR_Stream *stream, double inHigh, dou
 
 TA_LIB_API TA_RetCode TA_ADXR_Peek( const TA_ADXR_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_ADXR_Stream scratch;
-   struct TA_ADXR_Stream *sp = &scratch;
+   const struct TA_ADXR_Stream *sp = stream;
    double cur_adx = 0.0;
    double cur_outReal = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

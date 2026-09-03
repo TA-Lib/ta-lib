@@ -673,21 +673,22 @@ TA_LIB_API TA_RetCode TA_DEMA_Update( TA_DEMA_Stream *stream, double inReal, dou
 
 TA_LIB_API TA_RetCode TA_DEMA_Peek( const TA_DEMA_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_DEMA_Stream scratch;
-   struct TA_DEMA_Stream *sp = &scratch;
+   const struct TA_DEMA_Stream *sp = stream;
+   double prevEMA1;
+   double prevEMA2;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   prevEMA1 = sp->prevEMA1;
+   prevEMA2 = sp->prevEMA2;
    if( sp->optInTimePeriod == 1 )
    {
       *outReal= inReal;
-      sp->cur_outReal = *outReal;
       return TA_SUCCESS;
    }
-   sp->prevEMA1 = fma(inReal - sp->prevEMA1, sp->optInK_1, sp->prevEMA1);
-   sp->prevEMA2 = fma(sp->prevEMA1 - sp->prevEMA2, sp->optInK_1, sp->prevEMA2);
-   *outReal= 2.0 * sp->prevEMA1 - sp->prevEMA2;
+   prevEMA1 = fma(inReal - prevEMA1, sp->optInK_1, prevEMA1);
+   prevEMA2 = fma(prevEMA1 - prevEMA2, sp->optInK_1, prevEMA2);
+   *outReal= 2.0 * prevEMA1 - prevEMA2;
    return TA_SUCCESS;
 }
 

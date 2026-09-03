@@ -864,40 +864,56 @@ TA_LIB_API TA_RetCode TA_VAR_Update( TA_VAR_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_VAR_Stream scratch;
-   struct TA_VAR_Stream *sp = &scratch;
+   const struct TA_VAR_Stream *sp = stream;
    double tempReal;
    double meanValue1;
    double variance;
+   int barsSinceReseed;
+   int i;
+   int j;
+   double periodTotal1;
+   double periodTotal2;
+   double shift;
+   int trailingIdx;
+   int windowStart;
+   double *x_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
-   if( sp->i >= 1073741824 )
+   barsSinceReseed = sp->barsSinceReseed;
+   i = sp->i;
+   j = sp->j;
+   periodTotal1 = sp->periodTotal1;
+   periodTotal2 = sp->periodTotal2;
+   shift = sp->shift;
+   trailingIdx = sp->trailingIdx;
+   windowStart = sp->windowStart;
+   x_inReal = sp->x_inReal;
+   if( i >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->i -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->j -= rebaseShift;
-      sp->windowStart -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      i -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      j -= rebaseShift;
+      windowStart -= rebaseShift;
    }
-   pkSlot0 = sp->i & sp->xMask;
+   pkSlot0 = i & sp->xMask;
    pkVal0 = inReal;
    /* Add the incoming value, measured against the shift. */
-   tempReal = (((sp->i & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->i & sp->xMask] : pkVal0) - sp->shift;
-   sp->periodTotal1 += tempReal;
+   tempReal = (((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0) - shift;
+   periodTotal1 += tempReal;
    tempReal *= tempReal;
-   sp->periodTotal2 += tempReal;
-   meanValue1 = sp->periodTotal1 * sp->invPeriod;
-   variance = sp->periodTotal2 * sp->invPeriod - meanValue1 * meanValue1;
+   periodTotal2 += tempReal;
+   meanValue1 = periodTotal1 * sp->invPeriod;
+   variance = periodTotal2 * sp->invPeriod - meanValue1 * meanValue1;
    /* Remove the trailing value (prepares the next window). */
-   tempReal = (((sp->trailingIdx & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->trailingIdx & sp->xMask] : pkVal0) - sp->shift;
-   sp->periodTotal1 -= tempReal;
+   tempReal = (((trailingIdx & sp->xMask) != pkSlot0) ? x_inReal[trailingIdx & sp->xMask] : pkVal0) - shift;
+   periodTotal1 -= tempReal;
    tempReal *= tempReal;
-   sp->periodTotal2 -= tempReal;
-   sp->trailingIdx += 1;
+   periodTotal2 -= tempReal;
+   trailingIdx += 1;
    /* Re-anchor the shift and rebuild the running sums with a fresh two-pass
     * when the shift is stale enough that the subtraction loses digits - i.e.
     * the variance has shrunk below 1e-6 of the mean squared deviation it is
@@ -911,28 +927,28 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
     * leaves an exactly-constant window (variance 0, scale 0) alone instead of
     * reseeding it every bar. Guarantees a non-negative output.
     */
-   sp->barsSinceReseed -= 1;
-   if( variance < 0.000001 * (sp->periodTotal2 * sp->invPeriod) || tempReal > 1000000.0 * sp->periodTotal2 || sp->barsSinceReseed <= 0 )
+   barsSinceReseed -= 1;
+   if( variance < 0.000001 * (periodTotal2 * sp->invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 )
    {
-      sp->barsSinceReseed = 32 * sp->optInTimePeriod;
-      sp->windowStart = sp->i - sp->nbInitialElementNeeded;
+      barsSinceReseed = 32 * sp->optInTimePeriod;
+      windowStart = i - sp->nbInitialElementNeeded;
       tempReal = 0.0;
-      for( sp->j = sp->windowStart; sp->j <= sp->i; sp->j += 1 )
+      for( j = windowStart; j <= i; j += 1 )
       {
-         tempReal += ((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->j & sp->xMask] : pkVal0;
+         tempReal += ((j & sp->xMask) != pkSlot0) ? x_inReal[j & sp->xMask] : pkVal0;
       }
-      sp->shift = tempReal * sp->invPeriod;
-      sp->periodTotal1 = 0.0;
-      sp->periodTotal2 = 0.0;
-      for( sp->j = sp->windowStart; sp->j <= sp->i; sp->j += 1 )
+      shift = tempReal * sp->invPeriod;
+      periodTotal1 = 0.0;
+      periodTotal2 = 0.0;
+      for( j = windowStart; j <= i; j += 1 )
       {
-         tempReal = (((sp->j & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->j & sp->xMask] : pkVal0) - sp->shift;
-         sp->periodTotal1 += tempReal;
+         tempReal = (((j & sp->xMask) != pkSlot0) ? x_inReal[j & sp->xMask] : pkVal0) - shift;
+         periodTotal1 += tempReal;
          tempReal *= tempReal;
-         sp->periodTotal2 += tempReal;
+         periodTotal2 += tempReal;
       }
-      meanValue1 = sp->periodTotal1 * sp->invPeriod;
-      variance = sp->periodTotal2 * sp->invPeriod - meanValue1 * meanValue1;
+      meanValue1 = periodTotal1 * sp->invPeriod;
+      variance = periodTotal2 * sp->invPeriod - meanValue1 * meanValue1;
       /* Floor the fresh figure at the same ratio the trigger above uses, now
        * measured against the RE-ANCHORED sums. With the shift AT the window
        * mean the deviations sum to ~0, so a real window has variance ~
@@ -982,17 +998,17 @@ TA_LIB_API TA_RetCode TA_VAR_Peek( const TA_VAR_Stream *stream, double inReal, d
        * THIS - the alternative is an unconditional clamp at the output write,
        * which needs no such argument but does cost ~3%.
        */
-      if( variance < 0.000000000001 * (sp->periodTotal2 * sp->invPeriod) )
+      if( variance < 0.000000000001 * (periodTotal2 * sp->invPeriod) )
       {
          variance = 0.0;
       }
       /* Re-remove the trailing value under the new shift so the carried state
        * matches the non-reseed path.
        */
-      tempReal = (((sp->windowStart & sp->xMask) != pkSlot0) ? sp->x_inReal[sp->windowStart & sp->xMask] : pkVal0) - sp->shift;
-      sp->periodTotal1 -= tempReal;
+      tempReal = (((windowStart & sp->xMask) != pkSlot0) ? x_inReal[windowStart & sp->xMask] : pkVal0) - shift;
+      periodTotal1 -= tempReal;
       tempReal *= tempReal;
-      sp->periodTotal2 -= tempReal;
+      periodTotal2 -= tempReal;
    }
    *outReal= variance;
    return TA_SUCCESS;

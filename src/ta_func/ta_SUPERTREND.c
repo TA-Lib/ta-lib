@@ -894,8 +894,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double
 
 TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outReal, int *outInteger )
 {
-   struct TA_SUPERTREND_Stream scratch;
-   struct TA_SUPERTREND_Stream *sp = &scratch;
+   const struct TA_SUPERTREND_Stream *sp = stream;
    double val2;
    double val3;
    double greatest;
@@ -907,10 +906,17 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
    double basicUpper;
    double basicLower;
    double closeToday;
+   double finalLower;
+   double finalUpper;
+   int isUptrend;
+   double prevATR;
 
    if( !stream || !outReal || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   finalLower = sp->finalLower;
+   finalUpper = sp->finalUpper;
+   isUptrend = sp->isUptrend;
+   prevATR = sp->prevATR;
    tempLT = inLow;
    tempHT = inHigh;
    tempCY = sp->lag1_inClose;
@@ -926,11 +932,11 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
    {
       greatest = val3;
    }
-   sp->prevATR *= sp->optInTimePeriod - 1;
-   sp->prevATR += greatest;
-   sp->prevATR /= sp->optInTimePeriod;
+   prevATR *= sp->optInTimePeriod - 1;
+   prevATR += greatest;
+   prevATR /= sp->optInTimePeriod;
    medianPrice = (tempHT + tempLT) / 2.0;
-   band = sp->optInMultiplier * sp->prevATR;
+   band = sp->optInMultiplier * prevATR;
    basicUpper = medianPrice + band;
    basicLower = medianPrice - band;
    /* Each band ratchets toward price and is released only by a close on its
@@ -941,13 +947,13 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
     * always say which side of the line price is on; both read as invariants
     * and neither is one.
     */
-   if( basicUpper < sp->finalUpper || sp->prevClose > sp->finalUpper )
+   if( basicUpper < finalUpper || sp->prevClose > finalUpper )
    {
-      sp->finalUpper = basicUpper;
+      finalUpper = basicUpper;
    }
-   if( basicLower > sp->finalLower || sp->prevClose < sp->finalLower )
+   if( basicLower > finalLower || sp->prevClose < finalLower )
    {
-      sp->finalLower = basicLower;
+      finalLower = basicLower;
    }
    closeToday = inClose;
    /* The trend is carried in its own variable rather than recovered by
@@ -957,23 +963,23 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
     * comparison cannot tell them apart, so it would silently lose the
     * hysteresis on exactly the flat input a corpus of real prices lacks.
     */
-   if( sp->isUptrend )
+   if( isUptrend )
    {
-      if( closeToday < sp->finalLower )
+      if( closeToday < finalLower )
       {
-         sp->isUptrend = 0;
+         isUptrend = 0;
       }
-   } else if( closeToday > sp->finalUpper )
+   } else if( closeToday > finalUpper )
    {
-      sp->isUptrend = 1;
+      isUptrend = 1;
    }
-   if( sp->isUptrend )
+   if( isUptrend )
    {
-      *outReal= sp->finalLower;
+      *outReal= finalLower;
       *outInteger= 1;
    } else 
    {
-      *outReal= sp->finalUpper;
+      *outReal= finalUpper;
       *outInteger= 0 - 1;
    }
    return TA_SUCCESS;

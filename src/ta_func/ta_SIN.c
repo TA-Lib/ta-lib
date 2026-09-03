@@ -244,12 +244,10 @@ TA_LIB_API TA_RetCode TA_SIN_Update( TA_SIN_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_SIN_Peek( const TA_SIN_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_SIN_Stream scratch;
-   struct TA_SIN_Stream *sp = &scratch;
+   const struct TA_SIN_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= sin(inReal);
    return TA_SUCCESS;

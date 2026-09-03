@@ -559,12 +559,10 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_Update( TA_CDL3INSIDE_Stream *stream, double
 
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_Peek( const TA_CDL3INSIDE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDL3INSIDE_Stream scratch;
-   struct TA_CDL3INSIDE_Stream *sp = &scratch;
+   const struct TA_CDL3INSIDE_Stream *sp = stream;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( max(sp->lag1_inClose,sp->lag1_inOpen) < max(sp->lag2_inClose,sp->lag2_inOpen) && /* engulfed by 1st */
        min(sp->lag1_inClose,sp->lag1_inOpen) > min(sp->lag2_inClose,sp->lag2_inOpen) &&
        ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inClose < sp->lag2_inOpen) || (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inClose > sp->lag2_inOpen)) && /* 3rd: opposite to 1st and closing out */

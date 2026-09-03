@@ -420,8 +420,7 @@ TA_LIB_API TA_RetCode TA_TRANGE_Update( TA_TRANGE_Stream *stream, double inHigh,
 
 TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_TRANGE_Stream scratch;
-   struct TA_TRANGE_Stream *sp = &scratch;
+   const struct TA_TRANGE_Stream *sp = stream;
    double val2;
    double val3;
    double greatest;
@@ -431,7 +430,6 @@ TA_LIB_API TA_RetCode TA_TRANGE_Peek( const TA_TRANGE_Stream *stream, double inH
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    /* Find the greatest of the 3 values. */
    tempLT = inLow;
    tempHT = inHigh;

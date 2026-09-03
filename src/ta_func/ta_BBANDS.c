@@ -1084,8 +1084,7 @@ TA_LIB_API TA_RetCode TA_BBANDS_Update( TA_BBANDS_Stream *stream, double inReal,
 
 TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inReal, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
 {
-   struct TA_BBANDS_Stream scratch;
-   struct TA_BBANDS_Stream *sp = &scratch;
+   const struct TA_BBANDS_Stream *sp = stream;
    double tempReal;
    double tempReal2;
    double cur_tempBuffer1 = 0.0;
@@ -1095,7 +1094,6 @@ TA_LIB_API TA_RetCode TA_BBANDS_Peek( const TA_BBANDS_Stream *stream, double inR
 
    if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
 
    /* Pipeline the new bar through the sub-streams (batch tail order). */
    {

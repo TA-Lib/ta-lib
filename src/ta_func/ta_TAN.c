@@ -244,12 +244,10 @@ TA_LIB_API TA_RetCode TA_TAN_Update( TA_TAN_Stream *stream, double inReal, doubl
 
 TA_LIB_API TA_RetCode TA_TAN_Peek( const TA_TAN_Stream *stream, double inReal, double *outReal )
 {
-   struct TA_TAN_Stream scratch;
-   struct TA_TAN_Stream *sp = &scratch;
+   const struct TA_TAN_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    (void)sp;
    *outReal= tan(inReal);
    return TA_SUCCESS;

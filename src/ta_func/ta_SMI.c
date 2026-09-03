@@ -1314,14 +1314,27 @@ TA_LIB_API TA_RetCode TA_SMI_Update( TA_SMI_Stream *stream, double inHigh, doubl
 
 TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, double inLow, double inClose, double *outSMI, double *outSMISignal )
 {
-   struct TA_SMI_Stream scratch;
-   struct TA_SMI_Stream *sp = &scratch;
+   const struct TA_SMI_Stream *sp = stream;
    double tmp;
    double num;
    double den;
    double halfDen;
    double smiValue;
+   double emaFastDen;
+   double emaFastNum;
+   double emaSlowDen;
+   double emaSlowNum;
+   double highest;
+   int highestIdx;
+   int i;
+   double lowest;
+   int lowestIdx;
    double prevSignal;
+   int today;
+   int trailingIdx;
+   double *x_inClose;
+   double *x_inHigh;
+   double *x_inLow;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
    int pkSlot1 = -1;
@@ -1331,71 +1344,84 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
 
    if( !stream || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   emaFastDen = sp->emaFastDen;
+   emaFastNum = sp->emaFastNum;
+   emaSlowDen = sp->emaSlowDen;
+   emaSlowNum = sp->emaSlowNum;
+   highest = sp->highest;
+   highestIdx = sp->highestIdx;
+   i = sp->i;
+   lowest = sp->lowest;
+   lowestIdx = sp->lowestIdx;
    prevSignal = sp->prevSignal;
-   if( sp->today >= 1073741824 )
+   today = sp->today;
+   trailingIdx = sp->trailingIdx;
+   x_inClose = sp->x_inClose;
+   x_inHigh = sp->x_inHigh;
+   x_inLow = sp->x_inLow;
+   if( today >= 1073741824 )
    {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      today -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      highestIdx -= rebaseShift;
+      i -= rebaseShift;
+      lowestIdx -= rebaseShift;
    }
-   pkSlot0 = sp->today & sp->xMask;
+   pkSlot0 = today & sp->xMask;
    pkVal0 = inHigh;
-   pkSlot1 = sp->today & sp->xMask;
+   pkSlot1 = today & sp->xMask;
    pkVal1 = inLow;
-   pkSlot2 = sp->today & sp->xMask;
+   pkSlot2 = today & sp->xMask;
    pkVal2 = inClose;
    /* Set the lowest low */
-   tmp = ((sp->today & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->today & sp->xMask] : pkVal1;
-   if( sp->lowestIdx < sp->trailingIdx )
+   tmp = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
+   if( lowestIdx < trailingIdx )
    {
-      sp->lowestIdx = sp->trailingIdx;
-      sp->lowest = ((sp->lowestIdx & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->lowestIdx & sp->xMask] : pkVal1;
-      sp->i = sp->lowestIdx;
-      while( ++sp->i <= sp->today )
+      lowestIdx = trailingIdx;
+      lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
+      i = lowestIdx;
+      while( ++i <= today )
       {
-         tmp = ((sp->i & sp->xMask) != pkSlot1) ? sp->x_inLow[sp->i & sp->xMask] : pkVal1;
-         if( tmp < sp->lowest )
+         tmp = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
+         if( tmp < lowest )
          {
-            sp->lowestIdx = sp->i;
-            sp->lowest = tmp;
+            lowestIdx = i;
+            lowest = tmp;
          }
       }
-   } else if( tmp <= sp->lowest )
+   } else if( tmp <= lowest )
    {
-      sp->lowestIdx = sp->today;
-      sp->lowest = tmp;
+      lowestIdx = today;
+      lowest = tmp;
    }
    /* Set the highest high */
-   tmp = ((sp->today & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->today & sp->xMask] : pkVal0;
-   if( sp->highestIdx < sp->trailingIdx )
+   tmp = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
+   if( highestIdx < trailingIdx )
    {
-      sp->highestIdx = sp->trailingIdx;
-      sp->highest = ((sp->highestIdx & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->highestIdx & sp->xMask] : pkVal0;
-      sp->i = sp->highestIdx;
-      while( ++sp->i <= sp->today )
+      highestIdx = trailingIdx;
+      highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
+      i = highestIdx;
+      while( ++i <= today )
       {
-         tmp = ((sp->i & sp->xMask) != pkSlot0) ? sp->x_inHigh[sp->i & sp->xMask] : pkVal0;
-         if( tmp > sp->highest )
+         tmp = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
+         if( tmp > highest )
          {
-            sp->highestIdx = sp->i;
-            sp->highest = tmp;
+            highestIdx = i;
+            highest = tmp;
          }
       }
-   } else if( tmp >= sp->highest )
+   } else if( tmp >= highest )
    {
-      sp->highestIdx = sp->today;
-      sp->highest = tmp;
+      highestIdx = today;
+      highest = tmp;
    }
-   den = sp->highest - sp->lowest;
-   num = (((sp->today & sp->xMask) != pkSlot2) ? sp->x_inClose[sp->today & sp->xMask] : pkVal2) - (sp->highest + sp->lowest) * 0.5;
-   sp->emaSlowNum = fma(num - sp->emaSlowNum, sp->kSlow, sp->emaSlowNum);
-   sp->emaSlowDen = fma(den - sp->emaSlowDen, sp->kSlow, sp->emaSlowDen);
-   sp->emaFastNum = fma(sp->emaSlowNum - sp->emaFastNum, sp->kFast, sp->emaFastNum);
-   sp->emaFastDen = fma(sp->emaSlowDen - sp->emaFastDen, sp->kFast, sp->emaFastDen);
+   den = highest - lowest;
+   num = (((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2) - (highest + lowest) * 0.5;
+   emaSlowNum = fma(num - emaSlowNum, sp->kSlow, emaSlowNum);
+   emaSlowDen = fma(den - emaSlowDen, sp->kSlow, emaSlowDen);
+   emaFastNum = fma(emaSlowNum - emaFastNum, sp->kFast, emaFastNum);
+   emaFastDen = fma(emaSlowDen - emaFastDen, sp->kFast, emaFastDen);
    /* The denominator is an EMA of an EMA of the high-low range: every term
     * is non-negative and every weight is positive, so it carries no
     * cancellation residue and is zero only when every range that reached it
@@ -1407,10 +1433,10 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
     * window is caught by the exact test as well, since the residue an
     * EMA leaves there is zero, not sub-epsilon.
     */
-   halfDen = 0.5 * sp->emaFastDen;
+   halfDen = 0.5 * emaFastDen;
    if( halfDen > 0.0 )
    {
-      smiValue = 100.0 * sp->emaFastNum / halfDen;
+      smiValue = 100.0 * emaFastNum / halfDen;
    } else 
    {
       smiValue = 0.0;
@@ -1418,7 +1444,6 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
    prevSignal = fma(smiValue - prevSignal, sp->kSignal, prevSignal);
    *outSMI= smiValue;
    *outSMISignal= prevSignal;
-   sp->prevSignal = prevSignal;
    return TA_SUCCESS;
 }
 

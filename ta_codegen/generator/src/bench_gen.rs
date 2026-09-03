@@ -507,8 +507,8 @@ fn generate_stream_bench_func(s: &mut String, funcs: &[FuncDef]) {
         s.push_str("                long long tu = get_nanotime() - t0;\n");
         s.push_str("                if( best_u < 0 || tu < best_u ) best_u = tu;\n");
         s.push_str("            }\n");
-        // peek: timed ALONE in blocks (throwaway deep-copy + one transition, no
-        // commit), with state advanced by UNTIMED updates between blocks. Timing
+        // peek: timed ALONE in blocks (one transition, no commit), with state
+        // advanced by UNTIMED updates between blocks. Timing
         // peek away from any adjacent update avoids both the transition-CSE and
         // the superscalar-overlap that hide peek's cost when it sits next to an
         // update; the between-block updates keep the state on the same evolving

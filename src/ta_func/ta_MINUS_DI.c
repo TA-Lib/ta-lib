@@ -1395,37 +1395,39 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Update( TA_MINUS_DI_Stream *stream, double inH
 
 TA_LIB_API TA_RetCode TA_MINUS_DI_Peek( const TA_MINUS_DI_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_MINUS_DI_Stream scratch;
-   struct TA_MINUS_DI_Stream *sp = &scratch;
+   const struct TA_MINUS_DI_Stream *sp = stream;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( sp->optInTimePeriod <= 1 )
    {
       double tempReal;
       double diffP;
       double diffM;
+      double prevHigh;
+      double prevLow;
 
+      prevHigh = sp->prevHigh;
+      prevLow = sp->prevLow;
       tempReal = inHigh;
-      diffP = tempReal - sp->prevHigh;
+      diffP = tempReal - prevHigh;
       /* Plus Delta */
-      sp->prevHigh = tempReal;
+      prevHigh = tempReal;
       tempReal = inLow;
-      diffM = sp->prevLow - tempReal;
+      diffM = prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = tempReal;
+      prevLow = tempReal;
       if( diffM > 0 && diffP < diffM )
       {
          /* Case 2 and 4: +DM=0,-DM=diffM */
          double _true_range_6;
-         double range_6 = sp->prevHigh - sp->prevLow;
-         double tmp_6 = fabs(sp->prevHigh - sp->prevClose);
+         double range_6 = prevHigh - prevLow;
+         double tmp_6 = fabs(prevHigh - sp->prevClose);
          if( tmp_6 > range_6 )
          {
             range_6 = tmp_6;
          }
-         tmp_6 = fabs(sp->prevLow - sp->prevClose);
+         tmp_6 = fabs(prevLow - sp->prevClose);
          if( tmp_6 > range_6 )
          {
             range_6 = tmp_6;
@@ -1449,46 +1451,56 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Peek( const TA_MINUS_DI_Stream *stream, double
       double tempReal;
       double diffP;
       double diffM;
+      double prevClose;
+      double prevHigh;
+      double prevLow;
+      double prevMinusDM;
+      double prevTR;
 
+      prevClose = sp->prevClose;
+      prevHigh = sp->prevHigh;
+      prevLow = sp->prevLow;
+      prevMinusDM = sp->prevMinusDM;
+      prevTR = sp->prevTR;
       /* Calculate the prevMinusDM */
       tempReal = inHigh;
-      diffP = tempReal - sp->prevHigh;
+      diffP = tempReal - prevHigh;
       /* Plus Delta */
-      sp->prevHigh = tempReal;
+      prevHigh = tempReal;
       tempReal = inLow;
-      diffM = sp->prevLow - tempReal;
+      diffM = prevLow - tempReal;
       /* Minus Delta */
-      sp->prevLow = tempReal;
+      prevLow = tempReal;
       if( diffM > 0 && diffP < diffM )
       {
          /* Case 2 and 4: +DM=0,-DM=diffM */
-         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod + diffM;
+         prevMinusDM = prevMinusDM - prevMinusDM / sp->optInTimePeriod + diffM;
       } else 
       {
          /* Case 1,3,5 and 7 */
-         sp->prevMinusDM = sp->prevMinusDM - sp->prevMinusDM / sp->optInTimePeriod;
+         prevMinusDM = prevMinusDM - prevMinusDM / sp->optInTimePeriod;
       }
       /* Calculate the prevTR */
       double _true_range_7;
-      double range_7 = sp->prevHigh - sp->prevLow;
-      double tmp_7 = fabs(sp->prevHigh - sp->prevClose);
+      double range_7 = prevHigh - prevLow;
+      double tmp_7 = fabs(prevHigh - prevClose);
       if( tmp_7 > range_7 )
       {
          range_7 = tmp_7;
       }
-      tmp_7 = fabs(sp->prevLow - sp->prevClose);
+      tmp_7 = fabs(prevLow - prevClose);
       if( tmp_7 > range_7 )
       {
          range_7 = tmp_7;
       }
       _true_range_7 = range_7;
       tempReal = _true_range_7;
-      sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
-      sp->prevClose = inClose;
+      prevTR = prevTR - prevTR / sp->optInTimePeriod + tempReal;
+      prevClose = inClose;
       /* Calculate the DI. The value is rounded (see Wilder book). */
-      if( sp->prevTR > 0.0 )
+      if( prevTR > 0.0 )
       {
-         *outReal= (100.0 * (sp->prevMinusDM / sp->prevTR));
+         *outReal= (100.0 * (prevMinusDM / prevTR));
       } else 
       {
          *outReal= 0.0;

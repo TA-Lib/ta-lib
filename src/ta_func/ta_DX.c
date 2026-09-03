@@ -1161,59 +1161,69 @@ TA_LIB_API TA_RetCode TA_DX_Update( TA_DX_Stream *stream, double inHigh, double 
 
 TA_LIB_API TA_RetCode TA_DX_Peek( const TA_DX_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   struct TA_DX_Stream scratch;
-   struct TA_DX_Stream *sp = &scratch;
+   const struct TA_DX_Stream *sp = stream;
    double tempReal;
    double diffP;
    double diffM;
    double minusDI;
    double plusDI;
+   double prevClose;
+   double prevHigh;
+   double prevLow;
+   double prevMinusDM;
+   double prevPlusDM;
+   double prevTR;
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
+   prevClose = sp->prevClose;
+   prevHigh = sp->prevHigh;
+   prevLow = sp->prevLow;
+   prevMinusDM = sp->prevMinusDM;
+   prevPlusDM = sp->prevPlusDM;
+   prevTR = sp->prevTR;
    /* Calculate the prevMinusDM and prevPlusDM */
    tempReal = inHigh;
-   diffP = tempReal - sp->prevHigh;
+   diffP = tempReal - prevHigh;
    /* Plus Delta */
-   sp->prevHigh = tempReal;
+   prevHigh = tempReal;
    tempReal = inLow;
-   diffM = sp->prevLow - tempReal;
+   diffM = prevLow - tempReal;
    /* Minus Delta */
-   sp->prevLow = tempReal;
-   sp->prevMinusDM -= sp->prevMinusDM / sp->optInTimePeriod;
-   sp->prevPlusDM -= sp->prevPlusDM / sp->optInTimePeriod;
+   prevLow = tempReal;
+   prevMinusDM -= prevMinusDM / sp->optInTimePeriod;
+   prevPlusDM -= prevPlusDM / sp->optInTimePeriod;
    if( diffM > 0 && diffP < diffM )
    {
       /* Case 2 and 4: +DM=0,-DM=diffM */
-      sp->prevMinusDM += diffM;
+      prevMinusDM += diffM;
    } else if( diffP > 0 && diffP > diffM )
    {
       /* Case 1 and 3: +DM=diffP,-DM=0 */
-      sp->prevPlusDM += diffP;
+      prevPlusDM += diffP;
    }
    /* Calculate the prevTR */
    double _true_range_4;
-   double range_4 = sp->prevHigh - sp->prevLow;
-   double tmp_4 = fabs(sp->prevHigh - sp->prevClose);
+   double range_4 = prevHigh - prevLow;
+   double tmp_4 = fabs(prevHigh - prevClose);
    if( tmp_4 > range_4 )
    {
       range_4 = tmp_4;
    }
-   tmp_4 = fabs(sp->prevLow - sp->prevClose);
+   tmp_4 = fabs(prevLow - prevClose);
    if( tmp_4 > range_4 )
    {
       range_4 = tmp_4;
    }
    _true_range_4 = range_4;
    tempReal = _true_range_4;
-   sp->prevTR = sp->prevTR - sp->prevTR / sp->optInTimePeriod + tempReal;
-   sp->prevClose = inClose;
+   prevTR = prevTR - prevTR / sp->optInTimePeriod + tempReal;
+   prevClose = inClose;
    /* Calculate the DX. The value is rounded (see Wilder book). */
-   if( sp->prevTR > 0.0 )
+   if( prevTR > 0.0 )
    {
-      minusDI = (100.0 * (sp->prevMinusDM / sp->prevTR));
-      plusDI = (100.0 * (sp->prevPlusDM / sp->prevTR));
+      minusDI = (100.0 * (prevMinusDM / prevTR));
+      plusDI = (100.0 * (prevPlusDM / prevTR));
       /* This loop is just to accumulate the initial DX */
       tempReal = minusDI + plusDI;
       if( !TA_IS_ZERO(tempReal) )

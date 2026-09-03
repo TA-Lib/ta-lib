@@ -535,12 +535,10 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Update( TA_CDL3LINESTRIKE_Stream *stream
 
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Peek( const TA_CDL3LINESTRIKE_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   struct TA_CDL3LINESTRIKE_Stream scratch;
-   struct TA_CDL3LINESTRIKE_Stream *sp = &scratch;
+   const struct TA_CDL3LINESTRIKE_Stream *sp = stream;
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   scratch = *stream;
    if( ((sp->lag3_inClose >= sp->lag3_inOpen) ? 1 : 0 - 1) == ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) && /* three with same color */
        ((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) &&
        ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) && /* 4th opposite color */
