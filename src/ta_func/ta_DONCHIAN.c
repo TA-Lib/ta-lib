@@ -47,28 +47,23 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 KL     First version (proposal-drafts #38).
+ *  090326 MF     Drop optInLag; the window ends at the current bar.
  */
 
-TA_LIB_API int TA_DONCHIAN_Lookback( int optInTimePeriod, int optInLag )
+TA_LIB_API int TA_DONCHIAN_Lookback( int optInTimePeriod )
 {
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
-   if( (int)optInLag == TA_INTEGER_DEFAULT )
-      optInLag = 1;
-   else if( (int)optInLag < 0 || (int)optInLag > 100000 )
-      return -1;
-   /* The window ends optInLag bars behind the output bar, so the first
-    * bar with a full window behind it is (optInTimePeriod-1)+optInLag.
-    */
-   return optInTimePeriod - 1 + optInLag;
+   return optInTimePeriod - 1;
 }
 
 TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
@@ -76,7 +71,6 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
                                    const double inHigh[],
                                    const double inLow[],
                                    int optInTimePeriod,
-                                   int optInLag,
                                    int          *outBegIdx,
                                    int          *outNBElement,
                                    double        outRealUpperBand[],
@@ -93,7 +87,6 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
    int lowestIdx;
    int highestIdx;
    int today;
-   int winEnd;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -104,10 +97,6 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInLag == TA_INTEGER_DEFAULT )
-      optInLag = 1;
-   else if( (int)optInLag < 0 || (int)optInLag > 100000 )
       return TA_BAD_PARAM;
    if( !inHigh )
       return TA_BAD_PARAM;
@@ -124,27 +113,24 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
    if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
       return TA_BAD_PARAM;
 
-   /* Donchian Channels over the window [today-optInLag-optInTimePeriod+1 ..
-    * today-optInLag]:
+   /* Donchian Channels over the optInTimePeriod bars ending at the current
+    * bar:
     *
     *    Upper  = Highest High of the window
     *    Lower  = Lowest  Low  of the window
     *    Middle = (Upper + Lower) / 2
     *
-    * The default optInLag=1 is Donchian's original rule: the bar being
-    * evaluated is measured against a window it is NOT part of, which is
-    * what lets price cross the band. optInLag=0 includes the current bar
-    * (the TradingView/NinjaTrader/pandas form), making Upper/Lower/Middle
-    * exactly MAX(high,N)/MIN(low,N)/MIDPRICE(N).
+    * The window includes the current bar, matching every other library and
+    * charting platform. A breakout rule compares the current bar against the
+    * PREVIOUS bar's band, which is where the one-bar offset belongs.
     *
-    * The middle line is the Donchian centerline, not a moving average:
-    * at optInLag=0 it is bit-identical to MIDPRICE.
+    * Upper/Middle/Lower are bit-identical to MAX(high,N)/MIDPRICE(N)/MIN(low,N).
     */
    /* Identify the minimum number of price bar needed
     * to identify at least one output over the specified
     * period.
     */
-   nbInitialElementNeeded = optInTimePeriod - 1 + optInLag;
+   nbInitialElementNeeded = optInTimePeriod - 1;
    /* Move up the start index if there is not
     * enough initial data.
     */
@@ -166,29 +152,26 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
     *
     * The highest high and lowest low of the window are cached with their
     * indices; the window is rescanned only when a cached extremum drops
-    * out of it (same approach as MIN/MAX/WILLR and the MIDPRICE streaming
-    * tier). The window is the one ending optInLag bars behind the output
-    * bar, so the scan cursor is winEnd, not today.
+    * out of it (same approach as MIN/MAX/WILLR and MIDPRICE).
     */
    outIdx = 0;
    today = startIdx;
-   winEnd = today - optInLag;
-   trailingIdx = winEnd - (optInTimePeriod - 1);
+   trailingIdx = startIdx - nbInitialElementNeeded;
    highestIdx = 0 - 1;
    highest = 0.0;
    lowestIdx = 0 - 1;
    lowest = 0.0;
    while( today <= endIdx )
    {
-      tmpHigh = inHigh[winEnd];
-      tmpLow = inLow[winEnd];
+      tmpHigh = inHigh[today];
+      tmpLow = inLow[today];
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
          highest = inHigh[highestIdx];
          i = highestIdx;
          TA_UNROLL(4)
-         while( ++i <= winEnd )
+         while( ++i <= today )
          {
             tmpHigh = inHigh[i];
             if( tmpHigh > highest )
@@ -199,7 +182,7 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
          }
       } else if( tmpHigh >= highest )
       {
-         highestIdx = winEnd;
+         highestIdx = today;
          highest = tmpHigh;
       }
       if( lowestIdx < trailingIdx )
@@ -208,7 +191,7 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
          lowest = inLow[lowestIdx];
          i = lowestIdx;
          TA_UNROLL(4)
-         while( ++i <= winEnd )
+         while( ++i <= today )
          {
             tmpLow = inLow[i];
             if( tmpLow < lowest )
@@ -219,7 +202,7 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
          }
       } else if( tmpLow <= lowest )
       {
-         lowestIdx = winEnd;
+         lowestIdx = today;
          lowest = tmpLow;
       }
       outRealUpperBand[outIdx] = highest;
@@ -227,7 +210,6 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
       outRealMiddleBand[outIdx] = (highest + lowest) / 2.0;
       outIdx += 1;
       trailingIdx += 1;
-      winEnd += 1;
       today += 1;
    }
    /* Keep the outBegIdx relative to the
@@ -243,7 +225,6 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
                           const float inHigh[],
                           const float inLow[],
                           int optInTimePeriod,
-                          int optInLag,
                           int          *outBegIdx,
                           int          *outNBElement,
                           double        outRealUpperBand[],
@@ -260,7 +241,6 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
    int lowestIdx;
    int highestIdx;
    int today;
-   int winEnd;
    int i;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
@@ -271,10 +251,6 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 20;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
-      return TA_BAD_PARAM;
-   if( (int)optInLag == TA_INTEGER_DEFAULT )
-      optInLag = 1;
-   else if( (int)optInLag < 0 || (int)optInLag > 100000 )
       return TA_BAD_PARAM;
    if( !inHigh )
       return TA_BAD_PARAM;
@@ -291,7 +267,7 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
    if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand )
       return TA_BAD_PARAM;
 
-   nbInitialElementNeeded = optInTimePeriod - 1 + optInLag;
+   nbInitialElementNeeded = optInTimePeriod - 1;
    if( startIdx < nbInitialElementNeeded )
    {
       startIdx = nbInitialElementNeeded;
@@ -304,23 +280,22 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
    }
    outIdx = 0;
    today = startIdx;
-   winEnd = today - optInLag;
-   trailingIdx = winEnd - (optInTimePeriod - 1);
+   trailingIdx = startIdx - nbInitialElementNeeded;
    highestIdx = 0 - 1;
    highest = 0.0;
    lowestIdx = 0 - 1;
    lowest = 0.0;
    while( today <= endIdx )
    {
-      tmpHigh = (double)inHigh[winEnd];
-      tmpLow = (double)inLow[winEnd];
+      tmpHigh = (double)inHigh[today];
+      tmpLow = (double)inLow[today];
       if( highestIdx < trailingIdx )
       {
          highestIdx = trailingIdx;
          highest = (double)inHigh[highestIdx];
          i = highestIdx;
          TA_UNROLL(4)
-         while( ++i <= winEnd )
+         while( ++i <= today )
          {
             tmpHigh = (double)inHigh[i];
             if( tmpHigh > highest )
@@ -331,7 +306,7 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
          }
       } else if( tmpHigh >= highest )
       {
-         highestIdx = winEnd;
+         highestIdx = today;
          highest = tmpHigh;
       }
       if( lowestIdx < trailingIdx )
@@ -340,7 +315,7 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
          lowest = (double)inLow[lowestIdx];
          i = lowestIdx;
          TA_UNROLL(4)
-         while( ++i <= winEnd )
+         while( ++i <= today )
          {
             tmpLow = (double)inLow[i];
             if( tmpLow < lowest )
@@ -351,7 +326,7 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
          }
       } else if( tmpLow <= lowest )
       {
-         lowestIdx = winEnd;
+         lowestIdx = today;
          lowest = tmpLow;
       }
       outRealUpperBand[outIdx] = highest;
@@ -359,11 +334,514 @@ TA_RetCode TA_S_DONCHIAN( int    startIdx,
       outRealMiddleBand[outIdx] = (highest + lowest) / 2.0;
       outIdx += 1;
       trailingIdx += 1;
-      winEnd += 1;
       today += 1;
    }
    *outBegIdx= startIdx;
    *outNBElement= outIdx;
+   return TA_SUCCESS;
+}
+
+/**** Streaming API *****/
+
+struct TA_DONCHIAN_Stream {
+   /* The bars this handle has an output for (see TA_StreamOutRange).
+    * Kept first, and in this order, in every stream struct. */
+   int outRangeBegIdx;
+   int outRangeCount;
+   /* The value(s) at the last bar the stream counted (see TA_DONCHIAN_Value). */
+   double cur_outRealUpperBand;
+   double cur_outRealMiddleBand;
+   double cur_outRealLowerBand;
+   int optInTimePeriod;
+   double lowest;
+   double highest;
+   int trailingIdx;
+   int lowestIdx;
+   int highestIdx;
+   int i;
+   int today;
+   int xCap;
+   int xPhys;
+   int xMask;
+   double *x_inHigh;
+   double *x_inLow;
+};
+
+/* Private function, not in public API. */
+static void TA_DONCHIAN_ReleaseImpl( struct TA_DONCHIAN_Stream *sp )
+{
+   if( !sp ) return;
+   if( sp->x_inHigh ) TA_Free( sp->x_inHigh );
+   if( sp->x_inLow ) TA_Free( sp->x_inLow );
+   TA_Free( sp );
+}
+
+/* Private function, not in public API. */
+static void TA_DONCHIAN_StepImpl( struct TA_DONCHIAN_Stream *sp, double inHigh, double inLow, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   double tmpLow;
+   double tmpHigh;
+   double lowest;
+   double highest;
+
+   lowest = sp->lowest;
+   highest = sp->highest;
+   if( sp->today >= 1073741824 )
+   {
+      int rebaseShift = sp->trailingIdx & ~sp->xMask;
+      sp->today -= rebaseShift;
+      sp->trailingIdx -= rebaseShift;
+      sp->highestIdx -= rebaseShift;
+      sp->i -= rebaseShift;
+      sp->lowestIdx -= rebaseShift;
+   }
+   sp->x_inHigh[sp->today & sp->xMask] = inHigh;
+   sp->x_inLow[sp->today & sp->xMask] = inLow;
+   tmpHigh = sp->x_inHigh[sp->today & sp->xMask];
+   tmpLow = sp->x_inLow[sp->today & sp->xMask];
+   if( sp->highestIdx < sp->trailingIdx )
+   {
+      sp->highestIdx = sp->trailingIdx;
+      highest = sp->x_inHigh[sp->highestIdx & sp->xMask];
+      sp->i = sp->highestIdx;
+      TA_UNROLL(4)
+      while( ++sp->i <= sp->today )
+      {
+         tmpHigh = sp->x_inHigh[sp->i & sp->xMask];
+         if( tmpHigh > highest )
+         {
+            sp->highestIdx = sp->i;
+            highest = tmpHigh;
+         }
+      }
+   } else if( tmpHigh >= highest )
+   {
+      sp->highestIdx = sp->today;
+      highest = tmpHigh;
+   }
+   if( sp->lowestIdx < sp->trailingIdx )
+   {
+      sp->lowestIdx = sp->trailingIdx;
+      lowest = sp->x_inLow[sp->lowestIdx & sp->xMask];
+      sp->i = sp->lowestIdx;
+      TA_UNROLL(4)
+      while( ++sp->i <= sp->today )
+      {
+         tmpLow = sp->x_inLow[sp->i & sp->xMask];
+         if( tmpLow < lowest )
+         {
+            sp->lowestIdx = sp->i;
+            lowest = tmpLow;
+         }
+      }
+   } else if( tmpLow <= lowest )
+   {
+      sp->lowestIdx = sp->today;
+      lowest = tmpLow;
+   }
+   *outRealUpperBand= highest;
+   *outRealLowerBand= lowest;
+   *outRealMiddleBand= (highest + lowest) / 2.0;
+   sp->trailingIdx += 1;
+   sp->today += 1;
+   sp->cur_outRealUpperBand = *outRealUpperBand;
+   sp->cur_outRealMiddleBand = *outRealMiddleBand;
+   sp->cur_outRealLowerBand = *outRealLowerBand;
+   sp->lowest = lowest;
+   sp->highest = highest;
+}
+
+static TA_RetCode TA_DONCHIAN_OpenImpl( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+{
+   struct TA_DONCHIAN_Stream *sp;
+   int endIdx;
+   int dummyBegIdx;
+   int dummyNBElement;
+
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
+      optInTimePeriod = 20;
+   else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
+      return TA_BAD_PARAM;
+   if( startIdx > historyLen - 1 )
+   {
+      *outBegIdx = 0;
+      *outNBElement = 0;
+      return TA_INSUFFICIENT_HISTORY;
+   }
+
+   endIdx = historyLen - 1;
+   dummyBegIdx = 0;
+   dummyNBElement = 0;
+   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;
+
+   {
+      double lowest = 0.0;
+      double highest = 0.0;
+      double tmpLow;
+      double tmpHigh;
+      int outIdx;
+      int nbInitialElementNeeded;
+      int trailingIdx = 0;
+      int lowestIdx = 0;
+      int highestIdx = 0;
+      int today = 0;
+      int i = 0;
+      /* Donchian Channels over the optInTimePeriod bars ending at the current
+       * bar:
+       *
+       *    Upper  = Highest High of the window
+       *    Lower  = Lowest  Low  of the window
+       *    Middle = (Upper + Lower) / 2
+       *
+       * The window includes the current bar, matching every other library and
+       * charting platform. A breakout rule compares the current bar against the
+       * PREVIOUS bar's band, which is where the one-bar offset belongs.
+       *
+       * Upper/Middle/Lower are bit-identical to MAX(high,N)/MIDPRICE(N)/MIN(low,N).
+       */
+      /* Identify the minimum number of price bar needed
+       * to identify at least one output over the specified
+       * period.
+       */
+      nbInitialElementNeeded = optInTimePeriod - 1;
+      /* Move up the start index if there is not
+       * enough initial data.
+       */
+      if( startIdx < nbInitialElementNeeded )
+      {
+         startIdx = nbInitialElementNeeded;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      /* Proceed with the calculation for the requested range.
+       * Note that this algorithm allows the input and
+       * output to be the same buffer: every position written (outIdx) sits
+       * at or below trailingIdx, the oldest position any later bar reads.
+       *
+       * The highest high and lowest low of the window are cached with their
+       * indices; the window is rescanned only when a cached extremum drops
+       * out of it (same approach as MIN/MAX/WILLR and MIDPRICE).
+       */
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - nbInitialElementNeeded;
+      highestIdx = 0 - 1;
+      highest = 0.0;
+      lowestIdx = 0 - 1;
+      lowest = 0.0;
+      while( today <= endIdx )
+      {
+         tmpHigh = inHigh[today];
+         tmpLow = inLow[today];
+         if( highestIdx < trailingIdx )
+         {
+            highestIdx = trailingIdx;
+            highest = inHigh[highestIdx];
+            i = highestIdx;
+            TA_UNROLL(4)
+            while( ++i <= today )
+            {
+               tmpHigh = inHigh[i];
+               if( tmpHigh > highest )
+               {
+                  highestIdx = i;
+                  highest = tmpHigh;
+               }
+            }
+         } else if( tmpHigh >= highest )
+         {
+            highestIdx = today;
+            highest = tmpHigh;
+         }
+         if( lowestIdx < trailingIdx )
+         {
+            lowestIdx = trailingIdx;
+            lowest = inLow[lowestIdx];
+            i = lowestIdx;
+            TA_UNROLL(4)
+            while( ++i <= today )
+            {
+               tmpLow = inLow[i];
+               if( tmpLow < lowest )
+               {
+                  lowestIdx = i;
+                  lowest = tmpLow;
+               }
+            }
+         } else if( tmpLow <= lowest )
+         {
+            lowestIdx = today;
+            lowest = tmpLow;
+         }
+         outRealUpperBand[outIdx * outStride] = highest;
+         outRealLowerBand[outIdx * outStride] = lowest;
+         outRealMiddleBand[outIdx * outStride] = (highest + lowest) / 2.0;
+         outIdx += 1;
+         trailingIdx += 1;
+         today += 1;
+      }
+      /* Keep the outBegIdx relative to the
+       * caller input before returning.
+       */
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_DONCHIAN_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->lowest = lowest;
+      sp->highest = highest;
+      sp->trailingIdx = trailingIdx;
+      sp->lowestIdx = lowestIdx;
+      sp->highestIdx = highestIdx;
+      sp->i = i;
+      sp->today = today;
+      sp->xCap = (int)(today - trailingIdx) + 1;
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_DONCHIAN_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(403); }
+      sp->xPhys = 1;
+      while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
+      sp->xMask = sp->xPhys - 1;
+      sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
+      if( !sp->x_inHigh ) { TA_DONCHIAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      sp->x_inLow = (double *)TA_Malloc( sizeof(double) * (size_t)sp->xPhys );
+      if( !sp->x_inLow ) { TA_DONCHIAN_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
+      { int fillJ;
+        for( fillJ = historyLen - sp->xCap; fillJ < historyLen; fillJ++ )
+        {
+           sp->x_inHigh[fillJ & sp->xMask] = inHigh[fillJ];
+           sp->x_inLow[fillJ & sp->xMask] = inLow[fillJ];
+        }
+      }
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outRealUpperBand = outRealUpperBand[(*outNBElement - 1) * outStride];
+      sp->cur_outRealMiddleBand = outRealMiddleBand[(*outNBElement - 1) * outStride];
+      sp->cur_outRealLowerBand = outRealLowerBand[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DONCHIAN_OpenInternal( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   TA_RetCode retCode;
+   int dummyBegIdx = 0;
+   int dummyNBElement = 0;
+   double sink_outRealUpperBand = 0.0;
+   double sink_outRealMiddleBand = 0.0;
+   double sink_outRealLowerBand = 0.0;
+   retCode = TA_DONCHIAN_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, &dummyBegIdx, &dummyNBElement, &sink_outRealUpperBand, &sink_outRealMiddleBand, &sink_outRealLowerBand, 0 );
+   if( retCode == TA_SUCCESS )
+   {
+      *outRealUpperBand = sink_outRealUpperBand;
+      *outRealMiddleBand = sink_outRealMiddleBand;
+      *outRealLowerBand = sink_outRealLowerBand;
+   }
+   return retCode;
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Open( TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   return TA_DONCHIAN_OpenInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_OpenAndFill( TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   *stream = NULL;
+   if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
+   if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
+   if( !inHigh || !inLow || !outBegIdx || !outNBElement || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( (const void *)outRealUpperBand == (const void *)inHigh || (const void *)outRealUpperBand == (const void *)inLow || (const void *)outRealMiddleBand == (const void *)inHigh || (const void *)outRealMiddleBand == (const void *)inLow || (const void *)outRealLowerBand == (const void *)inHigh || (const void *)outRealLowerBand == (const void *)inLow || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
+   return TA_DONCHIAN_OpenAndFillInternal( stream, inHigh, inLow, 0, historyLen, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+}
+
+/* Private function, not in public API. */
+TA_RetCode TA_DONCHIAN_OpenAndFillInternal( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   return TA_DONCHIAN_OpenImpl( stream, inHigh, inLow, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1 );
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Update( TA_DONCHIAN_Stream *stream, double inHigh, double inLow, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) )
+   {
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+      return TA_BAD_PARAM;
+   }
+   TA_DONCHIAN_StepImpl( stream, inHigh, inLow, outRealUpperBand, outRealMiddleBand, outRealLowerBand );
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Peek( const TA_DONCHIAN_Stream *stream, double inHigh, double inLow, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   const struct TA_DONCHIAN_Stream *sp = stream;
+   double tmpLow;
+   double tmpHigh;
+   double highest;
+   int highestIdx;
+   int i;
+   double lowest;
+   int lowestIdx;
+   int today;
+   int trailingIdx;
+   double *x_inHigh;
+   double *x_inLow;
+   int pkSlot0 = -1;
+   double pkVal0 = 0.0;
+   int pkSlot1 = -1;
+   double pkVal1 = 0.0;
+
+   if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) ) return TA_BAD_PARAM;
+   highest = sp->highest;
+   highestIdx = sp->highestIdx;
+   i = sp->i;
+   lowest = sp->lowest;
+   lowestIdx = sp->lowestIdx;
+   today = sp->today;
+   trailingIdx = sp->trailingIdx;
+   x_inHigh = sp->x_inHigh;
+   x_inLow = sp->x_inLow;
+   if( today >= 1073741824 )
+   {
+      int rebaseShift = trailingIdx & ~sp->xMask;
+      today -= rebaseShift;
+      trailingIdx -= rebaseShift;
+      highestIdx -= rebaseShift;
+      i -= rebaseShift;
+      lowestIdx -= rebaseShift;
+   }
+   pkSlot0 = today & sp->xMask;
+   pkVal0 = inHigh;
+   pkSlot1 = today & sp->xMask;
+   pkVal1 = inLow;
+   tmpHigh = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
+   tmpLow = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
+   if( highestIdx < trailingIdx )
+   {
+      highestIdx = trailingIdx;
+      highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
+      i = highestIdx;
+      TA_UNROLL(4)
+      while( ++i <= today )
+      {
+         tmpHigh = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
+         if( tmpHigh > highest )
+         {
+            highestIdx = i;
+            highest = tmpHigh;
+         }
+      }
+   } else if( tmpHigh >= highest )
+   {
+      highestIdx = today;
+      highest = tmpHigh;
+   }
+   if( lowestIdx < trailingIdx )
+   {
+      lowestIdx = trailingIdx;
+      lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
+      i = lowestIdx;
+      TA_UNROLL(4)
+      while( ++i <= today )
+      {
+         tmpLow = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
+         if( tmpLow < lowest )
+         {
+            lowestIdx = i;
+            lowest = tmpLow;
+         }
+      }
+   } else if( tmpLow <= lowest )
+   {
+      lowestIdx = today;
+      lowest = tmpLow;
+   }
+   *outRealUpperBand= highest;
+   *outRealLowerBand= lowest;
+   *outRealMiddleBand= (highest + lowest) / 2.0;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_UpdateAndFill( TA_DONCHIAN_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+{
+   int i;
+
+   if( !stream || !inHigh || !inLow || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   if( barCount < 0 ) return TA_BAD_PARAM;
+   if( (const void *)outRealUpperBand == (const void *)inHigh || (const void *)outRealUpperBand == (const void *)inLow || (const void *)outRealMiddleBand == (const void *)inHigh || (const void *)outRealMiddleBand == (const void *)inLow || (const void *)outRealLowerBand == (const void *)inHigh || (const void *)outRealLowerBand == (const void *)inLow || (const void *)outRealUpperBand == (const void *)outRealMiddleBand || (const void *)outRealUpperBand == (const void *)outRealLowerBand || (const void *)outRealMiddleBand == (const void *)outRealLowerBand ) return TA_BAD_PARAM;
+   for( i = 0; i < barCount; i++ )
+   {
+      if( !TA_IS_FINITE( inHigh[i] ) || !TA_IS_FINITE( inLow[i] ) )
+      {
+         if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+         return TA_BAD_PARAM;
+      }
+      TA_DONCHIAN_StepImpl( stream, inHigh[i], inLow[i], &outRealUpperBand[i], &outRealMiddleBand[i], &outRealLowerBand[i] );
+      if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   }
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Close( TA_DONCHIAN_Stream *stream )
+{
+   TA_DONCHIAN_ReleaseImpl( stream );
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Value( const TA_DONCHIAN_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand )
+{
+   if( !stream || !outRealUpperBand || !outRealMiddleBand || !outRealLowerBand ) return TA_BAD_PARAM;
+   *outRealUpperBand = stream->cur_outRealUpperBand;
+   *outRealMiddleBand = stream->cur_outRealMiddleBand;
+   *outRealLowerBand = stream->cur_outRealLowerBand;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Clone( const TA_DONCHIAN_Stream *stream, TA_DONCHIAN_Stream **clone )
+{
+   struct TA_DONCHIAN_Stream *sp;
+
+   if( !clone ) return TA_BAD_PARAM;
+   *clone = NULL;
+   if( !stream ) return TA_BAD_PARAM;
+   sp = (struct TA_DONCHIAN_Stream *)TA_Malloc( sizeof(*sp) );
+   if( !sp ) return TA_ALLOC_ERR;
+   *sp = *stream;
+   sp->x_inHigh = NULL;
+   sp->x_inLow = NULL;
+   if( stream->x_inHigh )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inHigh = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inHigh ) { TA_DONCHIAN_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inHigh, stream->x_inHigh, sizeof(double) * copyN ); }
+   if( stream->x_inLow )
+   { size_t copyN = (size_t)(sp->xPhys);
+     sp->x_inLow = (double *)TA_Malloc( sizeof(double) * copyN );
+     if( !sp->x_inLow ) { TA_DONCHIAN_Close( sp ); return TA_ALLOC_ERR; }
+     memcpy( sp->x_inLow, stream->x_inLow, sizeof(double) * copyN ); }
+   *clone = sp;
    return TA_SUCCESS;
 }
 

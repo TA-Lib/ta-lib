@@ -652,7 +652,7 @@ internal static class NoPhantomIoBinder
         ["DONCHIAN"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.DONCHIAN_Impl(
-                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
         ["DX"] = static (core, c, startIdx, endIdx) =>

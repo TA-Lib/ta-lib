@@ -3904,6 +3904,7 @@ public static class FunctionDescription
 		<GroupId>Overlap Studies</GroupId>
 		<Flags>
 			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>
@@ -3928,19 +3929,6 @@ public static class FunctionDescription
 					<SuggestedIncrement>1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>20</DefaultValue>
-			</OptionalInputArgument>
-			<OptionalInputArgument>
-				<Name>Lag</Name>
-				<ShortDescription>Bars the window is held back from the current bar (0 includes the current bar)</ShortDescription>
-				<Type>Integer</Type>
-				<Range>
-					<Minimum>0</Minimum>
-					<Maximum>100000</Maximum>
-					<SuggestedStart>0</SuggestedStart>
-					<SuggestedEnd>1</SuggestedEnd>
-					<SuggestedIncrement>1</SuggestedIncrement>
-				</Range>
-				<DefaultValue>1</DefaultValue>
 			</OptionalInputArgument>
 		</OptionalInputArguments>
 		<OutputArguments>

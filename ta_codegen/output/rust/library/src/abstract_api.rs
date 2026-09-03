@@ -1736,9 +1736,9 @@ static FUNC_TABLE: [FuncInfo; 179] = [
         name: "DONCHIAN",
         group: Group::OverlapStudies,
         hint: "Donchian Channels",
-        flags: FuncFlags(0x01000000),
+        flags: FuncFlags(0x03000000),
         inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
-        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInLag", display_name: "Lag", hint: "Bars the window is held back from the current bar (0 includes the current bar)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 1, suggested: (0, 1, 1) } }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
         unst_id: None,
     },
@@ -3244,7 +3244,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::COSH => self.core.COSH_Lookback(),
             FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
             FuncId::DIV => self.core.DIV_Lookback(),
-            FuncId::DONCHIAN => self.core.DONCHIAN_Lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::DONCHIAN => self.core.DONCHIAN_Lookback(self.int_opt[0]),
             FuncId::DX => self.core.DX_Lookback(self.int_opt[0]),
             FuncId::EFI => self.core.EFI_Lookback(self.int_opt[0]),
             FuncId::EMA => self.core.EMA_Lookback(self.int_opt[0]),
@@ -4515,7 +4515,7 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
                 let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
-                let res = self.core.DONCHIAN(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1, &mut *o2);
+                let res = self.core.DONCHIAN(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0, &mut *o1, &mut *o2);
                 self.real_out[0] = Some(o0);
                 self.real_out[1] = Some(o1);
                 self.real_out[2] = Some(o2);

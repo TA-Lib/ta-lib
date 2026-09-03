@@ -3819,6 +3819,48 @@ static TA_RetCode TA_DIV_SFrameClose( void *stream )
    return TA_DIV_Close( (TA_DIV_Stream *)stream );
 }
 
+static TA_RetCode TA_DONCHIAN_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_DONCHIAN_Open(
+               (TA_DONCHIAN_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outRealUpperBand */,
+               outReal[1] /* outRealMiddleBand */,
+               outReal[2] /* outRealLowerBand */
+               );
+}
+static TA_RetCode TA_DONCHIAN_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_DONCHIAN_OpenAndFill(
+               (TA_DONCHIAN_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outRealUpperBand */,
+               outReal[1] /* outRealMiddleBand */,
+               outReal[2] /* outRealLowerBand */
+               );
+}
+static TA_RetCode TA_DONCHIAN_SFrameClose( void *stream )
+{
+   return TA_DONCHIAN_Close( (TA_DONCHIAN_Stream *)stream );
+}
+
 static TA_RetCode TA_DX_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -7362,6 +7404,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_DEMA, 1, TA_VOpt_DEMA, 1, TA_VOutIsInt_DEMA },
    { "DIV", TA_DIV_SFrameOpen, TA_DIV_SFrameFill, TA_DIV_SFrameClose,
      2, TA_VIn_DIV, 0, NULL, 1, TA_VOutIsInt_DIV },
+   { "DONCHIAN", TA_DONCHIAN_SFrameOpen, TA_DONCHIAN_SFrameFill, TA_DONCHIAN_SFrameClose,
+     2, TA_VIn_DONCHIAN, 1, TA_VOpt_DONCHIAN, 3, TA_VOutIsInt_DONCHIAN },
    { "DX", TA_DX_SFrameOpen, TA_DX_SFrameFill, TA_DX_SFrameClose,
      3, TA_VIn_DX, 1, TA_VOpt_DX, 1, TA_VOutIsInt_DX },
    { "EFI", TA_EFI_SFrameOpen, TA_EFI_SFrameFill, TA_EFI_SFrameClose,
@@ -7538,6 +7582,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 178
+#define TA_STREAM_TABLE_SIZE 179
 
 #endif /* TA_STREAM_FRAME_H */

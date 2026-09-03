@@ -2252,7 +2252,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         name: "DONCHIAN",
         group: FunctionGroup.OverlapStudies,
         hint: "Donchian Channels",
-        flags: FunctionFlags.Overlap,
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
         unstableId: null,
         inputs:
         [
@@ -2261,7 +2261,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         optInputs:
         [
             new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
-            new OptInputInfo("optInLag", "Lag", "Bars the window is held back from the current bar (0 includes the current bar)", OptInputFlags.None, new OptInputDomain.IntegerRange(0, 100000, 1, 0, 1, 1)),
         ],
         outputs:
         [
@@ -2269,10 +2268,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             new OutputInfo(OutputKind.Real, "outRealMiddleBand", OutputFlags.Line),
             new OutputInfo(OutputKind.Real, "outRealLowerBand", OutputFlags.LowerLimit),
         ],
-        lookback: static (core, c) => core.DONCHIAN_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        lookback: static (core, c) => core.DONCHIAN_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
             core.DONCHIAN(
-                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
     private static FunctionInfo MakeDx() => new(
         name: "DX",

@@ -88,29 +88,6 @@ DEF_FUNCTION( DIV,
 /* DIV END */
 
 /* DONCHIAN BEGIN */
-static const TA_IntegerRange TA_DEF_DONCHIAN_Lag =
-{
-   0,
-   100000,
-   0,
-   1,
-   1
-};
-
-static const TA_OptInputParameterInfo TA_DEF_UI_D_DONCHIAN_Lag =
-{
-   TA_OptInput_IntegerRange,
-   "optInLag",
-   0,
-
-   "Lag",
-   (const void *)&TA_DEF_DONCHIAN_Lag,
-   1,
-   "Bars the window is held back from the current bar (0 includes the current bar)",
-
-   NULL
-};
-
 const TA_OutputParameterInfo TA_DEF_UI_Output_Real_DONCHIAN_UpperBand =
                                { TA_Output_Real, "outRealUpperBand", TA_OUT_UPPER_LIMIT };
 
@@ -136,14 +113,13 @@ static const TA_OutputParameterInfo   *TA_DONCHIAN_Outputs[]   =
 
 static const TA_OptInputParameterInfo *TA_DONCHIAN_OptInputs[] =
 { &TA_DEF_UI_TimePeriod_20_MINIMUM2,
-  &TA_DEF_UI_D_DONCHIAN_Lag,
   NULL
 };
 
 DEF_FUNCTION( DONCHIAN,
               TA_GroupId_OverlapStudies,
               "Donchian Channels",
-              TA_FUNC_FLG_OVERLAP
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
              );
 /* DONCHIAN END */
 

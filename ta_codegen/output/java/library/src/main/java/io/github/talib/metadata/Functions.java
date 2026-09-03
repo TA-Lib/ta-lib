@@ -1610,7 +1610,7 @@ public final class Functions {
 
    private static FunctionInfo f_DONCHIAN() {
       return new FunctionInfo(
-         "DONCHIAN", "Overlap Studies", "Donchian Channels", 0x01000000,
+         "DONCHIAN", "Overlap Studies", "Donchian Channels", 0x03000000,
          List.of(
             new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
          ),
@@ -1619,12 +1619,7 @@ public final class Functions {
                OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
                "Time Period", "Time period", 20.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 4, 200, 1, null),
-            new OptInputInfo(
-               OptInputType.INTEGER_RANGE, "optInLag", 0x00000000,
-               "Lag", "Bars the window is held back from the current bar (0 includes the current bar)", 1.0,
-               0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               0, 100000, 0, 1, 1, null)
+               2, 100000, 4, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),

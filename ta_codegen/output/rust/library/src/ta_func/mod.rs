@@ -362,6 +362,7 @@ pub use cos::CosStream;
 pub use cosh::CoshStream;
 pub use dema::DemaStream;
 pub use div::DivStream;
+pub use donchian::DonchianStream;
 pub use dx::DxStream;
 pub use efi::EfiStream;
 pub use ema::EmaStream;

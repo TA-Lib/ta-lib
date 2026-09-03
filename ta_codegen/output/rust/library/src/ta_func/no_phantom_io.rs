@@ -9180,15 +9180,15 @@ fn legs_DIV(r: &mut Report) {
     r.legs_done("DIV", 2);
 }
 
-const V_DONCHIAN: &[(&str, i32, i32)] = &[
-    ("defaults", i32::MIN, i32::MIN),
-    ("minimums", 2i32, 0i32),
+const V_DONCHIAN: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
 ];
 
 fn sub_DONCHIAN(r: &mut Report) {
     let core = Core::new();
-    for &(label, optInTimePeriod, optInLag) in V_DONCHIAN {
-        let Ok(lb) = core.DONCHIAN_Lookback(optInTimePeriod, optInLag) else { continue; };
+    for &(label, optInTimePeriod) in V_DONCHIAN {
+        let Ok(lb) = core.DONCHIAN_Lookback(optInTimePeriod) else { continue; };
         r.control("DONCHIAN", label, run(|| {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
@@ -9197,7 +9197,7 @@ fn sub_DONCHIAN(r: &mut Report) {
             let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.DONCHIAN_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            let rc = core.DONCHIAN_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("DONCHIAN", label); continue; }
@@ -9209,7 +9209,7 @@ fn sub_DONCHIAN(r: &mut Report) {
             let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.DONCHIAN_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            let rc = core.DONCHIAN_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             (rc, _n)
         }));
     }
@@ -9218,8 +9218,7 @@ fn sub_DONCHIAN(r: &mut Report) {
 fn legs_DONCHIAN(r: &mut Report) {
     let core = Core::new();
     let optInTimePeriod = i32::MIN;
-    let optInLag = i32::MIN;
-    let Ok(lb) = core.DONCHIAN_Lookback(optInTimePeriod, optInLag) else { r.no_legs("DONCHIAN"); return; };
+    let Ok(lb) = core.DONCHIAN_Lookback(optInTimePeriod) else { r.no_legs("DONCHIAN"); return; };
     let (startIdx, endIdx) = (lb, lb + 4);
     {
         let inHigh: Vec<f64> = series("high", endIdx + 1);
@@ -9230,7 +9229,7 @@ fn legs_DONCHIAN(r: &mut Report) {
         r.legs_control("DONCHIAN", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             (rc, _n)
         }));
     }
@@ -9243,7 +9242,7 @@ fn legs_DONCHIAN(r: &mut Report) {
         r.leg("DONCHIAN", "inHigh", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             (rc, _n)
         }));
     }
@@ -9256,7 +9255,7 @@ fn legs_DONCHIAN(r: &mut Report) {
         r.leg("DONCHIAN", "inLow", 1, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
             (rc, _n)
         }));
     }

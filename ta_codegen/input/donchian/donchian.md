@@ -6,7 +6,7 @@ Donchian Channels: three overlap lines built from rolling price extrema. The upp
 
 ## Formula
 
-Window = the optInTimePeriod bars ending optInLag bars before the current bar
+Window = the optInTimePeriod bars ending at the current bar
 
 Upper  = Highest High of Window
 Lower  = Lowest  Low  of Window
@@ -14,9 +14,9 @@ Middle = (Upper + Lower) / 2
 
 ## Notes
 
-- The default `optInLag=1` is the original rule: a breakout is measured against a window the breaking bar is **not** part of. With the current bar inside the window (`optInLag=0`) the upper band can never be crossed upward — `High[t]` is already in the max — which is why StockCharts and IncredibleCharts both document the lagged form.
-- `optInLag=0` reproduces the inclusive convention used by TradingView (`ta.highest`/`ta.lowest`), NinjaTrader and pandas-ta. Users arriving from those platforms should pass `optInLag=0` to match their charts; the difference is exactly a one-bar shift.
-- At `optInLag=0` the three outputs equal `MAX(high, N)`, `MIN(low, N)` and `MIDPRICE(N)` bit for bit.
+- The window includes the current bar, matching TradingView (`ta.highest`/`ta.lowest`), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.
+- A breakout rule compares the current bar against the **previous** bar's band — `High[t] > Upper[t-1]` — which is where the one-bar offset belongs. Reading `Upper[t]` against `High[t]` can never signal, because `High[t]` is inside the window that produced it.
+- Upper, Middle and Lower are bit-identical to `MAX(high, N)`, `MIDPRICE(N)` and `MIN(low, N)`. DONCHIAN computes all three in one pass under the name users look for.
 - The middle line is the channel midpoint, not a moving average of price.
 - No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.
 
@@ -34,7 +34,6 @@ Middle = (Upper + Lower) / 2
 ## Parameters
 
 - `optInTimePeriod` — Number of bars in the extrema window
-- `optInLag` — Bars the window is held back from the current bar (0 includes the current bar)
 
 ## Implementation
 

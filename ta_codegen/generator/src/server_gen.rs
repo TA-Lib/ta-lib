@@ -2936,10 +2936,8 @@ fn emit_rust_warmup_arms(
 }
 
 /// The `--mode=open` / `--mode=openfill` arms of the C bench loop: time the
-/// streaming warm-up instead of the batch call. Emitted only for streaming
-/// functions — a batch-only function answers unsupported_mode from its guard
-/// instead, since TA_<N>_Open does not exist to call. `historyLen` is
-/// `endIdx + 1` — the streaming
+/// streaming warm-up instead of the batch call. Every function streams, so both
+/// arms exist unconditionally. `historyLen` is `endIdx + 1` — the streaming
 /// entry points pin bar 0 (that is what makes `OpenAndFill` bit-exact), so they
 /// replay `0..endIdx` regardless of `startIdx`. Each arm closes the handle it
 /// opened: a 168-function sweep would otherwise leak one per iteration, and the
@@ -3115,19 +3113,12 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         // the C# backend has none -- so it gives the same answer C# does rather
         // than timing the batch call and reporting it as a warm-up. ta_bench drops
         // timing_ns 0 as a non-measurement, so the cref column reads blank.
-        // A batch-only function (no `stream` flag) has no TA_<N>_Open to time on
-        // ANY build, so its guard is unconditional -- emitting the warm-up arms
-        // would reference symbols the library does not export.
-        if func.streaming {
-            s.push_str("#ifdef TA_REF_SERVE\n");
-        }
+        s.push_str("#ifdef TA_REF_SERVE\n");
         s.push_str("        if( bench_mode != 0 ) {\n");
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\");\n");
         s.push_str("            return;\n");
         s.push_str("        }\n");
-        if func.streaming {
-            s.push_str("#endif /* TA_REF_SERVE */\n");
-        }
+        s.push_str("#endif /* TA_REF_SERVE */\n");
 
         s.push_str("        TA_RetCode rc = 0;\n");
 
@@ -3192,9 +3183,7 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
         }
         s.push_str(");\n");
 
-        if func.streaming {
-            emit_c_warmup_arms(&mut s, func, &input_names);
-        }
+        emit_c_warmup_arms(&mut s, func, &input_names);
         s.push_str("        }\n"); // end bench_iters loop
         s.push_str("        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;\n");
 
@@ -4218,23 +4207,15 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // discarded warm-up — see the C emitter: it removes the cold-call bias
         // AND makes every correctness gate an idempotency check.
         s.push_str("        int bench_mode = jsonInt(json, \"bench_mode\");\n");
-        // A batch-only function (no `stream` flag) has no Open/OpenAndFill to
-        // warm up, so it answers unsupported_mode -- the same non-measurement
-        // the frozen C reference server reports (ta_bench drops timing_ns 0).
-        if !func.streaming {
-            s.push_str("        if (bench_mode != 0) return \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\";\n");
-        }
         // Right-sized input views for the warm-up arms, bound ONCE outside the
         // timing loop. Java derives historyLen from array.length, and with
         // use_preloaded the buffer is `new double[MAX_ARRAY_SIZE]` with only
         // refN points copied in -- passing it whole replays a fixed, oversized
         // history regardless of --points (the C arm passes `endIdx + 1`).
-        if func.streaming {
-            for name in &input_names {
-                s.push_str(&format!(
-                    "        double[] _warm_{name} = bench_mode == 0 ? null : java.util.Arrays.copyOfRange({name}, 0, endIdx + 1);\n"
-                ));
-            }
+        for name in &input_names {
+            s.push_str(&format!(
+                "        double[] _warm_{name} = bench_mode == 0 ? null : java.util.Arrays.copyOfRange({name}, 0, endIdx + 1);\n"
+            ));
         }
         s.push_str("        long startNs = 0;\n");
         s.push_str("        for (int _bi = 0; _bi <= bench_iters; _bi++) {\n");
@@ -4320,9 +4301,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // --- warm-up arms (ta_bench --mode=open / openfill). Java handles are
         // GC-managed (no Close) and the public Open throws instead of returning
         // a code, so the arms convert the throw into a RetCode.
-        // Batch-only functions answered unsupported_mode above and emit no arms:
-        // the Open/OpenAndFill symbols do not exist for them.
-        if func.streaming {
+        {
             // Java derives historyLen from array.length, and with
             // use_preloaded the buffer is `new double[MAX_ARRAY_SIZE]` with only
             // refN points copied in -- passing it whole replays a fixed,
@@ -5065,12 +5044,6 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         // OpenAndFill throw instead of returning a code, same as the batch
         // call below -- the arms convert the throw into a RetCode the same way.
         s.push_str("        int bench_mode = GetInt(p, \"bench_mode\", 0);\n");
-        // A batch-only function (no `stream` flag) has no Open/OpenAndFill to
-        // warm up, so it answers unsupported_mode -- the same non-measurement
-        // the frozen C reference server reports (ta_bench drops timing_ns 0).
-        if !func.streaming {
-            s.push_str("        if (bench_mode != 0) return \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\";\n");
-        }
 
         // Inputs: preloaded reference data or from the request.
         for name in &input_names {
@@ -5108,12 +5081,10 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
         // buffer is refN-sized already; slicing to endIdx+1 matches what the
         // C/Rust/Java arms do for the same reason (measure the same range the
         // batch call does, not whatever --points happened to preload).
-        if func.streaming {
-            for name in &input_names {
-                s.push_str(&format!(
-                    "        ReadOnlySpan<double> _warm_{name} = bench_mode == 0 ? default : {name}.AsSpan(0, endIdx + 1);\n"
-                ));
-            }
+        for name in &input_names {
+            s.push_str(&format!(
+                "        ReadOnlySpan<double> _warm_{name} = bench_mode == 0 ? default : {name}.AsSpan(0, endIdx + 1);\n"
+            ));
         }
 
         // Optional params (enum params read as int, cast to the enum type).
@@ -5232,7 +5203,6 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("                    outNBElement = 0;\n");
             s.push_str("                }\n");
             s.push_str("            }\n");
-            if func.streaming {
             // --- warm-up arms (ta_bench --mode=open / openfill), issue #256.
             // Handles are GC-managed (no Close) and the public Open/OpenAndFill
             // throw instead of returning a code, so these arms convert the
@@ -5272,12 +5242,6 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
             s.push_str("                    outNBElement = 0;\n");
             s.push_str("                }\n");
             s.push_str("            }\n");
-            } else {
-                // Batch-only: no warm-up arms exist (the Open/OpenAndFill
-                // symbols are not generated); bench_mode != 0 already answered
-                // unsupported_mode above, so the batch branch simply closes.
-                s.push_str("            }\n");
-            }
         }
         s.push_str("        }\n");
         s.push_str("        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;\n");
@@ -5805,12 +5769,6 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // warm-up Open, 2 = OpenAndFill. Rust handles are dropped at end of
         // scope, so unlike C there is nothing to close explicitly.
         s.push_str("            let bench_mode = params[\"bench_mode\"].as_i64().unwrap_or(0);\n");
-        // A batch-only function (no `stream` flag) has no Open/OpenAndFill to
-        // warm up, so it answers unsupported_mode -- the same non-measurement
-        // the frozen C reference server reports (ta_bench drops timing_ns 0).
-        if !func.streaming {
-            s.push_str("            if bench_mode != 0 { return \"{\\\"retCode\\\":0,\\\"timing_ns\\\":0,\\\"unsupported_mode\\\":1}\".to_string(); }\n");
-        }
         // --xlang-hash (issue #113): seed-based input generation + out_hash. Absent
         // (0) for the normal per-function / preloaded paths.
         s.push_str("            let gen_present = params[\"gen_present\"].as_i64().unwrap_or(0);\n");
@@ -6041,16 +5999,9 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("                Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }\n");
         s.push_str("                Err(e) => { outBegIdx = 0; outNBElement = 0; e }\n");
         s.push_str("            };\n");
-        if func.streaming {
-            s.push_str("            } else {\n");
-            emit_rust_warmup_arms(&mut s, func, &input_names, outputs);
-            s.push_str("            }\n");
-        } else {
-            // Batch-only: bench_mode != 0 answered unsupported_mode above, so
-            // the batch branch simply closes -- the streaming entry points do
-            // not exist to call.
-            s.push_str("            }\n");
-        }
+        s.push_str("            } else {\n");
+        emit_rust_warmup_arms(&mut s, func, &input_names, outputs);
+        s.push_str("            }\n");
         s.push_str("            }\n"); // end guarded bench loop
         if !enum_opts.is_empty() {
             s.push_str("            }\n"); // end enum-conversion guard

@@ -7136,9 +7136,6 @@ TA_LIB_API TA_RetCode TA_DIV_Clone( const TA_DIV_Stream *stream, TA_DIV_Stream *
  * optInTimePeriod:(From 2 to 100000)
  *    Time period
  * 
- * optInLag:(From 0 to 100000)
- *    Bars the window is held back from the current bar (0 includes the current bar)
- * 
  * 
  */
 TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
@@ -7146,7 +7143,6 @@ TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
                                               const double inHigh[],
                                               const double inLow[],
                                               int           optInTimePeriod, /* From 2 to 100000 */
-                                              int           optInLag, /* From 0 to 100000 */
                                               int          *outBegIdx,
                                               int          *outNBElement,
                                               double        outRealUpperBand[],
@@ -7158,16 +7154,60 @@ TA_LIB_API TA_RetCode TA_S_DONCHIAN( int    startIdx,
                                                 const float  inHigh[],
                                                 const float  inLow[],
                                                 int           optInTimePeriod, /* From 2 to 100000 */
-                                                int           optInLag, /* From 0 to 100000 */
                                                 int          *outBegIdx,
                                                 int          *outNBElement,
                                                 double        outRealUpperBand[],
                                                 double        outRealMiddleBand[],
                                                 double        outRealLowerBand[] );
 
-TA_LIB_API int TA_DONCHIAN_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
-                                              int           optInLag );  /* From 0 to 100000 */
+TA_LIB_API int TA_DONCHIAN_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
 
+
+
+/*
+ * Streaming API for TA_DONCHIAN — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_DONCHIAN_Stream TA_DONCHIAN_Stream;
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Open( TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Update( TA_DONCHIAN_Stream *stream, double inHigh, double inLow, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Peek( const TA_DONCHIAN_Stream *stream, double inHigh, double inLow, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+TA_LIB_API TA_RetCode TA_DONCHIAN_Close( TA_DONCHIAN_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_DONCHIAN( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_DONCHIAN_OpenAndFill( TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_DONCHIAN_Update calls, including the
+ * per-bar rejection. A rejected bar k leaves the bars before it committed and
+ * written, itself uncommitted and its output slot untouched; TA_StreamOutRange
+ * then reports k+1, the rejected bar being the last one counted. Outputs must
+ * not alias the inputs or each other.
+ */
+TA_LIB_API TA_RetCode TA_DONCHIAN_UpdateAndFill( TA_DONCHIAN_Stream *stream, const double inHigh[], const double inLow[], int barCount, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update and UpdateAndFill, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_DONCHIAN_Value( const TA_DONCHIAN_Stream *stream, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_DONCHIAN_Clone( const TA_DONCHIAN_Stream *stream, TA_DONCHIAN_Stream **clone );
 
 /*
  * TA_DX - Directional Movement Index

@@ -3952,7 +3952,6 @@ static TA_RetCode TA_DONCHIAN_VFrameD( int startIdx, int endIdx,
                in[0] /* inHigh */,
                in[1] /* inLow */,
                (int)optIn[0] /* optInTimePeriod */,
-               (int)optIn[1] /* optInLag */,
                outBegIdx,
                outNBElement,
                outReal[0] /* outRealUpperBand */,
@@ -3972,7 +3971,6 @@ static TA_RetCode TA_DONCHIAN_VFrameS( int startIdx, int endIdx,
                in[0] /* inHigh */,
                in[1] /* inLow */,
                (int)optIn[0] /* optInTimePeriod */,
-               (int)optIn[1] /* optInLag */,
                outBegIdx,
                outNBElement,
                outReal[0] /* outRealUpperBand */,
@@ -3985,7 +3983,6 @@ static const TA_VInputKind TA_VIn_DONCHIAN[] = { TA_VIN_HIGH, TA_VIN_LOW };
 static const int TA_VOutIsInt_DONCHIAN[] = { 0, 0, 0 };
 static const TA_VOptSpec TA_VOpt_DONCHIAN[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 20.0 },
-   { "optInLag", TA_VOPT_INT, 0.0, 100000.0, 1.0 },
 };
 
 static TA_RetCode TA_DX_VFrameD( int startIdx, int endIdx,
@@ -7755,7 +7752,7 @@ static const TA_VariantEntry TA_VariantTable[] = {
    { "DIV", TA_DIV_VFrameD, TA_DIV_VFrameS,
      2, TA_VIn_DIV, 0, NULL, 1, TA_VOutIsInt_DIV, 0 },
    { "DONCHIAN", TA_DONCHIAN_VFrameD, TA_DONCHIAN_VFrameS,
-     2, TA_VIn_DONCHIAN, 2, TA_VOpt_DONCHIAN, 3, TA_VOutIsInt_DONCHIAN, 0 },
+     2, TA_VIn_DONCHIAN, 1, TA_VOpt_DONCHIAN, 3, TA_VOutIsInt_DONCHIAN, 0 },
    { "DX", TA_DX_VFrameD, TA_DX_VFrameS,
      3, TA_VIn_DX, 1, TA_VOpt_DX, 1, TA_VOutIsInt_DX, 0 },
    { "EFI", TA_EFI_VFrameD, TA_EFI_VFrameS,

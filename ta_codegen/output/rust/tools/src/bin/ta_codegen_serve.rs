@@ -11505,7 +11505,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             let use_preloaded = params["use_preloaded"].as_i64().unwrap_or(0);
             let bench_iters = std::cmp::max(1, params["iters"].as_i64().unwrap_or(1)) as u64;
             let bench_mode = params["bench_mode"].as_i64().unwrap_or(0);
-            if bench_mode != 0 { return "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}".to_string(); }
             let gen_present = params["gen_present"].as_i64().unwrap_or(0);
             let gen_shape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
             let gen_seed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -11538,7 +11537,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 inLow = &_json_inLow;
             }
             let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
-            let optInLag = params["optInLag"].as_i64().unwrap_or(1) as i32;
             // The output buffers are sized to the count the call actually PRODUCES --
             // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
             // never below one. Not to the width of the requested range: that is the bound the
@@ -11562,7 +11560,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
             // error-handling-spec, open item 11.
             // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
             // sizes and cannot make the check, so an exact buffer would test nothing there.
-            let _lb = core.DONCHIAN_Lookback(optInTimePeriod, optInLag).unwrap_or(usize::MAX);
+            let _lb = core.DONCHIAN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
             let _cs = if startIdx > _lb { startIdx } else { _lb };
             let out_size = (if _cs > endIdx { 1 } else { endIdx - _cs + 1 }) + params["out_pad"].as_u64().unwrap_or(0) as usize;
             let mut outBuf0: Vec<f64> = vec![0.0f64; out_size];
@@ -11580,13 +11578,18 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 &inHigh,
                 &inLow,
                 optInTimePeriod,
-                optInLag,
                 &mut outBuf0, &mut outBuf1, &mut outBuf2,
             );
             rc = match _out {
                 Ok(r) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success }
                 Err(e) => { outBegIdx = 0; outNBElement = 0; e }
             };
+            } else {
+            if bench_mode == 1 {
+                rc = match core.donchian_open(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, ) { Ok(_h) => RetCode::Success, Err(e) => e };
+            } else {
+                rc = match core.donchian_open_and_fill(&inHigh[..=endIdx], &inLow[..=endIdx], optInTimePeriod, &mut outBuf0, &mut outBuf1, &mut outBuf2) { Ok((_h, r)) => { outBegIdx = r.beg_idx; outNBElement = r.count; RetCode::Success } Err(e) => e };
+            }
             }
             }
             let elapsed_ns = start_time.elapsed().as_nanos() as u64 / bench_iters as u64;
@@ -11600,7 +11603,7 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 _oh = fuzz_hash_fin(_oh);
                 return format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_hash\":\"{:016x}\"}}", retcode_to_int(rc), outBegIdx, outNBElement, _oh);
             }
-            let lookback: i64 = core.DONCHIAN_Lookback(optInTimePeriod, optInLag).map_or(-1, |v| v as i64);
+            let lookback: i64 = core.DONCHIAN_Lookback(optInTimePeriod).map_or(-1, |v| v as i64);
             let mut resp = format!("{{\"retCode\":{},\"outBegIdx\":{},\"outNBElement\":{},\"out_len\":{},\"lookback\":{},\"timing_ns\":{}", retcode_to_int(rc), outBegIdx, outNBElement, out_size, lookback, elapsed_ns);
             resp.push_str(",\"outReal\":"); resp.push_str(&json_f64_array(&outBuf0[..outNBElement]));
             resp.push_str(",\"outReal1\":"); resp.push_str(&json_f64_array(&outBuf1[..outNBElement]));
@@ -36409,6 +36412,198 @@ fn sv_div(core: &Core, params: &Value) -> String {
     format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), zsign, diag)
 }
 
+fn sv_donchian(core: &Core, params: &Value) -> String {
+    let svShape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
+    let svSeed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
+    let mut svN = params["gen_n"].as_i64().unwrap_or(0) as usize;
+    if svN < 2 { svN = 2; }
+    if svN > 256 { svN = 256; }
+    let svK = match u32::try_from(params["unstablePeriod"].as_i64().unwrap_or(0)) {
+        Ok(v) => v,
+        Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
+    };
+    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
+    if svCompat != 0 {
+        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
+    }
+    let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
+    let mut fz_o = vec![0.0f64; svN];
+    let mut fz_h = vec![0.0f64; svN];
+    let mut fz_l = vec![0.0f64; svN];
+    let mut fz_c = vec![0.0f64; svN];
+    let mut fz_v = vec![0.0f64; svN];
+    let mut fz_oi = vec![0.0f64; svN];
+    fuzz_gen(svShape, svSeed, svN as i32, &mut fz_o, &mut fz_h, &mut fz_l, &mut fz_c, &mut fz_v, &mut fz_oi);
+    let mut b0: Vec<f64> = vec![0.0f64; svN];
+    let mut b1: Vec<f64> = vec![0.0f64; svN];
+    let mut b2: Vec<f64> = vec![0.0f64; svN];
+    let mut legs = 0i64;
+    let mut all_ok = true;
+    let mut peek_all = true;
+    let mut peek_reps = 0i64;
+    let mut peek_rep_all = true;
+    let mut fill_checked = 0i32;
+    let mut fill_ok = true;
+    let mut beg = 0usize;
+    let mut nb = 0usize;
+    let mut diag = String::new();
+    let mut range_checked = 0i32;
+    let mut range_ok = true;
+    let mut range_legs = 0i64;
+    let mut range_sites = 0i32;
+    let mut value_checked = 0i32;
+    let mut value_ok = true;
+    let mut value_legs = 0i64;
+    let mut ufill_checked = 0i32;
+    let mut ufill_ok = true;
+    let mut zsign = 0i64;
+    let rounds = 1;
+    for rd in 0..rounds {
+        let _ = rd;
+        let cb = core.to_builder();
+        let c2 = match cb.build() {
+            Ok(c) => c,
+            Err(_) => return "{\"error\":\"unstablePeriod out of range\"}".to_string(),
+        };
+        let rc = match c2.DONCHIAN(0, svN - 1, &fz_h, &fz_l, optInTimePeriod, &mut b0, &mut b1, &mut b2) { Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success } Err(e) => { beg = 0; nb = 0; e } };
+        let lb = c2.DONCHIAN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
+        if rc != RetCode::Success || nb == 0 {
+            let open_rejects = c2.donchian_open(&fz_h, &fz_l, optInTimePeriod).is_err();
+            return format!("{{\"retCode\":{},\"legs\":0,\"nb\":{},\"openRejects\":{},\"ok\":{},\"peek_ok\":1}}", retcode_to_int(rc), nb, i32::from(open_rejects), i32::from(open_rejects));
+        }
+        fill_checked = 1;
+        {
+        let mut f0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        let mut f2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+        match c2.donchian_open_and_fill(&fz_h, &fz_l, optInTimePeriod, &mut f0, &mut f1, &mut f2) {
+            Err(_) => { fill_ok = false; }
+            Ok((_h, fr)) => {
+                range_checked = 1; range_legs += 1; range_sites |= 1;
+                if _h.out_range().beg_idx != beg || _h.out_range().count != nb { range_ok = false; }
+                if fr.beg_idx != beg || fr.count != nb { fill_ok = false; }
+                else {
+                    for i in 0..nb { if sv_xtier_ne(f0[i], b0[i], &mut zsign) { fill_ok = false; } }
+                    for i in 0..nb { if sv_xtier_ne(f1[i], b1[i], &mut zsign) { fill_ok = false; } }
+                    for i in 0..nb { if sv_xtier_ne(f2[i], b2[i], &mut zsign) { fill_ok = false; } }
+                    for i in nb..svN { if f0[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f1[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                    for i in nb..svN { if f2[i] != -1.2345678901234e300f64 { fill_ok = false; } }
+                }
+            }
+        }
+        }
+        let seed_shift: usize = 0;
+        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        pcs.sort_unstable();
+        pcs.dedup();
+        for &p in &pcs {
+            match c2.donchian_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = format!(",\"openRejectP\":{}", p); } }
+                Ok((mut st, v0)) => {
+                    legs += 1;
+                    if sv_xtier_ne(v0.0, b0[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"where\":\"open\"", p - 1); } }
+                    if sv_xtier_ne(v0.1, b1[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"where\":\"open\"", p - 1); } }
+                    if sv_xtier_ne(v0.2, b2[p - 1 - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"where\":\"open\"", p - 1); } }
+                    for t in p..svN {
+                        let Ok(pk) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                        if t % 7 == 0 {
+                            let Ok(_dk) = st.peek(fz_h[t - 1], fz_l[t - 1]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t - 1); } break; };
+                            let Ok(rp) = st.peek(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"peekRejected\":{}", t); } break; };
+                            peek_reps += 1;
+                            if rp.0.to_bits() != pk.0.to_bits() { peek_rep_all = false; }
+                            if rp.1.to_bits() != pk.1.to_bits() { peek_rep_all = false; }
+                            if rp.2.to_bits() != pk.2.to_bits() { peek_rep_all = false; }
+                        }
+                        let Ok(up) = st.update(fz_h[t], fz_l[t]) else { all_ok = false; if diag.is_empty() { diag = format!(",\"updateRejected\":{}", t); } break; };
+                        if pk.0.to_bits() != up.0.to_bits() { peek_all = false; }
+                        if pk.1.to_bits() != up.1.to_bits() { peek_all = false; }
+                        if pk.2.to_bits() != up.2.to_bits() { peek_all = false; }
+                        if sv_xtier_ne(up.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":0,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b0[t - beg].to_bits(), up.0.to_bits()); } }
+                        if sv_xtier_ne(up.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":1,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b1[t - beg].to_bits(), up.1.to_bits()); } }
+                        if sv_xtier_ne(up.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"badBar\":{},\"badOut\":2,\"batchv\":\"{:016x}\",\"streamv\":\"{:016x}\"", t, b2[t - beg].to_bits(), up.2.to_bits()); } }
+                    }
+                    if all_ok {
+                        range_checked = 1; range_legs += 1; range_sites |= 2;
+                        if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
+                    }
+                }
+            }
+        }
+        if let Some(&p) = pcs.first() {
+            match c2.donchian_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { ufill_ok = false; }
+                Ok((mut stu, _uv0)) => {
+                    ufill_checked = 1;
+                    let r0 = stu.out_range();
+                    let mut u0: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+                    let mut u1: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+                    let mut u2: Vec<f64> = vec![-1.2345678901234e300f64; svN];
+                    if stu.update_and_fill(&fz_h[p..p], &fz_l[p..p], &mut u0, &mut u1, &mut u2).is_err() { ufill_ok = false; }
+                    if stu.update_and_fill(&fz_h[p..], &fz_l[p..], &mut u0[..0], &mut u1, &mut u2).is_ok() { ufill_ok = false; }
+                    if stu.out_range() != r0 { ufill_ok = false; }
+                    match stu.update_and_fill(&fz_h[p..], &fz_l[p..], &mut u0, &mut u1, &mut u2) {
+                        Err(_) => { ufill_ok = false; }
+                        Ok(()) => {
+                            for t in p..svN { if sv_xtier_ne(u0[t - p], b0[t - beg], &mut zsign) { ufill_ok = false; } }
+                            for t in p..svN { if sv_xtier_ne(u1[t - p], b1[t - beg], &mut zsign) { ufill_ok = false; } }
+                            for t in p..svN { if sv_xtier_ne(u2[t - p], b2[t - beg], &mut zsign) { ufill_ok = false; } }
+                            for t in (svN - p)..svN { if u0[t] != -1.2345678901234e300f64 { ufill_ok = false; } }
+                            for t in (svN - p)..svN { if u1[t] != -1.2345678901234e300f64 { ufill_ok = false; } }
+                            for t in (svN - p)..svN { if u2[t] != -1.2345678901234e300f64 { ufill_ok = false; } }
+                            range_checked = 1; range_legs += 1; range_sites |= 4;
+                            if stu.out_range().beg_idx != beg || stu.out_range().count != nb { ufill_ok = false; range_ok = false; }
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(&p) = pcs.first() {
+            match c2.donchian_open(&fz_h[..p], &fz_l[..p], optInTimePeriod) {
+                Err(_) => { all_ok = false; if diag.is_empty() { diag = ",\"copyOpenReject\":1".to_string(); } }
+                Ok((mut sa, _v0)) => {
+                    { let va = sa.value(); value_checked = 1; value_legs += 1;
+                      if va.0.to_bits() != _v0.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.1.to_bits() != _v0.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                      if va.2.to_bits() != _v0.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterOpen\":1".to_string(); } }
+                    }
+                    let mid = (p + svN) / 2;
+                    let mut forked = true;
+                    for t in p..mid { if sa.update(fz_h[t], fz_l[t]).is_err() { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyPreRejected\":{}", t); } break; } }
+                    let mut sb = sa.clone();
+                    if forked {
+                    for t in mid..svN {
+                        let Ok(u_src) = sa.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        let Ok(u_fork) = sb.update(fz_h[t], fz_l[t]) else { all_ok = false; forked = false; if diag.is_empty() { diag = format!(",\"copyRejected\":{}", t); } break; };
+                        if u_src.0.to_bits() != u_fork.0.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.0, b0[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.1.to_bits() != u_fork.1.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.1, b1[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if u_src.2.to_bits() != u_fork.2.to_bits() { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        if sv_xtier_ne(u_src.2, b2[t - beg], &mut zsign) { all_ok = false; if diag.is_empty() { diag = format!(",\"copyDiverged\":{}", t); } }
+                        { let va = sa.value(); let vb = sb.value(); value_checked = 1; value_legs += 1;
+                          if va.0.to_bits() != u_src.0.to_bits() || vb.0.to_bits() != u_fork.0.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.1.to_bits() != u_src.1.to_bits() || vb.1.to_bits() != u_fork.1.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                          if va.2.to_bits() != u_src.2.to_bits() || vb.2.to_bits() != u_fork.2.to_bits() { value_ok = false; if diag.is_empty() { diag = ",\"valueAfterUpdate\":1".to_string(); } }
+                        }
+                    }
+                    }
+                    if all_ok && forked {
+                        range_checked = 1; range_legs += 1; range_sites |= 16;
+                        if sa.out_range().beg_idx != beg || sa.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRangeSrc\":1".to_string(); } }
+                        if sb.out_range().beg_idx != beg || sb.out_range().count != nb { range_ok = false; if diag.is_empty() { diag = ",\"copyRange\":1".to_string(); } }
+                    }
+                }
+            }
+        }
+        if lb >= 1 && lb < svN {
+            if c2.donchian_open(&fz_h[..lb], &fz_l[..lb], optInTimePeriod).is_ok() { all_ok = false; if diag.is_empty() { diag = ",\"shortHistoryAccepted\":1".to_string(); } }
+        }
+    }
+    format!("{{\"retCode\":0,\"beg\":{},\"nb\":{},\"legs\":{},\"fill_checked\":{},\"fill_ok\":{},\"ufill_checked\":{},\"ufill_ok\":{},\"range_checked\":{},\"range_legs\":{},\"range_sites\":{},\"range_sites_all\":23,\"range_ok\":{},\"value_checked\":{},\"value_legs\":{},\"value_ok\":{},\"ok\":{},\"peek_ok\":{},\"peek_reps\":{},\"peek_rep_ok\":{},\"benign\":{}{}}}", beg, nb, legs, fill_checked, i32::from(fill_ok), ufill_checked, i32::from(ufill_ok), range_checked, range_legs, range_sites, i32::from(range_ok), value_checked, value_legs, i32::from(value_ok), i32::from(all_ok && fill_ok && ufill_ok && range_ok && value_ok), i32::from(peek_all), peek_reps, i32::from(peek_rep_all), zsign, diag)
+}
+
 fn sv_dx(core: &Core, params: &Value) -> String {
     let svShape = params["gen_shape"].as_i64().unwrap_or(0) as i32;
     let svSeed = params["gen_seed"].as_i64().unwrap_or(0) as i32;
@@ -50986,6 +51181,7 @@ fn handle_stream_verify(core: &Core, params: &Value) -> String {
         "TA_COSH" => sv_cosh(core, params),
         "TA_DEMA" => sv_dema(core, params),
         "TA_DIV" => sv_div(core, params),
+        "TA_DONCHIAN" => sv_donchian(core, params),
         "TA_DX" => sv_dx(core, params),
         "TA_EFI" => sv_efi(core, params),
         "TA_EMA" => sv_ema(core, params),

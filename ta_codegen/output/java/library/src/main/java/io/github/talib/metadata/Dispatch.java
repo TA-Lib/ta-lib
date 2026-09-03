@@ -331,7 +331,7 @@ final class Dispatch {
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.realOutput(0));
          case "DONCHIAN":
             return core.DONCHIAN(
-               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "DX":
             return core.DX(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -787,7 +787,7 @@ final class Dispatch {
          case "DIV":
             return core.DIV_Lookback();
          case "DONCHIAN":
-            return core.DONCHIAN_Lookback(h.intOpt(0), h.intOpt(1));
+            return core.DONCHIAN_Lookback(h.intOpt(0));
          case "DX":
             return core.DX_Lookback(h.intOpt(0));
          case "EFI":

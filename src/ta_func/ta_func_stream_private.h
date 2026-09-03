@@ -115,6 +115,7 @@ struct TA_COS_Stream;
 struct TA_COSH_Stream;
 struct TA_DEMA_Stream;
 struct TA_DIV_Stream;
+struct TA_DONCHIAN_Stream;
 struct TA_DX_Stream;
 struct TA_EFI_Stream;
 struct TA_EMA_Stream;
@@ -293,6 +294,7 @@ TA_RetCode TA_COS_OpenInternal( struct TA_COS_Stream **stream, const double inRe
 TA_RetCode TA_COSH_OpenInternal( struct TA_COSH_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_DEMA_OpenInternal( struct TA_DEMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_DIV_OpenInternal( struct TA_DIV_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, double *outReal );
+TA_RetCode TA_DONCHIAN_OpenInternal( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, double *outRealUpperBand, double *outRealMiddleBand, double *outRealLowerBand );
 TA_RetCode TA_DX_OpenInternal( struct TA_DX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_EFI_OpenInternal( struct TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
@@ -473,6 +475,7 @@ TA_RetCode TA_COS_OpenAndFillInternal( struct TA_COS_Stream **stream, const doub
 TA_RetCode TA_COSH_OpenAndFillInternal( struct TA_COSH_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_DEMA_OpenAndFillInternal( struct TA_DEMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_DIV_OpenAndFillInternal( struct TA_DIV_Stream **stream, const double inReal0[], const double inReal1[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_DONCHIAN_OpenAndFillInternal( struct TA_DONCHIAN_Stream **stream, const double inHigh[], const double inLow[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] );
 TA_RetCode TA_DX_OpenAndFillInternal( struct TA_DX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_EFI_OpenAndFillInternal( struct TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_EMA_OpenAndFillInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );

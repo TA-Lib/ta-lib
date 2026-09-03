@@ -1,7 +1,7 @@
 name: DONCHIAN
 group: Overlap Studies
 hint: Donchian Channels
-flags: [overlap]
+flags: [overlap, stream]
 inputs:
   - name: inPriceHL
     type: price
@@ -14,13 +14,6 @@ optional_inputs:
     range: [2, 100000]
     default: 20
     suggested: [4, 200, 1]
-  - name: optInLag
-    type: integer
-    display_name: Lag
-    hint: Bars the window is held back from the current bar (0 includes the current bar)
-    range: [0, 100000]
-    default: 1
-    suggested: [0, 1, 1]
 outputs:
   - name: outRealUpperBand
     type: real

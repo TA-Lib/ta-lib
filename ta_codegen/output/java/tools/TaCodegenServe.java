@@ -76153,12 +76153,14 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  KL       Kevin Lin
+     *  MF       Mario Fortier
      *
      * Change history:
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
      *  090526 KL     First version (proposal-drafts #38).
+     *  090326 MF     Drop optInLag; the window ends at the current bar.
      */
 
        /**
@@ -76170,27 +76172,16 @@ class Core {
         *
         * @param optInTimePeriod Number of bars in the extrema window (default 20;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-        * @param optInLag Bars the window is held back from the current bar (0
-        *        includes the current bar) (default 1; range 0..100000;
-        *        {@code Integer.MIN_VALUE} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
-       public int DONCHIAN_Lookback( int optInTimePeriod, int optInLag )
+       public int DONCHIAN_Lookback( int optInTimePeriod )
        {
           if( optInTimePeriod == Integer.MIN_VALUE ) {
              optInTimePeriod = 20;
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return -1;
           }
-          if( optInLag == Integer.MIN_VALUE ) {
-             optInLag = 1;
-          } else if( optInLag < 0 || optInLag > 100000 ) {
-             return -1;
-          }
-          /* The window ends optInLag bars behind the output bar, so the first
-           * bar with a full window behind it is (optInTimePeriod-1)+optInLag.
-           */
-          return optInTimePeriod - 1 + optInLag ;
+          return optInTimePeriod - 1 ;
 
        }
        RetCode DONCHIAN_Impl( int startIdx,
@@ -76198,7 +76189,6 @@ class Core {
                               double inHigh[],
                               double inLow[],
                               int optInTimePeriod,
-                              int optInLag,
                               MInteger outBegIdx,
                               MInteger outNBElement,
                               double outRealUpperBand[],
@@ -76215,7 +76205,6 @@ class Core {
           int lowestIdx = 0;
           int highestIdx = 0;
           int today = 0;
-          int winEnd = 0;
           int i = 0;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OutOfRangeStartIndex ;
@@ -76228,35 +76217,27 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInLag == Integer.MIN_VALUE ) {
-             optInLag = 1;
-          } else if( optInLag < 0 || optInLag > 100000 ) {
-             return RetCode.BadParam;
-          }
           if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
              return RetCode.BadParam ;
           }
-          /* Donchian Channels over the window [today-optInLag-optInTimePeriod+1 ..
-           * today-optInLag]:
+          /* Donchian Channels over the optInTimePeriod bars ending at the current
+           * bar:
            *
            *    Upper  = Highest High of the window
            *    Lower  = Lowest  Low  of the window
            *    Middle = (Upper + Lower) / 2
            *
-           * The default optInLag=1 is Donchian's original rule: the bar being
-           * evaluated is measured against a window it is NOT part of, which is
-           * what lets price cross the band. optInLag=0 includes the current bar
-           * (the TradingView/NinjaTrader/pandas form), making Upper/Lower/Middle
-           * exactly MAX(high,N)/MIN(low,N)/MIDPRICE(N).
+           * The window includes the current bar, matching every other library and
+           * charting platform. A breakout rule compares the current bar against the
+           * PREVIOUS bar's band, which is where the one-bar offset belongs.
            *
-           * The middle line is the Donchian centerline, not a moving average:
-           * at optInLag=0 it is bit-identical to MIDPRICE.
+           * Upper/Middle/Lower are bit-identical to MAX(high,N)/MIDPRICE(N)/MIN(low,N).
            */
           /* Identify the minimum number of price bar needed
            * to identify at least one output over the specified
            * period.
            */
-          nbInitialElementNeeded = optInTimePeriod - 1 + optInLag;
+          nbInitialElementNeeded = optInTimePeriod - 1;
           /* Move up the start index if there is not
            * enough initial data.
            */
@@ -76276,26 +76257,23 @@ class Core {
            *
            * The highest high and lowest low of the window are cached with their
            * indices; the window is rescanned only when a cached extremum drops
-           * out of it (same approach as MIN/MAX/WILLR and the MIDPRICE streaming
-           * tier). The window is the one ending optInLag bars behind the output
-           * bar, so the scan cursor is winEnd, not today.
+           * out of it (same approach as MIN/MAX/WILLR and MIDPRICE).
            */
           outIdx = 0;
           today = startIdx;
-          winEnd = today - optInLag;
-          trailingIdx = winEnd - (optInTimePeriod - 1);
+          trailingIdx = startIdx - nbInitialElementNeeded;
           highestIdx = 0 - 1;
           highest = 0.0;
           lowestIdx = 0 - 1;
           lowest = 0.0;
           while( today <= endIdx ) {
-             tmpHigh = inHigh[winEnd];
-             tmpLow = inLow[winEnd];
+             tmpHigh = inHigh[today];
+             tmpLow = inLow[today];
              if( highestIdx < trailingIdx ) {
                 highestIdx = trailingIdx;
                 highest = inHigh[highestIdx];
                 i = highestIdx;
-                while( ++i <= winEnd ) {
+                while( ++i <= today ) {
                    tmpHigh = inHigh[i];
                    if( tmpHigh > highest ) {
                       highestIdx = i;
@@ -76303,14 +76281,14 @@ class Core {
                    }
                 }
              } else if( tmpHigh >= highest ) {
-                highestIdx = winEnd;
+                highestIdx = today;
                 highest = tmpHigh;
              }
              if( lowestIdx < trailingIdx ) {
                 lowestIdx = trailingIdx;
                 lowest = inLow[lowestIdx];
                 i = lowestIdx;
-                while( ++i <= winEnd ) {
+                while( ++i <= today ) {
                    tmpLow = inLow[i];
                    if( tmpLow < lowest ) {
                       lowestIdx = i;
@@ -76318,7 +76296,7 @@ class Core {
                    }
                 }
              } else if( tmpLow <= lowest ) {
-                lowestIdx = winEnd;
+                lowestIdx = today;
                 lowest = tmpLow;
              }
              outRealUpperBand[outIdx] = highest;
@@ -76326,7 +76304,6 @@ class Core {
              outRealMiddleBand[outIdx] = (highest + lowest) / 2.0;
              outIdx += 1;
              trailingIdx += 1;
-             winEnd += 1;
              today += 1;
           }
           /* Keep the outBegIdx relative to the
@@ -76341,7 +76318,6 @@ class Core {
                               float inHigh[],
                               float inLow[],
                               int optInTimePeriod,
-                              int optInLag,
                               MInteger outBegIdx,
                               MInteger outNBElement,
                               double outRealUpperBand[],
@@ -76358,7 +76334,6 @@ class Core {
           int lowestIdx = 0;
           int highestIdx = 0;
           int today = 0;
-          int winEnd = 0;
           int i = 0;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OutOfRangeStartIndex ;
@@ -76371,15 +76346,10 @@ class Core {
           } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
              return RetCode.BadParam;
           }
-          if( optInLag == Integer.MIN_VALUE ) {
-             optInLag = 1;
-          } else if( optInLag < 0 || optInLag > 100000 ) {
-             return RetCode.BadParam;
-          }
           if( outRealUpperBand == outRealMiddleBand || outRealUpperBand == outRealLowerBand || outRealMiddleBand == outRealLowerBand ) {
              return RetCode.BadParam ;
           }
-          nbInitialElementNeeded = optInTimePeriod - 1 + optInLag;
+          nbInitialElementNeeded = optInTimePeriod - 1;
           if( startIdx < nbInitialElementNeeded ) {
              startIdx = nbInitialElementNeeded;
           }
@@ -76390,20 +76360,19 @@ class Core {
           }
           outIdx = 0;
           today = startIdx;
-          winEnd = today - optInLag;
-          trailingIdx = winEnd - (optInTimePeriod - 1);
+          trailingIdx = startIdx - nbInitialElementNeeded;
           highestIdx = 0 - 1;
           highest = 0.0;
           lowestIdx = 0 - 1;
           lowest = 0.0;
           while( today <= endIdx ) {
-             tmpHigh = (double)inHigh[winEnd];
-             tmpLow = (double)inLow[winEnd];
+             tmpHigh = (double)inHigh[today];
+             tmpLow = (double)inLow[today];
              if( highestIdx < trailingIdx ) {
                 highestIdx = trailingIdx;
                 highest = (double)inHigh[highestIdx];
                 i = highestIdx;
-                while( ++i <= winEnd ) {
+                while( ++i <= today ) {
                    tmpHigh = (double)inHigh[i];
                    if( tmpHigh > highest ) {
                       highestIdx = i;
@@ -76411,14 +76380,14 @@ class Core {
                    }
                 }
              } else if( tmpHigh >= highest ) {
-                highestIdx = winEnd;
+                highestIdx = today;
                 highest = tmpHigh;
              }
              if( lowestIdx < trailingIdx ) {
                 lowestIdx = trailingIdx;
                 lowest = (double)inLow[lowestIdx];
                 i = lowestIdx;
-                while( ++i <= winEnd ) {
+                while( ++i <= today ) {
                    tmpLow = (double)inLow[i];
                    if( tmpLow < lowest ) {
                       lowestIdx = i;
@@ -76426,7 +76395,7 @@ class Core {
                    }
                 }
              } else if( tmpLow <= lowest ) {
-                lowestIdx = winEnd;
+                lowestIdx = today;
                 lowest = tmpLow;
              }
              outRealUpperBand[outIdx] = highest;
@@ -76434,7 +76403,6 @@ class Core {
              outRealMiddleBand[outIdx] = (highest + lowest) / 2.0;
              outIdx += 1;
              trailingIdx += 1;
-             winEnd += 1;
              today += 1;
           }
           outBegIdx.value = startIdx;
@@ -76450,16 +76418,16 @@ class Core {
         * weeks and sells a break below their low.
         * <p><b>Formula</b>
         * <pre>{@code
-        * Window = the optInTimePeriod bars ending optInLag bars before the current bar
+        * Window = the optInTimePeriod bars ending at the current bar
         * Upper  = Highest High of Window
         * Lower  = Lowest  Low  of Window
         * Middle = (Upper + Lower) / 2
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>The default {@code optInLag=1} is the original rule: a breakout is measured against a window the breaking bar is **not** part of. With the current bar inside the window ({@code optInLag=0}) the upper band can never be crossed upward — {@code High[t]} is already in the max — which is why StockCharts and IncredibleCharts both document the lagged form.</li>
-        * <li>{@code optInLag=0} reproduces the inclusive convention used by TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader and pandas-ta. Users arriving from those platforms should pass {@code optInLag=0} to match their charts; the difference is exactly a one-bar shift.</li>
-        * <li>At {@code optInLag=0} the three outputs equal {@code MAX(high, N)}, {@code MIN(low, N)} and {@code MIDPRICE(N)} bit for bit.</li>
+        * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
+        * <li>A breakout rule compares the current bar against the **previous** bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
+        * <li>Upper, Middle and Lower are bit-identical to {@code MAX(high, N)}, {@code MIDPRICE(N)} and {@code MIN(low, N)}. DONCHIAN computes all three in one pass under the name users look for.</li>
         * <li>The middle line is the channel midpoint, not a moving average of price.</li>
         * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
         * </ul>
@@ -76475,9 +76443,6 @@ class Core {
         * @param inLow Low price of each bar.
         * @param optInTimePeriod Number of bars in the extrema window (default 20;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-        * @param optInLag Bars the window is held back from the current bar (0
-        *        includes the current bar) (default 1; range 0..100000;
-        *        {@code Integer.MIN_VALUE} selects the default).
         * @param outRealUpperBand Highest high of the window. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outRealMiddleBand Midpoint of the upper and lower bands. Must hold
@@ -76503,13 +76468,12 @@ class Core {
                                  double inHigh[],
                                  double inLow[],
                                  int optInTimePeriod,
-                                 int optInLag,
                                  double outRealUpperBand[],
                                  double outRealMiddleBand[],
                                  double outRealLowerBand[] )
        {
           requireIndexRange("DONCHIAN", startIdx, endIdx);
-          int guardStart = clampedStart("DONCHIAN", startIdx, DONCHIAN_Lookback(optInTimePeriod, optInLag));
+          int guardStart = clampedStart("DONCHIAN", startIdx, DONCHIAN_Lookback(optInTimePeriod));
           int guardInLen = endIdx + 1;
           int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
           requireLength("DONCHIAN", "inHigh", inHigh, guardInLen);
@@ -76519,7 +76483,7 @@ class Core {
           requireLength("DONCHIAN", "outRealLowerBand", outRealLowerBand, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
-          RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInLag, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+          RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
           if( retCode != RetCode.Success ) {
              throw failure("DONCHIAN", retCode);
           }
@@ -76534,16 +76498,16 @@ class Core {
         * weeks and sells a break below their low.
         * <p><b>Formula</b>
         * <pre>{@code
-        * Window = the optInTimePeriod bars ending optInLag bars before the current bar
+        * Window = the optInTimePeriod bars ending at the current bar
         * Upper  = Highest High of Window
         * Lower  = Lowest  Low  of Window
         * Middle = (Upper + Lower) / 2
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>The default {@code optInLag=1} is the original rule: a breakout is measured against a window the breaking bar is **not** part of. With the current bar inside the window ({@code optInLag=0}) the upper band can never be crossed upward — {@code High[t]} is already in the max — which is why StockCharts and IncredibleCharts both document the lagged form.</li>
-        * <li>{@code optInLag=0} reproduces the inclusive convention used by TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader and pandas-ta. Users arriving from those platforms should pass {@code optInLag=0} to match their charts; the difference is exactly a one-bar shift.</li>
-        * <li>At {@code optInLag=0} the three outputs equal {@code MAX(high, N)}, {@code MIN(low, N)} and {@code MIDPRICE(N)} bit for bit.</li>
+        * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
+        * <li>A breakout rule compares the current bar against the **previous** bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
+        * <li>Upper, Middle and Lower are bit-identical to {@code MAX(high, N)}, {@code MIDPRICE(N)} and {@code MIN(low, N)}. DONCHIAN computes all three in one pass under the name users look for.</li>
         * <li>The middle line is the channel midpoint, not a moving average of price.</li>
         * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
         * </ul>
@@ -76562,9 +76526,6 @@ class Core {
         * @param inLow Low price of each bar.
         * @param optInTimePeriod Number of bars in the extrema window (default 20;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
-        * @param optInLag Bars the window is held back from the current bar (0
-        *        includes the current bar) (default 1; range 0..100000;
-        *        {@code Integer.MIN_VALUE} selects the default).
         * @param outRealUpperBand Highest high of the window. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outRealMiddleBand Midpoint of the upper and lower bands. Must hold
@@ -76590,13 +76551,12 @@ class Core {
                                  float inHigh[],
                                  float inLow[],
                                  int optInTimePeriod,
-                                 int optInLag,
                                  double outRealUpperBand[],
                                  double outRealMiddleBand[],
                                  double outRealLowerBand[] )
        {
           requireIndexRange("DONCHIAN", startIdx, endIdx);
-          int guardStart = clampedStart("DONCHIAN", startIdx, DONCHIAN_Lookback(optInTimePeriod, optInLag));
+          int guardStart = clampedStart("DONCHIAN", startIdx, DONCHIAN_Lookback(optInTimePeriod));
           int guardInLen = endIdx + 1;
           int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
           requireLength("DONCHIAN", "inHigh", inHigh, guardInLen);
@@ -76606,11 +76566,578 @@ class Core {
           requireLength("DONCHIAN", "outRealLowerBand", outRealLowerBand, guardOutLen);
           MInteger outBegIdx = new MInteger();
           MInteger outNBElement = new MInteger();
-          RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInLag, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
+          RetCode retCode = DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
           if( retCode != RetCode.Success ) {
              throw failure("DONCHIAN", retCode);
           }
           return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live DONCHIAN stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#DONCHIAN} over the same series.
+        * Open with {@link Core#donchianOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class DonchianStream {
+          Core core;
+          int optInTimePeriod;
+          double lowest;
+          double highest;
+          int trailingIdx;
+          int lowestIdx;
+          int highestIdx;
+          int i;
+          int today;
+          int xMask;
+          double[] x_inHigh;
+          double[] x_inLow;
+          double cur_outRealUpperBand;
+          double cur_outRealMiddleBand;
+          double cur_outRealLowerBand;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          DonchianStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#DONCHIAN} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          DonchianStream( DonchianStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.lowest = other.lowest;
+             this.highest = other.highest;
+             this.trailingIdx = other.trailingIdx;
+             this.lowestIdx = other.lowestIdx;
+             this.highestIdx = other.highestIdx;
+             this.i = other.i;
+             this.today = other.today;
+             this.xMask = other.xMask;
+             this.x_inHigh = other.x_inHigh.clone();
+             this.x_inLow = other.x_inLow.clone();
+             this.cur_outRealUpperBand = other.cur_outRealUpperBand;
+             this.cur_outRealMiddleBand = other.cur_outRealMiddleBand;
+             this.cur_outRealLowerBand = other.cur_outRealLowerBand;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value(DonchianOut)} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public void update( double inHigh, double inLow, DonchianOut out ) {
+             requireArgument("DONCHIAN update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
+             }
+             core.donchianStepImpl(this, inHigh, inLow);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             out.realUpperBand = this.cur_outRealUpperBand;
+             out.realMiddleBand = this.cur_outRealMiddleBand;
+             out.realLowerBand = this.cur_outRealLowerBand;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inHigh.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inHigh[], double inLow[], double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] ) {
+             requireArgument("DONCHIAN updateAndFill", "inHigh", inHigh);
+             requireArgument("DONCHIAN updateAndFill", "inLow", inLow);
+             requireArgument("DONCHIAN updateAndFill", "outRealUpperBand", outRealUpperBand);
+             requireArgument("DONCHIAN updateAndFill", "outRealMiddleBand", outRealMiddleBand);
+             requireArgument("DONCHIAN updateAndFill", "outRealLowerBand", outRealLowerBand);
+             final int barCount = inHigh.length;
+             if( inLow.length != barCount || outRealUpperBand.length < barCount || outRealMiddleBand.length < barCount || outRealLowerBand.length < barCount || (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand )
+                throw new TaLibArgumentException("DONCHIAN updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("DONCHIAN updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.donchianStepImpl(this, inHigh[i], inLow[i]);
+                outRealUpperBand[i] = this.cur_outRealUpperBand;
+                outRealMiddleBand[i] = this.cur_outRealMiddleBand;
+                outRealLowerBand[i] = this.cur_outRealLowerBand;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public void peek( double inHigh, double inLow, DonchianOut out ) {
+             requireArgument("DONCHIAN peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+                throw new TaLibArgumentException("DONCHIAN peek: BadParam", RetCode.BadParam);
+             DonchianStream sp = this;
+             double tmpLow = 0.0;
+             double tmpHigh = 0.0;
+             double cur_outRealLowerBand = sp.cur_outRealLowerBand;
+             double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
+             double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+             double highest = sp.highest;
+             int highestIdx = sp.highestIdx;
+             int i = sp.i;
+             double lowest = sp.lowest;
+             int lowestIdx = sp.lowestIdx;
+             int today = sp.today;
+             int trailingIdx = sp.trailingIdx;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             if( today >= 1073741824 ) {
+                int rebaseShift = trailingIdx & ~sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                highestIdx -= rebaseShift;
+                i -= rebaseShift;
+                lowestIdx -= rebaseShift;
+             }
+             pkSlot0 = today & sp.xMask;
+             pkVal0 = inHigh;
+             pkSlot1 = today & sp.xMask;
+             pkVal1 = inLow;
+             tmpHigh = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
+             tmpLow = ((today & sp.xMask) != pkSlot1) ? sp.x_inLow[today & sp.xMask] : pkVal1;
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = ((highestIdx & sp.xMask) != pkSlot0) ? sp.x_inHigh[highestIdx & sp.xMask] : pkVal0;
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmpHigh = ((i & sp.xMask) != pkSlot0) ? sp.x_inHigh[i & sp.xMask] : pkVal0;
+                   if( tmpHigh > highest ) {
+                      highestIdx = i;
+                      highest = tmpHigh;
+                   }
+                }
+             } else if( tmpHigh >= highest ) {
+                highestIdx = today;
+                highest = tmpHigh;
+             }
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = ((lowestIdx & sp.xMask) != pkSlot1) ? sp.x_inLow[lowestIdx & sp.xMask] : pkVal1;
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmpLow = ((i & sp.xMask) != pkSlot1) ? sp.x_inLow[i & sp.xMask] : pkVal1;
+                   if( tmpLow < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmpLow;
+                   }
+                }
+             } else if( tmpLow <= lowest ) {
+                lowestIdx = today;
+                lowest = tmpLow;
+             }
+             cur_outRealUpperBand = highest;
+             cur_outRealLowerBand = lowest;
+             cur_outRealMiddleBand = (highest + lowest) / 2.0;
+             out.realUpperBand = cur_outRealUpperBand;
+             out.realMiddleBand = cur_outRealMiddleBand;
+             out.realLowerBand = cur_outRealLowerBand;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           */
+          public void value( DonchianOut out ) {
+             requireArgument("DONCHIAN value", "out", out);
+             out.realUpperBand = this.cur_outRealUpperBand;
+             out.realMiddleBand = this.cur_outRealMiddleBand;
+             out.realLowerBand = this.cur_outRealLowerBand;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public DonchianStream clone() {
+             return new DonchianStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one DONCHIAN bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class DonchianOut {
+          /** Highest high of the window. */
+          public double realUpperBand;
+          /** Midpoint of the upper and lower bands. */
+          public double realMiddleBand;
+          /** Lowest low of the window. */
+          public double realLowerBand;
+       }
+       void donchianStepImpl( DonchianStream sp, double inHigh, double inLow )
+       {
+          double tmpLow = 0.0;
+          double tmpHigh = 0.0;
+          if( sp.today >= 1073741824 ) {
+             int rebaseShift = sp.trailingIdx & ~sp.xMask;
+             sp.today -= rebaseShift;
+             sp.trailingIdx -= rebaseShift;
+             sp.highestIdx -= rebaseShift;
+             sp.i -= rebaseShift;
+             sp.lowestIdx -= rebaseShift;
+          }
+          sp.x_inHigh[sp.today & sp.xMask] = inHigh;
+          sp.x_inLow[sp.today & sp.xMask] = inLow;
+          tmpHigh = sp.x_inHigh[sp.today & sp.xMask];
+          tmpLow = sp.x_inLow[sp.today & sp.xMask];
+          if( sp.highestIdx < sp.trailingIdx ) {
+             sp.highestIdx = sp.trailingIdx;
+             sp.highest = sp.x_inHigh[sp.highestIdx & sp.xMask];
+             sp.i = sp.highestIdx;
+             while( ++sp.i <= sp.today ) {
+                tmpHigh = sp.x_inHigh[sp.i & sp.xMask];
+                if( tmpHigh > sp.highest ) {
+                   sp.highestIdx = sp.i;
+                   sp.highest = tmpHigh;
+                }
+             }
+          } else if( tmpHigh >= sp.highest ) {
+             sp.highestIdx = sp.today;
+             sp.highest = tmpHigh;
+          }
+          if( sp.lowestIdx < sp.trailingIdx ) {
+             sp.lowestIdx = sp.trailingIdx;
+             sp.lowest = sp.x_inLow[sp.lowestIdx & sp.xMask];
+             sp.i = sp.lowestIdx;
+             while( ++sp.i <= sp.today ) {
+                tmpLow = sp.x_inLow[sp.i & sp.xMask];
+                if( tmpLow < sp.lowest ) {
+                   sp.lowestIdx = sp.i;
+                   sp.lowest = tmpLow;
+                }
+             }
+          } else if( tmpLow <= sp.lowest ) {
+             sp.lowestIdx = sp.today;
+             sp.lowest = tmpLow;
+          }
+          sp.cur_outRealUpperBand = sp.highest;
+          sp.cur_outRealLowerBand = sp.lowest;
+          sp.cur_outRealMiddleBand = (sp.highest + sp.lowest) / 2.0;
+          sp.trailingIdx += 1;
+          sp.today += 1;
+       }
+       private RetCode donchianOpenImpl( DonchianStream sp, double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[], int outStride )
+       {
+          double lowest = 0;
+          double highest = 0;
+          double tmpLow = 0;
+          double tmpHigh = 0;
+          int outIdx = 0;
+          int nbInitialElementNeeded = 0;
+          int trailingIdx = 0;
+          int lowestIdx = 0;
+          int highestIdx = 0;
+          int today = 0;
+          int i = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inLow.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 20;
+          } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          /* Donchian Channels over the optInTimePeriod bars ending at the current
+           * bar:
+           *
+           *    Upper  = Highest High of the window
+           *    Lower  = Lowest  Low  of the window
+           *    Middle = (Upper + Lower) / 2
+           *
+           * The window includes the current bar, matching every other library and
+           * charting platform. A breakout rule compares the current bar against the
+           * PREVIOUS bar's band, which is where the one-bar offset belongs.
+           *
+           * Upper/Middle/Lower are bit-identical to MAX(high,N)/MIDPRICE(N)/MIN(low,N).
+           */
+          /* Identify the minimum number of price bar needed
+           * to identify at least one output over the specified
+           * period.
+           */
+          nbInitialElementNeeded = optInTimePeriod - 1;
+          /* Move up the start index if there is not
+           * enough initial data.
+           */
+          if( startIdx < nbInitialElementNeeded ) {
+             startIdx = nbInitialElementNeeded;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          /* Proceed with the calculation for the requested range.
+           * Note that this algorithm allows the input and
+           * output to be the same buffer: every position written (outIdx) sits
+           * at or below trailingIdx, the oldest position any later bar reads.
+           *
+           * The highest high and lowest low of the window are cached with their
+           * indices; the window is rescanned only when a cached extremum drops
+           * out of it (same approach as MIN/MAX/WILLR and MIDPRICE).
+           */
+          outIdx = 0;
+          today = startIdx;
+          trailingIdx = startIdx - nbInitialElementNeeded;
+          highestIdx = 0 - 1;
+          highest = 0.0;
+          lowestIdx = 0 - 1;
+          lowest = 0.0;
+          while( today <= endIdx ) {
+             tmpHigh = inHigh[today];
+             tmpLow = inLow[today];
+             if( highestIdx < trailingIdx ) {
+                highestIdx = trailingIdx;
+                highest = inHigh[highestIdx];
+                i = highestIdx;
+                while( ++i <= today ) {
+                   tmpHigh = inHigh[i];
+                   if( tmpHigh > highest ) {
+                      highestIdx = i;
+                      highest = tmpHigh;
+                   }
+                }
+             } else if( tmpHigh >= highest ) {
+                highestIdx = today;
+                highest = tmpHigh;
+             }
+             if( lowestIdx < trailingIdx ) {
+                lowestIdx = trailingIdx;
+                lowest = inLow[lowestIdx];
+                i = lowestIdx;
+                while( ++i <= today ) {
+                   tmpLow = inLow[i];
+                   if( tmpLow < lowest ) {
+                      lowestIdx = i;
+                      lowest = tmpLow;
+                   }
+                }
+             } else if( tmpLow <= lowest ) {
+                lowestIdx = today;
+                lowest = tmpLow;
+             }
+             outRealUpperBand[outIdx * outStride] = highest;
+             outRealLowerBand[outIdx * outStride] = lowest;
+             outRealMiddleBand[outIdx * outStride] = (highest + lowest) / 2.0;
+             outIdx += 1;
+             trailingIdx += 1;
+             today += 1;
+          }
+          /* Keep the outBegIdx relative to the
+           * caller input before returning.
+           */
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = today - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.InternalError;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inHigh = new double[physX];
+          double[] capX_inLow = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inHigh[fillJ & (physX - 1)] = inHigh[fillJ];
+             capX_inLow[fillJ & (physX - 1)] = inLow[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.lowest = lowest;
+          sp.highest = highest;
+          sp.trailingIdx = trailingIdx;
+          sp.lowestIdx = lowestIdx;
+          sp.highestIdx = highestIdx;
+          sp.i = i;
+          sp.today = today;
+          sp.xMask = physX - 1;
+          sp.x_inHigh = capX_inHigh;
+          sp.x_inLow = capX_inLow;
+          sp.cur_outRealUpperBand = outRealUpperBand[(outNBElement.value - 1) * outStride];
+          sp.cur_outRealMiddleBand = outRealMiddleBand[(outNBElement.value - 1) * outStride];
+          sp.cur_outRealLowerBand = outRealLowerBand[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* donchianOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       DonchianStream donchianOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+       {
+          DonchianStream sp = new DonchianStream(this);
+          RetCode retCode = donchianOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("DONCHIAN openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("DONCHIAN openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("DONCHIAN openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind donchianOpen (composition seam). */
+       DonchianStream donchianOpenInternal( double inHigh[], double inLow[], int startIdx, int optInTimePeriod )
+       {
+          DonchianStream sp = new DonchianStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outRealUpperBand = new double[1];
+          double[] sink_outRealMiddleBand = new double[1];
+          double[] sink_outRealLowerBand = new double[1];
+          RetCode retCode = donchianOpenImpl(sp, inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outRealUpperBand, sink_outRealMiddleBand, sink_outRealLowerBand, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("DONCHIAN open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("DONCHIAN open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("DONCHIAN open: " + retCode, retCode);
+       }
+       /**
+        * Open a live DONCHIAN stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#DONCHIAN} at that bar.
+        * <p>The history must hold at least {@code DONCHIAN_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public DonchianStream donchianOpen( double inHigh[], double inLow[], int optInTimePeriod )
+       {
+          requireArgument("DONCHIAN open", "inHigh", inHigh);
+          requireHistory("DONCHIAN open", inHigh.length);
+          requireArgument("DONCHIAN open", "inLow", inLow);
+          requireHistoryLength("DONCHIAN open", "inLow", inLow.length, inHigh.length);
+          return donchianOpenInternal(inHigh, inLow, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#donchianOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#DONCHIAN} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link DonchianStream#outRange()}.
+        */
+       public DonchianStream donchianOpenAndFill( double inHigh[], double inLow[], int optInTimePeriod, double outRealUpperBand[], double outRealMiddleBand[], double outRealLowerBand[] )
+       {
+          requireArgument("DONCHIAN openAndFill", "inHigh", inHigh);
+          requireHistory("DONCHIAN openAndFill", inHigh.length);
+          requireArgument("DONCHIAN openAndFill", "inLow", inLow);
+          int guardOutLen = openFillCount("DONCHIAN openAndFill", inHigh.length, DONCHIAN_Lookback(optInTimePeriod));
+          requireHistoryLength("DONCHIAN openAndFill", "inLow", inLow.length, inHigh.length);
+          requireLength("DONCHIAN openAndFill", "outRealUpperBand", outRealUpperBand, guardOutLen);
+          requireLength("DONCHIAN openAndFill", "outRealMiddleBand", outRealMiddleBand, guardOutLen);
+          requireLength("DONCHIAN openAndFill", "outRealLowerBand", outRealLowerBand, guardOutLen);
+          if( (Object)outRealUpperBand == (Object)inHigh || (Object)outRealUpperBand == (Object)inLow || (Object)outRealMiddleBand == (Object)inHigh || (Object)outRealMiddleBand == (Object)inLow || (Object)outRealLowerBand == (Object)inHigh || (Object)outRealLowerBand == (Object)inLow || (Object)outRealUpperBand == (Object)outRealMiddleBand || (Object)outRealUpperBand == (Object)outRealLowerBand || (Object)outRealMiddleBand == (Object)outRealLowerBand ) {
+             throw new TaLibArgumentException("DONCHIAN openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return donchianOpenAndFillInternal(inHigh, inLow, 0, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand);
        }
     /* List of contributors:
      *
@@ -115913,7 +116440,7 @@ class Core {
         * <p><b>Formula</b>
         * <pre>{@code
         * MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-        * This is the Donchian Channel centerline in its inclusive form: `DONCHIAN` with `optInLag=0` emits this line as its middle output, alongside the two extrema.
+        * This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middle output, alongside the two extrema.
         * }</pre>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -115976,7 +116503,7 @@ class Core {
         * <p><b>Formula</b>
         * <pre>{@code
         * MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-        * This is the Donchian Channel centerline in its inclusive form: `DONCHIAN` with `optInLag=0` emits this line as its middle output, alongside the two extrema.
+        * This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middle output, alongside the two extrema.
         * }</pre>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -163671,7 +164198,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "ca6e8ff6638d2349";
+    static final String SPLICED_GENCODE_DIGEST = "a41cdf263d1803fa";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -164199,9 +164726,9 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
             new AbsOpt[]{  },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
-        ABSTRACT.put("DONCHIAN", new AbsFunc("DONCHIAN", "Overlap Studies", "Donchian Channels", 16777216,
+        ABSTRACT.put("DONCHIAN", new AbsFunc("DONCHIAN", "Overlap Studies", "Donchian Channels", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInLag",0,"Lag","Bars the window is held back from the current bar (0 includes the current bar)",1.0, 0,0,0,0,0,0, 0,100000,0,1,1, null) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("DX", new AbsFunc("DX", "Momentum Indicators", "Directional Movement Index", 167772160,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -179729,7 +180256,6 @@ public class TaCodegenServe {
         }
         boolean _optRejected = false;
         int optInTimePeriod = jsonInt(json, "optInTimePeriod");
-        int optInLag = jsonInt(json, "optInLag");
         // The output buffers are sized to the count the call actually PRODUCES --
         // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
         // never below one. Not to the width of the requested range: that is the bound the
@@ -179753,7 +180279,7 @@ public class TaCodegenServe {
         // error-handling-spec, open item 11.
         // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
         // sizes and cannot make the check, so an exact buffer would test nothing there.
-        int _lb = core.DONCHIAN_Lookback(optInTimePeriod, optInLag);
+        int _lb = core.DONCHIAN_Lookback(optInTimePeriod);
         int _cs = startIdx > _lb ? startIdx : _lb;
         int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
         double[] outArr0 = new double[_outLen];
@@ -179763,7 +180289,8 @@ public class TaCodegenServe {
         MInteger outNBElement = new MInteger();
         RetCode rc = RetCode.Success;
         int bench_mode = jsonInt(json, "bench_mode");
-        if (bench_mode != 0) return "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}";
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
         long startNs = 0;
         for (int _bi = 0; _bi <= bench_iters; _bi++) {
         if (_bi == 1) startNs = System.nanoTime();
@@ -179775,7 +180302,7 @@ public class TaCodegenServe {
                 outNBElement.value = 0;
             } else {
             try {
-                rc = core.DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInLag, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+                rc = core.DONCHIAN_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
             } catch (RuntimeException _e) {
                 if (!(_e instanceof TaLibFailure)) throw _e;
                 rc = ((TaLibFailure) _e).retCode();
@@ -179790,7 +180317,7 @@ public class TaCodegenServe {
                 outNBElement.value = 0;
             } else {
             try {
-                OutRange _pr = core.DONCHIAN(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInLag, outArr0, outArr1, outArr2);
+                OutRange _pr = core.DONCHIAN(startIdx, endIdx, inHigh, inLow, optInTimePeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _pr.begIdx();
                 outNBElement.value = _pr.count();
                 rc = RetCode.Success;
@@ -179803,6 +180330,17 @@ public class TaCodegenServe {
             }
         }
         }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.donchianOpen(_warm_inHigh, _warm_inLow, optInTimePeriod);
+            } else {
+                Core.DonchianStream _wh = core.donchianOpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
         }
         long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
         int usedFloat = 0;
@@ -179817,7 +180355,7 @@ public class TaCodegenServe {
                 outNBElement.value = 0;
             } else {
             try {
-                OutRange _fr = core.DONCHIAN(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, optInLag, outArr0, outArr1, outArr2);
+                OutRange _fr = core.DONCHIAN(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, outArr0, outArr1, outArr2);
                 outBegIdx.value = _fr.begIdx();
                 outNBElement.value = _fr.count();
                 rc = RetCode.Success;
@@ -208381,6 +208919,220 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_DONCHIAN(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        double[] b2 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.DONCHIAN_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.DONCHIAN_Lookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.donchianOpen(fz_h, fz_l, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                Core.DonchianStream _fh = c2.donchianOpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f1, f2);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.donchianOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.donchianOpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.DonchianStream st;
+                try { st = c2.donchianOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.DonchianOut v0 = new Core.DonchianOut(); st.value(v0);
+                if (svXtierNe(v0.realUpperBand, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.realMiddleBand, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.realLowerBand, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.DonchianOut pk = new Core.DonchianOut();
+                Core.DonchianOut up = new Core.DonchianOut();
+                Core.DonchianOut vc = new Core.DonchianOut();
+                Core.DonchianOut rp = new Core.DonchianOut();
+                for (int t = p; t < svN; t++) {
+                    st.peek(fz_h[t], fz_l[t], pk);
+                    if (t % 7 == 0) {
+                        st.peek(fz_h[t - 1], fz_l[t - 1], rp);
+                        st.peek(fz_h[t], fz_l[t], rp);
+                        peekReps++;
+                        if (svBne(rp.realUpperBand, pk.realUpperBand)) peekRepAll = false;
+                        if (svBne(rp.realMiddleBand, pk.realMiddleBand)) peekRepAll = false;
+                        if (svBne(rp.realLowerBand, pk.realLowerBand)) peekRepAll = false;
+                    }
+                    st.update(fz_h[t], fz_l[t], up);
+                    if (svBne(pk.realUpperBand, up.realUpperBand)) peekAll = false;
+                    if (svBne(pk.realMiddleBand, up.realMiddleBand)) peekAll = false;
+                    if (svBne(pk.realLowerBand, up.realLowerBand)) peekAll = false;
+                    st.peek(fz_h[t - 1], fz_l[t - 1], pk);
+                    st.value(vc);
+                    if (svBne(vc.realUpperBand, up.realUpperBand)) allOk = false;
+                    if (svBne(vc.realMiddleBand, up.realMiddleBand)) allOk = false;
+                    if (svBne(vc.realLowerBand, up.realLowerBand)) allOk = false;
+                    if (svXtierNe(up.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realUpperBand)) + "\""; }
+                    if (svXtierNe(up.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realMiddleBand)) + "\""; }
+                    if (svXtierNe(up.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.realLowerBand)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.DonchianStream stu = c2.donchianOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] u1 = new double[svN];
+                        java.util.Arrays.fill(u1, (double)-1.2345678901234e300);
+                        double[] u2 = new double[svN];
+                        java.util.Arrays.fill(u2, (double)-1.2345678901234e300);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], u0, u1, u2);
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, new double[0], u1, u2); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_h, u1, u2); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_h, tail_fz_l, u0, u1, u2);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u1[t - p], b1[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u2[t - p], b2[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u2[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.DonchianStream sA = c2.donchianOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        Core.DonchianOut uA = new Core.DonchianOut();
+                        Core.DonchianOut uB = new Core.DonchianOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
+                        Core.DonchianStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            if (svBne(uA.realUpperBand, uB.realUpperBand) || svXtierNe(uA.realUpperBand, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realMiddleBand, uB.realMiddleBand) || svXtierNe(uA.realMiddleBand, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.realLowerBand, uB.realLowerBand) || svXtierNe(uA.realLowerBand, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.donchianOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.DonchianStream sD = c2.donchianOpen(fz_h, fz_l, Integer.MIN_VALUE);
+                Core.DonchianStream sE = c2.donchianOpen(fz_h, fz_l, 20);
+                Core.DonchianOut vD = new Core.DonchianOut(); sD.value(vD);
+                Core.DonchianOut vE = new Core.DonchianOut(); sE.value(vE);
+                if (svBne(vD.realUpperBand, vE.realUpperBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realMiddleBand, vE.realMiddleBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.realLowerBand, vE.realLowerBand)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.DONCHIAN_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.DonchianStream stA = c2.donchianOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_DX(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -223753,6 +224505,7 @@ public class TaCodegenServe {
         case "TA_COSH": return sv_COSH(json);
         case "TA_DEMA": return sv_DEMA(json);
         case "TA_DIV": return sv_DIV(json);
+        case "TA_DONCHIAN": return sv_DONCHIAN(json);
         case "TA_DX": return sv_DX(json);
         case "TA_EFI": return sv_EFI(json);
         case "TA_EMA": return sv_EMA(json);

@@ -45,12 +45,14 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090526 KL     First version (proposal-drafts #38).
+ *  090326 MF     Drop optInLag; the window ends at the current bar.
  */
 
 // Import types from parent module
@@ -69,8 +71,6 @@ impl Core {
     /// # Arguments
     ///
     /// * `optInTimePeriod` — Number of bars in the extrema window (default 20, range 2..=100000)
-    /// * `optInLag` — Bars the window is held back from the current bar (0 includes the current
-    ///   bar) (default 1, range 0..=100000)
     ///
     /// # Errors
     ///
@@ -78,20 +78,13 @@ impl Core {
     /// [`Core::INTEGER_DEFAULT`] to select their default value.
     #[doc(alias = "TA_DONCHIAN_Lookback")]
     #[inline]
-    pub fn DONCHIAN_Lookback(&self, mut optInTimePeriod: i32, mut optInLag: i32) -> Result<usize, RetCode> {
+    pub fn DONCHIAN_Lookback(&self, mut optInTimePeriod: i32) -> Result<usize, RetCode> {
         if ((optInTimePeriod) as i32) == (i32::MIN) {
             optInTimePeriod = 20;
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return Err(RetCode::BadParam);
         }
-        if ((optInLag) as i32) == (i32::MIN) {
-            optInLag = 1;
-        } else if (((optInLag) as i32) < 0) || (((optInLag) as i32) > 100000) {
-            return Err(RetCode::BadParam);
-        }
-        // The window ends optInLag bars behind the output bar, so the first
-        // bar with a full window behind it is (optInTimePeriod-1)+optInLag.
-        return Ok((optInTimePeriod - 1 + optInLag) as usize);
+        return Ok((optInTimePeriod - 1) as usize);
     }
     /// C-shaped body behind [`Core::DONCHIAN`]: a `RetCode` plus two out-params,
     /// which is what the transcribed body is written against. Since #267 its only
@@ -103,7 +96,6 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         mut optInTimePeriod: i32,
-        mut optInLag: i32,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
         outRealUpperBand: &mut [f64],
@@ -121,12 +113,7 @@ impl Core {
         } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
             return RetCode::BadParam;
         }
-        if ((optInLag) as i32) == (i32::MIN) {
-            optInLag = 1;
-        } else if (((optInLag) as i32) < 0) || (((optInLag) as i32) > 100000) {
-            return RetCode::BadParam;
-        }
-        let _assertLb = self.DONCHIAN_Lookback(optInTimePeriod, optInLag).unwrap_or(usize::MAX);
+        let _assertLb = self.DONCHIAN_Lookback(optInTimePeriod).unwrap_or(usize::MAX);
         let _assertStart = if startIdx > _assertLb { startIdx } else { _assertLb };
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
@@ -147,27 +134,23 @@ impl Core {
         let mut lowestIdx: i32 = 0_i32;
         let mut highestIdx: i32 = 0_i32;
         let mut today: usize = 0_usize;
-        let mut winEnd: usize = 0_usize;
         let mut i: usize = 0_usize;
-        // Donchian Channels over the window [today-optInLag-optInTimePeriod+1 ..
-        // today-optInLag]:
+        // Donchian Channels over the optInTimePeriod bars ending at the current
+        // bar:
         //
         //    Upper  = Highest High of the window
         //    Lower  = Lowest  Low  of the window
         //    Middle = (Upper + Lower) / 2
         //
-        // The default optInLag=1 is Donchian's original rule: the bar being
-        // evaluated is measured against a window it is NOT part of, which is
-        // what lets price cross the band. optInLag=0 includes the current bar
-        // (the TradingView/NinjaTrader/pandas form), making Upper/Lower/Middle
-        // exactly MAX(high,N)/MIN(low,N)/MIDPRICE(N).
+        // The window includes the current bar, matching every other library and
+        // charting platform. A breakout rule compares the current bar against the
+        // PREVIOUS bar's band, which is where the one-bar offset belongs.
         //
-        // The middle line is the Donchian centerline, not a moving average:
-        // at optInLag=0 it is bit-identical to MIDPRICE.
+        // Upper/Middle/Lower are bit-identical to MAX(high,N)/MIDPRICE(N)/MIN(low,N).
         // Identify the minimum number of price bar needed
         // to identify at least one output over the specified
         // period.
-        nbInitialElementNeeded = (optInTimePeriod - 1 + optInLag) as usize;
+        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
         // Move up the start index if there is not
         // enough initial data.
         if startIdx < nbInitialElementNeeded {
@@ -186,25 +169,22 @@ impl Core {
         //
         // The highest high and lowest low of the window are cached with their
         // indices; the window is rescanned only when a cached extremum drops
-        // out of it (same approach as MIN/MAX/WILLR and the MIDPRICE streaming
-        // tier). The window is the one ending optInLag bars behind the output
-        // bar, so the scan cursor is winEnd, not today.
+        // out of it (same approach as MIN/MAX/WILLR and MIDPRICE).
         outIdx = 0;
         today = startIdx;
-        winEnd = today - ((optInLag) as usize);
-        trailingIdx = winEnd - (((optInTimePeriod - 1)) as usize);
+        trailingIdx = startIdx - nbInitialElementNeeded;
         highestIdx = 0 - 1;
         highest = 0.0;
         lowestIdx = 0 - 1;
         lowest = 0.0;
         while today <= endIdx {
-            tmpHigh = inHigh[winEnd];
-            tmpLow = inLow[winEnd];
+            tmpHigh = inHigh[today];
+            tmpLow = inLow[today];
             if highestIdx < ((trailingIdx) as i32) {
                 highestIdx = (trailingIdx) as i32;
                 highest = inHigh[(highestIdx) as usize];
                 i = (highestIdx) as usize;
-                while { i += 1; i } <= winEnd {
+                while { i += 1; i } <= today {
                     tmpHigh = inHigh[i];
                     if tmpHigh > highest {
                         highestIdx = (i) as i32;
@@ -212,14 +192,14 @@ impl Core {
                     }
                 }
             } else if tmpHigh >= highest {
-                highestIdx = (winEnd) as i32;
+                highestIdx = (today) as i32;
                 highest = tmpHigh;
             }
             if lowestIdx < ((trailingIdx) as i32) {
                 lowestIdx = (trailingIdx) as i32;
                 lowest = inLow[(lowestIdx) as usize];
                 i = (lowestIdx) as usize;
-                while { i += 1; i } <= winEnd {
+                while { i += 1; i } <= today {
                     tmpLow = inLow[i];
                     if tmpLow < lowest {
                         lowestIdx = (i) as i32;
@@ -227,7 +207,7 @@ impl Core {
                     }
                 }
             } else if tmpLow <= lowest {
-                lowestIdx = (winEnd) as i32;
+                lowestIdx = (today) as i32;
                 lowest = tmpLow;
             }
             outRealUpperBand[outIdx] = highest;
@@ -235,7 +215,6 @@ impl Core {
             outRealMiddleBand[outIdx] = (highest + lowest) / 2.0;
             outIdx += 1;
             trailingIdx += 1;
-            winEnd += 1;
             today += 1;
         }
         // Keep the outBegIdx relative to the
@@ -260,8 +239,6 @@ impl Core {
     /// * `inHigh` — High price of each bar.
     /// * `inLow` — Low price of each bar.
     /// * `optInTimePeriod` — Number of bars in the extrema window (default 20, range 2..=100000)
-    /// * `optInLag` — Bars the window is held back from the current bar (0 includes the current
-    ///   bar) (default 1, range 0..=100000)
     /// * `outRealUpperBand` — Highest high of the window.
     /// * `outRealMiddleBand` — Midpoint of the upper and lower bands.
     /// * `outRealLowerBand` — Lowest low of the window.
@@ -300,7 +277,7 @@ impl Core {
     /// let mut lower_band = vec![0.0; 252];
     ///
     /// let out_range = core.DONCHIAN(
-    ///     0, high.len() - 1, &high, &low, 20, 1,
+    ///     0, high.len() - 1, &high, &low, 20,
     ///     &mut upper_band, &mut middle_band, &mut lower_band,
     /// )?;
     /// assert!(out_range.count > 0);
@@ -315,7 +292,6 @@ impl Core {
         inHigh: &[f64],
         inLow: &[f64],
         optInTimePeriod: i32,
-        optInLag: i32,
         outRealUpperBand: &mut [f64],
         outRealMiddleBand: &mut [f64],
         outRealLowerBand: &mut [f64],
@@ -326,7 +302,7 @@ impl Core {
         if endIdx > Self::MAX_INDEX || endIdx < startIdx {
             return Err(RetCode::OutOfRangeEndIndex);
         }
-        let _guardLb = self.DONCHIAN_Lookback(optInTimePeriod, optInLag)?;
+        let _guardLb = self.DONCHIAN_Lookback(optInTimePeriod)?;
         let _guardStart = if startIdx > _guardLb { startIdx } else { _guardLb };
         if inHigh.len() < endIdx + 1 {
             return Err(RetCode::BadParam);
@@ -352,7 +328,6 @@ impl Core {
             inHigh,
             inLow,
             optInTimePeriod,
-            optInLag,
             &mut outBegIdx,
             &mut outNBElement,
             outRealUpperBand,
@@ -366,6 +341,600 @@ impl Core {
     }
 
 }
+/**** Streaming API *****/
+
+/// Live DONCHIAN stream: one value per closed bar, bit-identical to [`Core::DONCHIAN`]
+/// over the same series. Open with [`Core::donchian_open`]; dropping the handle
+/// closes the stream. Cloning it forks an independent stream.
+///
+/// [`Self::out_range`] reports the bars this handle has an output for.
+#[must_use = "a stream does nothing unless updated; dropping it closes the stream"]
+#[derive(Debug, Clone)]
+#[doc(alias = "TA_DONCHIAN_Stream")]
+pub struct DonchianStream {
+    state: DonchianStreamState,
+    /// The bars this handle has an output for — see [`Self::out_range`].
+    out: OutRange,
+}
+
+#[derive(Debug, Clone)]
+#[allow(non_snake_case, dead_code)]
+struct DonchianStreamState {
+    optInTimePeriod: i32,
+    lowest: f64,
+    highest: f64,
+    trailingIdx: i32,
+    lowestIdx: i32,
+    highestIdx: i32,
+    i: i32,
+    today: i32,
+    xMask: i32,
+    x_inHigh: Vec<f64>,
+    x_inLow: Vec<f64>,
+    cur_outRealUpperBand: f64,
+    cur_outRealMiddleBand: f64,
+    cur_outRealLowerBand: f64,
+}
+
+#[allow(unused_variables)]
+#[allow(dead_code)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl Core {
+    fn donchian_step_impl(sp: &mut DonchianStreamState, inHigh: f64, inLow: f64, outRealUpperBand: &mut f64, outRealMiddleBand: &mut f64, outRealLowerBand: &mut f64) {
+        let mut tmpLow: f64 = 0.0_f64;
+        let mut tmpHigh: f64 = 0.0_f64;
+        if sp.today >= 1073741824 {
+            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
+            sp.today -= rebaseShift;
+            sp.trailingIdx -= rebaseShift;
+            sp.highestIdx -= rebaseShift;
+            sp.i -= rebaseShift;
+            sp.lowestIdx -= rebaseShift;
+        }
+        sp.x_inHigh[(sp.today & sp.xMask) as usize] = inHigh;
+        sp.x_inLow[(sp.today & sp.xMask) as usize] = inLow;
+        tmpHigh = sp.x_inHigh[(sp.today & sp.xMask) as usize];
+        tmpLow = sp.x_inLow[(sp.today & sp.xMask) as usize];
+        if sp.highestIdx < sp.trailingIdx {
+            sp.highestIdx = sp.trailingIdx;
+            sp.highest = sp.x_inHigh[(sp.highestIdx & sp.xMask) as usize];
+            sp.i = sp.highestIdx;
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
+                tmpHigh = sp.x_inHigh[(sp.i & sp.xMask) as usize];
+                if tmpHigh > sp.highest {
+                    sp.highestIdx = sp.i;
+                    sp.highest = tmpHigh;
+                }
+            }
+        } else if tmpHigh >= sp.highest {
+            sp.highestIdx = sp.today;
+            sp.highest = tmpHigh;
+        }
+        if sp.lowestIdx < sp.trailingIdx {
+            sp.lowestIdx = sp.trailingIdx;
+            sp.lowest = sp.x_inLow[(sp.lowestIdx & sp.xMask) as usize];
+            sp.i = sp.lowestIdx;
+            while (({ sp.i += 1; sp.i }) as i32) <= sp.today {
+                tmpLow = sp.x_inLow[(sp.i & sp.xMask) as usize];
+                if tmpLow < sp.lowest {
+                    sp.lowestIdx = sp.i;
+                    sp.lowest = tmpLow;
+                }
+            }
+        } else if tmpLow <= sp.lowest {
+            sp.lowestIdx = sp.today;
+            sp.lowest = tmpLow;
+        }
+        (*outRealUpperBand) = sp.highest;
+        (*outRealLowerBand) = sp.lowest;
+        (*outRealMiddleBand) = (sp.highest + sp.lowest) / 2.0;
+        sp.trailingIdx += 1;
+        sp.today += 1;
+        sp.cur_outRealUpperBand = (*outRealUpperBand);
+        sp.cur_outRealMiddleBand = (*outRealMiddleBand);
+        sp.cur_outRealLowerBand = (*outRealLowerBand);
+    }
+
+    /// The single whole-history transcription behind [`Core::donchian_open_internal`]
+    /// (stride 0, scalar sink) and [`Core::donchian_open_and_fill`] (stride 1, caller slices).
+    pub(crate) fn donchian_open_impl(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64], outStride: usize,
+    ) -> Result<DonchianStream, RetCode> {
+        if inHigh.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inHigh.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        if ((optInTimePeriod) as i32) == (i32::MIN) {
+            optInTimePeriod = 20;
+        } else if (((optInTimePeriod) as i32) < 2) || (((optInTimePeriod) as i32) > 100000) {
+            return Err(RetCode::BadParam);
+        }
+        if inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        let historyLen: usize = inHigh.len();
+        let endIdx: usize = historyLen - 1;
+        let mut startIdx = startIdx;
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut lowest: f64 = 0.0_f64;
+        let mut highest: f64 = 0.0_f64;
+        let mut tmpLow: f64 = 0.0_f64;
+        let mut tmpHigh: f64 = 0.0_f64;
+        let mut outIdx: usize = 0_usize;
+        let mut nbInitialElementNeeded: usize = 0_usize;
+        let mut trailingIdx: usize = 0_usize;
+        let mut lowestIdx: i32 = 0_i32;
+        let mut highestIdx: i32 = 0_i32;
+        let mut today: usize = 0_usize;
+        let mut i: usize = 0_usize;
+        // Donchian Channels over the optInTimePeriod bars ending at the current
+        // bar:
+        //
+        //    Upper  = Highest High of the window
+        //    Lower  = Lowest  Low  of the window
+        //    Middle = (Upper + Lower) / 2
+        //
+        // The window includes the current bar, matching every other library and
+        // charting platform. A breakout rule compares the current bar against the
+        // PREVIOUS bar's band, which is where the one-bar offset belongs.
+        //
+        // Upper/Middle/Lower are bit-identical to MAX(high,N)/MIDPRICE(N)/MIN(low,N).
+        // Identify the minimum number of price bar needed
+        // to identify at least one output over the specified
+        // period.
+        nbInitialElementNeeded = (optInTimePeriod - 1) as usize;
+        // Move up the start index if there is not
+        // enough initial data.
+        if startIdx < nbInitialElementNeeded {
+            startIdx = nbInitialElementNeeded;
+        }
+        // Make sure there is still something to evaluate.
+        if startIdx > endIdx {
+            (*outBegIdx) = 0;
+            (*outNBElement) = 0;
+            return Err(RetCode::InsufficientHistory);
+        }
+        // Proceed with the calculation for the requested range.
+        // Note that this algorithm allows the input and
+        // output to be the same buffer: every position written (outIdx) sits
+        // at or below trailingIdx, the oldest position any later bar reads.
+        //
+        // The highest high and lowest low of the window are cached with their
+        // indices; the window is rescanned only when a cached extremum drops
+        // out of it (same approach as MIN/MAX/WILLR and MIDPRICE).
+        outIdx = 0;
+        today = startIdx;
+        trailingIdx = startIdx - nbInitialElementNeeded;
+        highestIdx = 0 - 1;
+        highest = 0.0;
+        lowestIdx = 0 - 1;
+        lowest = 0.0;
+        while today <= endIdx {
+            tmpHigh = inHigh[today];
+            tmpLow = inLow[today];
+            if highestIdx < ((trailingIdx) as i32) {
+                highestIdx = (trailingIdx) as i32;
+                highest = inHigh[(highestIdx) as usize];
+                i = (highestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmpHigh = inHigh[i];
+                    if tmpHigh > highest {
+                        highestIdx = (i) as i32;
+                        highest = tmpHigh;
+                    }
+                }
+            } else if tmpHigh >= highest {
+                highestIdx = (today) as i32;
+                highest = tmpHigh;
+            }
+            if lowestIdx < ((trailingIdx) as i32) {
+                lowestIdx = (trailingIdx) as i32;
+                lowest = inLow[(lowestIdx) as usize];
+                i = (lowestIdx) as usize;
+                while { i += 1; i } <= today {
+                    tmpLow = inLow[i];
+                    if tmpLow < lowest {
+                        lowestIdx = (i) as i32;
+                        lowest = tmpLow;
+                    }
+                }
+            } else if tmpLow <= lowest {
+                lowestIdx = (today) as i32;
+                lowest = tmpLow;
+            }
+            outRealUpperBand[(outIdx * outStride) as usize] = highest;
+            outRealLowerBand[(outIdx * outStride) as usize] = lowest;
+            outRealMiddleBand[(outIdx * outStride) as usize] = (highest + lowest) / 2.0;
+            outIdx += 1;
+            trailingIdx += 1;
+            today += 1;
+        }
+        // Keep the outBegIdx relative to the
+        // caller input before returning.
+        (*outBegIdx) = startIdx;
+        (*outNBElement) = outIdx;
+
+        // Capture the live batch state into the handle.
+        let capX: i64 = (today as i64) - (trailingIdx as i64) + 1;
+        if capX < 1 || capX > historyLen as i64 {
+            return Err(RetCode::InternalError);
+        }
+        let mut physX: i64 = 1;
+        while physX < capX {
+            physX <<= 1;
+        }
+        let mut x_inHigh: Vec<f64> = vec![0.0_f64; physX as usize];
+        let mut x_inLow: Vec<f64> = vec![0.0_f64; physX as usize];
+        {
+            let mut fillJ: usize = historyLen - capX as usize;
+            while fillJ < historyLen {
+                x_inHigh[fillJ & (physX as usize - 1)] = inHigh[fillJ];
+                x_inLow[fillJ & (physX as usize - 1)] = inLow[fillJ];
+                fillJ += 1;
+            }
+        }
+        let state = DonchianStreamState {
+            optInTimePeriod,
+            lowest,
+            highest,
+            trailingIdx: (trailingIdx) as i32,
+            lowestIdx: (lowestIdx) as i32,
+            highestIdx: (highestIdx) as i32,
+            i: (i) as i32,
+            today: (today) as i32,
+            cur_outRealUpperBand: outRealUpperBand[(*outNBElement - 1) * outStride],
+            cur_outRealMiddleBand: outRealMiddleBand[(*outNBElement - 1) * outStride],
+            cur_outRealLowerBand: outRealLowerBand[(*outNBElement - 1) * outStride],
+            xMask: (physX - 1) as i32,
+            x_inHigh,
+            x_inLow,
+        };
+        Ok(DonchianStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+    }
+
+    /// Internal startIdx-anchored open behind [`Core::donchian_open`] (composition seam).
+    pub(crate) fn donchian_open_internal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32,
+    ) -> Result<(DonchianStream, (f64, f64, f64)), RetCode> {
+        let mut dummyBegIdx: usize = 0;
+        let mut dummyNBElement: usize = 0;
+        let mut sink_outRealUpperBand = [0.0_f64; 1];
+        let mut sink_outRealMiddleBand = [0.0_f64; 1];
+        let mut sink_outRealLowerBand = [0.0_f64; 1];
+        let handle = self.donchian_open_impl(inHigh, inLow, startIdx, optInTimePeriod, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outRealUpperBand, &mut sink_outRealMiddleBand, &mut sink_outRealLowerBand, 0)?;
+        Ok((handle, (sink_outRealUpperBand[0], sink_outRealMiddleBand[0], sink_outRealLowerBand[0])))
+    }
+
+    /// Open a live DONCHIAN stream over the warm-up history; returns the handle and
+    /// the value at the last history bar — bit-identical to [`Core::DONCHIAN`] at that bar.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::InsufficientHistory`] when the history holds fewer than
+    /// `lookback + 1` bars — the one failure here worth retrying, since another
+    /// bar fixes it. [`RetCode::OutOfRangeStartIndex`] when the history is empty.
+    /// [`RetCode::BadParam`] when a parameter is out of range or the input
+    /// lengths differ.
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let (mut s, _last) = core.donchian_open(&high, &low, 20).expect("enough history");
+    /// let r0 = s.out_range();
+    /// let peeked = s.peek(101.4, 99.1).expect("a finite bar");
+    /// assert_eq!(s.out_range().count, r0.count); // a peek commits nothing
+    /// let updated = s.update(101.4, 99.1).expect("a finite bar");
+    /// assert_eq!(s.out_range().beg_idx, r0.beg_idx);
+    /// assert_eq!(s.out_range().count, r0.count + 1);
+    /// assert_eq!(peeked.0.to_bits(), updated.0.to_bits());
+    /// assert_eq!(peeked.1.to_bits(), updated.1.to_bits());
+    /// assert_eq!(peeked.2.to_bits(), updated.2.to_bits());
+    /// ```
+    #[doc(alias = "TA_DONCHIAN_Open")]
+    pub fn donchian_open(&self, inHigh: &[f64], inLow: &[f64], optInTimePeriod: i32) -> Result<(DonchianStream, (f64, f64, f64)), RetCode> {
+        self.donchian_open_internal(inHigh, inLow, 0, optInTimePeriod)
+    }
+
+    /// [`Core::donchian_open`] that also fills the output array(s) bit-identically to
+    /// [`Core::DONCHIAN`] over `0..len` in the same single pass, and reports the range it
+    /// wrote as the [`OutRange`] beside the handle.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
+    /// or when two of them are the same slice. Everything [`Core::donchian_open`] rejects
+    /// is rejected here too.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ta_lib::Core;
+    /// let high: Vec<f64> = (0..252).map(|i| 101.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    /// let low: Vec<f64> = (0..252).map(|i| 99.0 + 10.0 * (0.1 * i as f64).sin()).collect();
+    ///
+    /// let core = Core::new();
+    /// let mut batch_upper_band = vec![0.0; 252];
+    /// let mut batch_middle_band = vec![0.0; 252];
+    /// let mut batch_lower_band = vec![0.0; 252];
+    /// let batch = core.DONCHIAN(0, high.len() - 1, &high, &low, 20, &mut batch_upper_band, &mut batch_middle_band, &mut batch_lower_band)?;
+    ///
+    /// let mut upper_band = vec![0.0; 252];
+    /// let mut middle_band = vec![0.0; 252];
+    /// let mut lower_band = vec![0.0; 252];
+    /// let (_stream, filled) = core.donchian_open_and_fill(&high, &low, 20, &mut upper_band, &mut middle_band, &mut lower_band)?;
+    ///
+    /// assert_eq!(filled.beg_idx, batch.beg_idx);
+    /// assert_eq!(filled.count, batch.count);
+    /// assert!(upper_band[..filled.count].iter().zip(&batch_upper_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(middle_band[..filled.count].iter().zip(&batch_middle_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// assert!(lower_band[..filled.count].iter().zip(&batch_lower_band[..batch.count])
+    ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
+    /// # Ok::<(), ta_lib::RetCode>(())
+    /// ```
+    #[doc(alias = "TA_DONCHIAN_OpenAndFill")]
+    pub fn donchian_open_and_fill(
+        &self, inHigh: &[f64], inLow: &[f64], mut optInTimePeriod: i32, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+    ) -> Result<(DonchianStream, OutRange), RetCode> {
+        if inHigh.is_empty() {
+            return Err(RetCode::OutOfRangeStartIndex);
+        }
+        if inHigh.len() > Self::MAX_INDEX + 1 {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
+        let _guardLb = self.DONCHIAN_Lookback(optInTimePeriod)?;
+        if inLow.len() != inHigh.len() {
+            return Err(RetCode::BadParam);
+        }
+        let _guardOutLen = inHigh.len().saturating_sub(_guardLb);
+        if outRealUpperBand.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outRealMiddleBand.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if outRealLowerBand.len() < _guardOutLen {
+            return Err(RetCode::BadParam);
+        }
+        if !outRealUpperBand.is_empty() && !outRealMiddleBand.is_empty() && outRealUpperBand.as_ptr() == outRealMiddleBand.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if !outRealUpperBand.is_empty() && !outRealLowerBand.is_empty() && outRealUpperBand.as_ptr() == outRealLowerBand.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        if !outRealMiddleBand.is_empty() && !outRealLowerBand.is_empty() && outRealMiddleBand.as_ptr() == outRealLowerBand.as_ptr() {
+            return Err(RetCode::BadParam);
+        }
+        let mut outBegIdx: usize = 0;
+        let mut outNBElement: usize = 0;
+        let handle = self.donchian_open_and_fill_internal(inHigh, inLow, 0, optInTimePeriod, &mut outBegIdx, &mut outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand)?;
+        Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
+    }
+
+    /// [`Core::donchian_open_and_fill`] anchored at `startIdx` — the composed-open
+    /// fusion seam (issue #192), not a public entry point.
+    pub(crate) fn donchian_open_and_fill_internal(
+        &self, inHigh: &[f64], inLow: &[f64], startIdx: usize, mut optInTimePeriod: i32, outBegIdx: &mut usize, outNBElement: &mut usize, outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64],
+    ) -> Result<DonchianStream, RetCode> {
+        self.donchian_open_impl(inHigh, inLow, startIdx, optInTimePeriod, outBegIdx, outNBElement, outRealUpperBand, outRealMiddleBand, outRealLowerBand, 1)
+    }
+
+}
+
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+impl DonchianStream {
+    /// Commit one closed bar. Never allocates.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite (NaN or ±Inf).
+    /// That check runs before anything is written, so the handle's state is
+    /// left exactly as it was and the stream stays usable: skip the bar, or
+    /// close and re-open on a clean history. This is the one place the
+    /// streaming tier is stricter than the batch API, which computes on
+    /// whatever it is given — a handle retains its state, so a single
+    /// non-finite bar would poison every later value it produces.
+    ///
+    /// [`Self::out_range`] counts the rejected bar all the same: it happened,
+    /// so two handles fed the same series stay positionally aligned even when
+    /// one rejects a bar the other accepts.
+    #[doc(alias = "TA_DONCHIAN_Update")]
+    pub fn update(&mut self, inHigh: f64, inLow: f64) -> Result<(f64, f64, f64), RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            if self.out.count < Core::MAX_INDEX {
+                self.out.count += 1;
+            }
+            return Err(RetCode::BadParam);
+        }
+        let mut outRealUpperBand: f64 = 0.0_f64;
+        let mut outRealMiddleBand: f64 = 0.0_f64;
+        let mut outRealLowerBand: f64 = 0.0_f64;
+        Core::donchian_step_impl(&mut self.state, inHigh, inLow, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+        if self.out.count < Core::MAX_INDEX {
+            self.out.count += 1;
+        }
+        Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
+    }
+
+    /// Commit `n` closed bars and write their `n` values, in one call —
+    /// exactly `n` back-to-back [`Self::update`] calls, with one set of
+    /// argument checks instead of `n`. `n` is `inHigh.len()`; the outputs must
+    /// hold at least that many. Never allocates.
+    ///
+    /// [`Self::out_range`] counts what this call took in, which is what makes the
+    /// rejection below readable: there is no second out-parameter for it.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if the input slices differ in length, if an output
+    /// is shorter than the bar count — neither commits anything — or if a bar
+    /// is not finite. A non-finite bar `k` is rejected exactly as `update`
+    /// rejects it: bars `0..k` stay committed and their values written, bar `k`
+    /// and everything after it is not, and `out_range().count` has advanced by
+    /// `k + 1` — the committed bars, plus the rejected one, which is counted
+    /// but never written.
+    #[doc(alias = "TA_DONCHIAN_UpdateAndFill")]
+    pub fn update_and_fill(&mut self, inHigh: &[f64], inLow: &[f64], outRealUpperBand: &mut [f64], outRealMiddleBand: &mut [f64], outRealLowerBand: &mut [f64]) -> Result<(), RetCode> {
+        let barCount = inHigh.len();
+        if inLow.len() != inHigh.len() || outRealUpperBand.len() < barCount || outRealMiddleBand.len() < barCount || outRealLowerBand.len() < barCount {
+            return Err(RetCode::BadParam);
+        }
+        for i in 0..barCount {
+            if !inHigh[i].is_finite() || !inLow[i].is_finite() {
+                if self.out.count < Core::MAX_INDEX {
+                    self.out.count += 1;
+                }
+                return Err(RetCode::BadParam);
+            }
+            Core::donchian_step_impl(&mut self.state, inHigh[i], inLow[i], &mut outRealUpperBand[i], &mut outRealMiddleBand[i], &mut outRealLowerBand[i]);
+            if self.out.count < Core::MAX_INDEX {
+                self.out.count += 1;
+            }
+        }
+        Ok(())
+    }
+
+    /// Evaluate a forming bar without committing — bit-identical to what the
+    /// next `update` with the same bar would return: the same transition,
+    /// rewritten so every store it would make lives in a local instead. It
+    /// allocates nothing and copies no buffer, so its cost does not grow with
+    /// the period, and it writes no part of the handle — peeks may run
+    /// concurrently with each other.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::BadParam`] if any bar value is not finite, on the same test
+    /// `update` applies — but a rejected peek changes nothing at all, where a
+    /// rejected `update` still counts the bar in [`Self::out_range`].
+    #[doc(alias = "TA_DONCHIAN_Peek")]
+    pub fn peek(&self, inHigh: f64, inLow: f64) -> Result<(f64, f64, f64), RetCode> {
+        if !inHigh.is_finite() || !inLow.is_finite() {
+            return Err(RetCode::BadParam);
+        }
+        let mut outRealUpperBand: f64 = 0.0_f64;
+        let mut outRealMiddleBand: f64 = 0.0_f64;
+        let mut outRealLowerBand: f64 = 0.0_f64;
+        {
+            let sp = &self.state;
+            let outRealUpperBand = &mut outRealUpperBand;
+            let outRealMiddleBand = &mut outRealMiddleBand;
+            let outRealLowerBand = &mut outRealLowerBand;
+            let mut tmpLow: f64 = 0.0_f64;
+            let mut tmpHigh: f64 = 0.0_f64;
+            let mut highest = sp.highest;
+            let mut highestIdx = sp.highestIdx;
+            let mut i = sp.i;
+            let mut lowest = sp.lowest;
+            let mut lowestIdx = sp.lowestIdx;
+            let mut today = sp.today;
+            let mut trailingIdx = sp.trailingIdx;
+            let mut pkSlot0: usize = usize::MAX;
+            let mut pkVal0: f64 = 0.0_f64;
+            let mut pkSlot1: usize = usize::MAX;
+            let mut pkVal1: f64 = 0.0_f64;
+            if today >= 1073741824 {
+                let rebaseShift: i32 = trailingIdx & !sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                highestIdx -= rebaseShift;
+                i -= rebaseShift;
+                lowestIdx -= rebaseShift;
+            }
+            pkSlot0 = (today & sp.xMask) as usize;
+            pkVal0 = inHigh;
+            pkSlot1 = (today & sp.xMask) as usize;
+            pkVal1 = inLow;
+            tmpHigh = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(today & sp.xMask) as usize] } else { pkVal0 });
+            tmpLow = (if ((today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(today & sp.xMask) as usize] } else { pkVal1 });
+            if highestIdx < trailingIdx {
+                highestIdx = trailingIdx;
+                highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
+                i = highestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmpHigh = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
+                    if tmpHigh > highest {
+                        highestIdx = i;
+                        highest = tmpHigh;
+                    }
+                }
+            } else if tmpHigh >= highest {
+                highestIdx = today;
+                highest = tmpHigh;
+            }
+            if lowestIdx < trailingIdx {
+                lowestIdx = trailingIdx;
+                lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
+                i = lowestIdx;
+                while (({ i += 1; i }) as i32) <= today {
+                    tmpLow = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
+                    if tmpLow < lowest {
+                        lowestIdx = i;
+                        lowest = tmpLow;
+                    }
+                }
+            } else if tmpLow <= lowest {
+                lowestIdx = today;
+                lowest = tmpLow;
+            }
+            (*outRealUpperBand) = highest;
+            (*outRealLowerBand) = lowest;
+            (*outRealMiddleBand) = (highest + lowest) / 2.0;
+        }
+        Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
+    }
+
+    /// The value(s) at the last bar the stream counted — the bar
+    /// [`Self::out_range`] ends on — without recomputing. Seeded by the opener,
+    /// refreshed by every accepted `update` and `update_and_fill`, and left
+    /// alone by `peek`.
+    ///
+    /// A clone carries them verbatim, so a forked handle can be asked its
+    /// current value without committing a bar to find out.
+    #[must_use]
+    #[doc(alias = "TA_DONCHIAN_Value")]
+    pub fn value(&self) -> (f64, f64, f64) {
+        (self.state.cur_outRealUpperBand, self.state.cur_outRealMiddleBand, self.state.cur_outRealLowerBand)
+    }
+
+    /// The bars this stream has an output for, in the input series'
+    /// coordinates: `[beg_idx, beg_idx + count)`.
+    ///
+    /// It is what [`Core::DONCHIAN`] reports over the same bars: the opener sets it
+    /// to `(lookback, historyLen - lookback)`, every `update` adds one to the
+    /// count — a bar rejected for being non-finite included, because it still
+    /// happened — `peek` leaves it alone, and a clone carries it verbatim.
+    /// A plain `Open` hands back only the last value, a subset of this range,
+    /// because the caller chose not to take the fill.
+    #[doc(alias = "TA_StreamOutRange")]
+    pub fn out_range(&self) -> OutRange {
+        self.out
+    }
+}
+
+const _: () = {
+    const fn _assert_auto<T: Send + Sync + Clone>() {}
+    _assert_auto::<DonchianStream>();
+};
+
 /***************/
 /* End of File */
 /***************/
