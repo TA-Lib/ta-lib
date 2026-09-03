@@ -224,6 +224,8 @@ pub enum FuncId {
     DEMA,
     /// Vector Arithmetic Div — [`Core::DIV`](crate::Core::DIV).
     DIV,
+    /// Donchian Channels — [`Core::DONCHIAN`](crate::Core::DONCHIAN).
+    DONCHIAN,
     /// Directional Movement Index — [`Core::DX`](crate::Core::DX).
     DX,
     /// Elder's Force Index — [`Core::EFI`](crate::Core::EFI).
@@ -402,7 +404,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 178;
+    pub const COUNT: usize = 179;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -727,7 +729,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 178] = [
+static FUNC_TABLE: [FuncInfo; 179] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1727,6 +1729,17 @@ static FUNC_TABLE: [FuncInfo; 178] = [
         inputs: &[InputInfo { param_name: "inReal0", kind: InputType::Real, flags: InputFlags(0x00000000) }, InputInfo { param_name: "inReal1", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::DONCHIAN,
+        name: "DONCHIAN",
+        group: Group::OverlapStudies,
+        hint: "Donchian Channels",
+        flags: FuncFlags(0x01000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 20, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInLag", display_name: "Lag", hint: "Bars the window is held back from the current bar (0 includes the current bar)", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 0, max: 100000, default: 1, suggested: (0, 1, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outRealUpperBand", kind: OutputType::Real, flags: OutputFlags(0x00000800) }, OutputInfo { param_name: "outRealMiddleBand", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outRealLowerBand", kind: OutputType::Real, flags: OutputFlags(0x00001000) }, ],
         unst_id: None,
     },
     FuncInfo {
@@ -2795,6 +2808,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "COSH" => FuncId::COSH,
         "DEMA" => FuncId::DEMA,
         "DIV" => FuncId::DIV,
+        "DONCHIAN" => FuncId::DONCHIAN,
         "DX" => FuncId::DX,
         "EFI" => FuncId::EFI,
         "EMA" => FuncId::EMA,
@@ -3230,6 +3244,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::COSH => self.core.COSH_Lookback(),
             FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
             FuncId::DIV => self.core.DIV_Lookback(),
+            FuncId::DONCHIAN => self.core.DONCHIAN_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::DX => self.core.DX_Lookback(self.int_opt[0]),
             FuncId::EFI => self.core.EFI_Lookback(self.int_opt[0]),
             FuncId::EMA => self.core.EMA_Lookback(self.int_opt[0]),
@@ -4488,6 +4503,22 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.DIV(start_idx, end_idx, i0, i1, &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::DONCHIAN => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.DONCHIAN(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1, &mut *o2);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

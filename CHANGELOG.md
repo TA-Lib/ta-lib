@@ -17,6 +17,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - AO: Awesome Oscillator (#227)
   - CMF: Chaikin Money Flow (#134)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
+  - DONCHIAN: Donchian Channels, the rolling extrema bands with the original lagged window (proposal-drafts #38)
   - EFI: Elder's Force Index (#206)
   - HMA: Hull Moving Average (#139)
   - KC: Keltner Channels (#273)

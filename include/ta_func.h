@@ -7126,6 +7126,50 @@ TA_LIB_API TA_RetCode TA_DIV_Value( const TA_DIV_Stream *stream, double *outReal
 TA_LIB_API TA_RetCode TA_DIV_Clone( const TA_DIV_Stream *stream, TA_DIV_Stream **clone );
 
 /*
+ * TA_DONCHIAN - Donchian Channels
+ * 
+ * Input  = High, Low
+ * Output = double, double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * optInLag:(From 0 to 100000)
+ *    Bars the window is held back from the current bar (0 includes the current bar)
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_DONCHIAN( int    startIdx,
+                                   int    endIdx,
+                                              const double inHigh[],
+                                              const double inLow[],
+                                              int           optInTimePeriod, /* From 2 to 100000 */
+                                              int           optInLag, /* From 0 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outRealUpperBand[],
+                                              double        outRealMiddleBand[],
+                                              double        outRealLowerBand[] );
+
+TA_LIB_API TA_RetCode TA_S_DONCHIAN( int    startIdx,
+                                     int    endIdx,
+                                                const float  inHigh[],
+                                                const float  inLow[],
+                                                int           optInTimePeriod, /* From 2 to 100000 */
+                                                int           optInLag, /* From 0 to 100000 */
+                                                int          *outBegIdx,
+                                                int          *outNBElement,
+                                                double        outRealUpperBand[],
+                                                double        outRealMiddleBand[],
+                                                double        outRealLowerBand[] );
+
+TA_LIB_API int TA_DONCHIAN_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
+                                              int           optInLag );  /* From 0 to 100000 */
+
+
+/*
  * TA_DX - Directional Movement Index
  * 
  * Input  = High, Low, Close

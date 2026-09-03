@@ -181,6 +181,7 @@ mod cos;
 mod cosh;
 mod dema;
 mod div;
+mod donchian;
 mod dx;
 mod efi;
 mod ema;

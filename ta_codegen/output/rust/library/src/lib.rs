@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 178 technical-analysis indicators — moving averages, momentum oscillators,
+//! 179 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -209,11 +209,12 @@
 //! * [`WAD`](Core::WAD) — Williams' Accumulation/Distribution
 //! * [`WILLR`](Core::WILLR) — Williams' %R
 //!
-//! ## Overlap Studies (22)
+//! ## Overlap Studies (23)
 //!
 //! * [`ACCBANDS`](Core::ACCBANDS) — Acceleration Bands
 //! * [`BBANDS`](Core::BBANDS) — Bollinger Bands
 //! * [`DEMA`](Core::DEMA) — Double Exponential Moving Average
+//! * [`DONCHIAN`](Core::DONCHIAN) — Donchian Channels
 //! * [`EMA`](Core::EMA) — Exponential Moving Average
 //! * [`HMA`](Core::HMA) — Hull Moving Average
 //! * [`HT_TRENDLINE`](Core::HT_TRENDLINE) — Hilbert Transform - Instantaneous Trendline

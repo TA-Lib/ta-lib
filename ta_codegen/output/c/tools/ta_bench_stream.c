@@ -152,6 +152,7 @@ static void bench_tracked_free(void *p) {
 #include "ta_COSH.c"
 #include "ta_DEMA.c"
 #include "ta_DIV.c"
+#include "ta_DONCHIAN.c"
 #include "ta_DX.c"
 #include "ta_EFI.c"
 #include "ta_EMA.c"
