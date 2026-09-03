@@ -202,6 +202,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeCosh(),
             MakeDema(),
             MakeDiv(),
+            MakeDonchian(),
             MakeDx(),
             MakeEfi(),
             MakeEma(),
@@ -2246,6 +2247,32 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.DIV(
                 startIdx, endIdx, c.Series(0), c.Series(1), c.RealOut(0)));
+
+    private static FunctionInfo MakeDonchian() => new(
+        name: "DONCHIAN",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Donchian Channels",
+        flags: FunctionFlags.Overlap,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 4, 200, 1)),
+            new OptInputInfo("optInLag", "Lag", "Bars the window is held back from the current bar (0 includes the current bar)", OptInputFlags.None, new OptInputDomain.IntegerRange(0, 100000, 1, 0, 1, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outRealUpperBand", OutputFlags.UpperLimit),
+            new OutputInfo(OutputKind.Real, "outRealMiddleBand", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outRealLowerBand", OutputFlags.LowerLimit),
+        ],
+        lookback: static (core, c) => core.DONCHIAN_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.DONCHIAN(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
     private static FunctionInfo MakeDx() => new(
         name: "DX",

@@ -9180,6 +9180,89 @@ fn legs_DIV(r: &mut Report) {
     r.legs_done("DIV", 2);
 }
 
+const V_DONCHIAN: &[(&str, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN),
+    ("minimums", 2i32, 0i32),
+];
+
+fn sub_DONCHIAN(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInLag) in V_DONCHIAN {
+        let Ok(lb) = core.DONCHIAN_Lookback(optInTimePeriod, optInLag) else { continue; };
+        r.control("DONCHIAN", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealMiddleBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DONCHIAN_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("DONCHIAN", label); continue; }
+        r.quiet("DONCHIAN", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealUpperBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealMiddleBand: Vec<f64> = Vec::with_capacity(1);
+            let mut outRealLowerBand: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DONCHIAN_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_DONCHIAN(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInLag = i32::MIN;
+    let Ok(lb) = core.DONCHIAN_Lookback(optInTimePeriod, optInLag) else { r.no_legs("DONCHIAN"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("DONCHIAN", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.leg("DONCHIAN", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outRealUpperBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealMiddleBand: Vec<f64> = vec![Default::default(); 5];
+        let mut outRealLowerBand: Vec<f64> = vec![Default::default(); 5];
+        r.leg("DONCHIAN", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DONCHIAN_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInLag, &mut _b, &mut _n, &mut outRealUpperBand, &mut outRealMiddleBand, &mut outRealLowerBand);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("DONCHIAN", 2);
+}
+
 const V_DX: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -15425,6 +15508,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("COSH", sub_COSH, legs_COSH),
     ("DEMA", sub_DEMA, legs_DEMA),
     ("DIV", sub_DIV, legs_DIV),
+    ("DONCHIAN", sub_DONCHIAN, legs_DONCHIAN),
     ("DX", sub_DX, legs_DX),
     ("EFI", sub_EFI, legs_EFI),
     ("EMA", sub_EMA, legs_EMA),
@@ -15550,7 +15634,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 178, "probe count");
+    assert_eq!(PROBES.len(), 179, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

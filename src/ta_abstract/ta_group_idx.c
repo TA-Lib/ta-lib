@@ -131,6 +131,7 @@ extern const TA_FuncDef TA_DEF_COS;
 extern const TA_FuncDef TA_DEF_COSH;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_DIV;
+extern const TA_FuncDef TA_DEF_DONCHIAN;
 extern const TA_FuncDef TA_DEF_DX;
 extern const TA_FuncDef TA_DEF_EFI;
 extern const TA_FuncDef TA_DEF_EMA;
@@ -257,6 +258,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_ACCBANDS,
 &TA_DEF_BBANDS,
 &TA_DEF_DEMA,
+&TA_DEF_DONCHIAN,
 &TA_DEF_EMA,
 &TA_DEF_HMA,
 &TA_DEF_HT_TRENDLINE,

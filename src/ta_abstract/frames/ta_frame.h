@@ -866,6 +866,15 @@ TA_RetCode TA_DIV_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_DIV_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_DONCHIAN_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_DONCHIAN_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_DX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

@@ -90,6 +90,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [ACCBANDS](/functions/accbands.md) — Acceleration Bands
 - [BBANDS](/functions/bbands.md) — Bollinger Bands
 - [DEMA](/functions/dema.md) — Double Exponential Moving Average
+- [DONCHIAN](/functions/donchian.md) — Donchian Channels
 - [EMA](/functions/ema.md) — Exponential Moving Average
 - [HMA](/functions/hma.md) — Hull Moving Average
 - [HT_TRENDLINE](/functions/ht_trendline.md) — Hilbert Transform - Instantaneous Trendline

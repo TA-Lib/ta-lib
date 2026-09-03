@@ -3842,6 +3842,78 @@
 	</FinancialFunction>
 
 
+	<!-- DONCHIAN -->
+	<FinancialFunction>
+		<Abbreviation>DONCHIAN</Abbreviation>
+		<ShortDescription>Donchian Channels</ShortDescription>
+		<GroupId>Overlap Studies</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Lag</Name>
+				<ShortDescription>Bars the window is held back from the current bar (0 includes the current bar)</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>0</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>0</SuggestedStart>
+					<SuggestedEnd>1</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>1</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outRealUpperBand</Name>
+				<Flags>
+					<Flag>Upper Limit</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outRealMiddleBand</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outRealLowerBand</Name>
+				<Flags>
+					<Flag>Lower Limit</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- DX -->
 	<FinancialFunction>
 		<Abbreviation>DX</Abbreviation>
