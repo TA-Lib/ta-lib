@@ -755,7 +755,6 @@ impl VwmaStream {
             let mut tempPV: f64 = 0.0_f64;
             let mut tempV: f64 = 0.0_f64;
             let mut tempReal: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut sumPV = sp.sumPV;
             let mut sumV = sp.sumV;
             let mut pkSlot0: usize = usize::MAX;
@@ -764,7 +763,6 @@ impl VwmaStream {
             let mut pkVal1: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             if sp.ringCap_trailingIdx == 0 {

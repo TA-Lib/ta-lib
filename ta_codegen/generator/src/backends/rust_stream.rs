@@ -1321,12 +1321,32 @@ fn peek_frame_arm(
         other => Some(other),
     });
 
+    // A peek commits nothing, so `cur_<out>` never carries the previous bar's
+    // output into the transition; a frame that answers through its out-param
+    // never reads the local at all. C's dead-local hygiene (#344) deletes the
+    // whole local there — do the same here: the declaration and its stores go
+    // together, or the survivor would not compile (issue #353).
+    let dead_curs: Vec<(String, VarType)> = func
+        .outputs
+        .iter()
+        .map(|o| format!("cur_{}", o.name))
+        .filter(|n| {
+            locals.contains(n) && streaming::peek_local_is_never_read(&body_ir, n)
+        })
+        .map(|n| (n, VarType::Real))
+        .collect();
+    let body_ir = streaming::purge_dead_temp_stores(&body_ir, &dead_curs);
+    let dead_cur_names: HashSet<&str> = dead_curs.iter().map(|(n, _)| n.as_str()).collect();
+
     let mut out = String::new();
     for (name, ty) in &streaming::temps_used(&model.temps, &body_ir) {
         let (rty, default) = field_type_and_default(typing, name, ty, false);
         out.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }
     for name in &locals {
+        if dead_cur_names.contains(name.as_str()) {
+            continue;
+        }
         let _ = writeln!(out, "{pad}let mut {name} = sp.{name};");
     }
     for sh in &pt.shadows {

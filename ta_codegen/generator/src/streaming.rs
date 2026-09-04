@@ -873,6 +873,23 @@ enum FirstUse {
     ReadOrUnknown,
 }
 
+/// Whether the peek transition never reads `var` at all — a wholly dead local
+/// (issue #353), where the declaration and every store to it go together.
+/// Distinct from [`peek_seed_is_dead`] below: that proves only the SEED value
+/// unread and keeps a local the frame still writes and reads; this one holds
+/// only when the frame answers through something else entirely, so the local
+/// has no reason to exist. A compound store's self-read does not rescue it:
+/// [`names_read`] counts only the RHS of the canonical `v op= e` shape, and a
+/// self-feeding chain nothing else reads is dead with the rest. Any mention
+/// shape the walker cannot model lands in the read set and keeps the local.
+/// Callers strip the stores with [`purge_dead_temp_stores`].
+#[must_use]
+pub fn peek_local_is_never_read(body: &[Statement], var: &str) -> bool {
+    let mut read = BTreeSet::new();
+    names_read(body, &mut read);
+    !read.contains(var)
+}
+
 /// Whether seeding `var` from the handle at the top of a peek frame is dead:
 /// every path that mentions it WRITES it before any read (issue #343). The
 /// analysis is deliberately conservative — a mention inside a loop or switch,

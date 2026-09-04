@@ -481,6 +481,36 @@ fn rust_composed_copy_out_is_stride_guarded() {
     );
 }
 
+/// The `cur_<out>` locals a peek frame declares, in either shape — the type
+/// default (`let mut cur_x: f64 = 0.0_f64;`, most frames) or the handle seed
+/// (`let mut cur_x = sp.cur_x;`, none since #353 but the arm must see one
+/// growing back).
+fn cur_locals_declared(peek: &str) -> Vec<String> {
+    peek.lines()
+        .filter_map(|l| l.trim().strip_prefix("let mut cur_"))
+        .filter_map(|r| {
+            let end = r.find(|c: char| !(c.is_alphanumeric() || c == '_'))?;
+            Some(format!("cur_{}", &r[..end]))
+        })
+        .collect()
+}
+
+/// Does `hay` mention `word` at a word boundary? Plain `contains` would let
+/// `cur_outReal` shadow a mention of `cur_outRealUpper`.
+fn mentions_word(hay: &str, word: &str) -> bool {
+    hay.match_indices(word).any(|(i, _)| {
+        let before_ok = !hay[..i]
+            .chars()
+            .next_back()
+            .is_some_and(|c| c.is_alphanumeric() || c == '_');
+        let after_ok = !hay[i + word.len()..]
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_alphanumeric() || c == '_');
+        before_ok && after_ok
+    })
+}
+
 /// The handle's fixed-size accumulator fields: a `[f64; N]` member.
 fn rust_accumulator_fields(section: &str) -> BTreeSet<String> {
     section
@@ -509,6 +539,7 @@ fn no_rust_peek_copies_the_handle() {
     let mut swept = 0usize;
     let mut frames = 0usize;
     let mut stateless = 0usize;
+    let mut cur_readers = 0usize;
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();
     for name in streaming_indicators() {
@@ -535,6 +566,32 @@ fn no_rust_peek_copies_the_handle() {
         for f in accs.iter().filter(|f| peek.contains(&format!("let mut {f} = sp.{f};"))) {
             offenders.push(format!("{name}: localizes {f}"));
         }
+        // A `cur_<out>` local the frame never reads is wholly dead: the frame
+        // answers through its out-param, so the declaration asserts a data flow
+        // that does not exist (issue #353; C deletes it too, #344). A read is
+        // any word-boundary mention besides the declaration itself and the
+        // target of a plain store — `return Ok(cur_x)` or an RHS use keeps the
+        // local legitimately, and rustc will never flag the dead one (lib.rs
+        // blanket-allows unused_variables/unused_assignments).
+        for cur in cur_locals_declared(peek) {
+            let read = peek.lines().any(|l| {
+                let t = l.trim();
+                if t.starts_with(&format!("let mut {cur}:"))
+                    || t.starts_with(&format!("let mut {cur} "))
+                {
+                    return false;
+                }
+                match t.strip_prefix(&format!("{cur} = ")) {
+                    Some(rhs) => mentions_word(rhs, &cur),
+                    None => mentions_word(t, &cur),
+                }
+            });
+            if read {
+                cur_readers += 1;
+            } else {
+                offenders.push(format!("{name}: declares dead local {cur}"));
+            }
+        }
         // The frame must READ an accumulator: a field it never names is
         // no evidence about the copy either way.
         if accs.iter().any(|f| peek.contains(&format!("{f}["))) {
@@ -558,6 +615,15 @@ fn no_rust_peek_copies_the_handle() {
         "only {} handle(s) have a peek frame that reads an accumulator — the sweep \
          is looking for something that is not there",
         fully_shadowed.len()
+    );
+    // Non-vacuity for the dead-`cur_` arm: frames that legitimately read the
+    // local they declare must exist in force, or the arm is sweeping air.
+    // 29 at issue #353 time — most cur_ declarations live in update frames,
+    // which this sweep does not enter.
+    assert!(
+        cur_readers > 20,
+        "only {cur_readers} peek frame(s) read the cur_ local they declare — the \
+         dead-local arm has nothing to discriminate against"
     );
     assert!(
         offenders.is_empty(),

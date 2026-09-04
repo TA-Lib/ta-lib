@@ -942,13 +942,11 @@ impl CmoStream {
             let outReal = &mut outReal;
             let mut tempValue1: f64 = 0.0_f64;
             let mut tempValue2: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut prevGain = sp.prevGain;
             let mut prevLoss = sp.prevLoss;
             let mut prevValue = sp.prevValue;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             tempValue1 = inReal;

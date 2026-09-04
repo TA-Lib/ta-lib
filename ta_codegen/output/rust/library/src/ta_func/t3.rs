@@ -936,7 +936,6 @@ impl T3Stream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             let mut e1 = sp.e1;
             let mut e2 = sp.e2;
             let mut e3 = sp.e3;
@@ -945,7 +944,6 @@ impl T3Stream {
             let mut e6 = sp.e6;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             e1 = (sp.one_minus_k as f64).mul_add(e1, sp.k * inReal);

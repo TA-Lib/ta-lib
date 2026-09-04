@@ -815,12 +815,10 @@ impl DemaStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             let mut prevEMA1 = sp.prevEMA1;
             let mut prevEMA2 = sp.prevEMA2;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             prevEMA1 = (inReal - prevEMA1 as f64).mul_add(sp.optInK_1, prevEMA1);
