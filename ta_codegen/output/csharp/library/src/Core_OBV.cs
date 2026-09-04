@@ -377,7 +377,7 @@ public partial class Core
          if( !double.IsFinite(inReal) || !double.IsFinite(inVolume) ) throw Core.StreamFailure("OBV", "peek", RetCode.BadParam);
          ObvStream sp = this;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevOBV = sp.prevOBV;
          tempReal = inReal;
          if( tempReal > sp.prevReal ) {

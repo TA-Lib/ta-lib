@@ -333,7 +333,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ACOS", "peek", RetCode.BadParam);
          AcosStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Acos(inReal);
          return cur_outReal;
       }

@@ -601,7 +601,7 @@
          double close = 0.0;
          double tmp = 0.0;
          double mfv = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double sumMFV = sp.sumMFV;
          double sumVol = sp.sumVol;
          sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];

@@ -1315,7 +1315,7 @@
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
          double Im = sp.Im;
          double Re = sp.Re;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int daysInTrend = sp.daysInTrend;
          int hilbertIdx = sp.hilbertIdx;
          double iTrend1 = sp.iTrend1;

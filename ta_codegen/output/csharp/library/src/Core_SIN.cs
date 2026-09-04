@@ -327,7 +327,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SIN", "peek", RetCode.BadParam);
          SinStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Sin(inReal);
          return cur_outReal;
       }

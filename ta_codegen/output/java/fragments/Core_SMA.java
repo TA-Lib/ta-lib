@@ -417,7 +417,7 @@
             throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
          SmaStream sp = this;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;

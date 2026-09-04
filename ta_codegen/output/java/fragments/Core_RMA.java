@@ -478,7 +478,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("RMA peek: BadParam", RetCode.BadParam);
          RmaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevRMA = sp.prevRMA;
          prevRMA = Math.fma(sp.wBeta, prevRMA, sp.wAlpha * inReal);
          cur_outReal = prevRMA;

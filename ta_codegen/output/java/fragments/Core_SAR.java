@@ -733,7 +733,7 @@
          double prevHigh = 0.0;
          double prevLow = 0.0;
          double af = sp.af;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double ep = sp.ep;
          int isLong = sp.isLong;
          double newHigh = sp.newHigh;

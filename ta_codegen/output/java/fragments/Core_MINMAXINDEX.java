@@ -516,8 +516,8 @@
          MinmaxindexStream sp = this;
          double tmpHigh = 0.0;
          double tmpLow = 0.0;
-         int cur_outMaxIdx = sp.cur_outMaxIdx;
-         int cur_outMinIdx = sp.cur_outMinIdx;
+         int cur_outMaxIdx = 0;
+         int cur_outMinIdx = 0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

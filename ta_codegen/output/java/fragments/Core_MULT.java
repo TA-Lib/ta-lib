@@ -310,7 +310,7 @@
          if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
             throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
          MultStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = inReal0 * inReal1;
          return cur_outReal;
       }

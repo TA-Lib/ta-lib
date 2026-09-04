@@ -333,7 +333,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("LOG10", "peek", RetCode.BadParam);
          Log10Stream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Log10(inReal);
          return cur_outReal;
       }

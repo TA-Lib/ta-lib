@@ -293,7 +293,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
          CoshStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.cosh(inReal);
          return cur_outReal;
       }

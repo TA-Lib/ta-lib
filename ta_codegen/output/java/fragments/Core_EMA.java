@@ -466,7 +466,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
          EmaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
          if( sp.optInTimePeriod == 1 ) {
             cur_outReal = inReal;

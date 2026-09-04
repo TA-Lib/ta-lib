@@ -374,7 +374,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
             throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
          MarketfiStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          /* A zero-volume bar would divide by zero. Neither reference guards
           * it -- they emit +/-Inf, or NaN when the range is zero too -- but
           * issue #112 settled that a successful call never emits NaN or Inf,

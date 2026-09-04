@@ -295,7 +295,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
          CosStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.cos(inReal);
          return cur_outReal;
       }

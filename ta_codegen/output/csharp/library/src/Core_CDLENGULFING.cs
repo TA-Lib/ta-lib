@@ -448,7 +448,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLENGULFING", "peek", RetCode.BadParam);
          CdlengulfingStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
               ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
               (inClose >= sp.lag1_inOpen &&

@@ -846,7 +846,7 @@ class Core {
              double medianPrice = 0.0;
              double osc = 0.0;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int oscBuffer_Idx = sp.oscBuffer_Idx;
              double sumFast = sp.sumFast;
              double sumSignal = sp.sumSignal;
@@ -1880,9 +1880,9 @@ class Core {
              double tempMiddle = 0.0;
              double tempLower = 0.0;
              double tempReal = 0.0;
-             double cur_outRealLowerBand = sp.cur_outRealLowerBand;
-             double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
-             double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+             double cur_outRealLowerBand = 0.0;
+             double cur_outRealMiddleBand = 0.0;
+             double cur_outRealUpperBand = 0.0;
              double periodTotalLower = sp.periodTotalLower;
              double periodTotalMiddle = sp.periodTotalMiddle;
              double periodTotalUpper = sp.periodTotalUpper;
@@ -2594,7 +2594,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
              AcosStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.acos(inReal);
              return cur_outReal;
           }
@@ -3127,7 +3127,7 @@ class Core {
              double close = 0.0;
              double tmp = 0.0;
              double ad = sp.ad;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              high = inHigh;
              low = inLow;
              tmp = high - low;
@@ -3642,7 +3642,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("ADD peek: BadParam", RetCode.BadParam);
              AddStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = inReal0 + inReal1;
              return cur_outReal;
           }
@@ -4380,7 +4380,7 @@ class Core {
              double close = 0.0;
              double tmp = 0.0;
              double ad = sp.ad;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double fastEMA = sp.fastEMA;
              double slowEMA = sp.slowEMA;
              high = inHigh;
@@ -5616,7 +5616,7 @@ class Core {
              double diffM = 0.0;
              double minusDI = 0.0;
              double plusDI = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevADX = sp.prevADX;
              double prevClose = sp.prevClose;
              double prevHigh = sp.prevHigh;
@@ -7453,7 +7453,7 @@ class Core {
              AoStream sp = this;
              double medianPrice = 0.0;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double sumFast = sp.sumFast;
              double sumSlow = sp.sumSlow;
              int pkSlot0 = -1;
@@ -9047,8 +9047,8 @@ class Core {
                 throw new TaLibArgumentException("AROON peek: BadParam", RetCode.BadParam);
              AroonStream sp = this;
              double tmp = 0.0;
-             double cur_outAroonDown = sp.cur_outAroonDown;
-             double cur_outAroonUp = sp.cur_outAroonUp;
+             double cur_outAroonDown = 0.0;
+             double cur_outAroonUp = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -9983,7 +9983,7 @@ class Core {
              AroonoscStream sp = this;
              double tmp = 0.0;
              double aroon = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -10695,7 +10695,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
              AsinStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.asin(inReal);
              return cur_outReal;
           }
@@ -11134,7 +11134,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
              AtanStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.atan(inReal);
              return cur_outReal;
           }
@@ -11872,7 +11872,7 @@ class Core {
              double tempCY = 0.0;
              double tempLT = 0.0;
              double tempHT = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevATR = sp.prevATR;
              /* Find the greatest of the 3 values. */
              tempLT = inLow;
@@ -12598,7 +12598,7 @@ class Core {
              double todaySum = 0.0;
              double todayDev = 0.0;
              int i = 0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              pkSlot0 = sp.winPos_i;
@@ -13144,7 +13144,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
              AvgpriceStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
              return cur_outReal;
           }
@@ -15482,7 +15482,7 @@ class Core {
              double S_y = sp.S_y;
              double S_yy = sp.S_yy;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int i = sp.i;
              int j = sp.j;
              double last_price_x = sp.last_price_x;
@@ -16717,7 +16717,7 @@ class Core {
                 throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
              BopStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              /* BOP is a fraction of the bar's own range, so it is scale-free and the
               * divisor only has to be positive. An exact test, not the fixed
               * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,
@@ -17439,7 +17439,7 @@ class Core {
              double theAverage = 0.0;
              double lastValue = 0.0;
              int j = 0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              lastValue = (inHigh + inLow + inClose) / 3;
@@ -18238,7 +18238,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL2CROWS peek: BadParam", RetCode.BadParam);
              Cdl2crowsStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -19020,7 +19020,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3BLACKCROWS peek: BadParam", RetCode.BadParam);
              Cdl3blackcrowsStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
              int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
              double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -19858,7 +19858,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3INSIDE peek: BadParam", RetCode.BadParam);
              Cdl3insideStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -20696,7 +20696,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3LINESTRIKE peek: BadParam", RetCode.BadParam);
              Cdl3linestrikeStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int Near_rangeType = sp.cs_Near_rangeType;
              int Near_avgPeriod = sp.cs_Near_avgPeriod;
              double Near_factor = sp.cs_Near_factor;
@@ -21439,7 +21439,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
              Cdl3outsideStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
                   ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
                   sp.lag1_inClose > sp.lag2_inOpen &&
@@ -22302,7 +22302,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3STARSINSOUTH peek: BadParam", RetCode.BadParam);
              Cdl3starsinsouthStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -23401,7 +23401,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3WHITESOLDIERS peek: BadParam", RetCode.BadParam);
              Cdl3whitesoldiersStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -24462,7 +24462,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLABANDONEDBABY peek: BadParam", RetCode.BadParam);
              CdlabandonedbabyStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -25573,7 +25573,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLADVANCEBLOCK peek: BadParam", RetCode.BadParam);
              CdladvanceblockStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -26596,7 +26596,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBELTHOLD peek: BadParam", RetCode.BadParam);
              CdlbeltholdStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -27399,7 +27399,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBREAKAWAY peek: BadParam", RetCode.BadParam);
              CdlbreakawayStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -28232,7 +28232,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCLOSINGMARUBOZU peek: BadParam", RetCode.BadParam);
              CdlclosingmarubozuStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -29027,7 +29027,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCONCEALBABYSWALL peek: BadParam", RetCode.BadParam);
              CdlconcealbabyswallStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
              int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
              double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -29859,7 +29859,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCOUNTERATTACK peek: BadParam", RetCode.BadParam);
              CdlcounterattackStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -30665,7 +30665,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDARKCLOUDCOVER peek: BadParam", RetCode.BadParam);
              CdldarkcloudcoverStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -31378,7 +31378,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJI peek: BadParam", RetCode.BadParam);
              CdldojiStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -32140,7 +32140,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJISTAR peek: BadParam", RetCode.BadParam);
              CdldojistarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -32957,7 +32957,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDRAGONFLYDOJI peek: BadParam", RetCode.BadParam);
              CdldragonflydojiStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -33673,7 +33673,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLENGULFING peek: BadParam", RetCode.BadParam);
              CdlengulfingStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
                   ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
                   (inClose >= sp.lag1_inOpen &&
@@ -34510,7 +34510,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLEVENINGDOJISTAR peek: BadParam", RetCode.BadParam);
              CdleveningdojistarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -35446,7 +35446,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLEVENINGSTAR peek: BadParam", RetCode.BadParam);
              CdleveningstarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -36306,7 +36306,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE peek: BadParam", RetCode.BadParam);
              CdlgapsidesidewhiteStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int Equal_rangeType = sp.cs_Equal_rangeType;
              int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
              double Equal_factor = sp.cs_Equal_factor;
@@ -37139,7 +37139,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLGRAVESTONEDOJI peek: BadParam", RetCode.BadParam);
              CdlgravestonedojiStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -38017,7 +38017,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHAMMER peek: BadParam", RetCode.BadParam);
              CdlhammerStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -39008,7 +39008,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHANGINGMAN peek: BadParam", RetCode.BadParam);
              CdlhangingmanStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -39934,7 +39934,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHARAMI peek: BadParam", RetCode.BadParam);
              CdlharamiStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -40809,7 +40809,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHARAMICROSS peek: BadParam", RetCode.BadParam);
              CdlharamicrossStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -41651,7 +41651,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIGHWAVE peek: BadParam", RetCode.BadParam);
              CdlhighwaveStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -42448,7 +42448,7 @@ class Core {
                 throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
              CdlhikkakeStream sp = this;
              int cd = sp.cd;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int patternResult = sp.patternResult;
              double savedHigh = sp.savedHigh;
              double savedLow = sp.savedLow;
@@ -43340,7 +43340,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
              CdlhikkakemodStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int patternCount = sp.patternCount;
              double patternHigh = sp.patternHigh;
              double patternLow = sp.patternLow;
@@ -44237,7 +44237,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHOMINGPIGEON peek: BadParam", RetCode.BadParam);
              CdlhomingpigeonStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -45095,7 +45095,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLIDENTICAL3CROWS peek: BadParam", RetCode.BadParam);
              Cdlidentical3crowsStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int Equal_rangeType = sp.cs_Equal_rangeType;
              int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
              double Equal_factor = sp.cs_Equal_factor;
@@ -45967,7 +45967,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLINNECK peek: BadParam", RetCode.BadParam);
              CdlinneckStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -46818,7 +46818,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLINVERTEDHAMMER peek: BadParam", RetCode.BadParam);
              CdlinvertedhammerStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -47688,7 +47688,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLKICKING peek: BadParam", RetCode.BadParam);
              CdlkickingStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -48540,7 +48540,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLKICKINGBYLENGTH peek: BadParam", RetCode.BadParam);
              CdlkickingbylengthStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -49359,7 +49359,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLADDERBOTTOM peek: BadParam", RetCode.BadParam);
              CdlladderbottomStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
              int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
              double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;
@@ -50152,7 +50152,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLONGLEGGEDDOJI peek: BadParam", RetCode.BadParam);
              CdllongleggeddojiStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -50915,7 +50915,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLONGLINE peek: BadParam", RetCode.BadParam);
              CdllonglineStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -51689,7 +51689,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMARUBOZU peek: BadParam", RetCode.BadParam);
              CdlmarubozuStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -52434,7 +52434,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATCHINGLOW peek: BadParam", RetCode.BadParam);
              CdlmatchinglowStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int Equal_rangeType = sp.cs_Equal_rangeType;
              int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
              double Equal_factor = sp.cs_Equal_factor;
@@ -53283,7 +53283,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATHOLD peek: BadParam", RetCode.BadParam);
              CdlmatholdStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -54268,7 +54268,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMORNINGDOJISTAR peek: BadParam", RetCode.BadParam);
              CdlmorningdojistarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -55212,7 +55212,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMORNINGSTAR peek: BadParam", RetCode.BadParam);
              CdlmorningstarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -56065,7 +56065,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLONNECK peek: BadParam", RetCode.BadParam);
              CdlonneckStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -56847,7 +56847,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLPIERCING peek: BadParam", RetCode.BadParam);
              CdlpiercingStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -57662,7 +57662,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLRICKSHAWMAN peek: BadParam", RetCode.BadParam);
              CdlrickshawmanStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -58577,7 +58577,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLRISEFALL3METHODS peek: BadParam", RetCode.BadParam);
              Cdlrisefall3methodsStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -59520,7 +59520,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSEPARATINGLINES peek: BadParam", RetCode.BadParam);
              CdlseparatinglinesStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -60427,7 +60427,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSHOOTINGSTAR peek: BadParam", RetCode.BadParam);
              CdlshootingstarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -61268,7 +61268,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSHORTLINE peek: BadParam", RetCode.BadParam);
              CdlshortlineStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -61991,7 +61991,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSPINNINGTOP peek: BadParam", RetCode.BadParam);
              CdlspinningtopStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
              int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
              double BodyShort_factor = sp.cs_BodyShort_factor;
@@ -62867,7 +62867,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTALLEDPATTERN peek: BadParam", RetCode.BadParam);
              CdlstalledpatternStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -63777,7 +63777,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTICKSANDWICH peek: BadParam", RetCode.BadParam);
              CdlsticksandwichStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int Equal_rangeType = sp.cs_Equal_rangeType;
              int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
              double Equal_factor = sp.cs_Equal_factor;
@@ -64589,7 +64589,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTAKURI peek: BadParam", RetCode.BadParam);
              CdltakuriStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -65399,7 +65399,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
              CdltasukigapStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int Near_rangeType = sp.cs_Near_rangeType;
              int Near_avgPeriod = sp.cs_Near_avgPeriod;
              double Near_factor = sp.cs_Near_factor;
@@ -66217,7 +66217,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTHRUSTING peek: BadParam", RetCode.BadParam);
              CdlthrustingStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -67011,7 +67011,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTRISTAR peek: BadParam", RetCode.BadParam);
              CdltristarStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
              int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
              double BodyDoji_factor = sp.cs_BodyDoji_factor;
@@ -67823,7 +67823,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLUNIQUE3RIVER peek: BadParam", RetCode.BadParam);
              Cdlunique3riverStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -68672,7 +68672,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS peek: BadParam", RetCode.BadParam);
              Cdlupsidegap2crowsStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
              int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
              double BodyLong_factor = sp.cs_BodyLong_factor;
@@ -69426,7 +69426,7 @@ class Core {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLXSIDEGAP3METHODS peek: BadParam", RetCode.BadParam);
              Cdlxsidegap3methodsStream sp = this;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
                  ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
                  inOpen < Math.max(sp.lag1_inClose, sp.lag1_inOpen) &&          /* 3rd opens within 2nd rb */
@@ -69966,7 +69966,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CEIL peek: BadParam", RetCode.BadParam);
              CeilStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.ceil(inReal);
              return cur_outReal;
           }
@@ -70712,7 +70712,7 @@ class Core {
              double close = 0.0;
              double tmp = 0.0;
              double mfv = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double sumMFV = sp.sumMFV;
              double sumVol = sp.sumVol;
              sumMFV -= sp.cb_mfv_flow[sp.mfv_Idx];
@@ -71622,7 +71622,7 @@ class Core {
              CmoStream sp = this;
              double tempValue1 = 0.0;
              double tempValue2 = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevGain = sp.prevGain;
              double prevLoss = sp.prevLoss;
              double prevValue = sp.prevValue;
@@ -72549,7 +72549,7 @@ class Core {
              double sum = 0.0;
              double diff = 0.0;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double downSum = sp.downSum;
              int nullRun = sp.nullRun;
              double prevValue = sp.prevValue;
@@ -73686,7 +73686,7 @@ class Core {
              double tempReal = 0.0;
              int windowStart = 0;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int j = sp.j;
              double shiftX = sp.shiftX;
              double shiftY = sp.shiftY;
@@ -74712,7 +74712,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COS peek: BadParam", RetCode.BadParam);
              CosStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.cos(inReal);
              return cur_outReal;
           }
@@ -75150,7 +75150,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COSH peek: BadParam", RetCode.BadParam);
              CoshStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.cosh(inReal);
              return cur_outReal;
           }
@@ -75820,7 +75820,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
              DemaStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevEMA1 = sp.prevEMA1;
              double prevEMA2 = sp.prevEMA2;
              if( sp.optInTimePeriod == 1 ) {
@@ -76427,7 +76427,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("DIV peek: BadParam", RetCode.BadParam);
              DivStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = inReal0 / inReal1;
              return cur_outReal;
           }
@@ -77151,9 +77151,9 @@ class Core {
              DonchianStream sp = this;
              double tmpLow = 0.0;
              double tmpHigh = 0.0;
-             double cur_outRealLowerBand = sp.cur_outRealLowerBand;
-             double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
-             double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+             double cur_outRealLowerBand = 0.0;
+             double cur_outRealMiddleBand = 0.0;
+             double cur_outRealUpperBand = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -78400,7 +78400,7 @@ class Core {
              double diffM = 0.0;
              double minusDI = 0.0;
              double plusDI = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevClose = sp.prevClose;
              double prevHigh = sp.prevHigh;
              double prevLow = sp.prevLow;
@@ -80313,7 +80313,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EMA peek: BadParam", RetCode.BadParam);
              EmaStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevMA = sp.prevMA;
              if( sp.optInTimePeriod == 1 ) {
                 cur_outReal = inReal;
@@ -80845,7 +80845,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EXP peek: BadParam", RetCode.BadParam);
              ExpStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.exp(inReal);
              return cur_outReal;
           }
@@ -81281,7 +81281,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("FLOOR peek: BadParam", RetCode.BadParam);
              FloorStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.floor(inReal);
              return cur_outReal;
           }
@@ -84486,7 +84486,7 @@ class Core {
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
              double Re = sp.Re;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int hilbertIdx = sp.hilbertIdx;
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
@@ -86454,7 +86454,7 @@ class Core {
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
              double Re = sp.Re;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int hilbertIdx = sp.hilbertIdx;
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
@@ -88477,8 +88477,8 @@ class Core {
              double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
-             double cur_outInPhase = sp.cur_outInPhase;
-             double cur_outQuadrature = sp.cur_outQuadrature;
+             double cur_outInPhase = 0.0;
+             double cur_outQuadrature = 0.0;
              int hilbertIdx = sp.hilbertIdx;
              double periodWMASub = sp.periodWMASub;
              double periodWMASum = sp.periodWMASum;
@@ -90456,8 +90456,8 @@ class Core {
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
              double Re = sp.Re;
-             double cur_outLeadSine = sp.cur_outLeadSine;
-             double cur_outSine = sp.cur_outSine;
+             double cur_outLeadSine = 0.0;
+             double cur_outSine = 0.0;
              int hilbertIdx = sp.hilbertIdx;
              double period = sp.period;
              double periodWMASub = sp.periodWMASub;
@@ -92577,7 +92577,7 @@ class Core {
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
              double Re = sp.Re;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int hilbertIdx = sp.hilbertIdx;
              double iTrend1 = sp.iTrend1;
              double iTrend2 = sp.iTrend2;
@@ -94838,7 +94838,7 @@ class Core {
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
              double Im = sp.Im;
              double Re = sp.Re;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int daysInTrend = sp.daysInTrend;
              int hilbertIdx = sp.hilbertIdx;
              double iTrend1 = sp.iTrend1;
@@ -97427,7 +97427,7 @@ class Core {
              double tempReal = 0.0;
              double tempReal2 = 0.0;
              double periodROC = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int nullRun = sp.nullRun;
              double prevKAMA = sp.prevKAMA;
              double sumROC1 = sp.sumROC1;
@@ -99413,7 +99413,7 @@ class Core {
              double SumXY = sp.SumXY;
              double SumY = sp.SumY;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int j = sp.j;
              double sumAbs = sp.sumAbs;
              int today = sp.today;
@@ -100556,7 +100556,7 @@ class Core {
              double SumXY = sp.SumXY;
              double SumY = sp.SumY;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int j = sp.j;
              double sumAbs = sp.sumAbs;
              int today = sp.today;
@@ -101692,7 +101692,7 @@ class Core {
              double SumXY = sp.SumXY;
              double SumY = sp.SumY;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int j = sp.j;
              double sumAbs = sp.sumAbs;
              int today = sp.today;
@@ -102823,7 +102823,7 @@ class Core {
              double SumXY = sp.SumXY;
              double SumY = sp.SumY;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int j = sp.j;
              double sumAbs = sp.sumAbs;
              int today = sp.today;
@@ -103649,7 +103649,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
              LnStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.log(inReal);
              return cur_outReal;
           }
@@ -104093,7 +104093,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
              Log10Stream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.log10(inReal);
              return cur_outReal;
           }
@@ -106260,9 +106260,9 @@ class Core {
              MacdStream sp = this;
              double macdValue = 0.0;
              double tempReal = 0.0;
-             double cur_outMACD = sp.cur_outMACD;
-             double cur_outMACDHist = sp.cur_outMACDHist;
-             double cur_outMACDSignal = sp.cur_outMACDSignal;
+             double cur_outMACD = 0.0;
+             double cur_outMACDHist = 0.0;
+             double cur_outMACDSignal = 0.0;
              double prevFast = sp.prevFast;
              double prevSignal = sp.prevSignal;
              double prevSlow = sp.prevSlow;
@@ -108350,9 +108350,9 @@ class Core {
              MacdfixStream sp = this;
              double macdValue = 0.0;
              double tempReal = 0.0;
-             double cur_outMACD = sp.cur_outMACD;
-             double cur_outMACDHist = sp.cur_outMACDHist;
-             double cur_outMACDSignal = sp.cur_outMACDSignal;
+             double cur_outMACD = 0.0;
+             double cur_outMACDHist = 0.0;
+             double cur_outMACDSignal = 0.0;
              double prevFast = sp.prevFast;
              double prevSignal = sp.prevSignal;
              double prevSlow = sp.prevSlow;
@@ -109894,8 +109894,8 @@ class Core {
              double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
              double I1ForOddPrev2 = sp.I1ForOddPrev2;
              double I1ForOddPrev3 = sp.I1ForOddPrev3;
-             double cur_outFAMA = sp.cur_outFAMA;
-             double cur_outMAMA = sp.cur_outMAMA;
+             double cur_outFAMA = 0.0;
+             double cur_outMAMA = 0.0;
              double fama = sp.fama;
              int hilbertIdx = sp.hilbertIdx;
              double mama = sp.mama;
@@ -111198,7 +111198,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("MARKETFI peek: BadParam", RetCode.BadParam);
              MarketfiStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              /* A zero-volume bar would divide by zero. Neither reference guards
               * it -- they emit +/-Inf, or NaN when the range is zero too -- but
               * issue #112 settled that a successful call never emits NaN or Inf,
@@ -113009,7 +113009,7 @@ class Core {
                 throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
              MaxStream sp = this;
              double tmp = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -113744,7 +113744,7 @@ class Core {
                 throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
              MaxindexStream sp = this;
              double tmp = 0.0;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -114344,7 +114344,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
              MedpriceStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = (inHigh + inLow) / 2.0;
              return cur_outReal;
           }
@@ -115154,7 +115154,7 @@ class Core {
              double posFlow = 0.0;
              double negFlow = 0.0;
              double posClamped = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double negSumMF = sp.negSumMF;
              int nullRun = sp.nullRun;
              double posSumMF = sp.posSumMF;
@@ -116181,7 +116181,7 @@ class Core {
              MidpointStream sp = this;
              double tmpLow = 0.0;
              double tmpHigh = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -117191,7 +117191,7 @@ class Core {
              MidpriceStream sp = this;
              double tmpLow = 0.0;
              double tmpHigh = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -118110,7 +118110,7 @@ class Core {
                 throw new TaLibArgumentException("MIN peek: BadParam", RetCode.BadParam);
              MinStream sp = this;
              double tmp = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int i = sp.i;
              double lowest = sp.lowest;
              int lowestIdx = sp.lowestIdx;
@@ -118843,7 +118843,7 @@ class Core {
                 throw new TaLibArgumentException("MININDEX peek: BadParam", RetCode.BadParam);
              MinindexStream sp = this;
              double tmp = 0.0;
-             int cur_outInteger = sp.cur_outInteger;
+             int cur_outInteger = 0;
              int i = sp.i;
              double lowest = sp.lowest;
              int lowestIdx = sp.lowestIdx;
@@ -119773,8 +119773,8 @@ class Core {
              MinmaxStream sp = this;
              double tmpHigh = 0.0;
              double tmpLow = 0.0;
-             double cur_outMax = sp.cur_outMax;
-             double cur_outMin = sp.cur_outMin;
+             double cur_outMax = 0.0;
+             double cur_outMin = 0.0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -120681,8 +120681,8 @@ class Core {
              MinmaxindexStream sp = this;
              double tmpHigh = 0.0;
              double tmpLow = 0.0;
-             int cur_outMaxIdx = sp.cur_outMaxIdx;
-             int cur_outMinIdx = sp.cur_outMinIdx;
+             int cur_outMaxIdx = 0;
+             int cur_outMinIdx = 0;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -124217,7 +124217,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
              MomStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              if( sp.ringCap_trailingIdx == 0 ) {
@@ -124754,7 +124754,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("MULT peek: BadParam", RetCode.BadParam);
              MultStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = inReal0 * inReal1;
              return cur_outReal;
           }
@@ -125572,7 +125572,7 @@ class Core {
              double tempCY = 0.0;
              double tempLT = 0.0;
              double tempHT = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevATR = sp.prevATR;
              /* Find the greatest of the 3 values. */
              tempLT = inLow;
@@ -126368,7 +126368,7 @@ class Core {
              double tempClose = 0.0;
              double tempVolume = 0.0;
              double tempNVI = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevNVI = sp.prevNVI;
              tempClose = inClose;
              tempVolume = inVolume;
@@ -126950,7 +126950,7 @@ class Core {
                 throw new TaLibArgumentException("OBV peek: BadParam", RetCode.BadParam);
              ObvStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevOBV = sp.prevOBV;
              tempReal = inReal;
              if( tempReal > sp.prevReal ) {
@@ -131033,7 +131033,7 @@ class Core {
              double tempClose = 0.0;
              double tempVolume = 0.0;
              double tempPVI = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevPVI = sp.prevPVI;
              tempClose = inClose;
              tempVolume = inVolume;
@@ -132462,7 +132462,7 @@ class Core {
                 throw new TaLibArgumentException("QSTICK peek: BadParam", RetCode.BadParam);
              QstickStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double periodTotal = sp.periodTotal;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
@@ -133194,7 +133194,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RMA peek: BadParam", RetCode.BadParam);
              RmaStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevRMA = sp.prevRMA;
              prevRMA = Math.fma(sp.wBeta, prevRMA, sp.wAlpha * inReal);
              cur_outReal = prevRMA;
@@ -133823,7 +133823,7 @@ class Core {
                 throw new TaLibArgumentException("ROC peek: BadParam", RetCode.BadParam);
              RocStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              if( sp.ringCap_trailingIdx == 0 ) {
@@ -134475,7 +134475,7 @@ class Core {
                 throw new TaLibArgumentException("ROCP peek: BadParam", RetCode.BadParam);
              RocpStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              if( sp.ringCap_trailingIdx == 0 ) {
@@ -135130,7 +135130,7 @@ class Core {
                 throw new TaLibArgumentException("ROCR peek: BadParam", RetCode.BadParam);
              RocrStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              if( sp.ringCap_trailingIdx == 0 ) {
@@ -135787,7 +135787,7 @@ class Core {
                 throw new TaLibArgumentException("ROCR100 peek: BadParam", RetCode.BadParam);
              Rocr100Stream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
              if( sp.ringCap_trailingIdx == 0 ) {
@@ -136648,7 +136648,7 @@ class Core {
              RsiStream sp = this;
              double tempValue1 = 0.0;
              double tempValue2 = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevGain = sp.prevGain;
              double prevLoss = sp.prevLoss;
              double prevValue = sp.prevValue;
@@ -137738,7 +137738,7 @@ class Core {
              double prevHigh = 0.0;
              double prevLow = 0.0;
              double af = sp.af;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double ep = sp.ep;
              int isLong = sp.isLong;
              double newHigh = sp.newHigh;
@@ -139344,7 +139344,7 @@ class Core {
              double prevLow = 0.0;
              double afLong = sp.afLong;
              double afShort = sp.afShort;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double ep = sp.ep;
              int isLong = sp.isLong;
              double newHigh = sp.newHigh;
@@ -140363,7 +140363,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
              SinStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.sin(inReal);
              return cur_outReal;
           }
@@ -140799,7 +140799,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
              SinhStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.sinh(inReal);
              return cur_outReal;
           }
@@ -141361,7 +141361,7 @@ class Core {
                 throw new TaLibArgumentException("SMA peek: BadParam", RetCode.BadParam);
              SmaStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double periodTotal = sp.periodTotal;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
@@ -142571,8 +142571,8 @@ class Core {
              double den = 0.0;
              double halfDen = 0.0;
              double smiValue = 0.0;
-             double cur_outSMI = sp.cur_outSMI;
-             double cur_outSMISignal = sp.cur_outSMISignal;
+             double cur_outSMI = 0.0;
+             double cur_outSMISignal = 0.0;
              double emaFastDen = sp.emaFastDen;
              double emaFastNum = sp.emaFastNum;
              double emaSlowDen = sp.emaSlowDen;
@@ -143525,7 +143525,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SQRT peek: BadParam", RetCode.BadParam);
              SqrtStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.sqrt(inReal);
              return cur_outReal;
           }
@@ -148219,7 +148219,7 @@ class Core {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("SUB peek: BadParam", RetCode.BadParam);
              SubStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = inReal0 - inReal1;
              return cur_outReal;
           }
@@ -148764,7 +148764,7 @@ class Core {
                 throw new TaLibArgumentException("SUM peek: BadParam", RetCode.BadParam);
              SumStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double periodTotal = sp.periodTotal;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
@@ -149725,8 +149725,8 @@ class Core {
              double basicUpper = 0.0;
              double basicLower = 0.0;
              double closeToday = 0.0;
-             int cur_outInteger = sp.cur_outInteger;
-             double cur_outReal = sp.cur_outReal;
+             int cur_outInteger = 0;
+             double cur_outReal = 0.0;
              double finalLower = sp.finalLower;
              double finalUpper = sp.finalUpper;
              int isUptrend = sp.isUptrend;
@@ -150861,7 +150861,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
              T3Stream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double e1 = sp.e1;
              double e2 = sp.e2;
              double e3 = sp.e3;
@@ -151507,7 +151507,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TAN peek: BadParam", RetCode.BadParam);
              TanStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.tan(inReal);
              return cur_outReal;
           }
@@ -151945,7 +151945,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TANH peek: BadParam", RetCode.BadParam);
              TanhStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = Math.tanh(inReal);
              return cur_outReal;
           }
@@ -152657,7 +152657,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TEMA peek: BadParam", RetCode.BadParam);
              TemaStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevEMA1 = sp.prevEMA1;
              double prevEMA2 = sp.prevEMA2;
              double prevEMA3 = sp.prevEMA3;
@@ -153394,7 +153394,7 @@ class Core {
              double tempCY = 0.0;
              double tempLT = 0.0;
              double tempHT = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              /* Find the greatest of the 3 values. */
              tempLT = inLow;
              tempHT = inHigh;
@@ -155564,7 +155564,7 @@ class Core {
                 throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
              TrixStream sp = this;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevEMA1 = sp.prevEMA1;
              double prevEMA2 = sp.prevEMA2;
              double prevEMA3 = sp.prevEMA3;
@@ -156447,7 +156447,7 @@ class Core {
              double SumXY = sp.SumXY;
              double SumY = sp.SumY;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int j = sp.j;
              double sumAbs = sp.sumAbs;
              int today = sp.today;
@@ -157304,7 +157304,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TYPPRICE peek: BadParam", RetCode.BadParam);
              TyppriceStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = (inHigh + inLow + inClose) / 3.0;
              return cur_outReal;
           }
@@ -158363,7 +158363,7 @@ class Core {
              double b1Total = sp.b1Total;
              double b2Total = sp.b2Total;
              double b3Total = sp.b3Total;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int nullRun = sp.nullRun;
              int term_Idx = sp.term_Idx;
              int trailingPos1 = sp.trailingPos1;
@@ -159618,7 +159618,7 @@ class Core {
              double meanValue1 = 0.0;
              double variance = 0.0;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              int i = sp.i;
              int j = sp.j;
              double periodTotal1 = sp.periodTotal1;
@@ -160691,7 +160691,7 @@ class Core {
              double typPrice = 0.0;
              double volume = 0.0;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double sumPV = sp.sumPV;
              double sumV = sp.sumV;
              double vwap = sp.vwap;
@@ -161642,7 +161642,7 @@ class Core {
              double tempPV = 0.0;
              double tempV = 0.0;
              double tempReal = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double sumPV = sp.sumPV;
              double sumV = sp.sumV;
              int pkSlot0 = -1;
@@ -162422,7 +162422,7 @@ class Core {
              WadStream sp = this;
              double close = 0.0;
              double trueExtreme = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double sum = sp.sum;
              close = inClose;
              if( close > sp.prevClose ) {
@@ -162993,7 +162993,7 @@ class Core {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
              WclpriceStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
              return cur_outReal;
           }
@@ -163824,7 +163824,7 @@ class Core {
                 throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
              WillrStream sp = this;
              double tmp = 0.0;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double diff = sp.diff;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
@@ -164847,7 +164847,7 @@ class Core {
              int rw = 0;
              double tempReal = 0.0;
              int barsSinceReseed = sp.barsSinceReseed;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double periodSub = sp.periodSub;
              double periodSum = sp.periodSum;
              double trailingValue = sp.trailingValue;
@@ -165890,7 +165890,7 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
              ZlemaStream sp = this;
-             double cur_outReal = sp.cur_outReal;
+             double cur_outReal = 0.0;
              double prevMA = sp.prevMA;
              int pkSlot0 = -1;
              double pkVal0 = 0.0;
@@ -166158,7 +166158,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "410022f7280640c2";
+    static final String SPLICED_GENCODE_DIGEST = "83a415a2571230dc";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

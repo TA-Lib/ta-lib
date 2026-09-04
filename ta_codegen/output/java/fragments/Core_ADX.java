@@ -926,7 +926,7 @@
          double diffM = 0.0;
          double minusDI = 0.0;
          double plusDI = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevADX = sp.prevADX;
          double prevClose = sp.prevClose;
          double prevHigh = sp.prevHigh;

@@ -584,7 +584,7 @@
          CmoStream sp = this;
          double tempValue1 = 0.0;
          double tempValue2 = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevGain = sp.prevGain;
          double prevLoss = sp.prevLoss;
          double prevValue = sp.prevValue;

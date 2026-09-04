@@ -658,7 +658,7 @@ public partial class Core
          MidpointStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

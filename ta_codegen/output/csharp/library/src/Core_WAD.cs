@@ -485,7 +485,7 @@ public partial class Core
          WadStream sp = this;
          double close = 0.0;
          double trueExtreme = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double sum = sp.sum;
          close = inClose;
          if( close > sp.prevClose ) {

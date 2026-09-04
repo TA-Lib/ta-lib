@@ -901,7 +901,7 @@
          double b1Total = sp.b1Total;
          double b2Total = sp.b2Total;
          double b3Total = sp.b3Total;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int nullRun = sp.nullRun;
          int term_Idx = sp.term_Idx;
          int trailingPos1 = sp.trailingPos1;

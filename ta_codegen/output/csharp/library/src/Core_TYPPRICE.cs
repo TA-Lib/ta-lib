@@ -356,7 +356,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("TYPPRICE", "peek", RetCode.BadParam);
          TyppriceStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose) / 3.0;
          return cur_outReal;
       }

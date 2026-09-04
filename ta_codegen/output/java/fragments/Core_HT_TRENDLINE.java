@@ -1086,7 +1086,7 @@
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
          double Im = sp.Im;
          double Re = sp.Re;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int hilbertIdx = sp.hilbertIdx;
          double iTrend1 = sp.iTrend1;
          double iTrend2 = sp.iTrend2;

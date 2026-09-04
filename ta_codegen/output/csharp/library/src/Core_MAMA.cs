@@ -1225,8 +1225,8 @@ public partial class Core
          double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
          double I1ForOddPrev2 = sp.I1ForOddPrev2;
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
-         double cur_outFAMA = sp.cur_outFAMA;
-         double cur_outMAMA = sp.cur_outMAMA;
+         double cur_outFAMA = 0.0;
+         double cur_outMAMA = 0.0;
          double fama = sp.fama;
          int hilbertIdx = sp.hilbertIdx;
          double mama = sp.mama;

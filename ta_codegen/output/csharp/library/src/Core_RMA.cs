@@ -507,7 +507,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("RMA", "peek", RetCode.BadParam);
          RmaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevRMA = sp.prevRMA;
          prevRMA = Math.FusedMultiplyAdd(sp.wBeta, prevRMA, sp.wAlpha * inReal);
          cur_outReal = prevRMA;

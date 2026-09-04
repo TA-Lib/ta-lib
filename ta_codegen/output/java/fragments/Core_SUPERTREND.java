@@ -738,8 +738,8 @@
          double basicUpper = 0.0;
          double basicLower = 0.0;
          double closeToday = 0.0;
-         int cur_outInteger = sp.cur_outInteger;
-         double cur_outReal = sp.cur_outReal;
+         int cur_outInteger = 0;
+         double cur_outReal = 0.0;
          double finalLower = sp.finalLower;
          double finalUpper = sp.finalUpper;
          int isUptrend = sp.isUptrend;

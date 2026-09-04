@@ -443,7 +443,7 @@ public partial class Core
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ROCP", "peek", RetCode.BadParam);
          RocpStream sp = this;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          if( sp.ringCap_trailingIdx == 0 ) {

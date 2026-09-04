@@ -678,7 +678,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("T3", "peek", RetCode.BadParam);
          T3Stream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double e1 = sp.e1;
          double e2 = sp.e2;
          double e3 = sp.e3;

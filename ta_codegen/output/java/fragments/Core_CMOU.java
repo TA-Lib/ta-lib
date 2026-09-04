@@ -577,7 +577,7 @@
          double sum = 0.0;
          double diff = 0.0;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double downSum = sp.downSum;
          int nullRun = sp.nullRun;
          double prevValue = sp.prevValue;

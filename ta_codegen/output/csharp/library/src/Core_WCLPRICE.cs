@@ -356,7 +356,7 @@ public partial class Core
       {
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WCLPRICE", "peek", RetCode.BadParam);
          WclpriceStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = (Math.FusedMultiplyAdd(inClose, 2.0, inHigh + inLow)) / 4.0;
          return cur_outReal;
       }

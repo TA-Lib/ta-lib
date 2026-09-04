@@ -954,7 +954,7 @@ public partial class Core
          double S_y = sp.S_y;
          double S_yy = sp.S_yy;
          int barsSinceReseed = sp.barsSinceReseed;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int i = sp.i;
          int j = sp.j;
          double last_price_x = sp.last_price_x;

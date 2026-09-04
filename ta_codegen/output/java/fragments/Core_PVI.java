@@ -394,7 +394,7 @@
          double tempClose = 0.0;
          double tempVolume = 0.0;
          double tempPVI = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevPVI = sp.prevPVI;
          tempClose = inClose;
          tempVolume = inVolume;

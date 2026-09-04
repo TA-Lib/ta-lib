@@ -301,7 +301,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ACOS peek: BadParam", RetCode.BadParam);
          AcosStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.acos(inReal);
          return cur_outReal;
       }

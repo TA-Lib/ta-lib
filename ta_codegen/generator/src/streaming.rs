@@ -865,6 +865,89 @@ impl StreamModel<'_> {
 // IR walking helpers
 // ---------------------------------------------------------------------------
 
+/// What a linear scan of a statement list concluded about one scalar local.
+#[derive(PartialEq, Eq, Clone, Copy)]
+enum FirstUse {
+    NotMentioned,
+    WriteFirst,
+    ReadOrUnknown,
+}
+
+/// Whether seeding `var` from the handle at the top of a peek frame is dead:
+/// every path that mentions it WRITES it before any read (issue #343). The
+/// analysis is deliberately conservative — a mention inside a loop or switch,
+/// a compound assignment, or an `if` whose arms disagree all answer `false`,
+/// which keeps the seed. `false` never mis-renders; it only leaves the one
+/// field load this exists to drop.
+pub fn peek_seed_is_dead(body: &[Statement], var: &str) -> bool {
+    fn reads(e: &Expr, var: &str) -> bool {
+        let mut hit = false;
+        walk_expr(e, &mut |x| match x {
+            Expr::Var(v) if v == var => hit = true,
+            Expr::ArrayAccess(n, _) if n == var => hit = true,
+            _ => {}
+        });
+        hit
+    }
+    fn mentions_stmts(list: &[Statement], var: &str) -> bool {
+        let mut hit = false;
+        for st in list {
+            walk_stmt_exprs(st, &mut |e| {
+                if reads(e, var) {
+                    hit = true;
+                }
+            });
+        }
+        hit
+    }
+    fn scan(list: &[Statement], var: &str) -> FirstUse {
+        for st in list {
+            match st {
+                Statement::Assign { target: Expr::Var(t), value, compound } if t == var => {
+                    if *compound || reads(value, var) {
+                        return FirstUse::ReadOrUnknown;
+                    }
+                    return FirstUse::WriteFirst;
+                }
+                Statement::If { condition, then_body, else_body, .. } => {
+                    if reads(condition, var) {
+                        return FirstUse::ReadOrUnknown;
+                    }
+                    let t = scan(then_body, var);
+                    let e = scan(else_body, var);
+                    // An arm that ends in `return` never rejoins the code
+                    // below the `if`; writing there settles that path for
+                    // good. This is the period-1 identity branch's exact
+                    // shape: `if( p == 1 ) { cur_x = in; return cur_x; }`.
+                    let t_exits = matches!(then_body.last(), Some(Statement::Return { .. }));
+                    let e_exits = matches!(else_body.last(), Some(Statement::Return { .. }));
+                    match (t, e) {
+                        (FirstUse::NotMentioned, FirstUse::NotMentioned) => {}
+                        (FirstUse::WriteFirst, FirstUse::WriteFirst) => {
+                            return FirstUse::WriteFirst;
+                        }
+                        (FirstUse::WriteFirst, FirstUse::NotMentioned) if t_exits => {}
+                        (FirstUse::NotMentioned, FirstUse::WriteFirst) if e_exits => {}
+                        // One arm writes without exiting and the other does not
+                        // touch it: the untouched path leaves the seed live
+                        // downstream.
+                        _ => return FirstUse::ReadOrUnknown,
+                    }
+                }
+                // A loop may run zero times and a switch arm is data-picked;
+                // any mention inside is treated as a read.
+                other => {
+                    if mentions_stmts(std::slice::from_ref(other), var) {
+                        return FirstUse::ReadOrUnknown;
+                    }
+                }
+            }
+        }
+        FirstUse::NotMentioned
+    }
+    scan(body, var) == FirstUse::WriteFirst
+}
+
 /// Visit every expression held by a statement tree (conditions, initializers,
 /// targets, values), recursing into nested statements.
 pub fn walk_stmt_exprs(s: &Statement, f: &mut dyn FnMut(&Expr)) {

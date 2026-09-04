@@ -343,7 +343,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal0) || !double.IsFinite(inReal1) ) throw Core.StreamFailure("DIV", "peek", RetCode.BadParam);
          DivStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = inReal0 / inReal1;
          return cur_outReal;
       }

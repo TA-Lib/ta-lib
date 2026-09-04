@@ -293,7 +293,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SIN peek: BadParam", RetCode.BadParam);
          SinStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.sin(inReal);
          return cur_outReal;
       }

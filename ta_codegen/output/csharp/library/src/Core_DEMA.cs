@@ -555,7 +555,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("DEMA", "peek", RetCode.BadParam);
          DemaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
          double prevEMA2 = sp.prevEMA2;
          if( sp.optInTimePeriod == 1 ) {

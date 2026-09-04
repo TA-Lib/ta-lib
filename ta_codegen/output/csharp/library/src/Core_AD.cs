@@ -427,7 +427,7 @@ public partial class Core
          double close = 0.0;
          double tmp = 0.0;
          double ad = sp.ad;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          high = inHigh;
          low = inLow;
          tmp = high - low;

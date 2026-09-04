@@ -575,8 +575,8 @@ public partial class Core
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) ) throw Core.StreamFailure("AROON", "peek", RetCode.BadParam);
          AroonStream sp = this;
          double tmp = 0.0;
-         double cur_outAroonDown = sp.cur_outAroonDown;
-         double cur_outAroonUp = sp.cur_outAroonUp;
+         double cur_outAroonDown = 0.0;
+         double cur_outAroonUp = 0.0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

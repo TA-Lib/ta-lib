@@ -303,7 +303,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ASIN peek: BadParam", RetCode.BadParam);
          AsinStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.asin(inReal);
          return cur_outReal;
       }

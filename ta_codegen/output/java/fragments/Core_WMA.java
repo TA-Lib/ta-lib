@@ -603,7 +603,7 @@
          int rw = 0;
          double tempReal = 0.0;
          int barsSinceReseed = sp.barsSinceReseed;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double periodSub = sp.periodSub;
          double periodSum = sp.periodSum;
          double trailingValue = sp.trailingValue;

@@ -1023,8 +1023,8 @@
          double I1ForEvenPrev3 = sp.I1ForEvenPrev3;
          double I1ForOddPrev2 = sp.I1ForOddPrev2;
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
-         double cur_outInPhase = sp.cur_outInPhase;
-         double cur_outQuadrature = sp.cur_outQuadrature;
+         double cur_outInPhase = 0.0;
+         double cur_outQuadrature = 0.0;
          int hilbertIdx = sp.hilbertIdx;
          double periodWMASub = sp.periodWMASub;
          double periodWMASum = sp.periodWMASum;

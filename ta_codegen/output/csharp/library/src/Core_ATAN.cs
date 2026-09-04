@@ -328,7 +328,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ATAN", "peek", RetCode.BadParam);
          AtanStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Atan(inReal);
          return cur_outReal;
       }

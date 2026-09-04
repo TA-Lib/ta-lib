@@ -651,7 +651,7 @@
          double posFlow = 0.0;
          double negFlow = 0.0;
          double posClamped = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double negSumMF = sp.negSumMF;
          int nullRun = sp.nullRun;
          double posSumMF = sp.posSumMF;

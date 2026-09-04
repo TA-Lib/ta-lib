@@ -521,7 +521,7 @@
             throw new TaLibArgumentException("TRIX peek: BadParam", RetCode.BadParam);
          TrixStream sp = this;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
          double prevEMA2 = sp.prevEMA2;
          double prevEMA3 = sp.prevEMA3;
