@@ -137,6 +137,7 @@ extern const TA_FuncDef TA_DEF_EFI;
 extern const TA_FuncDef TA_DEF_EMA;
 extern const TA_FuncDef TA_DEF_EXP;
 extern const TA_FuncDef TA_DEF_FLOOR;
+extern const TA_FuncDef TA_DEF_FOSC;
 extern const TA_FuncDef TA_DEF_HMA;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
 extern const TA_FuncDef TA_DEF_HT_DCPHASE;
@@ -306,6 +307,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_CMO,
 &TA_DEF_CMOU,
 &TA_DEF_DX,
+&TA_DEF_FOSC,
 &TA_DEF_IMI,
 &TA_DEF_MACD,
 &TA_DEF_MACDEXT,

@@ -95,6 +95,7 @@ EFI                 Elder's Force Index
 EMA                 Exponential Moving Average
 EXP                 Vector Arithmetic Exp
 FLOOR               Vector Floor
+FOSC                Forecast Oscillator
 HMA                 Hull Moving Average
 HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period
 HT_DCPHASE          Hilbert Transform - Dominant Cycle Phase

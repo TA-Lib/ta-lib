@@ -61,6 +61,54 @@ DEF_FUNCTION( FLOOR,
              );
 /* FLOOR END */
 
+/* FOSC BEGIN */
+static const TA_IntegerRange TA_DEF_FOSC_TimePeriod =
+{
+   2,
+   100000,
+   2,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_FOSC_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_FOSC_TimePeriod,
+   5,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_FOSC_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_FOSC_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_FOSC_OptInputs[] =
+{ &TA_DEF_UI_D_FOSC_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( FOSC,
+              TA_GroupId_MomentumIndicators,
+              "Forecast Oscillator",
+              TA_FUNC_FLG_STREAM
+             );
+/* FOSC END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -68,6 +116,7 @@ DEF_FUNCTION( FLOOR,
 const TA_FuncDef *TA_DEF_TableF[] =
 {
    ADD_TO_TABLE(FLOOR),
+   ADD_TO_TABLE(FOSC),
    NULL
 };
 

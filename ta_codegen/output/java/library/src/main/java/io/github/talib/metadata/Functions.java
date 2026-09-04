@@ -217,6 +217,7 @@ public final class Functions {
       put(m, f_EMA());
       put(m, f_EXP());
       put(m, f_FLOOR());
+      put(m, f_FOSC());
       put(m, f_HMA());
       put(m, f_HT_DCPERIOD());
       put(m, f_HT_DCPHASE());
@@ -1704,6 +1705,24 @@ public final class Functions {
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_FOSC() {
+      return new FunctionInfo(
+         "FOSC", "Momentum Indicators", "Forecast Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 5.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 200, 1, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

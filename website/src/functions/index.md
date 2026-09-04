@@ -59,6 +59,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [CMO](/functions/cmo.md) — Chande Momentum Oscillator
 - [CMOU](/functions/cmou.md) — Chande Momentum Oscillator (Unsmoothed)
 - [DX](/functions/dx.md) — Directional Movement Index
+- [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [IMI](/functions/imi.md) — Intraday Momentum Index
 - [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 - [MACDEXT](/functions/macdext.md) — MACD with controllable MA type

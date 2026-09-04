@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 182 technical-analysis indicators — moving averages, momentum oscillators,
+//! 183 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -169,7 +169,7 @@
 //! * [`TAN`](Core::TAN) — Vector Trigonometric Tan
 //! * [`TANH`](Core::TANH) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (38)
+//! ## Momentum Indicators (39)
 //!
 //! * [`AC`](Core::AC) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::ADX) — Average Directional Movement Index
@@ -183,6 +183,7 @@
 //! * [`CMO`](Core::CMO) — Chande Momentum Oscillator
 //! * [`CMOU`](Core::CMOU) — Chande Momentum Oscillator (Unsmoothed)
 //! * [`DX`](Core::DX) — Directional Movement Index
+//! * [`FOSC`](Core::FOSC) — Forecast Oscillator
 //! * [`IMI`](Core::IMI) — Intraday Momentum Index
 //! * [`MACD`](Core::MACD) — Moving Average Convergence/Divergence
 //! * [`MACDEXT`](Core::MACDEXT) — MACD with controllable MA type

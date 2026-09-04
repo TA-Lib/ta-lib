@@ -499,6 +499,7 @@ typedef enum
   TA_RMA_ORACLE_VACUOUS              = 1655,
   TA_ZLEMA_VACUOUS                   = 1656,
   TA_VHF_VACUOUS                     = 1657,
+  TA_FOSC_VACUOUS                    = 1658,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

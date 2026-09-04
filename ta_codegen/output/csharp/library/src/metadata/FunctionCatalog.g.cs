@@ -210,6 +210,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeEma(),
             MakeExp(),
             MakeFloor(),
+            MakeFosc(),
             MakeHma(),
             MakeHtDcperiod(),
             MakeHtDcphase(),
@@ -2386,6 +2387,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.FLOOR(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeFosc() => new(
+        name: "FOSC",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Forecast Oscillator",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 5, 2, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.FOSC_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.FOSC(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeHma() => new(
         name: "HMA",

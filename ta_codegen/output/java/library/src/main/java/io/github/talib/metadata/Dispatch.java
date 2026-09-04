@@ -347,6 +347,9 @@ final class Dispatch {
          case "FLOOR":
             return core.FLOOR(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "FOSC":
+            return core.FOSC(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "HMA":
             return core.HMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -807,6 +810,8 @@ final class Dispatch {
             return core.EXP_Lookback();
          case "FLOOR":
             return core.FLOOR_Lookback();
+         case "FOSC":
+            return core.FOSC_Lookback(h.intOpt(0));
          case "HMA":
             return core.HMA_Lookback(h.intOpt(0));
          case "HT_DCPERIOD":

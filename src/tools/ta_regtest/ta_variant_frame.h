@@ -4180,6 +4180,45 @@ static TA_RetCode TA_FLOOR_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_FLOOR[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_FLOOR[] = { 0 };
 
+static TA_RetCode TA_FOSC_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_FOSC(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_FOSC_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_FOSC(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_FOSC[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_FOSC[] = { 0 };
+static const TA_VOptSpec TA_VOpt_FOSC[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 5.0 },
+};
+
 static TA_RetCode TA_HMA_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7880,6 +7919,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_EXP, 0, NULL, 1, TA_VOutIsInt_EXP, 0 },
    { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameS,
      1, TA_VIn_FLOOR, 0, NULL, 1, TA_VOutIsInt_FLOOR, 0 },
+   { "FOSC", TA_FOSC_VFrameD, TA_FOSC_VFrameS,
+     1, TA_VIn_FOSC, 1, TA_VOpt_FOSC, 1, TA_VOutIsInt_FOSC, 0 },
    { "HMA", TA_HMA_VFrameD, TA_HMA_VFrameS,
      1, TA_VIn_HMA, 1, TA_VOpt_HMA, 1, TA_VOutIsInt_HMA, 0 },
    { "HT_DCPERIOD", TA_HT_DCPERIOD_VFrameD, TA_HT_DCPERIOD_VFrameS,
@@ -8052,6 +8093,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 182
+#define TA_VARIANT_TABLE_SIZE 183
 
 #endif /* TA_VARIANT_FRAME_H */

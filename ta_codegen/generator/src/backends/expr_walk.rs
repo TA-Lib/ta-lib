@@ -93,14 +93,30 @@ pub const ATOMIC_PREC: u8 = 12;
 /// Shared by the C-family backends: C, Java and C# share this exact operator
 /// precedence, and the only operators Rust ranks differently (bitwise `| ^ &`)
 /// are unused by the indicators, so the one table is correct for every backend.
+///
+/// One exception to "minimal": a bitwise operator's operands are wrapped as soon
+/// as they are not atomic, even where precedence already groups them right. gcc
+/// `-Wparentheses` rejects `a - 1 & mask` in the shipped library, and the
+/// ring-slot rewrite produces exactly that from any `arr[i - 1]`.
 #[must_use]
 pub fn wrap_child(rendered: String, child: &Expr, parent_prec: u8, is_right: bool) -> String {
     let cp = expr_prec(child);
-    if cp < parent_prec || (cp == parent_prec && is_right) {
+    if cp < parent_prec
+        || (cp == parent_prec && is_right)
+        || (cp < ATOMIC_PREC && is_bitwise_prec(parent_prec))
+    {
         format!("({rendered})")
     } else {
         rendered
     }
+}
+
+/// True for the precedence levels the bitwise binaries occupy. Derived from
+/// [`binop_prec`] rather than written out, so the two cannot drift.
+fn is_bitwise_prec(prec: u8) -> bool {
+    prec == binop_prec(&BinOp::BitwiseAnd)
+        || prec == binop_prec(&BinOp::BitwiseOr)
+        || prec == binop_prec(&BinOp::BitwiseXor)
 }
 
 /// Parenthesize a rendered *inlined helper body* when it is non-atomic (a binary

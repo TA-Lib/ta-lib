@@ -7590,6 +7590,84 @@ TA_LIB_API TA_RetCode TA_FLOOR_Value( const TA_FLOOR_Stream *stream, double *out
 TA_LIB_API TA_RetCode TA_FLOOR_Clone( const TA_FLOOR_Stream *stream, TA_FLOOR_Stream **clone );
 
 /*
+ * TA_FOSC - Forecast Oscillator
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Time period
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_FOSC( int    startIdx,
+                               int    endIdx,
+                                          const double inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_FOSC( int    startIdx,
+                                 int    endIdx,
+                                            const float  inReal[],
+                                            int           optInTimePeriod, /* From 2 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API int TA_FOSC_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_FOSC — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_FOSC_Stream TA_FOSC_Stream;
+
+TA_LIB_API TA_RetCode TA_FOSC_Open( TA_FOSC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_FOSC_Update( TA_FOSC_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_FOSC_Peek( const TA_FOSC_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_FOSC_Close( TA_FOSC_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_FOSC( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_FOSC_OpenAndFill( TA_FOSC_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_FOSC_Update calls, including the
+ * per-bar rejection. A rejected bar k leaves the bars before it committed and
+ * written, itself uncommitted and its output slot untouched; TA_StreamOutRange
+ * then reports k+1, the rejected bar being the last one counted. Outputs must
+ * not alias the inputs or each other.
+ */
+TA_LIB_API TA_RetCode TA_FOSC_UpdateAndFill( TA_FOSC_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update and UpdateAndFill, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_FOSC_Value( const TA_FOSC_Stream *stream, double *outReal );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_FOSC_Clone( const TA_FOSC_Stream *stream, TA_FOSC_Stream **clone );
+
+/*
  * TA_HMA - Hull Moving Average
  * 
  * Input  = double
