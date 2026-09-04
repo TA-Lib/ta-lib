@@ -1650,6 +1650,29 @@ DEF_FUNCTION( COSH,
              );
 /* COSH END */
 
+/* CUMSUM BEGIN */
+static const TA_InputParameterInfo    *TA_CUMSUM_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_CUMSUM_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_CUMSUM_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( CUMSUM,
+              TA_GroupId_MathOperators,
+              "Cumulative Sum",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* CUMSUM END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -1725,6 +1748,7 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CORREL),
    ADD_TO_TABLE(COS),
    ADD_TO_TABLE(COSH),
+   ADD_TO_TABLE(CUMSUM),
    NULL
 };
 

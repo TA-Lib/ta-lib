@@ -857,6 +857,15 @@ TA_RetCode TA_COSH_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_CUMSUM_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_CUMSUM_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_DEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

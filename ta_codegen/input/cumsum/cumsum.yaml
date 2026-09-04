@@ -1,0 +1,11 @@
+name: CUMSUM
+group: Math Operators
+hint: Cumulative Sum
+flags: [stream, path_dependent]
+inputs:
+  - name: inReal
+    type: real
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

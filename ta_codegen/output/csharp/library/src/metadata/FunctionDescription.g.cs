@@ -3868,6 +3868,33 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- CUMSUM -->
+	<FinancialFunction>
+		<Abbreviation>CUMSUM</Abbreviation>
+		<ShortDescription>Cumulative Sum</ShortDescription>
+		<GroupId>Math Operators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+			<Flag>Path Dependent</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- DEMA -->
 	<FinancialFunction>
 		<Abbreviation>DEMA</Abbreviation>

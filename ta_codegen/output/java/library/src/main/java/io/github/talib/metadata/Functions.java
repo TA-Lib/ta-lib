@@ -210,6 +210,7 @@ public final class Functions {
       put(m, f_CORREL());
       put(m, f_COS());
       put(m, f_COSH());
+      put(m, f_CUMSUM());
       put(m, f_DEMA());
       put(m, f_DIV());
       put(m, f_DONCHIAN());
@@ -1596,6 +1597,18 @@ public final class Functions {
    private static FunctionInfo f_COSH() {
       return new FunctionInfo(
          "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_CUMSUM() {
+      return new FunctionInfo(
+         "CUMSUM", "Math Operators", "Cumulative Sum", 0x22000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),

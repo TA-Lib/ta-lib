@@ -643,6 +643,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CUMSUM"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CUMSUM_Impl(
+                startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["DEMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.DEMA_Impl(

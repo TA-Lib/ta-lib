@@ -88,6 +88,7 @@ CMOU                Chande Momentum Oscillator (Unsmoothed)
 CORREL              Pearson's Correlation Coefficient (r)
 COS                 Vector Trigonometric Cos
 COSH                Vector Trigonometric Cosh
+CUMSUM              Cumulative Sum
 DEMA                Double Exponential Moving Average
 DIV                 Vector Arithmetic Div
 DONCHIAN            Donchian Channels

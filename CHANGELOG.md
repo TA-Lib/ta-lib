@@ -18,6 +18,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - AO: Awesome Oscillator (#227)
   - CMF: Chaikin Money Flow (#134)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
+  - CUMSUM: Cumulative Sum (#372)
   - DONCHIAN: Donchian Channels, the rolling extrema bands (#342)
   - DPO: Detrended Price Oscillator, price displaced back a half cycle less its moving average (#363)
   - EFI: Elder's Force Index (#206)
