@@ -327,8 +327,9 @@ fn no_managed_handle_caches_the_multi_output_value() {
 /// body provably overwrites it before any read (issue #343): a peek commits
 /// nothing, so the previous bar's output is never an input to the transition,
 /// and the seed was one dead field load per output per call. Swept over both
-/// managed backends — C writes through an out-param and Rust rebinds its
-/// locals, so only these two ever carried the shape. Exact-set in both
+/// managed backends: C writes the output through an out-param and has no such
+/// local, while Rust's period-1 identity frames do still carry the shape and
+/// are not covered here. Exact-set in both
 /// directions: a frame that grows a seed back fails, and so does a change
 /// that silently drops the one seed the analysis deliberately keeps — IMI,
 /// whose sole store sits inside the period loop, and the IR cannot prove a

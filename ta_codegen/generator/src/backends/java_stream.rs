@@ -1507,11 +1507,8 @@ fn peek_frame_arm_named(
         let (jty, default) = field_type_and_default(ty);
         let _ = writeln!(out, "{pad}{jty} {name} = {default};");
     }
-    // An output local whose every mentioning path writes it before any read
-    // does not need the handle's value: a peek commits nothing, so the previous
-    // bar's output is never an input to the transition (issue #343). Seeding it
-    // anyway is a dead field load on every call. Anything the analysis cannot
-    // prove keeps the seed.
+    // A peek commits nothing, so the previous bar's output is never an input
+    // to the transition (issue #343) and seeding it is a dead field load.
     let dead_seeds: BTreeSet<String> = func
         .outputs
         .iter()
