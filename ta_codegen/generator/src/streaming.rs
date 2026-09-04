@@ -10154,4 +10154,149 @@ mod tests {
         let m = analyze(&f).expect("analyzes");
         assert_eq!(names(&m.state), ["buf"]);
     }
+
+
+    // ---- peek_seed_is_dead -------------------------------------------------
+
+    fn out_local() -> &'static str {
+        "cur_outReal"
+    }
+
+    fn dead(body: Vec<Statement>) -> bool {
+        peek_seed_is_dead(&body, out_local())
+    }
+
+    fn ret_it() -> Statement {
+        Statement::Return { value: Some(var(out_local())) }
+    }
+
+    fn branch(condition: Expr, then_body: Vec<Statement>, else_body: Vec<Statement>) -> Statement {
+        Statement::If { condition, then_body, else_body, cond_comments: vec![] }
+    }
+
+    #[test]
+    fn an_unconditional_write_ahead_of_every_read_drops_the_seed() {
+        assert!(dead(vec![assign(var(out_local()), var("t")), ret_it()]));
+    }
+
+    /// The frame's own early exit is rewritten to `return cur_x`, so an exit
+    /// that computes nothing reads the seed and must keep it.
+    #[test]
+    fn an_early_exit_that_writes_nothing_keeps_the_seed() {
+        assert!(!dead(vec![
+            branch(var("degenerate"), vec![ret_it()], vec![]),
+            assign(var(out_local()), var("t")),
+        ]));
+    }
+
+    /// The period-1 identity arm (EMA, ZLEMA): it writes and leaves, so the
+    /// path that skips it still reaches the unconditional write below.
+    #[test]
+    fn an_arm_that_writes_and_returns_leaves_the_fallthrough_provable() {
+        assert!(dead(vec![
+            branch(
+                var("period1"),
+                vec![assign(var(out_local()), var("inReal")), ret_it()],
+                vec![],
+            ),
+            assign(var(out_local()), var("t")),
+        ]));
+    }
+
+    #[test]
+    fn an_else_arm_that_writes_and_returns_counts_the_same_as_a_then_arm() {
+        assert!(dead(vec![
+            branch(
+                var("ok"),
+                vec![],
+                vec![assign(var(out_local()), var("inReal")), ret_it()],
+            ),
+            assign(var(out_local()), var("t")),
+        ]));
+    }
+
+    #[test]
+    fn both_arms_writing_drops_the_seed() {
+        assert!(dead(vec![branch(
+            var("odd"),
+            vec![assign(var(out_local()), var("a"))],
+            vec![assign(var(out_local()), var("b"))],
+        )]));
+    }
+
+    /// One arm writes and rejoins, the other never mentions it: the rejoined
+    /// path leaves the seed live for whatever reads it below.
+    #[test]
+    fn an_arm_that_writes_without_leaving_keeps_the_seed() {
+        assert!(!dead(vec![
+            branch(var("odd"), vec![assign(var(out_local()), var("a"))], vec![]),
+            ret_it(),
+        ]));
+    }
+
+    #[test]
+    fn a_compound_assignment_keeps_the_seed() {
+        assert!(!dead(vec![Statement::Assign {
+            target: var(out_local()),
+            value: var("t"),
+            compound: true,
+        }]));
+    }
+
+    #[test]
+    fn a_write_whose_value_reads_it_keeps_the_seed() {
+        assert!(!dead(vec![assign(
+            var(out_local()),
+            add(var(out_local()), Expr::IntLiteral(1)),
+        )]));
+    }
+
+    #[test]
+    fn a_condition_that_reads_it_keeps_the_seed() {
+        assert!(!dead(vec![
+            branch(
+                le(var(out_local()), Expr::IntLiteral(0)),
+                vec![assign(var(out_local()), var("a"))],
+                vec![assign(var(out_local()), var("b"))],
+            ),
+            ret_it(),
+        ]));
+    }
+
+    /// IMI's shape, and the one seed the corpus still carries: the sole store
+    /// sits in the period loop, and a loop body is not provably entered.
+    #[test]
+    fn a_write_only_a_loop_body_makes_keeps_the_seed() {
+        assert!(!dead(vec![
+            Statement::ForC {
+                init: Box::new(assign(var("i"), Expr::IntLiteral(0))),
+                condition: le(var("i"), var("n")),
+                update: Box::new(assign(var("i"), add(var("i"), Expr::IntLiteral(1)))),
+                body: vec![assign(var(out_local()), var("t"))],
+            },
+            ret_it(),
+        ]));
+    }
+
+    /// A composed frame forwards the sub-stream's value from a switch arm,
+    /// which is data-picked: no arm is provably taken.
+    #[test]
+    fn a_write_only_a_switch_arm_makes_keeps_the_seed() {
+        assert!(!dead(vec![
+            Statement::Switch {
+                expr: var("maType"),
+                cases: vec![("0".to_string(), vec![assign(var(out_local()), var("sub"))])],
+                default: vec![],
+            },
+            ret_it(),
+        ]));
+    }
+
+    /// Not mentioning it at all is not the same as writing it: the emitter
+    /// keeps the seed rather than reasoning about a local nothing touches.
+    #[test]
+    fn a_body_that_never_mentions_it_keeps_the_seed() {
+        assert!(!dead(vec![assign(var("other"), var("t"))]));
+    }
+
 }
