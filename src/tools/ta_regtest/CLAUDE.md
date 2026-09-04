@@ -310,6 +310,15 @@ interchangeable, and the coverage they add is very uneven:
 | `OpenInternal` anchored leg | `OpenInternal(S)` vs `batch(S)` at the last bar | same — one more open, no update |
 | `Peek` | Peek vs the Update that immediately follows it, every bar | a defect in the step: both run it, on the same arguments |
 | **peek repeat** | `peek(t)`, `peek(t-1)`, `peek(t)` with no update between: the two answers for bar `t` must be bit-identical | a peek that commits something no later peek reads back — the twin-handle state compare below is what covers that, and it is C-only |
+
+The middle bar of the repeat probe is one the batch never evaluates, and a peek
+is allowed to refuse it: a composed stream hands a sub-stream a DERIVED value,
+which can be non-finite for finite inputs. Every backend counts a refusal in
+`peek_rejects` and compares nothing for it — a refusal writes no result, so
+comparing anyway reads the previous probe's. What keeps that honest is the pair
+of floors: every streaming function must report a non-zero `peek_reps`, and
+refusals outnumbering completed probes on one request is a failure of its own.
+
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers |
 | `UpdateAndFill` | `Open(P)` then ONE call over the tail, every value vs batch, plus canary slack and the rejections each backend can express (aliased or overlapping output, an output shorter than the run, a negative count, a zero-bar no-op) | what every value family is blind to — whether the handle knows how many bars it has consumed |
 | **range** | the handle's `OutRange` against the batch range, at four sites: the `OpenAndFill` handle, `Open(P)` + updates, `Open(P)` + one `UpdateAndFill`, and the anchored `OpenInternal` | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |

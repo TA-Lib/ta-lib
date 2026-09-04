@@ -3890,7 +3890,25 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
              * C-only. */
             {
                 int pr = stream_flag(ctx->responseBuf, "\"peek_reps\":");
+                int pj = stream_flag(ctx->responseBuf, "\"peek_rejects\":");
                 if( pr > 0 ) peekReps += pr;
+                /* A peek is allowed to refuse a bar: the probe feeds it one the
+                 * batch never visits, and a composed stream can derive a
+                 * non-finite intermediate from finite inputs. A refusal is
+                 * counted here rather than failed -- but it must stay the
+                 * exception. More refusals than completed probes means the leg
+                 * has stopped measuring and its `peek_rep_ok` is vacuous. */
+                if( pj > 0 && pj > pr )
+                {
+                    printf("STREAM PEEK REJECT FLOOD [TA_%s] vector=%d K=%d compat=%d\n"
+                           "  %d peek refusal(s) against %d completed repeat probe(s)\n"
+                           "  request:  %s\n  response: %s\n",
+                           funcInfo->name, v, K, compat, pj, pr,
+                           ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
                 if( stream_flag(ctx->responseBuf, "\"peek_rep_ok\":") == 0 )
                 {
                     printf("STREAM PEEK REPEAT MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
