@@ -7768,6 +7768,47 @@
 	</FinancialFunction>
 
 
+	<!-- VHF -->
+	<FinancialFunction>
+		<Abbreviation>VHF</Abbreviation>
+		<ShortDescription>Vertical Horizontal Filter</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>14</SuggestedStart>
+					<SuggestedEnd>56</SuggestedEnd>
+					<SuggestedIncrement>7</SuggestedIncrement>
+				</Range>
+				<DefaultValue>28</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- VWAP -->
 	<FinancialFunction>
 		<Abbreviation>VWAP</Abbreviation>

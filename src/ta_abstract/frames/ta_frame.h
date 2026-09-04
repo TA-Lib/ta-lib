@@ -1613,6 +1613,15 @@ TA_RetCode TA_VAR_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_VAR_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_VHF_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_VHF_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_VWAP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

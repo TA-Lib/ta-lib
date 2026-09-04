@@ -214,6 +214,7 @@ extern const TA_FuncDef TA_DEF_TSF;
 extern const TA_FuncDef TA_DEF_TYPPRICE;
 extern const TA_FuncDef TA_DEF_ULTOSC;
 extern const TA_FuncDef TA_DEF_VAR;
+extern const TA_FuncDef TA_DEF_VHF;
 extern const TA_FuncDef TA_DEF_VWAP;
 extern const TA_FuncDef TA_DEF_VWMA;
 extern const TA_FuncDef TA_DEF_WAD;
@@ -328,6 +329,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_STOCHRSI,
 &TA_DEF_TRIX,
 &TA_DEF_ULTOSC,
+&TA_DEF_VHF,
 &TA_DEF_WAD,
 &TA_DEF_WILLR,
 NULL };

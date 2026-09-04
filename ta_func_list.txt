@@ -172,6 +172,7 @@ TSF                 Time Series Forecast
 TYPPRICE            Typical Price
 ULTOSC              Ultimate Oscillator
 VAR                 Variance
+VHF                 Vertical Horizontal Filter
 VWAP                Volume Weighted Average Price
 VWMA                Volume Weighted Moving Average
 WAD                 Williams' Accumulation/Distribution

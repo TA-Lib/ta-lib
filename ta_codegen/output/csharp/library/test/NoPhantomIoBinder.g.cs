@@ -1147,6 +1147,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["VHF"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.VHF_Impl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["VWAP"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.VWAP_Impl(

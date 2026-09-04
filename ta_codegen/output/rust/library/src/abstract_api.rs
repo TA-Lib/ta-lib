@@ -390,6 +390,8 @@ pub enum FuncId {
     ULTOSC,
     /// Variance — [`Core::VAR`](crate::Core::VAR).
     VAR,
+    /// Vertical Horizontal Filter — [`Core::VHF`](crate::Core::VHF).
+    VHF,
     /// Volume Weighted Average Price — [`Core::VWAP`](crate::Core::VWAP).
     VWAP,
     /// Volume Weighted Moving Average — [`Core::VWMA`](crate::Core::VWMA).
@@ -408,7 +410,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 181;
+    pub const COUNT: usize = 182;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -733,7 +735,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 181] = [
+static FUNC_TABLE: [FuncInfo; 182] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2649,6 +2651,17 @@ static FUNC_TABLE: [FuncInfo; 181] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::VHF,
+        name: "VHF",
+        group: Group::MomentumIndicators,
+        hint: "Vertical Horizontal Filter",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 28, suggested: (14, 56, 7) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::VWAP,
         name: "VWAP",
         group: Group::VolumeIndicators,
@@ -2917,6 +2930,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "TYPPRICE" => FuncId::TYPPRICE,
         "ULTOSC" => FuncId::ULTOSC,
         "VAR" => FuncId::VAR,
+        "VHF" => FuncId::VHF,
         "VWAP" => FuncId::VWAP,
         "VWMA" => FuncId::VWMA,
         "WAD" => FuncId::WAD,
@@ -3355,6 +3369,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::TYPPRICE => self.core.TYPPRICE_Lookback(),
             FuncId::ULTOSC => self.core.ULTOSC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::VAR => self.core.VAR_Lookback(self.int_opt[0], self.real_opt[1]),
+            FuncId::VHF => self.core.VHF_Lookback(self.int_opt[0]),
             FuncId::VWAP => self.core.VWAP_Lookback(),
             FuncId::VWMA => self.core.VWMA_Lookback(self.int_opt[0]),
             FuncId::WAD => self.core.WAD_Lookback(),
@@ -5473,6 +5488,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.VAR(start_idx, end_idx, i0, self.int_opt[0], self.real_opt[1], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::VHF => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.VHF(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

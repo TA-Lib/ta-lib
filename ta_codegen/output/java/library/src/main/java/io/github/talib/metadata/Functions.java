@@ -294,6 +294,7 @@ public final class Functions {
       put(m, f_TYPPRICE());
       put(m, f_ULTOSC());
       put(m, f_VAR());
+      put(m, f_VHF());
       put(m, f_VWAP());
       put(m, f_VWMA());
       put(m, f_WAD());
@@ -3193,6 +3194,24 @@ public final class Functions {
                "Deviations", "Nb of deviations", 1.0,
                -3e37, 3e37, 2, -2.0, 2.0, 0.2,
                0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_VHF() {
+      return new FunctionInfo(
+         "VHF", "Momentum Indicators", "Vertical Horizontal Filter", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 28.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 14, 56, 7, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

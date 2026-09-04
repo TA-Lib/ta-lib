@@ -287,6 +287,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeTypprice(),
             MakeUltosc(),
             MakeVar(),
+            MakeVhf(),
             MakeVwap(),
             MakeVwma(),
             MakeWad(),
@@ -4155,6 +4156,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.VAR(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
+
+    private static FunctionInfo MakeVhf() => new(
+        name: "VHF",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Vertical Horizontal Filter",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 28, 14, 56, 7)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.VHF_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.VHF(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeVwap() => new(
         name: "VWAP",

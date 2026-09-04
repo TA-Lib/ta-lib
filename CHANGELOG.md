@@ -29,6 +29,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - RMA: Wilder's Smoothed Moving Average (#348)
   - SMI: Stochastic Momentum Index (#238)
   - SUPERTREND: SuperTrend, an ATR-scaled trailing band with a trend flag (#272)
+  - VHF: Vertical Horizontal Filter, a trend-versus-range strength filter (#346)
   - VWAP: Volume Weighted Average Price (#237)
   - VWMA: Volume Weighted Moving Average (#131)
   - WAD: Williams' Accumulation/Distribution (#200)

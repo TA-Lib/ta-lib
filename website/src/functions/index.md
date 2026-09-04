@@ -82,6 +82,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [STOCHRSI](/functions/stochrsi.md) — Stochastic Relative Strength Index
 - [TRIX](/functions/trix.md) — 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 - [ULTOSC](/functions/ultosc.md) — Ultimate Oscillator
+- [VHF](/functions/vhf.md) — Vertical Horizontal Filter
 - [WAD](/functions/wad.md) — Williams' Accumulation/Distribution
 - [WILLR](/functions/willr.md) — Williams' %R
 
