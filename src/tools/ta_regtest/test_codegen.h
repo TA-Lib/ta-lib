@@ -4,6 +4,17 @@
 #include "ta_error_number.h"
 #include "ta_test_priv.h"
 
+/* The widest output arity the hand-written harness sizes its buffers for.
+ * The generated side counts this from the corpus (backends/common.rs
+ * max_output_arity(), #262); this define is the one place the number is still
+ * written down by hand. It is enforced, not assumed: main() fails at startup
+ * with TA_CODEGEN_OUTPUT_ARITY_EXCEEDS_CAP if any registered function is
+ * wider (codegen_output_arity_within_cap below), because the comparison loops
+ * clamp at this cap (a wider function would silently pass with its extra
+ * outputs unverified) and the range-test param struct sizes its buffer arrays
+ * with it (issue #352). */
+#define CODEGEN_MAX_OUTPUTS  3
+
 /* Run codegen verification tests against one or more languages.
  * languageFilter: comma-separated list of languages to test (NULL = test all).
  *   Valid values: "rust", "c", "java", "csharp"
@@ -11,6 +22,13 @@
  * Errors loudly if a requested language's server cannot be started.
  */
 ErrorNumber test_codegen_unstable_map( void );
+
+/* Fails with TA_CODEGEN_OUTPUT_ARITY_EXCEEDS_CAP if any registered function
+ * has nbOutput > CODEGEN_MAX_OUTPUTS (issue #352). Call with the library
+ * initialized, ahead of every run mode — the clamped loops and sized buffers
+ * this protects are used by the normal suite, --codegen, --fuzz-064 and
+ * --xlang-hash alike. */
+ErrorNumber codegen_output_arity_within_cap( void );
 
 ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,

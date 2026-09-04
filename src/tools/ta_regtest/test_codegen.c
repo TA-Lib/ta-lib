@@ -504,7 +504,7 @@ static int check_stream_counter_parity( void )
  * the %.15g transport was never the limit. Applied as 1e-9 * max(1, |value|). */
 #define CODEGEN_EPSILON_DOUBLE  1e-9
 #define JSON_BUF_SIZE    (128 * 1024)   /* 128KB: enough for OHLCV inputs */
-#define MAX_OUTPUTS      3              /* Max outputs any TA function has */
+#define MAX_OUTPUTS      CODEGEN_MAX_OUTPUTS   /* enforced at startup, issue #352 */
 
 /* ---- Minimal JSON helpers (no library dependency) ---- */
 
@@ -9589,6 +9589,37 @@ static void cdl_collect(const TA_FuncInfo *fi, void *opaque)
     CdlList *L = (CdlList *)opaque;
     if( (fi->flags & TA_FUNC_FLG_CANDLESTICK) && L->n < 128 )
     { L->h[L->n] = fi->handle; L->nm[L->n] = fi->name; L->n++; }
+}
+
+/* ---- Output-arity cap guard (issue #352) ----
+ * CODEGEN_MAX_OUTPUTS is a hand-written cap over hand-written buffers; nothing
+ * else checks it. Every comparison loop in this file clamps at it, so a wider
+ * function would report PASS with outputs 3+ never compared, and
+ * CodegenRangeTestParam's buffer arrays are sized with it, so the unclamped
+ * loops would read past the struct. Fail loudly at startup instead — called
+ * from main() ahead of every run mode, because --fuzz-064 and --xlang-hash are
+ * self-contained early returns that never reach test_codegen(), and their
+ * buffers and clamped loops live in this file too. The library must be
+ * initialized when this runs (TA_ForEachFunc walks the registered table). */
+static void arity_cap_check(const TA_FuncInfo *funcInfo, void *opaqueData)
+{
+    if( funcInfo->nbOutput > MAX_OUTPUTS )
+    {
+        printf("\nFAIL - %s has %u outputs but CODEGEN_MAX_OUTPUTS is %d.\n"
+               "       Raise it in test_codegen.h; the harness buffers and\n"
+               "       clamped loops size from it.\n",
+               funcInfo->name, (unsigned int)funcInfo->nbOutput, MAX_OUTPUTS);
+        (*(int *)opaqueData)++;
+    }
+}
+
+ErrorNumber codegen_output_arity_within_cap(void)
+{
+    int wide = 0;
+    TA_ForEachFunc(arity_cap_check, &wide);
+    if( wide != 0 )
+        return TA_CODEGEN_OUTPUT_ARITY_EXCEEDS_CAP;
+    return TA_TEST_PASS;
 }
 
 static ErrorNumber verify_fuzz_candle_nonvacuous(void)

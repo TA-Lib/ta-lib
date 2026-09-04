@@ -219,6 +219,23 @@ int main( int argc, char **argv )
    printf( "Random seed: %u  (replay with --seed=%u)\n", randSeed, randSeed );
    srand( randSeed );
 
+   /* The output-arity cap must hold before anything sizes or clamps by it
+    * (issue #352) — checked here rather than inside test_codegen() because
+    * --fuzz-064 and --xlang-hash below are self-contained early returns that
+    * never reach it, and their buffers clamp at the same cap. */
+   {
+      ErrorNumber arityRet;
+      if( TA_Initialize() != TA_SUCCESS )
+      {
+         printf( "TA_Initialize failed\n" );
+         return TA_TESTUTIL_INIT_FAILED;
+      }
+      arityRet = codegen_output_arity_within_cap();
+      TA_Shutdown();
+      if( arityRet != TA_TEST_PASS )
+         return arityRet;
+   }
+
    /* Opt-in bit-exact differential fuzz vs released v0.6.4 (ta_064_serve).
     * Self-contained: init the lib, run the fuzz, done — skips the rest. */
    if( doFuzz064 )
