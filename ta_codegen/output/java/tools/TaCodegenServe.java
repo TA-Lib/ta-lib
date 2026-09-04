@@ -160439,24 +160439,16 @@ class Core {
        }
        /**
         * Vertical Horizontal Filter: Adam White's trend-versus-range filter, the
-        * net directional travel of a window divided by the total distance actually
-        * travelled. Bounded in [0,1]. Values near 1 mean the market covered most of
-        * its path in one direction (trending); values near 0 mean it retraced
-        * repeatedly and went nowhere (choppy). Like ADX and CMO it measures trend
-        * *strength*, not direction, but it uses no smoothing and carries no
-        * recursion. A common use is regime selection: run trend-following logic
-        * while VHF is high, oscillator logic while it is low.
+        * range a window covered divided by the path it actually travelled. Bounded
+        * in [0,1]. Values near 1 mean the market covered most of its path in one
+        * direction (trending); values near 0 mean it retraced repeatedly and went
+        * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
+        * but it uses no smoothing and carries no recursion. A common use is regime
+        * selection: run trend-following logic while VHF is high, oscillator logic
+        * while it is low.
         * <p><b>Formula</b>
         * <pre>{@code
-        * Over the `optInTimePeriod` most recent closes, the numerator is the range spanned:
-        * ```text
-        * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t])
-        * ```
-        * The denominator is the total absolute movement over the same number of changes, which reaches one bar further back:
-        * ```text
-        * den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t
-        * VHF = num / den
-        * ```
+        * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
         * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
         * }</pre>
         * <p><b>Notes</b>
@@ -160518,24 +160510,16 @@ class Core {
        }
        /**
         * Vertical Horizontal Filter: Adam White's trend-versus-range filter, the
-        * net directional travel of a window divided by the total distance actually
-        * travelled. Bounded in [0,1]. Values near 1 mean the market covered most of
-        * its path in one direction (trending); values near 0 mean it retraced
-        * repeatedly and went nowhere (choppy). Like ADX and CMO it measures trend
-        * *strength*, not direction, but it uses no smoothing and carries no
-        * recursion. A common use is regime selection: run trend-following logic
-        * while VHF is high, oscillator logic while it is low.
+        * range a window covered divided by the path it actually travelled. Bounded
+        * in [0,1]. Values near 1 mean the market covered most of its path in one
+        * direction (trending); values near 0 mean it retraced repeatedly and went
+        * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
+        * but it uses no smoothing and carries no recursion. A common use is regime
+        * selection: run trend-following logic while VHF is high, oscillator logic
+        * while it is low.
         * <p><b>Formula</b>
         * <pre>{@code
-        * Over the `optInTimePeriod` most recent closes, the numerator is the range spanned:
-        * ```text
-        * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t])
-        * ```
-        * The denominator is the total absolute movement over the same number of changes, which reaches one bar further back:
-        * ```text
-        * den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t
-        * VHF = num / den
-        * ```
+        * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
         * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
         * }</pre>
         * <p><b>Notes</b>
@@ -166977,7 +166961,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4956e30eea88710a";
+    static final String SPLICED_GENCODE_DIGEST = "95716087a1da5ad4";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
