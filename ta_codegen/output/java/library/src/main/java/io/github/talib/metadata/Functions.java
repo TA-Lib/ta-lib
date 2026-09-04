@@ -207,6 +207,7 @@ public final class Functions {
       put(m, f_CMF());
       put(m, f_CMO());
       put(m, f_CMOU());
+      put(m, f_COPPOCK());
       put(m, f_CORREL());
       put(m, f_COS());
       put(m, f_COSH());
@@ -1558,6 +1559,34 @@ public final class Functions {
                "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_COPPOCK() {
+      return new FunctionInfo(
+         "COPPOCK", "Momentum Indicators", "Coppock Curve", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInWMAPeriod", 0x00000000,
+               "WMA Period", "Smoothing period for the ROC sum", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC1Period", 0x00000000,
+               "ROC-1 Period", "Short rate-of-change period", 11.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC2Period", 0x00000000,
+               "ROC-2 Period", "Long rate-of-change period", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

@@ -39,7 +39,7 @@
        from ta_codegen/input/ (sync_pom_indicator_count in main.rs); never edit
        it by hand, it will be overwritten. scripts/pre-release-checks.py is the
        release-time backstop in case generate wasn't run. -->
-  <description>Technical analysis library: 191 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
+  <description>Technical analysis library: 192 indicators (SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Stochastic, candlestick patterns) - the official Java port of TA-Lib, verified against the C reference.</description>
   <url>https://ta-lib.org</url>
   <inceptionYear>1999</inceptionYear>
 
