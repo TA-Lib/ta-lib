@@ -68,6 +68,7 @@
 #include <ctype.h>
 #include <math.h>
 #include "ta_test_priv.h"
+#include "test_codegen.h"
 
 /**** External functions declarations. ****/
 /* None */
@@ -767,8 +768,8 @@ static ErrorNumber abstract_verify_func_metadata(
  * --------------------------------------------------------------------------- */
 typedef struct { ErrorNumber firstErr; int checked; int failed; const char *filter; } MetaParityCtx;
 
-/* Comma-separated substring match against the function name (matches the
- * --function filter semantics used by test_codegen). NULL filter = match all. */
+/* The --function filter semantics of test_codegen, short-token rule included.
+ * NULL filter = match all. */
 static int metaMatchesFilter( const char *filter, const char *name )
 {
     char filterCopy[1024];
@@ -779,7 +780,11 @@ static int metaMatchesFilter( const char *filter, const char *name )
     token = strtok(filterCopy, ",");
     while( token != NULL )
     {
-        if( strstr(name, token) != NULL ) return 1;
+        if( strlen(token) <= 2 )
+        {
+            if( codegen_short_filter_token_matches(name, token) ) return 1;
+        }
+        else if( strstr(name, token) != NULL ) return 1;
         token = strtok(NULL, ",");
     }
     return 0;

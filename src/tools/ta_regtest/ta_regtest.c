@@ -665,6 +665,34 @@ static int tagPrefixMatches(const char *tags, const char *token)
    return 0;
 }
 
+/* Does any comma-separated element of `tags` accept this short token, by the
+ * '_'-component rule in test_codegen.h? The group tag is a list of names, so the
+ * rule applies per element: "DI" reaches the tag holding PLUS_DI and MINUS_DI.
+ */
+static int tagHasShortToken(const char *tags, const char *token)
+{
+   char elem[128];
+   const char *p = tags;
+
+   while( *p )
+   {
+      const char *end = strchr(p, ',');
+      size_t elemLen = (end == NULL) ? strlen(p) : (size_t)(end - p);
+
+      if( elemLen < sizeof(elem) )
+      {
+         memcpy(elem, p, elemLen);
+         elem[elemLen] = '\0';
+         if( codegen_short_filter_token_matches(elem, token) )
+            return 1;
+      }
+      if( end == NULL )
+         return 0;
+      p = end + 1;
+   }
+   return 0;
+}
+
 static int matchesFilter(const char *filter, const char *tags)
 {
    char filterCopy[1024];
@@ -679,7 +707,12 @@ static int matchesFilter(const char *filter, const char *tags)
    token = strtok(filterCopy, ",");
    while( token != NULL )
    {
-      if( strstr(tags, token) != NULL )
+      if( strlen(token) <= 2 )
+      {
+         if( tagHasShortToken(tags, token) )
+            return 1;
+      }
+      else if( strstr(tags, token) != NULL )
          return 1;
       if( tagPrefixMatches(tags, token) )
          return 1;

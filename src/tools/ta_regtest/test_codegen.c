@@ -1959,6 +1959,26 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
 
 /* ---- Filter helper ---- */
 
+/* Documented in test_codegen.h. */
+int codegen_short_filter_token_matches(const char *name, const char *token)
+{
+    size_t len = strlen(token);
+    const char *p = name;
+
+    while( *p )
+    {
+        const char *end = strchr(p, '_');
+        size_t segLen = (end == NULL) ? strlen(p) : (size_t)(end - p);
+
+        if( segLen == len && strncmp(p, token, len) == 0 )
+            return 1;
+        if( end == NULL )
+            return 0;
+        p = end + 1;
+    }
+    return 0;
+}
+
 static int codegen_matches_filter(const char *filter, const char *name)
 {
     char filterCopy[1024];
@@ -1969,7 +1989,11 @@ static int codegen_matches_filter(const char *filter, const char *name)
     token = strtok(filterCopy, ",");
     while( token != NULL )
     {
-        if( strstr(name, token) != NULL ) return 1;
+        if( strlen(token) <= 2 )
+        {
+            if( codegen_short_filter_token_matches(name, token) ) return 1;
+        }
+        else if( strstr(name, token) != NULL ) return 1;
         token = strtok(NULL, ",");
     }
     return 0;

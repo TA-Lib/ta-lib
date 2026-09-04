@@ -16,6 +16,16 @@ ErrorNumber test_codegen(const TA_History *history,
                          const char *languageFilter,
                          const char *functionFilter);
 
+/* The --function rule for a SHORT token (one or two characters): it must be a
+ * whole '_'-delimited component of `name`, so DI selects DI, PLUS_DI and
+ * MINUS_DI but not DIV, and HT selects the HT_* family. Longer tokens stay a
+ * plain substring match. Two letters sit inside too many names to narrow
+ * anything loosely -- "MA" is a substring of 26 shipped names, "ER" of 12 --
+ * so a short token matched by substring runs a sweep the caller cannot opt out
+ * of. Callers apply this to a function name, or to one element of a group tag.
+ */
+int codegen_short_filter_token_matches(const char *name, const char *token);
+
 /* Can this language server select a compatibility variant?
  * Only C still carries the deprecated TA_SetCompatibility. Rust, Java and the
  * managed C# are pinned to Default with no public setter — their backends
