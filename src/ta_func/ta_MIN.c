@@ -479,8 +479,6 @@ static TA_RetCode TA_MIN_OpenImpl( struct TA_MIN_Stream **stream, const double i
 {
    struct TA_MIN_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -499,9 +497,6 @@ static TA_RetCode TA_MIN_OpenImpl( struct TA_MIN_Stream **stream, const double i
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       double lowest = 0.0;

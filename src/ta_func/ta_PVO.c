@@ -331,7 +331,6 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
    int dummyBegIdx;
    int dummyNBElement;
    TA_RetCode subRc;
-   double subOpenDummy;
    double *sc_outReal;
    TA_MA_Stream *sub0;
    TA_MA_Stream *sub1;
@@ -364,10 +363,8 @@ static TA_RetCode TA_PVO_OpenImpl( struct TA_PVO_Stream **stream, const double i
    dummyBegIdx = 0;
    dummyNBElement = 0;
    subRc = TA_SUCCESS;
-   subOpenDummy = 0.0;
    sub0 = NULL;
    sub1 = NULL;
-   (void)subOpenDummy;
    if( outStride ) sc_outReal = outReal;
    else
    {

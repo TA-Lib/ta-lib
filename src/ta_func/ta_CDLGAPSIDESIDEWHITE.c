@@ -350,8 +350,6 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
 {
    struct TA_CDLGAPSIDESIDEWHITE_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -366,9 +364,6 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;

@@ -542,8 +542,6 @@ static TA_RetCode TA_LINEARREG_OpenImpl( struct TA_LINEARREG_Stream **stream, co
 {
    struct TA_LINEARREG_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -562,9 +560,6 @@ static TA_RetCode TA_LINEARREG_OpenImpl( struct TA_LINEARREG_Stream **stream, co
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;

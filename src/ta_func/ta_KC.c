@@ -416,7 +416,6 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
    int dummyBegIdx;
    int dummyNBElement;
    TA_RetCode subRc;
-   double subOpenDummy;
    double *sc_outRealUpperBand;
    double *sc_outRealMiddleBand;
    double *sc_outRealLowerBand;
@@ -452,11 +451,9 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
    dummyBegIdx = 0;
    dummyNBElement = 0;
    subRc = TA_SUCCESS;
-   subOpenDummy = 0.0;
    sub0 = NULL;
    sub1 = NULL;
    sub2 = NULL;
-   (void)subOpenDummy;
    if( outStride ) sc_outRealUpperBand = outRealUpperBand;
    else
    {

@@ -536,7 +536,6 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
    int dummyBegIdx;
    int dummyNBElement;
    TA_RetCode subRc;
-   double subOpenDummy;
    double *sc_outMACD;
    double *sc_outMACDSignal;
    double *sc_outMACDHist;
@@ -584,11 +583,9 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
    dummyBegIdx = 0;
    dummyNBElement = 0;
    subRc = TA_SUCCESS;
-   subOpenDummy = 0.0;
    sub0 = NULL;
    sub1 = NULL;
    sub2 = NULL;
-   (void)subOpenDummy;
    if( outStride ) sc_outMACD = outMACD;
    else
    {

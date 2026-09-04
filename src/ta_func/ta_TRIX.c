@@ -412,8 +412,6 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
 {
    struct TA_TRIX_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -432,9 +430,6 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       double prevEMA1 = 0.0;

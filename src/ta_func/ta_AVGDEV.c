@@ -250,8 +250,6 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
 {
    struct TA_AVGDEV_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -270,9 +268,6 @@ static TA_RetCode TA_AVGDEV_OpenImpl( struct TA_AVGDEV_Stream **stream, const do
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int today;

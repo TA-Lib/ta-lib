@@ -144,8 +144,6 @@ static TA_RetCode TA_ACOS_OpenImpl( struct TA_ACOS_Stream **stream, const double
 {
    struct TA_ACOS_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -160,9 +158,6 @@ static TA_RetCode TA_ACOS_OpenImpl( struct TA_ACOS_Stream **stream, const double
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;

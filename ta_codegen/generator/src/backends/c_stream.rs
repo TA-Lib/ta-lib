@@ -1900,7 +1900,7 @@ fn is_lag_ring_free(stmt: &Statement, rings: &[streaming::SubLagRing]) -> bool {
 /// Composed Open: scratch output arrays + verbatim transcription of the
 /// batch body with sub-streams opened on the materialized series at the
 /// exact points batch consumes them, then producer-state capture.
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 fn emit_composed_open(
     o: &mut String,
     func: &FuncDef,
@@ -1912,7 +1912,56 @@ fn emit_composed_open(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
+    let mut body = String::new();
+    emit_composed_open_body(
+        &mut body, func, cp, outputs, cleanup, enums, registry, helpers, counter,
+    );
+    emit_composed_open_head(o, func, cp, outputs, enums, &body);
+    o.push_str(&body);
+}
+
+/// The scaffolding locals an Open head declares — `(type, name, initializer)`
+/// triples — narrowed to the ones the already-rendered body mentions. A head that
+/// calls this is emitted AFTER its body for exactly that reason: `c_hygiene` can
+/// walk back a `(void)` cast over finished text, but not the declaration behind
+/// it — dropping one the body reads is a compile error rather than a warning.
+fn open_scaffold<'a>(
+    body: &str,
+    all: &[(&'a str, &'a str, &'a str)],
+) -> Vec<(&'a str, &'a str, &'a str)> {
+    all.iter().copied().filter(|(_, name, _)| body.contains(name)).collect()
+}
+
+/// `(void)startIdx` plus one share per scaffolding local kept. A share survives
+/// `c_hygiene` only where the body merely WRITES the local, which is the one shape
+/// that would otherwise warn.
+fn open_void_line(scaffold: &[(&str, &str, &str)]) -> String {
+    scaffold.iter().fold(String::from("   (void)startIdx;"), |mut s, (_, name, _)| {
+        let _ = write!(s, " (void){name};");
+        s
+    })
+}
+
+/// Signature, declarations, validation and the scratch output arrays, emitted
+/// against the already-rendered transcription in `body`.
+fn emit_composed_open_head(
+    o: &mut String,
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    outputs: &[String],
+    enums: &HashMap<String, EnumDef>,
+    body: &str,
+) {
     let n = uname(func);
+    let scaffold = open_scaffold(
+        body,
+        &[
+            ("int", "dummyBegIdx", "0"),
+            ("int", "dummyNBElement", "0"),
+            ("TA_RetCode", "subRc", "TA_SUCCESS"),
+            ("double", "subOpenDummy", "0.0"),
+        ],
+    );
     // The composed fill path hardcodes `double` scratch arrays + memcpy (sc_<out>
     // is `double *`, the fill copy is sizeof(double)). Every composed function is
     // real-output today; fail LOUD at generation time if that ever changes, so the
@@ -1921,10 +1970,9 @@ fn emit_composed_open(
     let _ = writeln!(o, "{}\n{{", open_core_signature(func));
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     let _ = writeln!(o, "   int endIdx;");
-    let _ = writeln!(o, "   int dummyBegIdx;");
-    let _ = writeln!(o, "   int dummyNBElement;");
-    let _ = writeln!(o, "   TA_RetCode subRc;");
-    let _ = writeln!(o, "   double subOpenDummy;");
+    for (ty, name, _) in &scaffold {
+        let _ = writeln!(o, "   {ty} {name};");
+    }
     for out in outputs {
         let _ = writeln!(o, "   {} *sc_{out};", out_c_type(func, out));
     }
@@ -1937,17 +1985,13 @@ fn emit_composed_open(
     // startIdx arrives as a parameter: 0 for both public entry points, the
     // caller's own startIdx when a composed function opens this as a sub-stream.
     let _ = writeln!(o, "\n   endIdx = historyLen - 1;");
-    let _ = writeln!(o, "   dummyBegIdx = 0;");
-    let _ = writeln!(o, "   dummyNBElement = 0;");
-    let _ = writeln!(o, "   subRc = TA_SUCCESS;");
-    let _ = writeln!(o, "   subOpenDummy = 0.0;");
+    for (_, name, init) in &scaffold {
+        let _ = writeln!(o, "   {name} = {init};");
+    }
     for (i, _) in cp.subs.iter().enumerate() {
         let _ = writeln!(o, "   sub{i} = NULL;");
     }
-    let _ = writeln!(
-        o,
-        "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement; (void)subRc; (void)subOpenDummy;"
-    );
+    let _ = writeln!(o, "{}", open_void_line(&scaffold));
     // Scratch output arrays: the batch tail writes REAL arrays (sub-call
     // out args, memmoves) — a last-value scalar cannot stand in here. When
     // the caller wants the whole range (OpenAndFill), its own output array
@@ -1984,8 +2028,24 @@ fn emit_composed_open(
             let _ = writeln!(o, "   if( !sc_{out} ) {{ {prior}return TA_ALLOC_ERR; }}");
         }
     }
+}
 
-    // --- transcription ---------------------------------------------------------
+/// The transcription proper: the batch region, then the tail with each
+/// sub-stream opened where batch consumes it, then producer-state capture.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn emit_composed_open_body(
+    o: &mut String,
+    func: &FuncDef,
+    cp: &streaming::ComposedPlan,
+    outputs: &[String],
+    cleanup: &str,
+    enums: &HashMap<String, EnumDef>,
+    registry: &Registry,
+    helpers: &HelperRegistry,
+    counter: &Cell<usize>,
+) {
+    let n = uname(func);
+    let alias_fill = cp.fill_scratch_may_alias_output(outputs);
     let _ = writeln!(o, "\n   {{");
     let (region_stmts, tail_stmts) = build_composed_open_bodies(cp, outputs, cleanup);
     let mut region_c = String::new();
@@ -3215,14 +3275,6 @@ fn emit_dual_mode(
     let _ = writeln!(o, "}}\n");
 
     // --- OpenImpl: shared head, then a predicate branch per mode ------------
-    // The head is `emit_open_head` over the UNION circ hoist: a mode-B-only
-    // CIRCBUF's locals (HMA's dRing) are declared once at function scope and
-    // only the owning arm touches them. Its identity fast path leaves the whole
-    // union memset, including the buffers only the general arm dereferences;
-    // what keeps that arm from running is the step's guard, hoisted above the
-    // mode predicate.
-    emit_open_head(o, func, ma, &union_circs, registry, helpers, counter, enums);
-
     // Each mode transcribes the SHARED PROLOGUE, then its own arm body, then the
     // SHARED EPILOGUE (empty for the early-return form; the out-meta + return tail
     // for the if/else form). The prologue computes the mode-appropriate lookback/
@@ -3239,11 +3291,19 @@ fn emit_dual_mode(
     let pred_bare = render_dual_pred(&dmp.predicate, false, func, registry, helpers, counter);
     let body_a = compose(ma.body);
     let body_b = compose(mb.body);
-    let _ = writeln!(o, "\n   if( {pred_bare} )\n   {{");
-    emit_open_arm(o, func, ma, &body_a, enums, registry, helpers, counter);
-    let _ = writeln!(o, "   }}\n   else\n   {{");
-    emit_open_arm(o, func, mb, &body_b, enums, registry, helpers, counter);
-    let _ = writeln!(o, "   }}");
+    let mut arms = String::new();
+    let _ = writeln!(arms, "\n   if( {pred_bare} )\n   {{");
+    emit_open_arm(&mut arms, func, ma, &body_a, enums, registry, helpers, counter);
+    let _ = writeln!(arms, "   }}\n   else\n   {{");
+    emit_open_arm(&mut arms, func, mb, &body_b, enums, registry, helpers, counter);
+    let _ = writeln!(arms, "   }}");
+    // The head takes the UNION circ hoist: a mode-B-only CIRCBUF's locals (HMA's
+    // dRing) are declared once at function scope and only the owning arm touches
+    // them. Its identity fast path leaves the whole union memset, including the
+    // buffers only the general arm dereferences; what keeps that arm from running
+    // is the step's guard, hoisted above the mode predicate.
+    emit_open_head(o, func, ma, &union_circs, registry, helpers, counter, enums, &arms);
+    o.push_str(&arms);
     // Both arms return; keep the compiler happy about the fall-through.
     let _ = writeln!(
         o,
@@ -4370,10 +4430,10 @@ fn emit_used_candle_unpacking(
     out
 }
 
-/// The `OpenInternal` head shared by the loop tier and dual-mode:
+/// The `OpenImpl` head shared by the loop tier and dual-mode:
 /// signature, declarations, param validation, initialization, and the identity
-/// fast path. The caller then emits the transcribed body arm(s) and closes the
-/// function.
+/// fast path. `arms` is the caller's already-rendered body, which it appends
+/// after this returns.
 fn emit_open_head(
     o: &mut String,
     func: &FuncDef,
@@ -4383,19 +4443,22 @@ fn emit_open_head(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
     enums: &HashMap<String, EnumDef>,
+    arms: &str,
 ) {
     let n = uname(func);
+    let scaffold = open_scaffold(
+        arms,
+        &[("int", "dummyBegIdx", "0"), ("int", "dummyNBElement", "0")],
+    );
     let _ = writeln!(o, "{}\n{{", open_core_signature(func));
 
     // --- declarations -------------------------------------------------------
     let _ = writeln!(o, "   struct TA_{n}_Stream *sp;");
     emit_circ_hoist(o, func, hoist_circs);
     let _ = writeln!(o, "   int endIdx;");
-    // Kept as locals even though the core always has real out-meta pointers:
-    // the transcribed body writes them on paths the fill contract does not
-    // publish, and the composed tier reads them back as plain ints.
-    let _ = writeln!(o, "   int dummyBegIdx;");
-    let _ = writeln!(o, "   int dummyNBElement;");
+    for (ty, name, _) in &scaffold {
+        let _ = writeln!(o, "   {ty} {name};");
+    }
     for (name, c_type) in &func.private_extra_params {
         let _ = writeln!(o, "   {c_type} {name};");
     }
@@ -4407,8 +4470,9 @@ fn emit_open_head(
     // points, the sub-call's own startIdx when a composed function opens this
     // as a sub-stream.
     let _ = writeln!(o, "\n   endIdx = historyLen - 1;");
-    let _ = writeln!(o, "   dummyBegIdx = 0;");
-    let _ = writeln!(o, "   dummyNBElement = 0;");
+    for (_, name, init) in &scaffold {
+        let _ = writeln!(o, "   {name} = {init};");
+    }
     for (name, _) in &func.private_extra_params {
         let init = func
             .private_param_init
@@ -4420,10 +4484,7 @@ fn emit_open_head(
             );
         let _ = writeln!(o, "   {name} = {init};");
     }
-    let _ = writeln!(
-        o,
-        "   (void)startIdx; (void)dummyBegIdx; (void)dummyNBElement;"
-    );
+    let _ = writeln!(o, "{}", open_void_line(&scaffold));
 
     emit_identity_fast_path(o, func, model, registry, helpers, counter);
 }
@@ -4444,8 +4505,10 @@ fn emit_open_core_body(
     helpers: &HelperRegistry,
     counter: &Cell<usize>,
 ) {
-    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, enums);
-    emit_open_arm(o, func, model, body, enums, registry, helpers, counter);
+    let mut arm = String::new();
+    emit_open_arm(&mut arm, func, model, body, enums, registry, helpers, counter);
+    emit_open_head(o, func, model, model.circs(), registry, helpers, counter, enums, &arm);
+    o.push_str(&arm);
     let _ = writeln!(o, "}}\n");
     emit_open_internal_wrapper(o, func);
     emit_open_wrapper(o, func);

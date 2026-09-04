@@ -529,8 +529,6 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
 {
    struct TA_PLUS_DM_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -549,9 +547,6 @@ static TA_RetCode TA_PLUS_DM_OpenImpl( struct TA_PLUS_DM_Stream **stream, const 
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    if( optInTimePeriod <= 1 )
    {

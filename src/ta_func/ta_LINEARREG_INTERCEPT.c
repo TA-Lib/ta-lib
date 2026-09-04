@@ -532,8 +532,6 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_OpenImpl( struct TA_LINEARREG_INTERCEPT
 {
    struct TA_LINEARREG_INTERCEPT_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -552,9 +550,6 @@ static TA_RetCode TA_LINEARREG_INTERCEPT_OpenImpl( struct TA_LINEARREG_INTERCEPT
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int outIdx;

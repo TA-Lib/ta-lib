@@ -399,8 +399,6 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_OpenImpl( struct TA_CDLIDENTICAL3CROWS_S
 {
    struct TA_CDLIDENTICAL3CROWS_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -415,9 +413,6 @@ static TA_RetCode TA_CDLIDENTICAL3CROWS_OpenImpl( struct TA_CDLIDENTICAL3CROWS_S
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int Equal_avgPeriod = TA_Globals->candleSettings[TA_Equal].avgPeriod;

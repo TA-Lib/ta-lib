@@ -417,8 +417,6 @@ static TA_RetCode TA_CDLABANDONEDBABY_OpenImpl( struct TA_CDLABANDONEDBABY_Strea
 {
    struct TA_CDLABANDONEDBABY_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -437,9 +435,6 @@ static TA_RetCode TA_CDLABANDONEDBABY_OpenImpl( struct TA_CDLABANDONEDBABY_Strea
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;

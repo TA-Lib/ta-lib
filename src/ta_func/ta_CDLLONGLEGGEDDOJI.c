@@ -326,8 +326,6 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenImpl( struct TA_CDLLONGLEGGEDDOJI_Str
 {
    struct TA_CDLLONGLEGGEDDOJI_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -342,9 +340,6 @@ static TA_RetCode TA_CDLLONGLEGGEDDOJI_OpenImpl( struct TA_CDLLONGLEGGEDDOJI_Str
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyDoji_avgPeriod = TA_Globals->candleSettings[TA_BodyDoji].avgPeriod;

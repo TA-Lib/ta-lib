@@ -365,8 +365,6 @@ static TA_RetCode TA_CDLKICKING_OpenImpl( struct TA_CDLKICKING_Stream **stream, 
 {
    struct TA_CDLKICKING_Stream *sp;
    int endIdx;
-   int dummyBegIdx;
-   int dummyNBElement;
 
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
@@ -381,9 +379,6 @@ static TA_RetCode TA_CDLKICKING_OpenImpl( struct TA_CDLKICKING_Stream **stream, 
    }
 
    endIdx = historyLen - 1;
-   dummyBegIdx = 0;
-   dummyNBElement = 0;
-   (void)dummyBegIdx; (void)dummyNBElement;
 
    {
       int BodyLong_avgPeriod = TA_Globals->candleSettings[TA_BodyLong].avgPeriod;
