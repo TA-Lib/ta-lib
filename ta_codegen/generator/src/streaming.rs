@@ -880,25 +880,17 @@ enum FirstUse {
 /// which keeps the seed. `false` never mis-renders; it only leaves the one
 /// field load this exists to drop.
 pub fn peek_seed_is_dead(body: &[Statement], var: &str) -> bool {
+    // Any reference form counts, `*p` and `arr[i]` included: a mention this
+    // pass cannot model has to keep the seed, never drop it.
     fn reads(e: &Expr, var: &str) -> bool {
-        let mut hit = false;
-        walk_expr(e, &mut |x| match x {
-            Expr::Var(v) if v == var => hit = true,
-            Expr::ArrayAccess(n, _) if n == var => hit = true,
-            _ => {}
-        });
-        hit
+        let mut names = BTreeSet::new();
+        expr_var_names(e, &mut names);
+        names.contains(var)
     }
-    fn mentions_stmts(list: &[Statement], var: &str) -> bool {
-        let mut hit = false;
-        for st in list {
-            walk_stmt_exprs(st, &mut |e| {
-                if reads(e, var) {
-                    hit = true;
-                }
-            });
-        }
-        hit
+    fn mentions(st: &Statement, var: &str) -> bool {
+        let mut names = BTreeSet::new();
+        stmt_var_names(st, &mut names);
+        names.contains(var)
     }
     fn scan(list: &[Statement], var: &str) -> FirstUse {
         for st in list {
@@ -937,7 +929,7 @@ pub fn peek_seed_is_dead(body: &[Statement], var: &str) -> bool {
                 // A loop may run zero times and a switch arm is data-picked;
                 // any mention inside is treated as a read.
                 other => {
-                    if mentions_stmts(std::slice::from_ref(other), var) {
+                    if mentions(other, var) {
                         return FirstUse::ReadOrUnknown;
                     }
                 }
