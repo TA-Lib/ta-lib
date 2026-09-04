@@ -167,6 +167,7 @@ struct TA_PPO_Stream;
 struct TA_PVI_Stream;
 struct TA_PVO_Stream;
 struct TA_QSTICK_Stream;
+struct TA_RMA_Stream;
 struct TA_ROC_Stream;
 struct TA_ROCP_Stream;
 struct TA_ROCR_Stream;
@@ -346,6 +347,7 @@ TA_RetCode TA_PPO_OpenInternal( struct TA_PPO_Stream **stream, const double inRe
 TA_RetCode TA_PVI_OpenInternal( struct TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_PVO_OpenInternal( struct TA_PVO_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, double *outReal );
 TA_RetCode TA_QSTICK_OpenInternal( struct TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_RMA_OpenInternal( struct TA_RMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_ROC_OpenInternal( struct TA_ROC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_ROCP_OpenInternal( struct TA_ROCP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_ROCR_OpenInternal( struct TA_ROCR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
@@ -526,6 +528,7 @@ TA_RetCode TA_PPO_OpenAndFillInternal( struct TA_PPO_Stream **stream, const doub
 TA_RetCode TA_PVI_OpenAndFillInternal( struct TA_PVI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_PVO_OpenAndFillInternal( struct TA_PVO_Stream **stream, const double inVolume[], int startIdx, int historyLen, int optInFastPeriod, int optInSlowPeriod, TA_MAType optInMAType, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_QSTICK_OpenAndFillInternal( struct TA_QSTICK_Stream **stream, const double inOpen[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_RMA_OpenAndFillInternal( struct TA_RMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_ROC_OpenAndFillInternal( struct TA_ROC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_ROCP_OpenAndFillInternal( struct TA_ROCP_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_ROCR_OpenAndFillInternal( struct TA_ROCR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );

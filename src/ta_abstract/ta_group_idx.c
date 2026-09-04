@@ -183,6 +183,7 @@ extern const TA_FuncDef TA_DEF_PPO;
 extern const TA_FuncDef TA_DEF_PVI;
 extern const TA_FuncDef TA_DEF_PVO;
 extern const TA_FuncDef TA_DEF_QSTICK;
+extern const TA_FuncDef TA_DEF_RMA;
 extern const TA_FuncDef TA_DEF_ROC;
 extern const TA_FuncDef TA_DEF_ROCP;
 extern const TA_FuncDef TA_DEF_ROCR;
@@ -269,6 +270,7 @@ const TA_FuncDef *TA_PerGroupFunc_2[] = {
 &TA_DEF_MAVP,
 &TA_DEF_MIDPOINT,
 &TA_DEF_MIDPRICE,
+&TA_DEF_RMA,
 &TA_DEF_SAR,
 &TA_DEF_SAREXT,
 &TA_DEF_SMA,

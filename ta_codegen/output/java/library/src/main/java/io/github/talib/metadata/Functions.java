@@ -263,6 +263,7 @@ public final class Functions {
       put(m, f_PVI());
       put(m, f_PVO());
       put(m, f_QSTICK());
+      put(m, f_RMA());
       put(m, f_ROC());
       put(m, f_ROCP());
       put(m, f_ROCR());
@@ -2545,6 +2546,24 @@ public final class Functions {
                "Time Period", "Time period", 10.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                1, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_RMA() {
+      return new FunctionInfo(
+         "RMA", "Overlap Studies", "Wilder's Smoothed Moving Average", 0x0B000001,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

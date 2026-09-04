@@ -23,7 +23,7 @@ use common::{all_abstract_rows, check_rust_cast_parens, generate_all, load_indic
 /// by name (`TA_FUNC_UNST_<NAME>`), the same derivation the servers use. This
 /// pins the resulting set both ways: a lost mapping and a spurious one both fail.
 #[test]
-fn abstract_rows_unstable_period_set_is_exactly_the_twenty() {
+fn abstract_rows_unstable_period_set_is_exactly_the_declared_ids() {
     // (function name, its FuncUnstId ordinal). The NAME half would be a
     // tautology on its own — `unst_row` resolves `TA_FUNC_UNST_<name>` and hands
     // the variant's name back, so it can only ever equal the function's. The
@@ -51,6 +51,7 @@ fn abstract_rows_unstable_period_set_is_exactly_the_twenty() {
         ("PLUS_DM", 20),
         ("RSI", 21),
         ("T3", 23),
+        ("RMA", 24),
     ];
 
     let rows = all_abstract_rows();

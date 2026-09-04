@@ -70,3 +70,4 @@ FuncUnstId:
     - { name: RSI,          value: 21 }
     - { name: UNUSED_22,    value: 22 }  # reserved: was STOCHRSI, knob was inert (#129); kept for ABI, reusable
     - { name: T3,           value: 23 }
+    - { name: RMA,          value: 24 }

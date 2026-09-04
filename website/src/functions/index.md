@@ -101,6 +101,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [MAVP](/functions/mavp.md) — Moving average with variable period
 - [MIDPOINT](/functions/midpoint.md) — MidPoint over period
 - [MIDPRICE](/functions/midprice.md) — Midpoint Price over period
+- [RMA](/functions/rma.md) — Wilder's Smoothed Moving Average
 - [SAR](/functions/sar.md) — Parabolic SAR
 - [SAREXT](/functions/sarext.md) — Parabolic SAR - Extended
 - [SMA](/functions/sma.md) — Simple Moving Average

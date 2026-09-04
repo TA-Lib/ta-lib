@@ -129,7 +129,8 @@
       /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
-       * at nearly every period. Swapping them reddens nothing.
+       * at nearly every period. The order is a gated contract, not a preference:
+       * swapping it reddens the frozen v0.6.4 comparison.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;
@@ -831,7 +832,8 @@
       /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
-       * at nearly every period. Swapping them reddens nothing.
+       * at nearly every period. The order is a gated contract, not a preference:
+       * swapping it reddens the frozen v0.6.4 comparison.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
       wAlpha = 1.0 - wBeta;

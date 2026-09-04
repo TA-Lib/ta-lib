@@ -328,6 +328,8 @@ pub enum FuncId {
     PVO,
     /// Qstick — [`Core::QSTICK`](crate::Core::QSTICK).
     QSTICK,
+    /// Wilder's Smoothed Moving Average — [`Core::RMA`](crate::Core::RMA).
+    RMA,
     /// Rate of change : ((price/prevPrice)-1)*100 — [`Core::ROC`](crate::Core::ROC).
     ROC,
     /// Rate of change Percentage: (price-prevPrice)/prevPrice — [`Core::ROCP`](crate::Core::ROCP).
@@ -404,7 +406,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 179;
+    pub const COUNT: usize = 180;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -729,7 +731,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 179] = [
+static FUNC_TABLE: [FuncInfo; 180] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2304,6 +2306,17 @@ static FUNC_TABLE: [FuncInfo; 179] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::RMA,
+        name: "RMA",
+        group: Group::OverlapStudies,
+        hint: "Wilder's Smoothed Moving Average",
+        flags: FuncFlags(0x0b000001),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::RMA),
+    },
+    FuncInfo {
         id: FuncId::ROC,
         name: "ROC",
         group: Group::MomentumIndicators,
@@ -2860,6 +2873,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "PVI" => FuncId::PVI,
         "PVO" => FuncId::PVO,
         "QSTICK" => FuncId::QSTICK,
+        "RMA" => FuncId::RMA,
         "ROC" => FuncId::ROC,
         "ROCP" => FuncId::ROCP,
         "ROCR" => FuncId::ROCR,
@@ -3296,6 +3310,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::PVI => self.core.PVI_Lookback(),
             FuncId::PVO => self.core.PVO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::QSTICK => self.core.QSTICK_Lookback(self.int_opt[0]),
+            FuncId::RMA => self.core.RMA_Lookback(self.int_opt[0]),
             FuncId::ROC => self.core.ROC_Lookback(self.int_opt[0]),
             FuncId::ROCP => self.core.ROCP_Lookback(self.int_opt[0]),
             FuncId::ROCR => self.core.ROCR_Lookback(self.int_opt[0]),
@@ -5097,6 +5112,16 @@ impl<'a> ParamHolder<'a> {
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.QSTICK(start_idx, end_idx, i0_0, i0_3, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::RMA => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.RMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

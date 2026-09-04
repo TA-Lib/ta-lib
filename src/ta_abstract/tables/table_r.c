@@ -38,6 +38,31 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* RMA BEGIN */
+static const TA_InputParameterInfo    *TA_RMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_RMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_RMA_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30,
+  NULL
+};
+
+DEF_FUNCTION( RMA,
+              TA_GroupId_OverlapStudies,
+              "Wilder's Smoothed Moving Average",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
+             );
+/* RMA END */
+
 /* ROC BEGIN */
 static const TA_InputParameterInfo    *TA_ROC_Inputs[]    =
 {
@@ -169,6 +194,7 @@ DEF_FUNCTION( RSI,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableR[] =
 {
+   ADD_TO_TABLE(RMA),
    ADD_TO_TABLE(ROC),
    ADD_TO_TABLE(ROCP),
    ADD_TO_TABLE(ROCR),

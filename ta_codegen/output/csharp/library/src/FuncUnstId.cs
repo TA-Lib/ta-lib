@@ -87,6 +87,8 @@ public enum FuncUnstId
     UNUSED_22 = 22,
     /// <summary>Unstable-period id for <c>TA_FUNC_UNST_T3</c>.</summary>
     T3 = 23,
+    /// <summary>Unstable-period id for <c>TA_FUNC_UNST_RMA</c>.</summary>
+    RMA = 24,
 
     /// <summary>Wildcard: sets the unstable period for every function at
     /// once. Pinned, so adding an indicator can never move it.</summary>
@@ -99,5 +101,5 @@ public static class FuncUnstIds
     /// <summary>Number of function ids — the size of the unstable-period
     /// table. Not an id, and not <see cref="FuncUnstId.ALL"/>. Mirrors C's
     /// TA_FUNC_UNST_COUNT.</summary>
-    public const int Count = 24;
+    public const int Count = 25;
 }

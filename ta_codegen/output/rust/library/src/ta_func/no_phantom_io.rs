@@ -12801,6 +12801,63 @@ fn legs_QSTICK(r: &mut Report) {
     r.legs_done("QSTICK", 2);
 }
 
+const V_RMA: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 1i32),
+];
+
+fn sub_RMA(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_RMA {
+        let Ok(lb) = core.RMA_Lookback(optInTimePeriod) else { continue; };
+        r.control("RMA", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RMA_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("RMA", label); continue; }
+        r.quiet("RMA", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RMA_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_RMA(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.RMA_Lookback(optInTimePeriod) else { r.no_legs("RMA"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("RMA", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RMA_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("RMA", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RMA_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("RMA", 1);
+}
+
 const V_ROC: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -15559,6 +15616,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("PVI", sub_PVI, legs_PVI),
     ("PVO", sub_PVO, legs_PVO),
     ("QSTICK", sub_QSTICK, legs_QSTICK),
+    ("RMA", sub_RMA, legs_RMA),
     ("ROC", sub_ROC, legs_ROC),
     ("ROCP", sub_ROCP, legs_ROCP),
     ("ROCR", sub_ROCR, legs_ROCR),
@@ -15633,7 +15691,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 179, "probe count");
+    assert_eq!(PROBES.len(), 180, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

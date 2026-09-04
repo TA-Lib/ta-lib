@@ -254,6 +254,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakePvi(),
             MakePvo(),
             MakeQstick(),
+            MakeRma(),
             MakeRoc(),
             MakeRocp(),
             MakeRocr(),
@@ -3430,6 +3431,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.QSTICK(
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeRma() => new(
+        name: "RMA",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Wilder's Smoothed Moving Average",
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.UnstablePeriod | FunctionFlags.Period1Identity,
+        unstableId: FuncUnstId.RMA,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 30, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.RMA_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.RMA(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeRoc() => new(
         name: "ROC",

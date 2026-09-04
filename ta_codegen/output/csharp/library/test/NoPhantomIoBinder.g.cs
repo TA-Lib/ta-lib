@@ -961,6 +961,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.Open), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["RMA"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.RMA_Impl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["ROC"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ROC_Impl(

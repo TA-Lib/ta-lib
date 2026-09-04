@@ -507,7 +507,7 @@ public static class MetadataTest
 
         // The two sides come from different places — the YAML `flags:` list and
         // an enums.yaml name match — so the assertion above is not a tautology.
-        Check(withId == 20, $"exactly 20 functions carry an unstable period (got {withId})");
+        Check(withId == 21, $"exactly 21 functions carry an unstable period (got {withId})");
         Check(FunctionCatalog.Default["RSI"].UnstableId == FuncUnstId.RSI, "RSI maps to its own id");
     }
 

@@ -6057,6 +6057,45 @@ static const TA_VOptSpec TA_VOpt_QSTICK[] = {
    { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
 };
 
+static TA_RetCode TA_RMA_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_RMA(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_RMA_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_RMA(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_RMA[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_RMA[] = { 0 };
+static const TA_VOptSpec TA_VOpt_RMA[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 30.0 },
+};
+
 static TA_RetCode TA_ROC_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -7855,6 +7894,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_PVO, 3, TA_VOpt_PVO, 1, TA_VOutIsInt_PVO, 0 },
    { "QSTICK", TA_QSTICK_VFrameD, TA_QSTICK_VFrameS,
      2, TA_VIn_QSTICK, 1, TA_VOpt_QSTICK, 1, TA_VOutIsInt_QSTICK, 0 },
+   { "RMA", TA_RMA_VFrameD, TA_RMA_VFrameS,
+     1, TA_VIn_RMA, 1, TA_VOpt_RMA, 1, TA_VOutIsInt_RMA, 0 },
    { "ROC", TA_ROC_VFrameD, TA_ROC_VFrameS,
      1, TA_VIn_ROC, 1, TA_VOpt_ROC, 1, TA_VOutIsInt_ROC, 0 },
    { "ROCP", TA_ROCP_VFrameD, TA_ROCP_VFrameS,
@@ -7929,6 +7970,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 179
+#define TA_VARIANT_TABLE_SIZE 180
 
 #endif /* TA_VARIANT_FRAME_H */

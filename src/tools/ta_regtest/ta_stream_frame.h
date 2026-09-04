@@ -5811,6 +5811,42 @@ static TA_RetCode TA_QSTICK_SFrameClose( void *stream )
    return TA_QSTICK_Close( (TA_QSTICK_Stream *)stream );
 }
 
+static TA_RetCode TA_RMA_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_RMA_Open(
+               (TA_RMA_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_RMA_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_RMA_OpenAndFill(
+               (TA_RMA_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_RMA_SFrameClose( void *stream )
+{
+   return TA_RMA_Close( (TA_RMA_Stream *)stream );
+}
+
 static TA_RetCode TA_ROC_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -7508,6 +7544,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_PVO, 3, TA_VOpt_PVO, 1, TA_VOutIsInt_PVO },
    { "QSTICK", TA_QSTICK_SFrameOpen, TA_QSTICK_SFrameFill, TA_QSTICK_SFrameClose,
      2, TA_VIn_QSTICK, 1, TA_VOpt_QSTICK, 1, TA_VOutIsInt_QSTICK },
+   { "RMA", TA_RMA_SFrameOpen, TA_RMA_SFrameFill, TA_RMA_SFrameClose,
+     1, TA_VIn_RMA, 1, TA_VOpt_RMA, 1, TA_VOutIsInt_RMA },
    { "ROC", TA_ROC_SFrameOpen, TA_ROC_SFrameFill, TA_ROC_SFrameClose,
      1, TA_VIn_ROC, 1, TA_VOpt_ROC, 1, TA_VOutIsInt_ROC },
    { "ROCP", TA_ROCP_SFrameOpen, TA_ROCP_SFrameFill, TA_ROCP_SFrameClose,
@@ -7582,6 +7620,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 179
+#define TA_STREAM_TABLE_SIZE 180
 
 #endif /* TA_STREAM_FRAME_H */

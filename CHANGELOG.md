@@ -26,6 +26,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - PVI: Positive Volume Index (#126)
   - PVO: Percentage Volume Oscillator (#119)
   - QSTICK: Qstick (#226)
+  - RMA: Wilder's Smoothed Moving Average (#348)
   - SMI: Stochastic Momentum Index (#238)
   - SUPERTREND: SuperTrend, an ATR-scaled trailing band with a trend flag (#272)
   - VWAP: Volume Weighted Average Price (#237)

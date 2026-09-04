@@ -150,7 +150,9 @@ TA_LIB_API TA_RetCode TA_ATR( int    startIdx,
    /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
     * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
     * measures closer to the exact recursion than the 1/period-first spelling
-    * at nearly every period. Swapping them reddens nothing.
+    * at nearly every period. The order is a gated contract, not a preference:
+    * swapping it reddens the frozen v0.6.4 comparison, and breaks the
+    * bit-for-bit identity TA_RMA(TA_TRANGE(h,l,c),n) == TA_ATR(n).
     * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
     */
    wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
@@ -508,7 +510,9 @@ static TA_RetCode TA_ATR_OpenImpl( struct TA_ATR_Stream **stream, const double i
       /* wAlpha is derived FROM wBeta, never the reverse: only that order makes
        * wAlpha + wBeta exactly 1 (Sterbenz -- wBeta lands in [0.5, 1)), and it
        * measures closer to the exact recursion than the 1/period-first spelling
-       * at nearly every period. Swapping them reddens nothing.
+       * at nearly every period. The order is a gated contract, not a preference:
+       * swapping it reddens the frozen v0.6.4 comparison, and breaks the
+       * bit-for-bit identity TA_RMA(TA_TRANGE(h,l,c),n) == TA_ATR(n).
        * The pair is exactly (1, 0) at period 1 -- hence no period-1 arm.
        */
       wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;

@@ -726,6 +726,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"NATR",         TA_FUNC_UNST_NATR},
     {"PLUS_DI",      TA_FUNC_UNST_PLUS_DI},
     {"PLUS_DM",      TA_FUNC_UNST_PLUS_DM},
+    {"RMA",          TA_FUNC_UNST_RMA},
     {"RSI",          TA_FUNC_UNST_RSI},
     {"T3",           TA_FUNC_UNST_T3},
     /* EMA-derived: doRangeTest sweeps UNST_EMA, as the hand MA tests do. */
