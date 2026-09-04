@@ -3673,6 +3673,46 @@ static TA_RetCode TA_CMOU_SFrameClose( void *stream )
    return TA_CMOU_Close( (TA_CMOU_Stream *)stream );
 }
 
+static TA_RetCode TA_COPPOCK_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_COPPOCK_Open(
+               (TA_COPPOCK_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInWMAPeriod */,
+               (int)optIn[1] /* optInROC1Period */,
+               (int)optIn[2] /* optInROC2Period */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_COPPOCK_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_COPPOCK_OpenAndFill(
+               (TA_COPPOCK_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInWMAPeriod */,
+               (int)optIn[1] /* optInROC1Period */,
+               (int)optIn[2] /* optInROC2Period */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_COPPOCK_SFrameClose( void *stream )
+{
+   return TA_COPPOCK_Close( (TA_COPPOCK_Stream *)stream );
+}
+
 static TA_RetCode TA_CORREL_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -7762,6 +7802,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_CMO, 1, TA_VOpt_CMO, 1, TA_VOutIsInt_CMO },
    { "CMOU", TA_CMOU_SFrameOpen, TA_CMOU_SFrameFill, TA_CMOU_SFrameClose,
      1, TA_VIn_CMOU, 1, TA_VOpt_CMOU, 1, TA_VOutIsInt_CMOU },
+   { "COPPOCK", TA_COPPOCK_SFrameOpen, TA_COPPOCK_SFrameFill, TA_COPPOCK_SFrameClose,
+     1, TA_VIn_COPPOCK, 3, TA_VOpt_COPPOCK, 1, TA_VOutIsInt_COPPOCK },
    { "CORREL", TA_CORREL_SFrameOpen, TA_CORREL_SFrameFill, TA_CORREL_SFrameClose,
      2, TA_VIn_CORREL, 1, TA_VOpt_CORREL, 1, TA_VOutIsInt_CORREL },
    { "COS", TA_COS_SFrameOpen, TA_COS_SFrameFill, TA_COS_SFrameClose,
@@ -7968,6 +8010,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 189
+#define TA_STREAM_TABLE_SIZE 190
 
 #endif /* TA_STREAM_FRAME_H */

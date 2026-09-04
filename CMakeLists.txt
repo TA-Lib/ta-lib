@@ -383,6 +383,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CMF.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CMO.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CMOU.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_COPPOCK.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_CORREL.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_COS.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_COSH.c"

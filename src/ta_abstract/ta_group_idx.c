@@ -127,6 +127,7 @@ extern const TA_FuncDef TA_DEF_CEIL;
 extern const TA_FuncDef TA_DEF_CMF;
 extern const TA_FuncDef TA_DEF_CMO;
 extern const TA_FuncDef TA_DEF_CMOU;
+extern const TA_FuncDef TA_DEF_COPPOCK;
 extern const TA_FuncDef TA_DEF_CORREL;
 extern const TA_FuncDef TA_DEF_COS;
 extern const TA_FuncDef TA_DEF_COSH;
@@ -313,6 +314,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_CCI,
 &TA_DEF_CMO,
 &TA_DEF_CMOU,
+&TA_DEF_COPPOCK,
 &TA_DEF_DPO,
 &TA_DEF_DX,
 &TA_DEF_FOSC,

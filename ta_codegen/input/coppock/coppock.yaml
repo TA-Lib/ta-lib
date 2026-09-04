@@ -1,0 +1,33 @@
+name: COPPOCK
+group: Momentum Indicators
+hint: Coppock Curve
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInWMAPeriod
+    type: integer
+    display_name: WMA Period
+    hint: Smoothing period for the ROC sum
+    range: [1, 100000]
+    default: 10
+    suggested: [1, 200, 1]
+  - name: optInROC1Period
+    type: integer
+    display_name: ROC-1 Period
+    hint: Short rate-of-change period
+    range: [1, 100000]
+    default: 11
+    suggested: [1, 200, 1]
+  - name: optInROC2Period
+    type: integer
+    display_name: ROC-2 Period
+    hint: Long rate-of-change period
+    range: [1, 100000]
+    default: 14
+    suggested: [1, 200, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
