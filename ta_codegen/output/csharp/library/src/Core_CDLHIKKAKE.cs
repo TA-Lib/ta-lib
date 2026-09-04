@@ -131,14 +131,20 @@ public partial class Core
          /* copy here the pattern recognition code below */
          if( inHigh[i - 1] < inHigh[i - 2] &&
              inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+             (inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] ||     /* (bull) 3rd: lower high and lower low */
+              inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
          } else if( cd > 0 &&
-             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+             (patternResult > 0 &&       /* search for confirmation if hikkake was no more than 3 bars ago */
+               inClose[i] > savedHigh || /* close higher than the high of 2nd */
+              patternResult < 0 &&
+               inClose[i] < savedLow) )  /* close lower than the low of 2nd */
          {
             cd = 0;
          }
@@ -163,7 +169,10 @@ public partial class Core
       do {
          if( inHigh[i - 1] < inHigh[i - 2] &&
              inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+             (inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] ||     /* (bull) 3rd: lower high and lower low */
+              inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
             savedHigh = inHigh[i - 1];
@@ -171,7 +180,10 @@ public partial class Core
             cd = 4;
             outInteger[outIdx++] = patternResult;
          } else if( cd > 0 &&
-             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+             (patternResult > 0 &&       /* search for confirmation if hikkake was no more than 3 bars ago */
+               inClose[i] > savedHigh || /* close higher than the high of 2nd */
+              patternResult < 0 &&
+               inClose[i] < savedLow) )  /* close lower than the low of 2nd */
          {
             outInteger[outIdx++] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
             cd = 0;
@@ -527,7 +539,10 @@ public partial class Core
          double savedLow = sp.savedLow;
          if( sp.lag1_inHigh < sp.lag2_inHigh &&
              sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+             (inHigh < sp.lag1_inHigh &&
+               inLow < sp.lag1_inLow ||         /* (bull) 3rd: lower high and lower low */
+              inHigh > sp.lag1_inHigh &&
+               inLow > sp.lag1_inLow) )         /* (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : 0 - 1);
             savedHigh = sp.lag1_inHigh;
@@ -535,7 +550,10 @@ public partial class Core
             cd = 4;
             cur_outInteger = patternResult;
          } else if( cd > 0 &&
-             (patternResult > 0 && inClose > savedHigh || patternResult < 0 && inClose < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+             (patternResult > 0 &&    /* search for confirmation if hikkake was no more than 3 bars ago */
+               inClose > savedHigh || /* close higher than the high of 2nd */
+              patternResult < 0 &&
+               inClose < savedLow) )  /* close lower than the low of 2nd */
          {
             cur_outInteger = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
             cd = 0;
@@ -601,7 +619,10 @@ public partial class Core
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
-          (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+          (inHigh < sp.lag1_inHigh &&
+            inLow < sp.lag1_inLow ||         /* (bull) 3rd: lower high and lower low */
+           inHigh > sp.lag1_inHigh &&
+            inLow > sp.lag1_inLow) )         /* (bear) 3rd: higher high and higher low */
       {
          sp.patternResult = 100 * ((inHigh < sp.lag1_inHigh) ? 1 : 0 - 1);
          sp.savedHigh = sp.lag1_inHigh;
@@ -609,7 +630,10 @@ public partial class Core
          sp.cd = 4;
          sp.cur_outInteger = sp.patternResult;
       } else if( sp.cd > 0 &&
-          (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+          (sp.patternResult > 0 &&    /* search for confirmation if hikkake was no more than 3 bars ago */
+            inClose > sp.savedHigh || /* close higher than the high of 2nd */
+           sp.patternResult < 0 &&
+            inClose < sp.savedLow) )  /* close lower than the low of 2nd */
       {
          sp.cur_outInteger = sp.patternResult + 100 * ((sp.patternResult > 0) ? 1 : 0 - 1);
          sp.cd = 0;
@@ -682,14 +706,20 @@ public partial class Core
          /* copy here the pattern recognition code below */
          if( inHigh[i - 1] < inHigh[i - 2] &&
              inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+             (inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] ||     /* (bull) 3rd: lower high and lower low */
+              inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
             savedHigh = inHigh[i - 1];
             savedLow = inLow[i - 1];
             cd = 4;
          } else if( cd > 0 &&
-             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+             (patternResult > 0 &&       /* search for confirmation if hikkake was no more than 3 bars ago */
+               inClose[i] > savedHigh || /* close higher than the high of 2nd */
+              patternResult < 0 &&
+               inClose[i] < savedLow) )  /* close lower than the low of 2nd */
          {
             cd = 0;
          }
@@ -714,7 +744,10 @@ public partial class Core
       do {
          if( inHigh[i - 1] < inHigh[i - 2] &&
              inLow[i - 1] > inLow[i - 2] &&   /* 1st + 2nd: lower high and higher low */
-             (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) ) /* (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low */
+             (inHigh[i] < inHigh[i - 1] &&
+               inLow[i] < inLow[i - 1] ||     /* (bull) 3rd: lower high and lower low */
+              inHigh[i] > inHigh[i - 1] &&
+               inLow[i] > inLow[i - 1]) )     /* (bear) 3rd: higher high and higher low */
          {
             patternResult = 100 * ((inHigh[i] < inHigh[i - 1]) ? 1 : 0 - 1);
             savedHigh = inHigh[i - 1];
@@ -722,7 +755,10 @@ public partial class Core
             cd = 4;
             outInteger[outIdx++ * outStride] = patternResult;
          } else if( cd > 0 &&
-             (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) ) /* search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd */
+             (patternResult > 0 &&       /* search for confirmation if hikkake was no more than 3 bars ago */
+               inClose[i] > savedHigh || /* close higher than the high of 2nd */
+              patternResult < 0 &&
+               inClose[i] < savedLow) )  /* close lower than the low of 2nd */
          {
             outInteger[outIdx++ * outStride] = patternResult + 100 * ((patternResult > 0) ? 1 : 0 - 1);
             cd = 0;

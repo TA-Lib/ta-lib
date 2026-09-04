@@ -78,11 +78,14 @@
       do {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen[i] < Math.max(inClose[i - 1], inOpen[i - 1]) &&  /* 3rd opens within 2nd rb */
+             inOpen[i] < Math.max(inClose[i - 1], inOpen[i - 1]) &&       /* 3rd opens within 2nd rb */
              inOpen[i] > Math.min(inClose[i - 1], inOpen[i - 1]) &&
-             inClose[i] < Math.max(inClose[i - 2], inOpen[i - 2]) && /* 3rd closes within 1st rb */
+             inClose[i] < Math.max(inClose[i - 2], inOpen[i - 2]) &&      /* 3rd closes within 1st rb */
              inClose[i] > Math.min(inClose[i - 2], inOpen[i - 2]) &&
-             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2]))) ) /* when 1st is white upside gap when 1st is black downside gap */
+             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+               (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+               (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
          {
             outInteger[outIdx++] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
          } else {
@@ -408,11 +411,14 @@
          int cur_outInteger = sp.cur_outInteger;
          if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen < Math.max(sp.lag1_inClose, sp.lag1_inOpen) &&  /* 3rd opens within 2nd rb */
+             inOpen < Math.max(sp.lag1_inClose, sp.lag1_inOpen) &&          /* 3rd opens within 2nd rb */
              inOpen > Math.min(sp.lag1_inClose, sp.lag1_inOpen) &&
-             inClose < Math.max(sp.lag2_inClose, sp.lag2_inOpen) && /* 3rd closes within 1st rb */
+             inClose < Math.max(sp.lag2_inClose, sp.lag2_inOpen) &&         /* 3rd closes within 1st rb */
              inClose > Math.min(sp.lag2_inClose, sp.lag2_inOpen) &&
-             (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(sp.lag1_inOpen, sp.lag1_inClose) > Math.max(sp.lag2_inOpen, sp.lag2_inClose)) || ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(sp.lag1_inOpen, sp.lag1_inClose) < Math.min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* when 1st is white upside gap when 1st is black downside gap */
+             (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+               (Math.min(sp.lag1_inOpen, sp.lag1_inClose) > Math.max(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
+              ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+               (Math.max(sp.lag1_inOpen, sp.lag1_inClose) < Math.min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
          {
             cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
          } else {
@@ -451,11 +457,14 @@
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
-          inOpen < Math.max(sp.lag1_inClose, sp.lag1_inOpen) &&  /* 3rd opens within 2nd rb */
+          inOpen < Math.max(sp.lag1_inClose, sp.lag1_inOpen) &&          /* 3rd opens within 2nd rb */
           inOpen > Math.min(sp.lag1_inClose, sp.lag1_inOpen) &&
-          inClose < Math.max(sp.lag2_inClose, sp.lag2_inOpen) && /* 3rd closes within 1st rb */
+          inClose < Math.max(sp.lag2_inClose, sp.lag2_inOpen) &&         /* 3rd closes within 1st rb */
           inClose > Math.min(sp.lag2_inClose, sp.lag2_inOpen) &&
-          (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(sp.lag1_inOpen, sp.lag1_inClose) > Math.max(sp.lag2_inOpen, sp.lag2_inClose)) || ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(sp.lag1_inOpen, sp.lag1_inClose) < Math.min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* when 1st is white upside gap when 1st is black downside gap */
+          (((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+            (Math.min(sp.lag1_inOpen, sp.lag1_inClose) > Math.max(sp.lag2_inOpen, sp.lag2_inClose)) || /* upside gap */
+           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+            (Math.max(sp.lag1_inOpen, sp.lag1_inClose) < Math.min(sp.lag2_inOpen, sp.lag2_inClose))) ) /* downside gap */
       {
          sp.cur_outInteger = ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) * 100;
       } else {
@@ -523,11 +532,14 @@
       do {
          if( ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) && /* 3rd opposite color */
-             inOpen[i] < Math.max(inClose[i - 1], inOpen[i - 1]) &&  /* 3rd opens within 2nd rb */
+             inOpen[i] < Math.max(inClose[i - 1], inOpen[i - 1]) &&       /* 3rd opens within 2nd rb */
              inOpen[i] > Math.min(inClose[i - 1], inOpen[i - 1]) &&
-             inClose[i] < Math.max(inClose[i - 2], inOpen[i - 2]) && /* 3rd closes within 1st rb */
+             inClose[i] < Math.max(inClose[i - 2], inOpen[i - 2]) &&      /* 3rd closes within 1st rb */
              inClose[i] > Math.min(inClose[i - 2], inOpen[i - 2]) &&
-             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) || ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2]))) ) /* when 1st is white upside gap when 1st is black downside gap */
+             (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white */
+               (Math.min(inOpen[i - 1], inClose[i - 1]) > Math.max(inOpen[i - 2], inClose[i - 2])) || /* upside gap */
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black */
+               (Math.max(inOpen[i - 1], inClose[i - 1]) < Math.min(inOpen[i - 2], inClose[i - 2]))) ) /* downside gap */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) * 100;
          } else {

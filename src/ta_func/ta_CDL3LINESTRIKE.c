@@ -150,7 +150,16 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE( int    startIdx,
           inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) &&
           inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
           inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) &&
-          ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3]) || (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3])) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+          ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* if three white */
+            inClose[i - 1] > inClose[i - 2] &&
+            inClose[i - 2] > inClose[i - 3] &&                          /* consecutive higher closes */
+            inOpen[i] > inClose[i - 1] &&                               /* 4th opens above prior close */
+            inClose[i] < inOpen[i - 3]) ||                              /* 4th closes below 1st open */
+           (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* if three black */
+            inClose[i - 1] < inClose[i - 2] &&
+            inClose[i - 2] < inClose[i - 3] &&                          /* consecutive lower closes */
+            inOpen[i] < inClose[i - 1] &&                               /* 4th opens below prior close */
+            inClose[i] > inOpen[i - 3])) )                              /* 4th closes above 1st open */
       {
          outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
       } else 
@@ -302,7 +311,16 @@ static void TA_CDL3LINESTRIKE_StepImpl( struct TA_CDL3LINESTRIKE_Stream *sp, dou
        sp->lag2_inOpen <= max(sp->lag3_inOpen,sp->lag3_inClose) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[3],sp->lag3_inOpen,sp->lag3_inHigh,sp->lag3_inLow,sp->lag3_inClose) &&
        sp->lag1_inOpen >= min(sp->lag2_inOpen,sp->lag2_inClose) - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 3rd opens within/near 2nd rb */
        sp->lag1_inOpen <= max(sp->lag2_inOpen,sp->lag2_inClose) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
-       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && sp->lag1_inClose > sp->lag2_inClose && sp->lag2_inClose > sp->lag3_inClose && inOpen > sp->lag1_inClose && inClose < sp->lag3_inOpen) || (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp->lag1_inClose < sp->lag2_inClose && sp->lag2_inClose < sp->lag3_inClose && inOpen < sp->lag1_inClose && inClose > sp->lag3_inOpen)) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* if three white */
+         sp->lag1_inClose > sp->lag2_inClose &&
+         sp->lag2_inClose > sp->lag3_inClose &&                          /* consecutive higher closes */
+         inOpen > sp->lag1_inClose &&                                    /* 4th opens above prior close */
+         inClose < sp->lag3_inOpen) ||                                   /* 4th closes below 1st open */
+        (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* if three black */
+         sp->lag1_inClose < sp->lag2_inClose &&
+         sp->lag2_inClose < sp->lag3_inClose &&                          /* consecutive lower closes */
+         inOpen < sp->lag1_inClose &&                                    /* 4th opens below prior close */
+         inClose > sp->lag3_inOpen)) )                                   /* 4th closes above 1st open */
    {
       *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) * 100;
    } else 
@@ -415,7 +433,16 @@ static TA_RetCode TA_CDL3LINESTRIKE_OpenImpl( struct TA_CDL3LINESTRIKE_Stream **
              inOpen[i - 2] <= max(inOpen[i - 3],inClose[i - 3]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[3],i - 3) &&
              inOpen[i - 1] >= min(inOpen[i - 2],inClose[i - 2]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) && /* 3rd opens within/near 2nd rb */
              inOpen[i - 1] <= max(inOpen[i - 2],inClose[i - 2]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[2],i - 2) &&
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && inClose[i - 1] > inClose[i - 2] && inClose[i - 2] > inClose[i - 3] && inOpen[i] > inClose[i - 1] && inClose[i] < inOpen[i - 3]) || (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] < inClose[i - 2] && inClose[i - 2] < inClose[i - 3] && inOpen[i] < inClose[i - 1] && inClose[i] > inOpen[i - 3])) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* if three white */
+               inClose[i - 1] > inClose[i - 2] &&
+               inClose[i - 2] > inClose[i - 3] &&                          /* consecutive higher closes */
+               inOpen[i] > inClose[i - 1] &&                               /* 4th opens above prior close */
+               inClose[i] < inOpen[i - 3]) ||                              /* 4th closes below 1st open */
+              (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* if three black */
+               inClose[i - 1] < inClose[i - 2] &&
+               inClose[i - 2] < inClose[i - 3] &&                          /* consecutive lower closes */
+               inOpen[i] < inClose[i - 1] &&                               /* 4th opens below prior close */
+               inClose[i] > inOpen[i - 3])) )                              /* 4th closes above 1st open */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else 
@@ -541,7 +568,16 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Peek( const TA_CDL3LINESTRIKE_Stream *st
        sp->lag2_inOpen <= max(sp->lag3_inOpen,sp->lag3_inClose) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[3],sp->lag3_inOpen,sp->lag3_inHigh,sp->lag3_inLow,sp->lag3_inClose) &&
        sp->lag1_inOpen >= min(sp->lag2_inOpen,sp->lag2_inClose) - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 3rd opens within/near 2nd rb */
        sp->lag1_inOpen <= max(sp->lag2_inOpen,sp->lag2_inClose) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
-       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && sp->lag1_inClose > sp->lag2_inClose && sp->lag2_inClose > sp->lag3_inClose && inOpen > sp->lag1_inClose && inClose < sp->lag3_inOpen) || (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp->lag1_inClose < sp->lag2_inClose && sp->lag2_inClose < sp->lag3_inClose && inOpen < sp->lag1_inClose && inClose > sp->lag3_inOpen)) ) /* if three white consecutive higher closes 4th opens above prior close 4th closes below 1st open if three black consecutive lower closes 4th opens below prior close 4th closes above 1st open */
+       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* if three white */
+         sp->lag1_inClose > sp->lag2_inClose &&
+         sp->lag2_inClose > sp->lag3_inClose &&                          /* consecutive higher closes */
+         inOpen > sp->lag1_inClose &&                                    /* 4th opens above prior close */
+         inClose < sp->lag3_inOpen) ||                                   /* 4th closes below 1st open */
+        (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* if three black */
+         sp->lag1_inClose < sp->lag2_inClose &&
+         sp->lag2_inClose < sp->lag3_inClose &&                          /* consecutive lower closes */
+         inOpen < sp->lag1_inClose &&                                    /* 4th opens below prior close */
+         inClose > sp->lag3_inOpen)) )                                   /* 4th closes above 1st open */
    {
       *outInteger= ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) * 100;
    } else 

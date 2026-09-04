@@ -75,11 +75,17 @@
        */
       outIdx = 0;
       do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] ) {
-            /* white engulfs black */
-            /* third candle higher */
-            /* black engulfs white */
-            /* third candle lower */
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              inClose[i - 1] > inOpen[i - 2] &&
+              inOpen[i - 1] < inClose[i - 2] &&
+              inClose[i] > inClose[i - 1] ||                              /* third candle higher */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 &&
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              inOpen[i - 1] > inClose[i - 2] &&
+              inClose[i - 1] < inOpen[i - 2] &&
+              inClose[i] < inClose[i - 1] )                               /* third candle lower */
+         {
             outInteger[outIdx++] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++] = 0;
@@ -399,11 +405,17 @@
             throw new TaLibArgumentException("CDL3OUTSIDE peek: BadParam", RetCode.BadParam);
          Cdl3outsideStream sp = this;
          int cur_outInteger = sp.cur_outInteger;
-         if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
-            /* white engulfs black */
-            /* third candle higher */
-            /* black engulfs white */
-            /* third candle lower */
+         if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
+              ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              sp.lag1_inClose > sp.lag2_inOpen &&
+              sp.lag1_inOpen < sp.lag2_inClose &&
+              inClose > sp.lag1_inClose ||                                  /* third candle higher */
+             ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+              ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              sp.lag1_inOpen > sp.lag2_inClose &&
+              sp.lag1_inClose < sp.lag2_inOpen &&
+              inClose < sp.lag1_inClose )                                   /* third candle lower */
+         {
             cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) * 100;
          } else {
             cur_outInteger = 0;
@@ -439,11 +451,17 @@
    }
    void cdl3outsideStepImpl( Cdl3outsideStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
-      if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && sp.lag1_inClose > sp.lag2_inOpen && sp.lag1_inOpen < sp.lag2_inClose && inClose > sp.lag1_inClose || ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 && sp.lag1_inOpen > sp.lag2_inClose && sp.lag1_inClose < sp.lag2_inOpen && inClose < sp.lag1_inClose ) {
-         /* white engulfs black */
-         /* third candle higher */
-         /* black engulfs white */
-         /* third candle lower */
+      if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
+           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+           sp.lag1_inClose > sp.lag2_inOpen &&
+           sp.lag1_inOpen < sp.lag2_inClose &&
+           inClose > sp.lag1_inClose ||                                  /* third candle higher */
+          ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+           ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+           sp.lag1_inOpen > sp.lag2_inClose &&
+           sp.lag1_inClose < sp.lag2_inOpen &&
+           inClose < sp.lag1_inClose )                                   /* third candle lower */
+      {
          sp.cur_outInteger = ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) * 100;
       } else {
          sp.cur_outInteger = 0;
@@ -504,11 +522,17 @@
        */
       outIdx = 0;
       do {
-         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && inClose[i - 1] > inOpen[i - 2] && inOpen[i - 1] < inClose[i - 2] && inClose[i] > inClose[i - 1] || ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && inOpen[i - 1] > inClose[i - 2] && inClose[i - 1] < inOpen[i - 2] && inClose[i] < inClose[i - 1] ) {
-            /* white engulfs black */
-            /* third candle higher */
-            /* black engulfs white */
-            /* third candle lower */
+         if( ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              inClose[i - 1] > inOpen[i - 2] &&
+              inOpen[i - 1] < inClose[i - 2] &&
+              inClose[i] > inClose[i - 1] ||                              /* third candle higher */
+             ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 &&
+              ((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              inOpen[i - 1] > inClose[i - 2] &&
+              inClose[i - 1] < inOpen[i - 2] &&
+              inClose[i] < inClose[i - 1] )                               /* third candle lower */
+         {
             outInteger[outIdx++ * outStride] = ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) * 100;
          } else {
             outInteger[outIdx++ * outStride] = 0;

@@ -1616,41 +1616,53 @@ impl StatementEmitter for CStmt<'_> {
             }
         }
 
-        // Inline per-operand comments: render the `&&`-chain multi-line, one
-        // operand per line with its comment. Same tokens as the flat form (just
-        // reformatted) plus the comments — so behaviour is unchanged.
-        if !cond_comments.is_empty()
-            && super::stmt_walk::flatten_and(condition).len() == cond_comments.len()
-        {
+        // Inline per-leaf comments: render the condition's boolean spine
+        // multi-line, one leaf per line with its comment. `render_cond_tree`
+        // emits nothing whose token stream differs from the flat form below.
+        if !cond_comments.is_empty() {
             let mut hoisted = Vec::new();
-            let mut cnt = self.ctx.inline_counter.get();
+            let counter0 = self.ctx.inline_counter.get();
+            let mut cnt = counter0;
             let new_cond = hoist_block_helpers(condition, self.helpers, &mut hoisted, &mut cnt, C_CANDLE_MACRO_FNS);
             self.ctx.inline_counter.set(cnt);
-            // These operands are re-joined with `&&`, so any operand that binds
-            // looser than `&&` (an `||` chain or a ternary) must be wrapped to
-            // preserve grouping — the binop hook can't see across this split.
-            let and_prec = binop_prec(&BinOp::And);
-            let op_strs: Vec<String> = super::stmt_walk::flatten_and(&new_cond)
-                .iter()
-                .map(|o| {
-                    let s = render_expr(o, self.ctx, self.registry, self.helpers);
-                    if expr_prec(o) < and_prec {
-                        format!("({s})")
-                    } else {
-                        s
-                    }
-                })
-                .collect();
-            let mut out = render_hoisted_blocks(
-                &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
-            );
-            out.push_str(&format!("{pad}if( "));
-            out.push_str(&super::stmt_walk::render_and_operands(
-                &op_strs, cond_comments, &" ".repeat(indent + 4), " )", true,
-            ));
-            out.push_str(&format!("{pad}{{\n"));
-            out.push_str(&self.render_if_tail(then_body, else_body, indent));
-            return out;
+            // Both hooks restate `binop`'s operand rules for one child; the
+            // -Wparentheses parens around an `&&` group inside `||` land in
+            // `wraps`, since only a descended child can be such a group.
+            let operand = |o: &Expr, op: &BinOp, is_right: bool| {
+                wrap_child(
+                    render_expr(o, self.ctx, self.registry, self.helpers),
+                    o,
+                    binop_prec(op),
+                    is_right,
+                )
+            };
+            let wraps = |o: &Expr, op: &BinOp, is_right: bool| {
+                let (cp, pp) = (expr_prec(o), binop_prec(op));
+                cp < pp
+                    || (cp == pp && is_right)
+                    || (matches!(op, BinOp::Or) && matches!(o, Expr::BinOp(_, BinOp::And, _)))
+            };
+            let flat = render_expr(&new_cond, self.ctx, self.registry, self.helpers);
+            if let Some(cond_text) = super::stmt_walk::render_cond_tree(
+                &new_cond,
+                cond_comments,
+                &super::stmt_walk::CondHooks { operand: &operand, wraps: &wraps },
+                &flat,
+                &" ".repeat(indent + 4),
+                " )",
+                true,
+            ) {
+                let mut out = render_hoisted_blocks(
+                    &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
+                );
+                out.push_str(&format!("{pad}if( "));
+                out.push_str(&cond_text);
+                out.push_str(&format!("{pad}{{\n"));
+                out.push_str(&self.render_if_tail(then_body, else_body, indent));
+                return out;
+            }
+            // Falling through re-hoists from scratch; rewind so the names match.
+            self.ctx.inline_counter.set(counter0);
         }
 
         let mut hoisted = Vec::new();

@@ -125,9 +125,19 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) ) {
-            /* white engulfs black */
-            /* black engulfs white */
+         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              (inClose[i] >= inOpen[i - 1] &&
+                inOpen[i] < inClose[i - 1] ||
+               inClose[i] > inOpen[i - 1] &&
+                inOpen[i] <= inClose[i - 1]) ||
+             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              (inOpen[i] >= inClose[i - 1] &&
+                inClose[i] < inOpen[i - 1] ||
+               inOpen[i] > inClose[i - 1] &&
+                inClose[i] <= inOpen[i - 1]) )
+         {
             if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] ) {
                outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
             } else {
@@ -439,9 +449,19 @@ public partial class Core
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLENGULFING", "peek", RetCode.BadParam);
          CdlengulfingStream sp = this;
          int cur_outInteger = sp.cur_outInteger;
-         if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
-            /* white engulfs black */
-            /* black engulfs white */
+         if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
+              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              (inClose >= sp.lag1_inOpen &&
+                inOpen < sp.lag1_inClose ||
+               inClose > sp.lag1_inOpen &&
+                inOpen <= sp.lag1_inClose) ||
+             ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              (inOpen >= sp.lag1_inClose &&
+                inClose < sp.lag1_inOpen ||
+               inOpen > sp.lag1_inClose &&
+                inClose <= sp.lag1_inOpen) )
+         {
             if( inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen ) {
                cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
             } else {
@@ -507,9 +527,19 @@ public partial class Core
 
    internal void CdlengulfingStepImpl( CdlengulfingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
-      if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && (inClose >= sp.lag1_inOpen && inOpen < sp.lag1_inClose || inClose > sp.lag1_inOpen && inOpen <= sp.lag1_inClose) || ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 && (inOpen >= sp.lag1_inClose && inClose < sp.lag1_inOpen || inOpen > sp.lag1_inClose && inClose <= sp.lag1_inOpen) ) {
-         /* white engulfs black */
-         /* black engulfs white */
+      if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
+           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+           (inClose >= sp.lag1_inOpen &&
+             inOpen < sp.lag1_inClose ||
+            inClose > sp.lag1_inOpen &&
+             inOpen <= sp.lag1_inClose) ||
+          ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+           (inOpen >= sp.lag1_inClose &&
+             inClose < sp.lag1_inOpen ||
+            inOpen > sp.lag1_inClose &&
+             inClose <= sp.lag1_inOpen) )
+      {
          if( inOpen != sp.lag1_inClose && inClose != sp.lag1_inOpen ) {
             sp.cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
          } else {
@@ -577,9 +607,19 @@ public partial class Core
        */
       outIdx = 0;
       do {
-         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && (inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1] || inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]) || ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && (inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1] || inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]) ) {
-            /* white engulfs black */
-            /* black engulfs white */
+         if( ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              (inClose[i] >= inOpen[i - 1] &&
+                inOpen[i] < inClose[i - 1] ||
+               inClose[i] > inOpen[i - 1] &&
+                inOpen[i] <= inClose[i - 1]) ||
+             ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              (inOpen[i] >= inClose[i - 1] &&
+                inClose[i] < inOpen[i - 1] ||
+               inOpen[i] > inClose[i - 1] &&
+                inClose[i] <= inOpen[i - 1]) )
+         {
             if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] ) {
                outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
             } else {

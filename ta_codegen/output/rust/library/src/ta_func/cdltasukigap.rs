@@ -168,21 +168,23 @@ impl Core {
         // not consider it
         outIdx = 0;
         loop {
-            if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inOpen[i] < inClose[i - 1] && inOpen[i] > inOpen[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > (inClose[i - 2]).max(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < (inClose[i - 2]).min(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // upside gap
-                // 1st: white
-                // 2nd: black
-                // that opens within the white rb
-                // and closes under the white rb
-                // inside the gap
-                // size of 2 rb near the same
-                // downside gap
-                // 1st: black
-                // 2nd: white
-                // that opens within the black rb
-                // and closes above the black rb
-                // inside the gap
-                // size of 2 rb near the same
+            if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // upside gap
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && // 1st: white
+                (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
+                inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                                      // that opens within the white rb
+                inClose[i] < inOpen[i - 1] &&                                     // and closes under the white rb
+                inClose[i] > (inClose[i - 2]).max(inOpen[i - 2]) &&               // inside the gap
+                ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || // size of 2 rb near the same
+               ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && // downside gap
+                (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
+                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&         // 2nd: white
+                inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                                     // that opens within the black rb
+                inClose[i] > inOpen[i - 1] &&                                     // and closes above the black rb
+                inClose[i] < (inClose[i - 2]).min(inOpen[i - 2]) &&               // inside the gap
+                ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) // size of 2 rb near the same
+            {
                 outInteger[outIdx] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
                 outIdx += 1;
             } else {
@@ -417,21 +419,23 @@ impl Core {
             }
         }
         sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = _candlerange_0;
-        if ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > (sp.lag2_inClose).max(sp.lag2_inOpen) && ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < (sp.lag2_inClose).min(sp.lag2_inOpen) && ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
-            // upside gap
-            // 1st: white
-            // 2nd: black
-            // that opens within the white rb
-            // and closes under the white rb
-            // inside the gap
-            // size of 2 rb near the same
-            // downside gap
-            // 1st: black
-            // 2nd: white
-            // that opens within the black rb
-            // and closes above the black rb
-            // inside the gap
-            // size of 2 rb near the same
+        if ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // upside gap
+            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st: white
+            (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 2nd: black
+            inOpen < sp.lag1_inClose &&
+            inOpen > sp.lag1_inOpen &&                                          // that opens within the white rb
+            inClose < sp.lag1_inOpen &&                                         // and closes under the white rb
+            inClose > (sp.lag2_inClose).max(sp.lag2_inOpen) &&                  // inside the gap
+            ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || // size of 2 rb near the same
+           ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // downside gap
+            (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
+            (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&                 // 2nd: white
+            inOpen < sp.lag1_inOpen &&
+            inOpen > sp.lag1_inClose &&                                         // that opens within the black rb
+            inClose > sp.lag1_inOpen &&                                         // and closes above the black rb
+            inClose < (sp.lag2_inClose).min(sp.lag2_inOpen) &&                  // inside the gap
+            ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) // size of 2 rb near the same
+        {
             (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
         } else {
             (*outInteger) = 0;
@@ -554,21 +558,23 @@ impl Core {
         // not consider it
         outIdx = 0;
         loop {
-            if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inOpen[i] < inClose[i - 1] && inOpen[i] > inOpen[i - 1] && inClose[i] < inOpen[i - 1] && inClose[i] > (inClose[i - 2]).max(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 && inOpen[i] < inOpen[i - 1] && inOpen[i] > inClose[i - 1] && inClose[i] > inOpen[i - 1] && inClose[i] < (inClose[i - 2]).min(inOpen[i - 2]) && ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // upside gap
-                // 1st: white
-                // 2nd: black
-                // that opens within the white rb
-                // and closes under the white rb
-                // inside the gap
-                // size of 2 rb near the same
-                // downside gap
-                // 1st: black
-                // 2nd: white
-                // that opens within the black rb
-                // and closes above the black rb
-                // inside the gap
-                // size of 2 rb near the same
+            if ((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // upside gap
+                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && // 1st: white
+                (((if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 2nd: black
+                inOpen[i] < inClose[i - 1] &&
+                inOpen[i] > inOpen[i - 1] &&                                      // that opens within the white rb
+                inClose[i] < inOpen[i - 1] &&                                     // and closes under the white rb
+                inClose[i] > (inClose[i - 2]).max(inOpen[i - 2]) &&               // inside the gap
+                ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || // size of 2 rb near the same
+               ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && // downside gap
+                (((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
+                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&         // 2nd: white
+                inOpen[i] < inOpen[i - 1] &&
+                inOpen[i] > inClose[i - 1] &&                                     // that opens within the black rb
+                inClose[i] > inOpen[i - 1] &&                                     // and closes above the black rb
+                inClose[i] < (inClose[i - 2]).min(inOpen[i - 2]) &&               // inside the gap
+                ((inClose[i - 1] - inOpen[i - 1]).abs() - (inClose[i] - inOpen[i]).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) // size of 2 rb near the same
+            {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0;
@@ -866,21 +872,23 @@ impl CdltasukigapStream {
             let Near_avgPeriod: i32 = self.cs_near.avg_period;
             #[allow(non_snake_case)]
             let Near_factor: f64 = self.cs_near.factor;
-            if ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && inOpen < sp.lag1_inClose && inOpen > sp.lag1_inOpen && inClose < sp.lag1_inOpen && inClose > (sp.lag2_inClose).max(sp.lag2_inOpen) && ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 && inOpen < sp.lag1_inOpen && inOpen > sp.lag1_inClose && inClose > sp.lag1_inOpen && inClose < (sp.lag2_inClose).min(sp.lag2_inOpen) && ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // upside gap
-                // 1st: white
-                // 2nd: black
-                // that opens within the white rb
-                // and closes under the white rb
-                // inside the gap
-                // size of 2 rb near the same
-                // downside gap
-                // 1st: black
-                // 2nd: white
-                // that opens within the black rb
-                // and closes above the black rb
-                // inside the gap
-                // size of 2 rb near the same
+            if ((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // upside gap
+                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 1st: white
+                (((if inClose >= inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 &&  // 2nd: black
+                inOpen < sp.lag1_inClose &&
+                inOpen > sp.lag1_inOpen &&                                          // that opens within the white rb
+                inClose < sp.lag1_inOpen &&                                         // and closes under the white rb
+                inClose > (sp.lag2_inClose).max(sp.lag2_inOpen) &&                  // inside the gap
+                ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) || // size of 2 rb near the same
+               ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // downside gap
+                (((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) as i32) == 0 - 1 && // 1st: black
+                (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&                 // 2nd: white
+                inOpen < sp.lag1_inOpen &&
+                inOpen > sp.lag1_inClose &&                                         // that opens within the black rb
+                inClose > sp.lag1_inOpen &&                                         // and closes above the black rb
+                inClose < (sp.lag2_inClose).min(sp.lag2_inOpen) &&                  // inside the gap
+                ((sp.lag1_inClose - sp.lag1_inOpen).abs() - (inClose - inOpen).abs()).abs() < ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) // size of 2 rb near the same
+            {
                 (*outInteger) = ((if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) * 100) as i32;
             } else {
                 (*outInteger) = 0;

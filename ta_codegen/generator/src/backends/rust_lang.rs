@@ -3395,33 +3395,36 @@ impl StatementEmitter for RustStmt<'_, '_> {
                 return self.walk_stmt(&outer_if, indent);
             }
         }
-        // Inline per-operand comments: render the `&&`-chain multi-line, brace on
-        // the following line (same condition, reformatted, plus the comments).
-        if !cond_comments.is_empty()
-            && super::stmt_walk::flatten_and(condition).len() == cond_comments.len()
-        {
-            let op_strs: Vec<String> = super::stmt_walk::flatten_and(condition)
-                .iter()
-                .map(|o| {
-                    let s = render_condition(o, self.ctx, self.opt_real_params, self.registry, self.helpers);
-                    // An operand that is itself a logical `||` or a ternary binds
-                    // looser than `&&`; it must stay parenthesized to preserve
-                    // precedence in the chain (render_condition adds no outer
-                    // parens — the flat path relied on the enclosing render).
-                    if matches!(o, Expr::BinOp(_, BinOp::Or, _) | Expr::Ternary(..)) {
-                        format!("({s})")
-                    } else {
-                        s
-                    }
-                })
-                .collect();
-            let mut out = format!("{pad}if ");
-            out.push_str(&super::stmt_walk::render_and_operands(
-                &op_strs, cond_comments, &" ".repeat(indent + 3), "", false,
-            ));
-            out.push_str(&format!("{pad}{{\n"));
-            out.push_str(&self.render_if_tail(then_body, else_body, indent));
-            return out;
+        // Inline per-leaf comments: render the condition's boolean spine
+        // multi-line, brace on the following line. `render_cond_tree` emits
+        // nothing whose token stream differs from the flat form below.
+        if !cond_comments.is_empty() {
+            // `render_binop_operand` is the operand hook `binop` itself uses, so
+            // the split cannot respell a leaf; `wraps` restates its paren rule.
+            let operand = |o: &Expr, op: &BinOp, is_right: bool| {
+                render_binop_operand(o, op, !is_right, self.ctx, self.opt_real_params, self.registry, self.helpers)
+            };
+            let wraps = |o: &Expr, op: &BinOp, is_right: bool| {
+                let Expr::BinOp(_, child_op, _) = o else { return false };
+                let (cp, pp) = (op_precedence(child_op), op_precedence(op));
+                cp < pp || (cp == pp && is_right)
+            };
+            let flat = render_condition(condition, self.ctx, self.opt_real_params, self.registry, self.helpers);
+            if let Some(cond_text) = super::stmt_walk::render_cond_tree(
+                condition,
+                cond_comments,
+                &super::stmt_walk::CondHooks { operand: &operand, wraps: &wraps },
+                &flat,
+                &" ".repeat(indent + 3),
+                "",
+                false,
+            ) {
+                let mut out = format!("{pad}if ");
+                out.push_str(&cond_text);
+                out.push_str(&format!("{pad}{{\n"));
+                out.push_str(&self.render_if_tail(then_body, else_body, indent));
+                return out;
+            }
         }
         let mut out = format!(
             "{}if {} {{\n",

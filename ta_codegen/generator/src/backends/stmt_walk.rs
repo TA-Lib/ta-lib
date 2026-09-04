@@ -16,61 +16,170 @@
 
 use crate::ir::{BinOp, CircBuf, Expr, Statement, VarType};
 
-/// Flatten a left-associative `&&` chain into its operands, in source order.
-/// `a && b && c` (parsed as `((a && b) && c)`) yields `[a, b, c]`. A non-`&&`
-/// expression yields a single-element vec. Used to render commented conditions
-/// one operand per line.
-pub(crate) fn flatten_and(e: &Expr) -> Vec<&Expr> {
-    if let Expr::BinOp(l, BinOp::And, r) = e {
-        let mut v = flatten_and(l);
-        v.push(r);
-        v
-    } else {
-        vec![e]
-    }
+/// One line of a rendered condition: the code, carrying its indent *relative to*
+/// the condition's first column but not the caller's base padding, plus the
+/// comment annotating the leaf the line ends on.
+struct CondLine {
+    text: String,
+    comment: Option<Vec<String>>,
 }
 
-/// Render an already-flattened, already-rendered `&&`-chain as multiple lines —
-/// one operand per line joined by ` &&`, each with its inline comment aligned to
-/// a shared column. The first operand is emitted with no leading pad (it follows
-/// the caller's `if( ` / `if `); subsequent operands are indented by `line_pad`.
-/// `last_suffix` is appended after the final operand (e.g. ` )` for C/Java, empty
-/// for Rust). `block_style` picks `/* */` vs `//`. The result ends with a newline.
-pub(crate) fn render_and_operands(
-    operands: &[String],
+/// Per-backend operand spelling for [`render_cond_tree`]. Each hook must answer
+/// exactly as that backend's own `binop` hook does in the same operand position,
+/// so the multi-line form differs from the flat one in whitespace and comments
+/// only.
+pub(crate) struct CondHooks<'a> {
+    /// Render `child` as the `is_right` operand of `parent`, parens included.
+    pub operand: &'a dyn Fn(&Expr, &BinOp, bool) -> String,
+    /// Does this backend parenthesize `child` there? Consulted only for a child
+    /// the spine descends into.
+    pub wraps: &'a dyn Fn(&Expr, &BinOp, bool) -> bool,
+}
+
+/// True for a child the spine descends into rather than spelling as one operand.
+/// The IR keeps no parenthesis node, so an `&&`/`||` node is the only thing a
+/// source-level boolean group can become -- which is what makes this predicate
+/// and the parser's descent decision two spellings of one rule.
+fn descends(child: &Expr) -> bool {
+    matches!(child, Expr::BinOp(_, BinOp::And | BinOp::Or, _))
+}
+
+/// Render a commented condition across multiple lines: one boolean-spine leaf per
+/// line with its comment trailing, each `&&`/`||` group indented under the paren
+/// that opens it. The first line carries no pad (it follows the caller's `if( `);
+/// later lines get `line_pad`, and `last_suffix` closes the final one.
+///
+/// `flat` is the backend's own one-line rendering of the same condition. The
+/// result is returned only when the two agree token for token, so a construct the
+/// hooks spell differently falls back to the flat form instead of moving a token.
+pub(crate) fn render_cond_tree(
+    condition: &Expr,
     comments: &[Option<Vec<String>>],
+    hooks: &CondHooks,
+    flat: &str,
     line_pad: &str,
     last_suffix: &str,
     block_style: bool,
-) -> String {
-    let n = operands.len();
-    let code_lines: Vec<String> = operands
-        .iter()
-        .enumerate()
-        .map(|(i, op)| {
-            if i + 1 < n {
-                format!("{op} &&")
-            } else {
-                format!("{op}{last_suffix}")
+) -> Option<String> {
+    let mut lines = vec![CondLine { text: String::new(), comment: None }];
+    let mut idx = 0;
+    if descends(condition) {
+        build_spine(condition, 0, comments, hooks, &mut lines, &mut idx);
+    } else {
+        // A condition that is not an `&&`/`||` node is one line with no operator
+        // to break at, so the flat rendering IS that line. Taking it verbatim also
+        // keeps whatever whole-condition rule a backend applies outside its
+        // operand rules -- Java and C# coerce a non-boolean condition with `!= 0`
+        // there, and rebuilding the line from the operand hooks would drop it.
+        if let Some(line) = lines.last_mut() {
+            line.text.push_str(flat);
+            line.comment = comments.first().cloned().flatten();
+        }
+        idx = 1;
+    }
+    // The one check that keeps slots paired with leaves: the parser's spine
+    // collector and `build_operand` must agree on what a leaf is, and a
+    // disagreement (or a helper inlined into the condition) lands here.
+    if idx != comments.len() {
+        return None;
+    }
+    lines.last_mut()?.text.push_str(last_suffix);
+    let rebuilt: String = lines.iter().map(|l| l.text.as_str()).collect();
+    if squeeze(&rebuilt) != squeeze(&format!("{flat}{last_suffix}")) {
+        return None;
+    }
+    Some(align_cond_lines(&lines, line_pad, block_style))
+}
+
+/// Whitespace carries no meaning between two renderings of one condition, so the
+/// token-identity check compares what is left once it is gone.
+fn squeeze(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+/// Emit one `&&`/`||` node at column `col`: its left operand, the operator closing
+/// that line, and its right operand opening a new line back at `col`.
+fn build_spine(
+    e: &Expr,
+    col: usize,
+    comments: &[Option<Vec<String>>],
+    hooks: &CondHooks,
+    lines: &mut Vec<CondLine>,
+    idx: &mut usize,
+) {
+    let Expr::BinOp(l, op, r) = e else { return };
+    build_operand(l, op, false, col, comments, hooks, lines, idx);
+    let sep = if matches!(op, BinOp::And) { " &&" } else { " ||" };
+    if let Some(line) = lines.last_mut() {
+        line.text.push_str(sep);
+    }
+    lines.push(CondLine { text: " ".repeat(col), comment: None });
+    build_operand(r, op, true, col, comments, hooks, lines, idx);
+}
+
+/// Emit one operand of a `&&`/`||` node that starts at `col`: a nested group
+/// descended into, indented one column in, or a leaf claiming a comment slot.
+fn build_operand(
+    child: &Expr,
+    op: &BinOp,
+    is_right: bool,
+    col: usize,
+    comments: &[Option<Vec<String>>],
+    hooks: &CondHooks,
+    lines: &mut Vec<CondLine>,
+    idx: &mut usize,
+) {
+    if descends(child) {
+        let wrap = (hooks.wraps)(child, op, is_right);
+        if wrap {
+            if let Some(line) = lines.last_mut() {
+                line.text.push('(');
             }
-        })
-        .collect();
-    // Align comments to a column, but cap it so one very long operand doesn't
-    // push every comment far to the right; operands past the cap get a single
-    // space before the comment.
-    let align = code_lines
+        }
+        // A nested group's lines sit one column in from where it starts, so the
+        // grouping shows even in the three backends that emit no parens around an
+        // `&&` inside an `||`; a wrapped group takes that column from its own `(`.
+        // A same-operator child is the *same chain*, so it keeps `col` -- deriving
+        // it from the line length instead would re-indent every left-assoc rung.
+        let inner = if matches!(child, Expr::BinOp(_, o, _) if o == op) && !wrap {
+            col
+        } else {
+            lines.last().map_or(0, |line| line.text.len()) + usize::from(!wrap)
+        };
+        build_spine(child, inner, comments, hooks, lines, idx);
+        if wrap {
+            if let Some(line) = lines.last_mut() {
+                line.text.push(')');
+            }
+        }
+        return;
+    }
+    let text = (hooks.operand)(child, op, is_right);
+    if let Some(line) = lines.last_mut() {
+        line.text.push_str(&text);
+        line.comment = comments.get(*idx).cloned().flatten();
+    }
+    *idx += 1;
+}
+
+/// Attach each line's comment at a shared column and join. The column is measured
+/// over the unpadded text, so it lands where the caller's `if( ` prefix and
+/// `line_pad` agree; one very long line is excluded from the measurement rather
+/// than pushing every comment off to the right.
+fn align_cond_lines(lines: &[CondLine], line_pad: &str, block_style: bool) -> String {
+    let align = lines
         .iter()
-        .map(String::len)
+        .map(|l| l.text.len())
         .filter(|&w| w <= 72)
         .max()
         .unwrap_or(0);
     let mut out = String::new();
-    for (i, code) in code_lines.iter().enumerate() {
+    for (i, line) in lines.iter().enumerate() {
         if i > 0 {
             out.push_str(line_pad);
         }
-        out.push_str(code);
-        if let Some(Some(lines)) = comments.get(i) {
+        out.push_str(&line.text);
+        if let Some(lines) = &line.comment {
             let text = lines
                 .iter()
                 .filter(|l| !l.is_empty())
@@ -78,8 +187,8 @@ pub(crate) fn render_and_operands(
                 .collect::<Vec<_>>()
                 .join(" ");
             if !text.is_empty() {
-                let gap = if code.len() < align { align - code.len() + 1 } else { 1 };
-                let gap = " ".repeat(gap);
+                let width = line.text.len();
+                let gap = " ".repeat(if width < align { align - width + 1 } else { 1 });
                 if block_style {
                     out.push_str(&format!("{gap}/* {text} */"));
                 } else {
@@ -115,8 +224,8 @@ pub trait StatementEmitter {
     fn do_while(&self, condition: &Expr, body: &[Statement], indent: usize) -> String;
 
     /// Render a `Statement::If`; recurse into the bodies via [`walk_stmt`](Self::walk_stmt).
-    /// `cond_comments` holds the per-operand inline comments for a top-level
-    /// `&&`-chain condition (empty for ordinary conditions).
+    /// `cond_comments` holds one inline comment slot per boolean-spine leaf of the
+    /// condition (empty for ordinary conditions).
     fn if_stmt(
         &self,
         condition: &Expr,

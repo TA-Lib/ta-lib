@@ -153,7 +153,10 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE( int    startIdx,
    outIdx = 0;
    do
    {
-      if( ((((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((min(inOpen[i],inClose[i]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) || (((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((max(inOpen[i],inClose[i]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+      if( ((((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+            ((min(inOpen[i],inClose[i]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) ||
+           (((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) &&
+            ((max(inOpen[i],inClose[i]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) &&
           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && /* 2nd: white */
           ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&         /* 3rd: white */
           fabs(inClose[i] - inOpen[i]) >= fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) && /* same size 2 and 3 */
@@ -309,7 +312,10 @@ static void TA_CDLGAPSIDESIDEWHITE_StepImpl( struct TA_CDLGAPSIDESIDEWHITE_Strea
 {
    sp->ring_EqualTrailingIdx_derived[sp->ringPos_EqualTrailingIdx] = TA_STREAM_CANDLERANGE(Equal,inOpen,inHigh,inLow,inClose);
    sp->ring_NearTrailingIdx_derived[sp->ringPos_NearTrailingIdx] = TA_STREAM_CANDLERANGE(Near,inOpen,inHigh,inLow,inClose);
-   if( ((((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((min(inOpen,inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) || (((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((max(inOpen,inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+   if( ((((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+         ((min(inOpen,inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) ||
+        (((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) &&
+         ((max(inOpen,inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) &&
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd: white */
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                   /* 3rd: white */
        fabs(inClose - inOpen) >= fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* same size 2 and 3 */
@@ -427,7 +433,10 @@ static TA_RetCode TA_CDLGAPSIDESIDEWHITE_OpenImpl( struct TA_CDLGAPSIDESIDEWHITE
       outIdx = 0;
       do
       {
-         if( ((((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((min(inOpen[i],inClose[i]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) || (((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && ((max(inOpen[i],inClose[i]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+         if( ((((min(inOpen[i - 1],inClose[i - 1]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+               ((min(inOpen[i],inClose[i]) > max(inOpen[i - 2],inClose[i - 2])) ? 1 : 0)) ||
+              (((max(inOpen[i - 1],inClose[i - 1]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0) &&
+               ((max(inOpen[i],inClose[i]) < min(inOpen[i - 2],inClose[i - 2])) ? 1 : 0))) &&
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && /* 2nd: white */
              ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&         /* 3rd: white */
              fabs(inClose[i] - inOpen[i]) >= fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i - 1) && /* same size 2 and 3 */
@@ -558,7 +567,10 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Peek( const TA_CDLGAPSIDESIDEWHITE_
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( ((((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((min(inOpen,inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) || (((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && ((max(inOpen,inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+   if( ((((min(sp->lag1_inOpen,sp->lag1_inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) && /* upside or downside gap between the 1st candle and both the next 2 candles */
+         ((min(inOpen,inClose) > max(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0)) ||
+        (((max(sp->lag1_inOpen,sp->lag1_inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0) &&
+         ((max(inOpen,inClose) < min(sp->lag2_inOpen,sp->lag2_inClose)) ? 1 : 0))) &&
        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && /* 2nd: white */
        ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                   /* 3rd: white */
        fabs(inClose - inOpen) >= fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* same size 2 and 3 */

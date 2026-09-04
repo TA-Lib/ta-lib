@@ -463,10 +463,13 @@ fn rust_forc_emits_range_iteration_when_possible() {
     );
 }
 
-/// Regression: an inline-commented `&&`-chain whose operand is a parenthesized
+/// Regression: an inline-commented condition whose operand is a parenthesized
 /// `||` group must keep that group parenthesized in the multi-line Rust render,
 /// or precedence changes (`a && (b||c)` would become `(a&&b)||c`). CDLHIKKAKE hit
 /// this and panicked in the Rust server.
+///
+/// The comment slots are per boolean-spine *leaf*, so the group's own two
+/// operands each carry one — the count is what admits the multi-line path at all.
 #[test]
 fn rust_inline_condition_parenthesizes_or_operand() {
     use ta_codegen_lib::backends::rust_lang::{render_statement, RustRenderCtx};
@@ -485,8 +488,12 @@ fn rust_inline_condition_parenthesizes_or_operand() {
         condition,
         then_body: vec![],
         else_body: vec![],
-        // Comments on both operands force the multi-line rendering path.
-        cond_comments: vec![Some(vec!["one".into()]), Some(vec!["two".into()])],
+        // One slot per spine leaf (`a`, `b`, `c`) forces the multi-line path.
+        cond_comments: vec![
+            Some(vec!["one".into()]),
+            Some(vec!["two".into()]),
+            Some(vec!["three".into()]),
+        ],
     };
 
     let ctx = RustRenderCtx::empty();
@@ -518,6 +525,12 @@ fn rust_inline_condition_parenthesizes_or_operand() {
     assert!(
         flat.contains("(b>0||c>0)"),
         "the `||` operand must stay parenthesized in the multi-line render: {rendered}"
+    );
+    // Vacuity guard: the assertion above also holds of the flat one-line form.
+    assert_eq!(
+        rendered.lines().filter(|l| l.contains("//")).count(),
+        3,
+        "expected one commented line per leaf: {rendered}"
     );
 }
 

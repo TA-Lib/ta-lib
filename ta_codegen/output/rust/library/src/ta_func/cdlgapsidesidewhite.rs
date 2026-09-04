@@ -204,7 +204,10 @@ impl Core {
         // does not consider the trend
         outIdx = 0;
         loop {
-            if (((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if (inOpen[i]).min(inClose[i]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if (inOpen[i]).max(inClose[i]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) && // upside or downside gap between the 1st candle and both the next 2 candles
+            if (((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // upside or downside gap between the 1st candle and both the next 2 candles
+                 ((if (inOpen[i]).min(inClose[i]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) ||
+                ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) &&
+                 ((if (inOpen[i]).max(inClose[i]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) &&
                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && // 2nd: white
                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&         // 3rd: white
                (inClose[i] - inOpen[i]).abs() >= (inClose[i - 1] - inOpen[i - 1]).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // same size 2 and 3
@@ -511,7 +514,10 @@ impl Core {
             }
         }
         sp.ring_NearTrailingIdx_derived[sp.ringPos_NearTrailingIdx] = _candlerange_1;
-        if (((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && ((if (inOpen).min(inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) || ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && ((if (inOpen).max(inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) && // upside or downside gap between the 1st candle and both the next 2 candles
+        if (((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // upside or downside gap between the 1st candle and both the next 2 candles
+             ((if (inOpen).min(inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) ||
+            ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) &&
+             ((if (inOpen).max(inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) &&
            (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 2nd: white
            (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&                 // 3rd: white
            (inClose - inOpen).abs() >= (sp.lag1_inClose - sp.lag1_inOpen).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // same size 2 and 3
@@ -691,7 +697,10 @@ impl Core {
         // does not consider the trend
         outIdx = 0;
         loop {
-            if (((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if (inOpen[i]).min(inClose[i]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) || ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) && ((if (inOpen[i]).max(inClose[i]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) && // upside or downside gap between the 1st candle and both the next 2 candles
+            if (((if (inOpen[i - 1]).min(inClose[i - 1]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) && // upside or downside gap between the 1st candle and both the next 2 candles
+                 ((if (inOpen[i]).min(inClose[i]) > (inOpen[i - 2]).max(inClose[i - 2]) { 1 } else { 0 }) != 0) ||
+                ((if (inOpen[i - 1]).max(inClose[i - 1]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0) &&
+                 ((if (inOpen[i]).max(inClose[i]) < (inOpen[i - 2]).min(inClose[i - 2]) { 1 } else { 0 }) != 0)) &&
                (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 }) == 1 && // 2nd: white
                (if inClose[i] >= inOpen[i] { 1 } else { 0 - 1 }) == 1 &&         // 3rd: white
                (inClose[i] - inOpen[i]).abs() >= (inClose[i - 1] - inOpen[i - 1]).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // same size 2 and 3
@@ -1053,7 +1062,10 @@ impl CdlgapsidesidewhiteStream {
             let Near_avgPeriod: i32 = self.cs_near.avg_period;
             #[allow(non_snake_case)]
             let Near_factor: f64 = self.cs_near.factor;
-            if (((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && ((if (inOpen).min(inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) || ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) && ((if (inOpen).max(inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) && // upside or downside gap between the 1st candle and both the next 2 candles
+            if (((if (sp.lag1_inOpen).min(sp.lag1_inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) && // upside or downside gap between the 1st candle and both the next 2 candles
+                 ((if (inOpen).min(inClose) > (sp.lag2_inOpen).max(sp.lag2_inClose) { 1 } else { 0 }) != 0) ||
+                ((if (sp.lag1_inOpen).max(sp.lag1_inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0) &&
+                 ((if (inOpen).max(inClose) < (sp.lag2_inOpen).min(sp.lag2_inClose) { 1 } else { 0 }) != 0)) &&
                (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 }) == 1 && // 2nd: white
                (if inClose >= inOpen { 1 } else { 0 - 1 }) == 1 &&                 // 3rd: white
                (inClose - inOpen).abs() >= (sp.lag1_inClose - sp.lag1_inOpen).abs() - ((Near_factor) * (if (Near_avgPeriod) != 0 { (sp.NearPeriodTotal) / (Near_avgPeriod as f64) } else { match Near_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (Near_rangeType) == 2 { 2.0 } else { 1.0 })) && // same size 2 and 3

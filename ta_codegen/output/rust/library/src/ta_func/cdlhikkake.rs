@@ -139,14 +139,20 @@ impl Core {
             // copy here the pattern recognition code below
             if inHigh[i - 1] < inHigh[i - 2] &&
                inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
-               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+               (inHigh[i] < inHigh[i - 1] &&
+                 inLow[i] < inLow[i - 1] ||     // (bull) 3rd: lower high and lower low
+                inHigh[i] > inHigh[i - 1] &&
+                 inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
             } else if cd > 0 &&
-               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+               (patternResult > 0 &&       // search for confirmation if hikkake was no more than 3 bars ago
+                 inClose[i] > savedHigh || // close higher than the high of 2nd
+                patternResult < 0 &&
+                 inClose[i] < savedLow)    // close lower than the low of 2nd
             {
                 cd = 0;
             }
@@ -170,7 +176,10 @@ impl Core {
         loop {
             if inHigh[i - 1] < inHigh[i - 2] &&
                inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
-               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+               (inHigh[i] < inHigh[i - 1] &&
+                 inLow[i] < inLow[i - 1] ||     // (bull) 3rd: lower high and lower low
+                inHigh[i] > inHigh[i - 1] &&
+                 inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
                 savedHigh = inHigh[i - 1];
@@ -179,7 +188,10 @@ impl Core {
                 outInteger[outIdx] = (patternResult) as i32;
                 outIdx += 1;
             } else if cd > 0 &&
-               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+               (patternResult > 0 &&       // search for confirmation if hikkake was no more than 3 bars ago
+                 inClose[i] > savedHigh || // close higher than the high of 2nd
+                patternResult < 0 &&
+                 inClose[i] < savedLow)    // close lower than the low of 2nd
             {
                 outInteger[outIdx] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 outIdx += 1;
@@ -360,7 +372,10 @@ impl Core {
     fn cdlhikkake_step_impl(sp: &mut CdlhikkakeStreamState, inOpen: f64, inHigh: f64, inLow: f64, inClose: f64, outInteger: &mut i32) {
         if sp.lag1_inHigh < sp.lag2_inHigh &&
            sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
-           (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+           (inHigh < sp.lag1_inHigh &&
+             inLow < sp.lag1_inLow ||         // (bull) 3rd: lower high and lower low
+            inHigh > sp.lag1_inHigh &&
+             inLow > sp.lag1_inLow)           // (bear) 3rd: higher high and higher low
         {
             sp.patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
             sp.savedHigh = sp.lag1_inHigh;
@@ -368,7 +383,10 @@ impl Core {
             sp.cd = 4;
             (*outInteger) = (sp.patternResult) as i32;
         } else if sp.cd > 0 &&
-           (sp.patternResult > 0 && inClose > sp.savedHigh || sp.patternResult < 0 && inClose < sp.savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+           (sp.patternResult > 0 &&    // search for confirmation if hikkake was no more than 3 bars ago
+             inClose > sp.savedHigh || // close higher than the high of 2nd
+            sp.patternResult < 0 &&
+             inClose < sp.savedLow)    // close lower than the low of 2nd
         {
             (*outInteger) = (sp.patternResult + ((100 * (if sp.patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
             sp.cd = 0;
@@ -443,14 +461,20 @@ impl Core {
             // copy here the pattern recognition code below
             if inHigh[i - 1] < inHigh[i - 2] &&
                inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
-               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+               (inHigh[i] < inHigh[i - 1] &&
+                 inLow[i] < inLow[i - 1] ||     // (bull) 3rd: lower high and lower low
+                inHigh[i] > inHigh[i - 1] &&
+                 inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
                 savedHigh = inHigh[i - 1];
                 savedLow = inLow[i - 1];
                 cd = 4;
             } else if cd > 0 &&
-               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+               (patternResult > 0 &&       // search for confirmation if hikkake was no more than 3 bars ago
+                 inClose[i] > savedHigh || // close higher than the high of 2nd
+                patternResult < 0 &&
+                 inClose[i] < savedLow)    // close lower than the low of 2nd
             {
                 cd = 0;
             }
@@ -474,7 +498,10 @@ impl Core {
         loop {
             if inHigh[i - 1] < inHigh[i - 2] &&
                inLow[i - 1] > inLow[i - 2] &&   // 1st + 2nd: lower high and higher low
-               (inHigh[i] < inHigh[i - 1] && inLow[i] < inLow[i - 1] || inHigh[i] > inHigh[i - 1] && inLow[i] > inLow[i - 1]) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+               (inHigh[i] < inHigh[i - 1] &&
+                 inLow[i] < inLow[i - 1] ||     // (bull) 3rd: lower high and lower low
+                inHigh[i] > inHigh[i - 1] &&
+                 inLow[i] > inLow[i - 1])       // (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh[i] < inHigh[i - 1] { 1 } else { 0 - 1 });
                 savedHigh = inHigh[i - 1];
@@ -482,7 +509,10 @@ impl Core {
                 cd = 4;
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult) as i32;
             } else if cd > 0 &&
-               (patternResult > 0 && inClose[i] > savedHigh || patternResult < 0 && inClose[i] < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+               (patternResult > 0 &&       // search for confirmation if hikkake was no more than 3 bars ago
+                 inClose[i] > savedHigh || // close higher than the high of 2nd
+                patternResult < 0 &&
+                 inClose[i] < savedLow)    // close lower than the low of 2nd
             {
                 outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 cd = 0;
@@ -734,7 +764,10 @@ impl CdlhikkakeStream {
             let mut savedLow = sp.savedLow;
             if sp.lag1_inHigh < sp.lag2_inHigh &&
                sp.lag1_inLow > sp.lag2_inLow &&   // 1st + 2nd: lower high and higher low
-               (inHigh < sp.lag1_inHigh && inLow < sp.lag1_inLow || inHigh > sp.lag1_inHigh && inLow > sp.lag1_inLow) // (bull) 3rd: lower high and lower low (bear) 3rd: higher high and higher low
+               (inHigh < sp.lag1_inHigh &&
+                 inLow < sp.lag1_inLow ||         // (bull) 3rd: lower high and lower low
+                inHigh > sp.lag1_inHigh &&
+                 inLow > sp.lag1_inLow)           // (bear) 3rd: higher high and higher low
             {
                 patternResult = 100 * (if inHigh < sp.lag1_inHigh { 1 } else { 0 - 1 });
                 savedHigh = sp.lag1_inHigh;
@@ -742,7 +775,10 @@ impl CdlhikkakeStream {
                 cd = 4;
                 (*outInteger) = (patternResult) as i32;
             } else if cd > 0 &&
-               (patternResult > 0 && inClose > savedHigh || patternResult < 0 && inClose < savedLow) // search for confirmation if hikkake was no more than 3 bars ago close higher than the high of 2nd close lower than the low of 2nd
+               (patternResult > 0 &&    // search for confirmation if hikkake was no more than 3 bars ago
+                 inClose > savedHigh || // close higher than the high of 2nd
+                patternResult < 0 &&
+                 inClose < savedLow)    // close lower than the low of 2nd
             {
                 (*outInteger) = (patternResult + ((100 * (if patternResult > 0 { 1 } else { 0 - 1 })) as i32)) as i32;
                 cd = 0;

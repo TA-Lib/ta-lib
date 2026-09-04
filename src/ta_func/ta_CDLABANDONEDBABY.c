@@ -181,7 +181,16 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY( int    startIdx,
       if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long */
           fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i - 1) && /* 2nd: doji */
           fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) && /* 3rd: longer than short */
-          ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && ((inLow[i - 1] > inHigh[i - 2]) ? 1 : 0) && ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) || (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && ((inHigh[i - 1] < inLow[i - 2]) ? 1 : 0) && ((inLow[i] > inHigh[i - 1]) ? 1 : 0))) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
+          ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* 1st white */
+            ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* 3rd black */
+            inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
+            ((inLow[i - 1] > inHigh[i - 2]) ? 1 : 0) &&                 /* upside gap between 1st and 2nd */
+            ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) ||                    /* downside gap between 2nd and 3rd */
+           (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+            ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 3rd white */
+            inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
+            ((inHigh[i - 1] < inLow[i - 2]) ? 1 : 0) &&                 /* downside gap between 1st and 2nd */
+            ((inLow[i] > inHigh[i - 1]) ? 1 : 0))) )                    /* upside gap between 2nd and 3rd */
       {
          outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
       } else 
@@ -371,7 +380,16 @@ static void TA_CDLABANDONEDBABY_StepImpl( struct TA_CDLABANDONEDBABY_Stream *sp,
    if( fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long */
        fabs(sp->lag1_inClose - sp->lag1_inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* 2nd: doji */
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) && /* 3rd: longer than short */
-       ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inClose < sp->lag2_inClose - fabs(sp->lag2_inClose - sp->lag2_inOpen) * sp->optInPenetration && ((sp->lag1_inLow > sp->lag2_inHigh) ? 1 : 0) && ((inHigh < sp->lag1_inLow) ? 1 : 0)) || (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inClose > fma(fabs(sp->lag2_inClose - sp->lag2_inOpen), sp->optInPenetration, sp->lag2_inClose) && ((sp->lag1_inHigh < sp->lag2_inLow) ? 1 : 0) && ((inLow > sp->lag1_inHigh) ? 1 : 0))) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
+       ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st white */
+         ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                   /* 3rd black */
+         inClose < sp->lag2_inClose - fabs(sp->lag2_inClose - sp->lag2_inOpen) * sp->optInPenetration && /* 3rd closes well within 1st rb */
+         ((sp->lag1_inLow > sp->lag2_inHigh) ? 1 : 0) &&                 /* upside gap between 1st and 2nd */
+         ((inHigh < sp->lag1_inLow) ? 1 : 0)) ||                         /* downside gap between 2nd and 3rd */
+        (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+         ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                       /* 3rd white */
+         inClose > fma(fabs(sp->lag2_inClose - sp->lag2_inOpen), sp->optInPenetration, sp->lag2_inClose) && /* 3rd closes well within 1st rb */
+         ((sp->lag1_inHigh < sp->lag2_inLow) ? 1 : 0) &&                 /* downside gap between 1st and 2nd */
+         ((inLow > sp->lag1_inHigh) ? 1 : 0))) )                         /* upside gap between 2nd and 3rd */
    {
       *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
    } else 
@@ -515,7 +533,16 @@ static TA_RetCode TA_CDLABANDONEDBABY_OpenImpl( struct TA_CDLABANDONEDBABY_Strea
          if( fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long */
              fabs(inClose[i - 1] - inOpen[i - 1]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i - 1) && /* 2nd: doji */
              fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) && /* 3rd: longer than short */
-             ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && ((inLow[i - 1] > inHigh[i - 2]) ? 1 : 0) && ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) || (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && ((inHigh[i - 1] < inLow[i - 2]) ? 1 : 0) && ((inLow[i] > inHigh[i - 1]) ? 1 : 0))) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
+             ((((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 1 &&     /* 1st white */
+               ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&         /* 3rd black */
+               inClose[i] < inClose[i - 2] - fabs(inClose[i - 2] - inOpen[i - 2]) * optInPenetration && /* 3rd closes well within 1st rb */
+               ((inLow[i - 1] > inHigh[i - 2]) ? 1 : 0) &&                 /* upside gap between 1st and 2nd */
+               ((inHigh[i] < inLow[i - 1]) ? 1 : 0)) ||                    /* downside gap between 2nd and 3rd */
+              (((inClose[i - 2] >= inOpen[i - 2]) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+               ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&             /* 3rd white */
+               inClose[i] > fma(fabs(inClose[i - 2] - inOpen[i - 2]), optInPenetration, inClose[i - 2]) && /* 3rd closes well within 1st rb */
+               ((inHigh[i - 1] < inLow[i - 2]) ? 1 : 0) &&                 /* downside gap between 1st and 2nd */
+               ((inLow[i] > inHigh[i - 1]) ? 1 : 0))) )                    /* upside gap between 2nd and 3rd */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
          } else 
@@ -659,7 +686,16 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Peek( const TA_CDLABANDONEDBABY_Stream
    if( fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long */
        fabs(sp->lag1_inClose - sp->lag1_inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) && /* 2nd: doji */
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) && /* 3rd: longer than short */
-       ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && inClose < sp->lag2_inClose - fabs(sp->lag2_inClose - sp->lag2_inOpen) * sp->optInPenetration && ((sp->lag1_inLow > sp->lag2_inHigh) ? 1 : 0) && ((inHigh < sp->lag1_inLow) ? 1 : 0)) || (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= inOpen) ? 1 : 0 - 1) == 1 && inClose > fma(fabs(sp->lag2_inClose - sp->lag2_inOpen), sp->optInPenetration, sp->lag2_inClose) && ((sp->lag1_inHigh < sp->lag2_inLow) ? 1 : 0) && ((inLow > sp->lag1_inHigh) ? 1 : 0))) ) /* 1st white 3rd black 3rd closes well within 1st rb upside gap between 1st and 2nd downside gap between 2nd and 3rd 1st black 3rd white 3rd closes well within 1st rb downside gap between 1st and 2nd upside gap between 2nd and 3rd */
+       ((((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 1 &&     /* 1st white */
+         ((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&                   /* 3rd black */
+         inClose < sp->lag2_inClose - fabs(sp->lag2_inClose - sp->lag2_inOpen) * sp->optInPenetration && /* 3rd closes well within 1st rb */
+         ((sp->lag1_inLow > sp->lag2_inHigh) ? 1 : 0) &&                 /* upside gap between 1st and 2nd */
+         ((inHigh < sp->lag1_inLow) ? 1 : 0)) ||                         /* downside gap between 2nd and 3rd */
+        (((sp->lag2_inClose >= sp->lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* 1st black */
+         ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&                       /* 3rd white */
+         inClose > fma(fabs(sp->lag2_inClose - sp->lag2_inOpen), sp->optInPenetration, sp->lag2_inClose) && /* 3rd closes well within 1st rb */
+         ((sp->lag1_inHigh < sp->lag2_inLow) ? 1 : 0) &&                 /* downside gap between 1st and 2nd */
+         ((inLow > sp->lag1_inHigh) ? 1 : 0))) )                         /* upside gap between 2nd and 3rd */
    {
       *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
    } else 

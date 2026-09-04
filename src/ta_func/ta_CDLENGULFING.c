@@ -130,10 +130,19 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING( int    startIdx,
    outIdx = 0;
    do
    {
-      if( (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1]) || (inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]))) || (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1]) || (inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]))) )
+      if( (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
+           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+           ((inClose[i] >= inOpen[i - 1] &&
+             inOpen[i] < inClose[i - 1]) ||
+            (inClose[i] > inOpen[i - 1] &&
+             inOpen[i] <= inClose[i - 1]))) ||
+          (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
+           ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+           ((inOpen[i] >= inClose[i - 1] &&
+             inClose[i] < inOpen[i - 1]) ||
+            (inOpen[i] > inClose[i - 1] &&
+             inClose[i] <= inOpen[i - 1]))) )
       {
-         /* white engulfs black */
-         /* black engulfs white */
          if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
          {
             outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
@@ -236,10 +245,19 @@ struct TA_CDLENGULFING_Stream {
 /* Private function, not in public API. */
 static void TA_CDLENGULFING_StepImpl( struct TA_CDLENGULFING_Stream *sp, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= sp->lag1_inOpen && inOpen < sp->lag1_inClose) || (inClose > sp->lag1_inOpen && inOpen <= sp->lag1_inClose))) || (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inOpen >= sp->lag1_inClose && inClose < sp->lag1_inOpen) || (inOpen > sp->lag1_inClose && inClose <= sp->lag1_inOpen))) )
+   if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+        ((inClose >= sp->lag1_inOpen &&
+          inOpen < sp->lag1_inClose) ||
+         (inClose > sp->lag1_inOpen &&
+          inOpen <= sp->lag1_inClose))) ||
+       (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+        ((inOpen >= sp->lag1_inClose &&
+          inClose < sp->lag1_inOpen) ||
+         (inOpen > sp->lag1_inClose &&
+          inClose <= sp->lag1_inOpen))) )
    {
-      /* white engulfs black */
-      /* black engulfs white */
       if( inOpen != sp->lag1_inClose && inClose != sp->lag1_inOpen )
       {
          *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
@@ -314,10 +332,19 @@ static TA_RetCode TA_CDLENGULFING_OpenImpl( struct TA_CDLENGULFING_Stream **stre
       outIdx = 0;
       do
       {
-         if( (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i] >= inOpen[i - 1] && inOpen[i] < inClose[i - 1]) || (inClose[i] > inOpen[i - 1] && inOpen[i] <= inClose[i - 1]))) || (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 && ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inOpen[i] >= inClose[i - 1] && inClose[i] < inOpen[i - 1]) || (inOpen[i] > inClose[i - 1] && inClose[i] <= inOpen[i - 1]))) )
+         if( (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+              ((inClose[i] >= inOpen[i - 1] &&
+                inOpen[i] < inClose[i - 1]) ||
+               (inClose[i] > inOpen[i - 1] &&
+                inOpen[i] <= inClose[i - 1]))) ||
+             (((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) == 0 - 1 &&
+              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+              ((inOpen[i] >= inClose[i - 1] &&
+                inClose[i] < inOpen[i - 1]) ||
+               (inOpen[i] > inClose[i - 1] &&
+                inClose[i] <= inOpen[i - 1]))) )
          {
-            /* white engulfs black */
-            /* black engulfs white */
             if( inOpen[i] != inClose[i - 1] && inClose[i] != inOpen[i - 1] )
             {
                outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
@@ -410,10 +437,19 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Peek( const TA_CDLENGULFING_Stream *stream
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inClose >= sp->lag1_inOpen && inOpen < sp->lag1_inClose) || (inClose > sp->lag1_inOpen && inOpen <= sp->lag1_inClose))) || (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 && ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inOpen >= sp->lag1_inClose && inClose < sp->lag1_inOpen) || (inOpen > sp->lag1_inClose && inClose <= sp->lag1_inOpen))) )
+   if( (((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
+        ((inClose >= sp->lag1_inOpen &&
+          inOpen < sp->lag1_inClose) ||
+         (inClose > sp->lag1_inOpen &&
+          inOpen <= sp->lag1_inClose))) ||
+       (((inClose >= inOpen) ? 1 : 0 - 1) == 0 - 1 &&
+        ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&     /* black engulfs white */
+        ((inOpen >= sp->lag1_inClose &&
+          inClose < sp->lag1_inOpen) ||
+         (inOpen > sp->lag1_inClose &&
+          inClose <= sp->lag1_inOpen))) )
    {
-      /* white engulfs black */
-      /* black engulfs white */
       if( inOpen != sp->lag1_inClose && inClose != sp->lag1_inOpen )
       {
          *outInteger= ((inClose >= inOpen) ? 1 : 0 - 1) * 100;

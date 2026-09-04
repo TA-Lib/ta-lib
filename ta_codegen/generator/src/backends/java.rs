@@ -1755,44 +1755,59 @@ impl StatementEmitter for JavaStmt<'_> {
                 return self.walk_stmt(&outer_if, indent);
             }
         }
-        // Inline per-operand comments: render the `&&`-chain multi-line (same
-        // tokens as the flat form, plus the comments).
-        if !cond_comments.is_empty()
-            && super::stmt_walk::flatten_and(condition).len() == cond_comments.len()
-        {
+        // Inline per-leaf comments: render the condition's boolean spine
+        // multi-line, one leaf per line with its comment. `render_cond_tree`
+        // emits nothing whose token stream differs from the flat form below.
+        if !cond_comments.is_empty() {
             let mut hoisted = Vec::new();
-            let mut cnt = self.ctx.inline_counter.get();
+            let counter0 = self.ctx.inline_counter.get();
+            let mut cnt = counter0;
             let new_condition = hoist_block_helpers(
                 condition, self.helpers, &mut hoisted, &mut cnt, JAVA_CANDLE_FNS,
             );
             self.ctx.inline_counter.set(cnt);
-            let op_strs: Vec<String> = super::stmt_walk::flatten_and(&new_condition)
-                .iter()
-                .map(|o| {
-                    let s = render_expr(o, self.ctx, self.registry, self.helpers);
-                    if is_boolean_expr(o, self.helpers) {
-                        // Re-joined with `&&`, so wrap an operand that binds
-                        // looser than `&&` (an `||` chain or ternary).
-                        if expr_prec(o) < binop_prec(&BinOp::And) {
-                            format!("({s})")
-                        } else {
-                            s
-                        }
-                    } else {
-                        format!("({s}) != 0")
-                    }
-                })
-                .collect();
-            let mut out = render_hoisted_blocks(
-                &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
-            );
-            out.push_str(&format!("{pad}if( "));
-            out.push_str(&super::stmt_walk::render_and_operands(
-                &op_strs, cond_comments, &" ".repeat(indent + 4), " )", true,
-            ));
-            out.push_str(&format!("{pad}{{\n"));
-            out.push_str(&self.render_if_tail(then_body, else_body, indent));
-            return out;
+            // Both hooks restate `binop`'s operand rules for one child.
+            let operand = |o: &Expr, op: &BinOp, is_right: bool| {
+                let s = render_expr(o, self.ctx, self.registry, self.helpers);
+                if matches!(op, BinOp::And | BinOp::Or) && is_int_bitwise(o) {
+                    format!("({s}) != 0")
+                } else {
+                    wrap_child(s, o, binop_prec(op), is_right)
+                }
+            };
+            let wraps = |o: &Expr, op: &BinOp, is_right: bool| {
+                let (cp, pp) = (expr_prec(o), binop_prec(op));
+                cp < pp || (cp == pp && is_right)
+            };
+            // The flat path coerces a non-boolean condition here, outside the
+            // operand rules — so this, not the bare render, is what the
+            // token-identity check has to be measured against.
+            let rendered = render_expr(&new_condition, self.ctx, self.registry, self.helpers);
+            let flat = if is_boolean_expr(&new_condition, self.helpers) {
+                rendered
+            } else {
+                format!("({rendered}) != 0")
+            };
+            if let Some(cond_text) = super::stmt_walk::render_cond_tree(
+                &new_condition,
+                cond_comments,
+                &super::stmt_walk::CondHooks { operand: &operand, wraps: &wraps },
+                &flat,
+                &" ".repeat(indent + 4),
+                " )",
+                true,
+            ) {
+                let mut out = render_hoisted_blocks(
+                    &hoisted, indent, self.ctx, self.enums, self.registry, self.helpers,
+                );
+                out.push_str(&format!("{pad}if( "));
+                out.push_str(&cond_text);
+                out.push_str(&format!("{pad}{{\n"));
+                out.push_str(&self.render_if_tail(then_body, else_body, indent));
+                return out;
+            }
+            // Falling through re-hoists from scratch; rewind so the names match.
+            self.ctx.inline_counter.set(counter0);
         }
         // Hoist multi-statement helpers from the condition expression
         let mut hoisted = Vec::new();

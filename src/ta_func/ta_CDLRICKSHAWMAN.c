@@ -164,7 +164,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN( int    startIdx,
       if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && /* doji */
           (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long shadow */
           (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long shadow */
-          min(inOpen[i],inClose[i]) <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && max(inOpen[i],inClose[i]) >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) ) /* body near midpoint */
+          (min(inOpen[i],inClose[i]) <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && /* body near midpoint */
+           max(inOpen[i],inClose[i]) >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i)) )
       {
          outInteger[outIdx++] = 100;
       } else 
@@ -338,7 +339,8 @@ static void TA_CDLRICKSHAWMAN_StepImpl( struct TA_CDLRICKSHAWMAN_Stream *sp, dou
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) && /* doji */
        (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
-       min(inOpen,inClose) <= inLow + (inHigh - inLow) / 2 + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) && max(inOpen,inClose) >= inLow + (inHigh - inLow) / 2 - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* body near midpoint */
+       (min(inOpen,inClose) <= inLow + (inHigh - inLow) / 2 + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) && /* body near midpoint */
+        max(inOpen,inClose) >= inLow + (inHigh - inLow) / 2 - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose)) )
    {
       *outInteger= 100;
    } else 
@@ -463,7 +465,8 @@ static TA_RetCode TA_CDLRICKSHAWMAN_OpenImpl( struct TA_CDLRICKSHAWMAN_Stream **
          if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) && /* doji */
              (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long shadow */
              (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long shadow */
-             min(inOpen[i],inClose[i]) <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && max(inOpen[i],inClose[i]) >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) ) /* body near midpoint */
+             (min(inOpen[i],inClose[i]) <= inLow[i] + (inHigh[i] - inLow[i]) / 2 + TA_CANDLEAVERAGE(Near,NearPeriodTotal,i) && /* body near midpoint */
+              max(inOpen[i],inClose[i]) >= inLow[i] + (inHigh[i] - inLow[i]) / 2 - TA_CANDLEAVERAGE(Near,NearPeriodTotal,i)) )
          {
             outInteger[outIdx++ * outStride] = 100;
          } else 
@@ -597,7 +600,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Peek( const TA_CDLRICKSHAWMAN_Stream *st
    if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) && /* doji */
        (((inClose >= inOpen) ? inOpen : inClose) - inLow) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long shadow */
-       min(inOpen,inClose) <= inLow + (inHigh - inLow) / 2 + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) && max(inOpen,inClose) >= inLow + (inHigh - inLow) / 2 - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* body near midpoint */
+       (min(inOpen,inClose) <= inLow + (inHigh - inLow) / 2 + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose) && /* body near midpoint */
+        max(inOpen,inClose) >= inLow + (inHigh - inLow) / 2 - TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal,inOpen,inHigh,inLow,inClose)) )
    {
       *outInteger= 100;
    } else 

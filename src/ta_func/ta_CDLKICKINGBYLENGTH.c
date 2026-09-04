@@ -162,7 +162,10 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH( int    startIdx,
           fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && /* 2nd marubozu */
           (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) &&
           (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) &&
-          ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inLow[i] > inHigh[i - 1]) ? 1 : 0)) || (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inHigh[i] < inLow[i - 1]) ? 1 : 0))) ) /* gap */
+          ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* gap */
+            ((inLow[i] > inHigh[i - 1]) ? 1 : 0)) ||
+           (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&
+            ((inHigh[i] < inLow[i - 1]) ? 1 : 0))) )
       {
          outInteger[outIdx++] = ((inClose[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1] >= inOpen[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1]) ? 1 : 0 - 1) * 100;
       } else 
@@ -330,7 +333,10 @@ static void TA_CDLKICKINGBYLENGTH_StepImpl( struct TA_CDLKICKINGBYLENGTH_Stream 
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* 2nd marubozu */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
        (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
-       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inLow > sp->lag1_inHigh) ? 1 : 0)) || (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inHigh < sp->lag1_inLow) ? 1 : 0))) ) /* gap */
+       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* gap */
+         ((inLow > sp->lag1_inHigh) ? 1 : 0)) ||
+        (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&
+         ((inHigh < sp->lag1_inLow) ? 1 : 0))) )
    {
       *outInteger= ((((fabs(inClose - inOpen) > fabs(sp->lag1_inClose - sp->lag1_inOpen)) ? inClose : sp->lag1_inClose) >= ((fabs(inClose - inOpen) > fabs(sp->lag1_inClose - sp->lag1_inOpen)) ? inOpen : sp->lag1_inOpen)) ? 1 : 0 - 1) * 100;
    } else 
@@ -452,7 +458,10 @@ static TA_RetCode TA_CDLKICKINGBYLENGTH_OpenImpl( struct TA_CDLKICKINGBYLENGTH_S
              fabs(inClose[i] - inOpen[i]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal[0],i) && /* 2nd marubozu */
              (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) &&
              (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal[0],i) &&
-             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && ((inLow[i] > inHigh[i - 1]) ? 1 : 0)) || (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 && ((inHigh[i] < inLow[i - 1]) ? 1 : 0))) ) /* gap */
+             ((((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - 1 && /* gap */
+               ((inLow[i] > inHigh[i - 1]) ? 1 : 0)) ||
+              (((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 1 &&
+               ((inHigh[i] < inLow[i - 1]) ? 1 : 0))) )
          {
             outInteger[outIdx++ * outStride] = ((inClose[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1] >= inOpen[(fabs(inClose[i] - inOpen[i]) > fabs(inClose[i - 1] - inOpen[i - 1])) ? i : i - 1]) ? 1 : 0 - 1) * 100;
          } else 
@@ -585,7 +594,10 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Peek( const TA_CDLKICKINGBYLENGTH_St
        fabs(inClose - inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal[0],inOpen,inHigh,inLow,inClose) && /* 2nd marubozu */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
        (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal[0],inOpen,inHigh,inLow,inClose) &&
-       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && ((inLow > sp->lag1_inHigh) ? 1 : 0)) || (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 && ((inHigh < sp->lag1_inLow) ? 1 : 0))) ) /* gap */
+       ((((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* gap */
+         ((inLow > sp->lag1_inHigh) ? 1 : 0)) ||
+        (((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1) == 1 &&
+         ((inHigh < sp->lag1_inLow) ? 1 : 0))) )
    {
       *outInteger= ((((fabs(inClose - inOpen) > fabs(sp->lag1_inClose - sp->lag1_inOpen)) ? inClose : sp->lag1_inClose) >= ((fabs(inClose - inOpen) > fabs(sp->lag1_inClose - sp->lag1_inOpen)) ? inOpen : sp->lag1_inOpen)) ? 1 : 0 - 1) * 100;
    } else 

@@ -97,7 +97,22 @@
              ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) &&
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) &&
              Math.abs(inClose[i - 4] - inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
-             (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (Math.max(inOpen[i - 3], inClose[i - 3]) < Math.min(inOpen[i - 4], inClose[i - 4])) && inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] < inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] < inLow[i - 2] && inClose[i] > inOpen[i - 3] && inClose[i] < inClose[i - 4] || ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (Math.min(inOpen[i - 3], inClose[i - 3]) > Math.max(inOpen[i - 4], inClose[i - 4])) && inHigh[i - 2] > inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] > inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && inClose[i] < inOpen[i - 3] && inClose[i] > inClose[i - 4]) ) /* when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap */
+             (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
+               (Math.max(inOpen[i - 3], inClose[i - 3]) < Math.min(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps down */
+               inHigh[i - 2] < inHigh[i - 3] &&
+               inLow[i - 2] < inLow[i - 3] &&                             /* 3rd has lower high and low than 2nd */
+               inHigh[i - 1] < inHigh[i - 2] &&
+               inLow[i - 1] < inLow[i - 2] &&                             /* 4th has lower high and low than 3rd */
+               inClose[i] > inOpen[i - 3] &&
+               inClose[i] < inClose[i - 4] ||                             /* 5th closes inside the gap */
+              ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
+               (Math.min(inOpen[i - 3], inClose[i - 3]) > Math.max(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps up */
+               inHigh[i - 2] > inHigh[i - 3] &&
+               inLow[i - 2] > inLow[i - 3] &&                             /* 3rd has higher high and low than 2nd */
+               inHigh[i - 1] > inHigh[i - 2] &&
+               inLow[i - 1] > inLow[i - 2] &&                             /* 4th has higher high and low than 3rd */
+               inClose[i] < inOpen[i - 3] &&
+               inClose[i] > inClose[i - 4]) )                             /* 5th closes inside the gap */
          {
             outInteger[outIdx++] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {
@@ -484,7 +499,22 @@
              ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) &&
              ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
              Math.abs(sp.lag4_inClose - sp.lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
-             (((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(sp.lag3_inOpen, sp.lag3_inClose) < Math.min(sp.lag4_inOpen, sp.lag4_inClose)) && sp.lag2_inHigh < sp.lag3_inHigh && sp.lag2_inLow < sp.lag3_inLow && sp.lag1_inHigh < sp.lag2_inHigh && sp.lag1_inLow < sp.lag2_inLow && inClose > sp.lag3_inOpen && inClose < sp.lag4_inClose || ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(sp.lag3_inOpen, sp.lag3_inClose) > Math.max(sp.lag4_inOpen, sp.lag4_inClose)) && sp.lag2_inHigh > sp.lag3_inHigh && sp.lag2_inLow > sp.lag3_inLow && sp.lag1_inHigh > sp.lag2_inHigh && sp.lag1_inLow > sp.lag2_inLow && inClose < sp.lag3_inOpen && inClose > sp.lag4_inClose) ) /* when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap */
+             (((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
+               (Math.max(sp.lag3_inOpen, sp.lag3_inClose) < Math.min(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps down */
+               sp.lag2_inHigh < sp.lag3_inHigh &&
+               sp.lag2_inLow < sp.lag3_inLow &&                             /* 3rd has lower high and low than 2nd */
+               sp.lag1_inHigh < sp.lag2_inHigh &&
+               sp.lag1_inLow < sp.lag2_inLow &&                             /* 4th has lower high and low than 3rd */
+               inClose > sp.lag3_inOpen &&
+               inClose < sp.lag4_inClose ||                                 /* 5th closes inside the gap */
+              ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
+               (Math.min(sp.lag3_inOpen, sp.lag3_inClose) > Math.max(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps up */
+               sp.lag2_inHigh > sp.lag3_inHigh &&
+               sp.lag2_inLow > sp.lag3_inLow &&                             /* 3rd has higher high and low than 2nd */
+               sp.lag1_inHigh > sp.lag2_inHigh &&
+               sp.lag1_inLow > sp.lag2_inLow &&                             /* 4th has higher high and low than 3rd */
+               inClose < sp.lag3_inOpen &&
+               inClose > sp.lag4_inClose) )                                 /* 5th closes inside the gap */
          {
             cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
          } else {
@@ -529,7 +559,22 @@
           ((sp.lag3_inClose >= sp.lag3_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) &&
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) &&
           Math.abs(sp.lag4_inClose - sp.lag4_inOpen) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (sp.BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(sp.lag4_inClose - sp.lag4_inOpen)) : ((BodyLong_rangeType == 1) ? (sp.lag4_inHigh - sp.lag4_inLow) : ((BodyLong_rangeType == 2) ? ((sp.lag4_inHigh - (((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inClose) : (sp.lag4_inOpen))) + ((((sp.lag4_inClose) >= (sp.lag4_inOpen)) ? (sp.lag4_inOpen) : (sp.lag4_inClose)) - sp.lag4_inLow)) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
-          (((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && (Math.max(sp.lag3_inOpen, sp.lag3_inClose) < Math.min(sp.lag4_inOpen, sp.lag4_inClose)) && sp.lag2_inHigh < sp.lag3_inHigh && sp.lag2_inLow < sp.lag3_inLow && sp.lag1_inHigh < sp.lag2_inHigh && sp.lag1_inLow < sp.lag2_inLow && inClose > sp.lag3_inOpen && inClose < sp.lag4_inClose || ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 && (Math.min(sp.lag3_inOpen, sp.lag3_inClose) > Math.max(sp.lag4_inOpen, sp.lag4_inClose)) && sp.lag2_inHigh > sp.lag3_inHigh && sp.lag2_inLow > sp.lag3_inLow && sp.lag1_inHigh > sp.lag2_inHigh && sp.lag1_inLow > sp.lag2_inLow && inClose < sp.lag3_inOpen && inClose > sp.lag4_inClose) ) /* when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap */
+          (((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
+            (Math.max(sp.lag3_inOpen, sp.lag3_inClose) < Math.min(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps down */
+            sp.lag2_inHigh < sp.lag3_inHigh &&
+            sp.lag2_inLow < sp.lag3_inLow &&                             /* 3rd has lower high and low than 2nd */
+            sp.lag1_inHigh < sp.lag2_inHigh &&
+            sp.lag1_inLow < sp.lag2_inLow &&                             /* 4th has lower high and low than 3rd */
+            inClose > sp.lag3_inOpen &&
+            inClose < sp.lag4_inClose ||                                 /* 5th closes inside the gap */
+           ((sp.lag4_inClose >= sp.lag4_inOpen) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
+            (Math.min(sp.lag3_inOpen, sp.lag3_inClose) > Math.max(sp.lag4_inOpen, sp.lag4_inClose)) && /* 2nd gaps up */
+            sp.lag2_inHigh > sp.lag3_inHigh &&
+            sp.lag2_inLow > sp.lag3_inLow &&                             /* 3rd has higher high and low than 2nd */
+            sp.lag1_inHigh > sp.lag2_inHigh &&
+            sp.lag1_inLow > sp.lag2_inLow &&                             /* 4th has higher high and low than 3rd */
+            inClose < sp.lag3_inOpen &&
+            inClose > sp.lag4_inClose) )                                 /* 5th closes inside the gap */
       {
          sp.cur_outInteger = ((inClose >= inOpen) ? 1 : 0 - 1) * 100;
       } else {
@@ -630,7 +675,22 @@
              ((inClose[i - 3] >= inOpen[i - 3]) ? 1 : 0 - 1) == ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) &&
              ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1) == 0 - ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) &&
              Math.abs(inClose[i - 4] - inOpen[i - 4]) > ((BodyLong_factor * (((BodyLong_avgPeriod != 0) ? (BodyLongPeriodTotal / BodyLong_avgPeriod) : ((BodyLong_rangeType == 0) ? (Math.abs(inClose[i - 4] - inOpen[i - 4])) : ((BodyLong_rangeType == 1) ? (inHigh[i - 4] - inLow[i - 4]) : ((BodyLong_rangeType == 2) ? ((inHigh[i - 4] - (((inClose[i - 4]) >= (inOpen[i - 4])) ? (inClose[i - 4]) : (inOpen[i - 4]))) + ((((inClose[i - 4]) >= (inOpen[i - 4])) ? (inOpen[i - 4]) : (inClose[i - 4])) - inLow[i - 4])) : 0.0)))) / ((BodyLong_rangeType == 2) ? 2.0 : 1.0)))) && /* 1st long */
-             (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && (Math.max(inOpen[i - 3], inClose[i - 3]) < Math.min(inOpen[i - 4], inClose[i - 4])) && inHigh[i - 2] < inHigh[i - 3] && inLow[i - 2] < inLow[i - 3] && inHigh[i - 1] < inHigh[i - 2] && inLow[i - 1] < inLow[i - 2] && inClose[i] > inOpen[i - 3] && inClose[i] < inClose[i - 4] || ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 && (Math.min(inOpen[i - 3], inClose[i - 3]) > Math.max(inOpen[i - 4], inClose[i - 4])) && inHigh[i - 2] > inHigh[i - 3] && inLow[i - 2] > inLow[i - 3] && inHigh[i - 1] > inHigh[i - 2] && inLow[i - 1] > inLow[i - 2] && inClose[i] < inOpen[i - 3] && inClose[i] > inClose[i - 4]) ) /* when 1st is black: 2nd gaps down 3rd has lower high and low than 2nd 4th has lower high and low than 3rd 5th closes inside the gap when 1st is white: 2nd gaps up 3rd has higher high and low than 2nd 4th has higher high and low than 3rd 5th closes inside the gap */
+             (((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 0 - 1 && /* when 1st is black: */
+               (Math.max(inOpen[i - 3], inClose[i - 3]) < Math.min(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps down */
+               inHigh[i - 2] < inHigh[i - 3] &&
+               inLow[i - 2] < inLow[i - 3] &&                             /* 3rd has lower high and low than 2nd */
+               inHigh[i - 1] < inHigh[i - 2] &&
+               inLow[i - 1] < inLow[i - 2] &&                             /* 4th has lower high and low than 3rd */
+               inClose[i] > inOpen[i - 3] &&
+               inClose[i] < inClose[i - 4] ||                             /* 5th closes inside the gap */
+              ((inClose[i - 4] >= inOpen[i - 4]) ? 1 : 0 - 1) == 1 &&     /* when 1st is white: */
+               (Math.min(inOpen[i - 3], inClose[i - 3]) > Math.max(inOpen[i - 4], inClose[i - 4])) && /* 2nd gaps up */
+               inHigh[i - 2] > inHigh[i - 3] &&
+               inLow[i - 2] > inLow[i - 3] &&                             /* 3rd has higher high and low than 2nd */
+               inHigh[i - 1] > inHigh[i - 2] &&
+               inLow[i - 1] > inLow[i - 2] &&                             /* 4th has higher high and low than 3rd */
+               inClose[i] < inOpen[i - 3] &&
+               inClose[i] > inClose[i - 4]) )                             /* 5th closes inside the gap */
          {
             outInteger[outIdx++ * outStride] = ((inClose[i] >= inOpen[i]) ? 1 : 0 - 1) * 100;
          } else {

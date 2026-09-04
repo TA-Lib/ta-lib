@@ -1572,6 +1572,27 @@ struct Parser {
     circbufs: HashMap<String, CircBufLayout>,
 }
 
+/// Comment slots accumulated while climbing an if-condition's boolean spine: one
+/// per leaf, in source order, plus the comments still waiting for the leaf they
+/// annotate.
+#[derive(Default)]
+struct SpineComments {
+    slots: Vec<Vec<String>>,
+    pending: Vec<String>,
+}
+
+/// Where a comment drain sits, which settles who the comment annotates when only
+/// one leaf borders it.
+#[derive(Clone, Copy)]
+enum SpineDrain {
+    /// Between two leaves, after their `&&`/`||`.
+    Operator,
+    /// Just inside a group's `(` -- no leaf precedes it there.
+    GroupOpen,
+    /// Just before a `)` -- no leaf follows it there.
+    GroupClose,
+}
+
 impl Parser {
     #[cfg(test)]
     fn new(tokens: Vec<Token>) -> Self {
@@ -2466,14 +2487,14 @@ impl Parser {
     fn parse_if(&mut self) -> Statement {
         self.advance(); // consume "if"
         self.expect(&Token::LParen);
-        // For a pure top-level `&&`-chain condition, capture each operand's
-        // trailing comment so backends can render it inline (CDL patterns). If the
-        // condition has a top-level `||` or ternary, fall back to a normal parse
-        // (comments there would clump after the if — a rare, accepted case).
-        let (condition, cond_comments) = if self.condition_has_top_level_or_ternary() {
+        // Capture each boolean operand's comment so backends can render it inline
+        // (CDL patterns). A top-level ternary is parsed normally: the collector
+        // climbs `||` and `&&` only, so a `?` at that level would stall it before
+        // the closing paren.
+        let (condition, cond_comments) = if self.condition_has_top_level_ternary() {
             (self.parse_expr(), Vec::new())
         } else {
-            self.parse_and_chain_collecting()
+            self.parse_cond_spine_collecting()
         };
         self.expect(&Token::RParen);
 
@@ -2529,10 +2550,10 @@ impl Parser {
         }
     }
 
-    /// Scan the (already-opened) if-condition for a top-level `||` or ternary `?`
-    /// at paren-depth 0, stopping at the closing `)`. Such conditions are parsed
-    /// normally (no inline operand-comment collection).
-    fn condition_has_top_level_or_ternary(&self) -> bool {
+    /// Scan the (already-opened) if-condition for a ternary `?` at paren-depth 0,
+    /// stopping at the closing `)`. Such conditions are parsed normally (no inline
+    /// operand-comment collection).
+    fn condition_has_top_level_ternary(&self) -> bool {
         let mut depth = 0i32;
         let mut i = self.pos;
         while i < self.tokens.len() {
@@ -2544,7 +2565,6 @@ impl Parser {
                     }
                     depth -= 1;
                 }
-                Token::Op(op) if depth == 0 && op == "||" => return true,
                 Token::Question if depth == 0 => return true,
                 _ => {}
             }
@@ -2553,62 +2573,132 @@ impl Parser {
         false
     }
 
-    /// Parse a top-level `&&`-chain condition, collecting each operand's trailing
-    /// comment (the comment that follows it before the next `&&` / closing `)`).
-    /// Returns the rebuilt left-assoc `&&` expression and one comment slot per
-    /// operand (in order). If no operand carried a comment, the returned vec is
-    /// empty (so backends render the flat one-liner as before).
-    fn parse_and_chain_collecting(&mut self) -> (Expr, Vec<Option<Vec<String>>>) {
-        let mut operands = Vec::new();
-        let mut op_comments: Vec<Vec<String>> = Vec::new();
-        // Own-line comments seen after one operand's `&&` annotate the *next*
-        // operand; carried forward here.
-        let mut pending_leading: Vec<String> = Vec::new();
-        loop {
-            operands.push(self.parse_bitwise_or());
-            op_comments.push(std::mem::take(&mut pending_leading));
-            let idx = operands.len() - 1;
-            if matches!(self.peek(), Some(Token::Op(op)) if op == "&&") {
-                self.advance(); // consume &&
-                // Comments between this operand's `&&` and the next operand:
-                // same-line (trailing) → this operand; own-line → the next one.
-                while self.comment_idx < self.comments.len()
-                    && self.comments[self.comment_idx].0 <= self.pos
-                {
-                    let (_, lines, trailing) = self.comments[self.comment_idx].clone();
-                    self.comment_idx += 1;
-                    if trailing {
-                        op_comments[idx].extend(lines);
-                    } else {
-                        pending_leading.extend(lines);
-                    }
-                }
-            } else {
-                // Last operand: attach any remaining comment before the `)`.
-                while self.comment_idx < self.comments.len()
-                    && self.comments[self.comment_idx].0 <= self.pos
-                {
-                    let lines = self.comments[self.comment_idx].1.clone();
-                    self.comment_idx += 1;
-                    op_comments[idx].extend(lines);
-                }
-                break;
-            }
-        }
-
-        let comments: Vec<Option<Vec<String>>> = op_comments
+    /// Parse the condition's boolean spine -- `&&`, `||`, and the parenthesized
+    /// groups between them -- collecting one comment slot per leaf, in source
+    /// order. The rebuilt expression is what [`parse_expr`](Self::parse_expr)
+    /// would have produced; only the comments are extra. If no leaf carried one,
+    /// the returned vec is empty (so backends render the flat one-liner).
+    ///
+    /// A leaf is anything that is not an `&&`/`||` node, which is how
+    /// `stmt_walk::build_operand` walks the tree back. The two must widen
+    /// together: a disagreement drops the condition to the flat one-liner, taking
+    /// every one of its comments with it.
+    fn parse_cond_spine_collecting(&mut self) -> (Expr, Vec<Option<Vec<String>>>) {
+        let mut spine = SpineComments::default();
+        let expr = self.spine_or(&mut spine);
+        self.drain_spine_comments(&mut spine, SpineDrain::GroupClose);
+        let comments: Vec<Option<Vec<String>>> = spine
+            .slots
             .into_iter()
             .map(|c| if c.is_empty() { None } else { Some(c) })
             .collect();
-        let mut expr = operands.remove(0);
-        for op in operands {
-            expr = Expr::BinOp(Box::new(expr), BinOp::And, Box::new(op));
-        }
         if comments.iter().any(Option::is_some) {
             (expr, comments)
         } else {
             (expr, Vec::new())
         }
+    }
+
+    /// The `||` rung of the spine climb, mirroring
+    /// [`parse_logical_or`](Self::parse_logical_or).
+    fn spine_or(&mut self, spine: &mut SpineComments) -> Expr {
+        let mut left = self.spine_and(spine);
+        while matches!(self.peek(), Some(Token::Op(op)) if op == "||") {
+            self.advance();
+            self.drain_spine_comments(spine, SpineDrain::Operator);
+            let right = self.spine_and(spine);
+            left = Expr::BinOp(Box::new(left), BinOp::Or, Box::new(right));
+        }
+        left
+    }
+
+    /// The `&&` rung of the spine climb, mirroring
+    /// [`parse_logical_and`](Self::parse_logical_and).
+    fn spine_and(&mut self, spine: &mut SpineComments) -> Expr {
+        let mut left = self.spine_leaf(spine);
+        while matches!(self.peek(), Some(Token::Op(op)) if op == "&&") {
+            self.advance();
+            self.drain_spine_comments(spine, SpineDrain::Operator);
+            let right = self.spine_leaf(spine);
+            left = Expr::BinOp(Box::new(left), BinOp::And, Box::new(right));
+        }
+        left
+    }
+
+    /// One spine leaf: a parenthesized boolean group, descended into so its own
+    /// operands get slots, or an ordinary operand claiming a single slot.
+    fn spine_leaf(&mut self, spine: &mut SpineComments) -> Expr {
+        if self.peek() == Some(&Token::LParen) && self.group_is_boolean_spine() {
+            self.advance(); // consume (
+            self.drain_spine_comments(spine, SpineDrain::GroupOpen);
+            let inner = self.spine_or(spine);
+            self.drain_spine_comments(spine, SpineDrain::GroupClose);
+            self.expect(&Token::RParen);
+            return inner;
+        }
+        let e = self.parse_bitwise_or();
+        spine.slots.push(std::mem::take(&mut spine.pending));
+        e
+    }
+
+    /// Drain the comments buffered up to the current token, giving each to the leaf
+    /// it annotates. Between two leaves the comment's own line decides; at a
+    /// group's edge only one side exists, so `at` decides for it.
+    fn drain_spine_comments(&mut self, spine: &mut SpineComments, at: SpineDrain) {
+        while self.comment_idx < self.comments.len()
+            && self.comments[self.comment_idx].0 <= self.pos
+        {
+            let (_, lines, same_line) = self.comments[self.comment_idx].clone();
+            self.comment_idx += 1;
+            let trails = match at {
+                SpineDrain::Operator => same_line,
+                SpineDrain::GroupOpen => false,
+                SpineDrain::GroupClose => true,
+            };
+            match spine.slots.last_mut() {
+                Some(slot) if trails => slot.extend(lines),
+                _ => spine.pending.extend(lines),
+            }
+        }
+    }
+
+    /// At a `(`: is this a parenthesized boolean group the spine should descend
+    /// into? True when the group's own top level holds an `&&`/`||` -- so the
+    /// parsed expression is an `And`/`Or` node, which the renderer descends -- and
+    /// the group stands directly as a boolean operand rather than feeding a wider
+    /// expression. A `?` at that level disqualifies it: the group is then a
+    /// ternary, which the spine climb does not reach.
+    ///
+    /// Answering `false` costs only the nested comments; the group is parsed whole
+    /// as one leaf, exactly as before.
+    fn group_is_boolean_spine(&self) -> bool {
+        let mut depth = 0i32;
+        let mut has_logical = false;
+        let mut i = self.pos;
+        let close = loop {
+            match self.tokens.get(i) {
+                None => return false,
+                Some(Token::LParen) => depth += 1,
+                Some(Token::RParen) => {
+                    depth -= 1;
+                    if depth == 0 {
+                        break i;
+                    }
+                }
+                Some(Token::Question) if depth == 1 => return false,
+                Some(Token::Op(op)) if depth == 1 && (op == "&&" || op == "||") => {
+                    has_logical = true;
+                }
+                _ => {}
+            }
+            i += 1;
+        };
+        has_logical
+            && match self.tokens.get(close + 1) {
+                Some(Token::Op(op)) => op == "&&" || op == "||",
+                Some(Token::RParen) => true,
+                _ => false,
+            }
     }
 
     fn parse_switch(&mut self) -> Statement {
@@ -3515,6 +3605,112 @@ TA_RetCode f( int a, int b, int startIdx, int endIdx, int *outBegIdx, int *outNB
         assert_eq!(cond_comments.len(), 2);
         assert_eq!(cond_comments[0], Some(vec!["first".to_string()]));
         assert_eq!(cond_comments[1], Some(vec!["second".to_string()]));
+    }
+
+    /// The spine climbs through `||` and through the parenthesized groups between
+    /// the operators, so a comment lands on the leaf it was written against rather
+    /// than on whichever top-level operand happened to swallow the group.
+    #[test]
+    fn test_condition_comment_follows_a_nested_group_leaf() {
+        let src = "\
+TA_RetCode f( int a, int b, int c, int d, int startIdx, int endIdx, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+    if( ( a > 0 &&   // first
+          b > 0 ) || // second
+        ( c > 0 &&   // third
+          d > 0 ) )
+    {
+        a = 1;
+    }
+}
+";
+        let parsed = parse_c_source_str(src);
+        let body = &parsed.functions[0].body;
+        let Statement::If { cond_comments, .. } = &body[0] else {
+            panic!("expected If, got {:?}", body[0]);
+        };
+        assert_eq!(
+            cond_comments,
+            &vec![
+                Some(vec!["first".to_string()]),
+                Some(vec!["second".to_string()]),
+                Some(vec!["third".to_string()]),
+                None,
+            ]
+        );
+    }
+
+    /// A group's own parentheses bound who a comment can annotate: one just inside
+    /// the `(` leads the first leaf even when it shares the `(`'s line, and one just
+    /// before the `)` trails the last leaf even when it sits on its own. Both were
+    /// off by one when the drain read only the comment's line.
+    #[test]
+    fn test_condition_comment_at_a_group_edge() {
+        let src = "\
+TA_RetCode f( int a, int b, int c, int startIdx, int endIdx, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+    if( a > 0 &&
+        (            // opener
+        b > 0 &&
+        c > 0
+        // closer
+        ) )
+    {
+        a = 1;
+    }
+}
+";
+        let parsed = parse_c_source_str(src);
+        let body = &parsed.functions[0].body;
+        let Statement::If { cond_comments, .. } = &body[0] else {
+            panic!("expected If, got {:?}", body[0]);
+        };
+        assert_eq!(
+            cond_comments,
+            &vec![
+                None,
+                Some(vec!["opener".to_string()]),
+                Some(vec!["closer".to_string()]),
+            ]
+        );
+    }
+
+    /// A top-level ternary is still parsed whole: the spine climb reaches `||` and
+    /// `&&` only, so collecting through a `?` would stall before the closing paren.
+    #[test]
+    fn test_condition_with_top_level_ternary_collects_nothing() {
+        let src = "\
+TA_RetCode f( int a, int b, int startIdx, int endIdx, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+    if( (a > 0 ? b : a) > 0 &&   // trailing
+        b > 0 )
+    {
+        a = 1;
+    }
+}
+";
+        let parsed = parse_c_source_str(src);
+        let body = &parsed.functions[0].body;
+        let Statement::If { cond_comments, .. } = &body[0] else {
+            panic!("expected If, got {:?}", body[0]);
+        };
+        assert_eq!(cond_comments.len(), 2, "a `?` inside parens is not top level");
+
+        let ternary = "\
+TA_RetCode f( int a, int b, int startIdx, int endIdx, int *outBegIdx, int *outNBElement, double outReal[] )
+{
+    if( a > 0 ?   // trailing
+        b > 0 : a > 0 )
+    {
+        a = 1;
+    }
+}
+";
+        let parsed = parse_c_source_str(ternary);
+        let Statement::If { cond_comments, .. } = &parsed.functions[0].body[0] else {
+            panic!("expected If");
+        };
+        assert!(cond_comments.is_empty(), "got {cond_comments:?}");
     }
 
     #[test]
