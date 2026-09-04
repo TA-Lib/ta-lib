@@ -38,7 +38,7 @@ SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
 | `optInSlowD_Period` | integer | 3 | 1–100000 | Smoothing period for the SlowD signal line |
 | `optInSlowD_MAType` | MAType | SMA (0) | any MAType | MA type used for the SlowD line |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA*
 
 ## Properties
 

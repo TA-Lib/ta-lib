@@ -205,6 +205,7 @@
 #include "ta_WCLPRICE.c"
 #include "ta_WILLR.c"
 #include "ta_WMA.c"
+#include "ta_ZLEMA.c"
 #include "ta_MA.c"
 
 
@@ -3209,6 +3210,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("WMA %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ZLEMA") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_ZLEMA(0, g_nPoints - 1, g_close, 30, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("ZLEMA %lld\n", best / iters);
         fflush(stdout);
     }
 }

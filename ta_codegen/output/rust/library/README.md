@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/ta-lib.svg)](https://crates.io/crates/ta-lib) [![docs.rs](https://docs.rs/ta-lib/badge.svg)](https://docs.rs/ta-lib)
 
 [TA-Lib](https://ta-lib.org) — the widely used technical-analysis library — as a
-pure-Rust crate: 180 indicators covering moving averages, momentum oscillators
+pure-Rust crate: 181 indicators covering moving averages, momentum oscillators
 (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR), volume, Hilbert
 Transform cycle analysis, statistics, price transforms, and 61 candlestick
 patterns.

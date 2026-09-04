@@ -747,6 +747,9 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"PVO",          TA_FUNC_UNST_EMA},
     /* EFI smooths its force series with the same EMA. */
     {"EFI",          TA_FUNC_UNST_EMA},
+    /* ZLEMA de-lags the input and hands it to the same EMA recurrence, seeded
+     * the same way, so its whole trajectory shifts with UNST_EMA. */
+    {"ZLEMA",        TA_FUNC_UNST_EMA},
     /* KC is recursive through BOTH of its callees -- EMA of the typical price
      * and the Wilder ATR -- so it is converging, not finite-window, and it is
      * the first function here whose legs carry DIFFERENT ids. BOTH rows are
@@ -2582,11 +2585,12 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * max, and the affected run summaries print the skip count so the exclusion
  * is loud, never silent. Current-vs-current gates are unaffected and DO
  * exercise the new value: --xlang-hash, stream_verify's enum sweep, the
- * VARIANT gate and the COMPOSITE hand tests (TA_MAType_HMA dispatch parity).
- * When a frozen oracle is re-frozen on a tag that includes #139, raise (or
- * retire) this max accordingly. */
+ * VARIANT gate and the per-function hand tests (TA_MAType_HMA and
+ * TA_MAType_ZLEMA dispatch parity). When a frozen oracle is re-frozen on a tag
+ * that includes #139, raise (or retire) this max accordingly. */
 #define FROZEN_ORACLE_MATYPE_MAX 8   /* == TA_MAType_T3; 9+ postdate the frozen
-                                        oracles (HMA #139, DISABLED #93, DEFAULT #182) */
+                                        oracles (HMA #139, DISABLED #93,
+                                        DEFAULT #182, ZLEMA #347) */
 static long long g_frozenEnumSkips = 0;
 
 static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int value)
@@ -3283,9 +3287,9 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
 /* Sized for the widest stream-vector enumeration: MACDEXT carries 3 MAType
  * params, so its count is 8*M-1 in the MAType-list length M (base 4 + 3 params *
  * (2 base-vector crosses * (M-1) non-default arms + 1 out-of-list) + the 2 *
- * (M-1) multi-enum diagonal, #181). M=12 today (#93 added DISABLED, #182
- * DEFAULT) => 95; 128 keeps runway for 4 more MATypes before MACDEXT reaches
- * it again. Overflow is a hard failure, never a skip. */
+ * (M-1) multi-enum diagonal, #181). M=13 today (#93 added DISABLED, #182
+ * DEFAULT, #347 ZLEMA) => 103; 128 keeps runway for 3 more MATypes before
+ * MACDEXT reaches it again. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_VEC 128
 #define STREAM_N       240
 /* Stream-leg variants: 0 = ambient defaults, 1 = unstable period, 2 = Metastock,
@@ -3478,7 +3482,7 @@ static int stream_build_vectors(const TA_FuncInfo *fi,
      * all-EMA call to TA_MACD's single lockstep pass, the streaming tier
      * composes the generic three-MA path instead, and no stream leg ever
      * selected all-EMA to hold the two to each other. The full cross is M^N
-     * (1331 vectors for MACDEXT at M=12) and is what makes this deliberately
+     * (2197 vectors for MACDEXT at M=13) and is what makes this deliberately
      * uncovered; the diagonal is M-1 and reaches every "all slots equal" guard.
      *
      * Crossed with the same base vectors as the sweep above, which puts the
@@ -4800,7 +4804,7 @@ static ErrorNumber test_codegen_for_language(
 
         if( g_frozenEnumSkips > 0 )
             printf("  post-freeze enums: %lld MAType value(s) > %d excluded vs ta_ref_serve "
-                   "(#139, #93, #182; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+                   "(#139, #93, #182, #347; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
                    g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     }
 
@@ -5455,10 +5459,11 @@ static const char *const argv_064[] = {"./ta_064_serve", NULL};
                              * 3 period ranges (<= 6 candidates + 2 reject + 1
                              * sentinel each) + 3 MAType lists (M-1 values + 1
                              * sentinel each, #162) + the defaults vector <= 3*M+28
-                             * in the MAType-list length M. M=12 today => 64 worst
-                             * case, 63 actually built (one of optInSignalPeriod's
-                             * boundary candidates lands on its own default and is
-                             * dropped). 80 gives runway to M=17, and still matches
+                             * in the MAType-list length M. M=13 today => 67 worst
+                             * case, one fewer actually built (one of
+                             * optInSignalPeriod's boundary candidates lands on its
+                             * own default and is dropped). 80 gives runway to M=17,
+                             * and still matches
                              * STREAM_MAX_VEC.
                              * fuzz_build_vectors reports any overflow (this cap or
                              * the cand cap) and the caller fails the run loudly. */
@@ -6826,7 +6831,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                ctx.mfiSkipped);
     if( g_frozenEnumSkips > 0 )
         printf("post-freeze enums: %lld MAType value(s) > %d excluded vs v0.6.4 "
-               "(#139, #93, #182; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+               "(#139, #93, #182, #347; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
                g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     if( ctx.varianceSkipped > 0 )
         printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",

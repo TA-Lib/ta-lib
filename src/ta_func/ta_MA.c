@@ -61,6 +61,7 @@
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
  *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
+ *  090426 MF,CC Add ZLEMA (issue #347).
  */
 
 TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
@@ -109,6 +110,9 @@ TA_LIB_API int TA_MA_Lookback( int optInTimePeriod, TA_MAType optInMAType )
       break;
    case TA_MAType_HMA:
       retValue = TA_HMA_Lookback(optInTimePeriod);
+      break;
+   case TA_MAType_ZLEMA:
+      retValue = TA_ZLEMA_Lookback(optInTimePeriod);
       break;
    default:
       retValue = 0;
@@ -232,6 +236,9 @@ TA_LIB_API TA_RetCode TA_MA( int    startIdx,
    case TA_MAType_HMA:
       retCode = TA_HMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
+   case TA_MAType_ZLEMA:
+      retCode = TA_ZLEMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -321,6 +328,9 @@ TA_RetCode TA_S_MA( int    startIdx,
       break;
    case TA_MAType_HMA:
       retCode = TA_S_HMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
+      break;
+   case TA_MAType_ZLEMA:
+      retCode = TA_S_ZLEMA(startIdx,endIdx,inReal,optInTimePeriod,outBegIdx,outNBElement,outReal);
       break;
    default:
       retCode = TA_BAD_PARAM;
@@ -453,6 +463,13 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
       {
          TA_HMA_Stream *sub = NULL;
          retCode = TA_HMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
+         sp->sub = sub;
+      }
+      break;
+   case TA_MAType_ZLEMA:
+      {
+         TA_ZLEMA_Stream *sub = NULL;
+         retCode = TA_ZLEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
       }
       break;
@@ -601,6 +618,13 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
          sp->sub = sub;
       }
       break;
+   case TA_MAType_ZLEMA:
+      {
+         TA_ZLEMA_Stream *sub = NULL;
+         retCode = TA_ZLEMA_OpenAndFill( &sub, inReal, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -738,6 +762,13 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
          sp->sub = sub;
       }
       break;
+   case TA_MAType_ZLEMA:
+      {
+         TA_ZLEMA_Stream *sub = NULL;
+         retCode = TA_ZLEMA_OpenAndFillInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outBegIdx, outNBElement, outReal );
+         sp->sub = sub;
+      }
+      break;
    default:
       retCode = TA_BAD_PARAM;
       break;
@@ -804,6 +835,9 @@ TA_LIB_API TA_RetCode TA_MA_Update( TA_MA_Stream *stream, double inReal, double 
    case TA_MAType_HMA:
       retCode = TA_HMA_Update( (TA_HMA_Stream *)stream->sub, inReal, outReal );
       break;
+   case TA_MAType_ZLEMA:
+      retCode = TA_ZLEMA_Update( (TA_ZLEMA_Stream *)stream->sub, inReal, outReal );
+      break;
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR(343);
@@ -845,6 +879,8 @@ TA_LIB_API TA_RetCode TA_MA_Peek( const TA_MA_Stream *stream, double inReal, dou
       return TA_T3_Peek( (const TA_T3_Stream *)stream->sub, inReal, outReal );
    case TA_MAType_HMA:
       return TA_HMA_Peek( (const TA_HMA_Stream *)stream->sub, inReal, outReal );
+   case TA_MAType_ZLEMA:
+      return TA_ZLEMA_Peek( (const TA_ZLEMA_Stream *)stream->sub, inReal, outReal );
    default:
       /* Unreachable: Open rejects arms without a sub-stream. */
       return TA_INTERNAL_ERROR(344);
@@ -913,6 +949,9 @@ TA_LIB_API TA_RetCode TA_MA_UpdateAndFill( TA_MA_Stream *stream, const double in
       case TA_MAType_HMA:
          retCode = TA_HMA_Update( (TA_HMA_Stream *)stream->sub, inReal[i], &outReal[i] );
          break;
+      case TA_MAType_ZLEMA:
+         retCode = TA_ZLEMA_Update( (TA_ZLEMA_Stream *)stream->sub, inReal[i], &outReal[i] );
+         break;
       default:
          /* Unreachable: Open rejects arms without a sub-stream. */
          return TA_INTERNAL_ERROR(345);
@@ -958,6 +997,9 @@ TA_LIB_API TA_RetCode TA_MA_Close( TA_MA_Stream *stream )
       break;
    case TA_MAType_HMA:
       TA_HMA_Close( (TA_HMA_Stream *)stream->sub );
+      break;
+   case TA_MAType_ZLEMA:
+      TA_ZLEMA_Close( (TA_ZLEMA_Stream *)stream->sub );
       break;
    default:
       break; /* identity-only or rejected arm: no sub-stream */
@@ -1056,6 +1098,13 @@ TA_LIB_API TA_RetCode TA_MA_Clone( const TA_MA_Stream *stream, TA_MA_Stream **cl
          {
             TA_HMA_Stream *subClone = NULL;
             subRc = TA_HMA_Clone( (const TA_HMA_Stream *)stream->sub, &subClone );
+            sp->sub = subClone;
+         }
+         break;
+      case TA_MAType_ZLEMA:
+         {
+            TA_ZLEMA_Stream *subClone = NULL;
+            subRc = TA_ZLEMA_Clone( (const TA_ZLEMA_Stream *)stream->sub, &subClone );
             sp->sub = subClone;
          }
          break;

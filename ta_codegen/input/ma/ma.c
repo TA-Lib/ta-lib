@@ -17,6 +17,7 @@
  *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
  *  072226 MF,CC Add HMA (issue #139).
  *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
+ *  090426 MF,CC Add ZLEMA (issue #347).
  */
 
 int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
@@ -66,6 +67,10 @@ int ma_lookback(int optInTimePeriod, TA_MAType optInMAType)
 
       case TA_MAType_HMA:
          retValue = hma_lookback( optInTimePeriod );
+         break;
+
+      case TA_MAType_ZLEMA:
+         retValue = zlema_lookback( optInTimePeriod );
          break;
 
       default:
@@ -185,6 +190,11 @@ TA_RetCode ma(int startIdx, int endIdx,
 
       case TA_MAType_HMA:
          retCode = hma( startIdx, endIdx, inReal, optInTimePeriod,
+            outBegIdx, outNBElement, outReal );
+         break;
+
+      case TA_MAType_ZLEMA:
+         retCode = zlema( startIdx, endIdx, inReal, optInTimePeriod,
             outBegIdx, outNBElement, outReal );
          break;
 

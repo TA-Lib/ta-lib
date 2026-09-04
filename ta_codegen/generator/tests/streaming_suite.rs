@@ -664,6 +664,7 @@ fn every_matype_is_streamable_except_tracked_blockers() {
         ("MAMA", "mama"),
         ("T3", "t3"),
         ("HMA", "hma"),
+        ("ZLEMA", "zlema"),
     ];
     // Not-yet-streamable MAType functions (deep blockers). MUST ONLY SHRINK.
     // NOW EMPTY: MAMA streamed in M7c (it is an ordinary HT function — WMA ring +
@@ -717,7 +718,7 @@ fn ma_derives_dispatch_plan() {
     };
     assert_eq!(dp.param, "optInMAType");
     assert!(dp.identity.is_some(), "period==1 identity path");
-    assert_eq!(dp.arms.len(), 10, "all ten batch arms recognized");
+    assert_eq!(dp.arms.len(), 11, "all eleven batch arms recognized");
     let supported: Vec<&str> = dp
         .arms
         .iter()
@@ -726,7 +727,7 @@ fn ma_derives_dispatch_plan() {
         .collect();
     assert_eq!(
         supported,
-        ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "mama", "t3", "hma"],
+        ["sma", "ema", "wma", "dema", "tema", "trima", "kama", "mama", "t3", "hma", "zlema"],
         "every arm streams: single-output MAs plus MAMA via its nullable FAMA \
          (TRIMA joined in M6c, MAMA via nullable outputs in #125, HMA via the \
          dual-mode buffer union in #141)"

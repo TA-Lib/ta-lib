@@ -33,7 +33,7 @@ The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-da
 | `optInSlowPeriod` | integer | 26 | 2–100000 | Period of the slow MA |
 | `optInMAType` | MAType | EMA (1) | any MAType | Moving average type used for both MAs |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA*
 
 ## Properties
 

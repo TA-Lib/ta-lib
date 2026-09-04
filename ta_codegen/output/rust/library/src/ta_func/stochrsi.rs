@@ -79,7 +79,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -246,7 +246,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for %D (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — MA type used to smooth %D (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `outFastK` — Unsmoothed stochastic of the RSI (raw %K)
     /// * `outFastD` — %K smoothed over FastD_Period (signal line)
     ///

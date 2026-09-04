@@ -35,7 +35,7 @@ FastD = MA(FastK, FastD_Period, FastD_MAType)
 | `optInFastD_Period` | integer | 3 | 1–100000 | Smoothing period for the Fast-D line |
 | `optInFastD_MAType` | MAType | SMA (0) | any MAType | Moving-average type used to smooth Fast-D |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA*
 
 ## Properties
 

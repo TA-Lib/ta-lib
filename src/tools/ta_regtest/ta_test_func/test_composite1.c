@@ -51,6 +51,7 @@
  *  081226 KL     QSTICK legs: SMA-of-body differential plus two book vectors.
  *  081626 MF,CC  AO legs: two-SMA-of-median differential plus two oracles (#227).
  *  081726 MF,CC  AC legs: AO-less-its-own-SMA differential plus one oracle (#228).
+ *  090426 MF,CC  TA_MAType_ZLEMA into the PVO grid (#347).
  */
 
 /* Description:
@@ -119,6 +120,7 @@ static const struct { int fast; int slow; TA_MAType maType; } pvoGrid[] =
    { 12, 26, TA_MAType_MAMA  },
    { 12, 26, TA_MAType_T3    },
    { 12, 26, TA_MAType_HMA   },
+   { 12, 26, TA_MAType_ZLEMA },
    { 26, 12, TA_MAType_SMA   },  /* fast>slow: internal swap path */
    { 26, 12, TA_MAType_EMA   },  /* fast>slow: internal swap path */
    {  5, 10, TA_MAType_EMA   },  /* shorter periods */

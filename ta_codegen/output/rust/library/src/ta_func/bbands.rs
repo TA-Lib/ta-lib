@@ -96,7 +96,7 @@ impl Core {
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -497,7 +497,7 @@ impl Core {
     /// * `optInNbDevDn` — Standard-deviation multiplier for the lower band (default 2)
     /// * `optInMAType` — Moving-average type for the middle band (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `outRealUpperBand` — Middle band plus nbDevUp standard deviations.
     /// * `outRealMiddleBand` — The moving average.
     /// * `outRealLowerBand` — Middle band minus nbDevDn standard deviations.

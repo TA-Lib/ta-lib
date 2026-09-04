@@ -84,6 +84,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         new(9, "HMA"),
         new(10, "DISABLED"),
         new(11, "DEFAULT"),
+        new(12, "ZLEMA"),
     ];
 
     /// <summary>The process-wide catalogue.</summary>
@@ -291,6 +292,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeWclprice(),
             MakeWillr(),
             MakeWma(),
+            MakeZlema(),
         ];
         _byName = _all.ToFrozenDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
     }
@@ -4281,6 +4283,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.WMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
             core.WMA(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeZlema() => new(
+        name: "ZLEMA",
+        group: FunctionGroup.OverlapStudies,
+        hint: "Zero-Lag Exponential Moving Average",
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream | FunctionFlags.Period1Identity,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 30, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ZLEMA_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.ZLEMA(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
 }

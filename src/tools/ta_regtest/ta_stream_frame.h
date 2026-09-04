@@ -7257,6 +7257,42 @@ static TA_RetCode TA_WMA_SFrameClose( void *stream )
    return TA_WMA_Close( (TA_WMA_Stream *)stream );
 }
 
+static TA_RetCode TA_ZLEMA_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ZLEMA_Open(
+               (TA_ZLEMA_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ZLEMA_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ZLEMA_OpenAndFill(
+               (TA_ZLEMA_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ZLEMA_SFrameClose( void *stream )
+{
+   return TA_ZLEMA_Close( (TA_ZLEMA_Stream *)stream );
+}
+
 static const TA_StreamEntry TA_StreamTable[] = {
    { "AC", TA_AC_SFrameOpen, TA_AC_SFrameFill, TA_AC_SFrameClose,
      2, TA_VIn_AC, 3, TA_VOpt_AC, 1, TA_VOutIsInt_AC },
@@ -7618,8 +7654,10 @@ static const TA_StreamEntry TA_StreamTable[] = {
      3, TA_VIn_WILLR, 1, TA_VOpt_WILLR, 1, TA_VOutIsInt_WILLR },
    { "WMA", TA_WMA_SFrameOpen, TA_WMA_SFrameFill, TA_WMA_SFrameClose,
      1, TA_VIn_WMA, 1, TA_VOpt_WMA, 1, TA_VOutIsInt_WMA },
+   { "ZLEMA", TA_ZLEMA_SFrameOpen, TA_ZLEMA_SFrameFill, TA_ZLEMA_SFrameClose,
+     1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 180
+#define TA_STREAM_TABLE_SIZE 181
 
 #endif /* TA_STREAM_FRAME_H */

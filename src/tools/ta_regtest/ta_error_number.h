@@ -496,6 +496,7 @@ typedef enum
   TA_UNSTABLE_MAP_INCOMPLETE         = 1653,
   TA_DONCHIAN_ORACLE_VACUOUS         = 1654,
   TA_RMA_ORACLE_VACUOUS              = 1655,
+  TA_ZLEMA_VACUOUS                   = 1656,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

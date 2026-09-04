@@ -32,7 +32,7 @@ outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
 | `optInTimePeriod` | integer | 30 | 1–100000 | Averaging window length |
 | `optInMAType` | MAType | SMA (0) | any MAType | Which moving-average algorithm to dispatch to |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA*
 
 ## Properties
 
@@ -68,4 +68,4 @@ Moving Average, MovingAverage
 
 ## See Also
 
-[SMA](/functions/sma.md) · [EMA](/functions/ema.md) · [WMA](/functions/wma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md) · [TRIMA](/functions/trima.md) · [KAMA](/functions/kama.md) · [MAMA](/functions/mama.md) · [T3](/functions/t3.md) · [HMA](/functions/hma.md)
+[SMA](/functions/sma.md) · [EMA](/functions/ema.md) · [WMA](/functions/wma.md) · [DEMA](/functions/dema.md) · [TEMA](/functions/tema.md) · [TRIMA](/functions/trima.md) · [KAMA](/functions/kama.md) · [MAMA](/functions/mama.md) · [T3](/functions/t3.md) · [HMA](/functions/hma.md) · [ZLEMA](/functions/zlema.md)

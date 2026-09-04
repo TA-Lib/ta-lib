@@ -83,7 +83,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int STOCHF_Lookback( int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -512,7 +512,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outFastK">Raw %K stochastic line. Must hold at least <c>endIdx - startIdx + 1</c>
    /// values.</param>
@@ -601,7 +601,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">Moving-average type used to smooth Fast-D (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outFastK">Raw %K stochastic line. Must hold at least <c>endIdx - startIdx + 1</c>
    /// values.</param>

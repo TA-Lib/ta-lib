@@ -298,38 +298,66 @@ fn every_return_in_a_peek_answers_a_code() {
 }
 
 
-/// Replace every `sp-><buffer>[...]` with one token, so two bodies that differ
-/// only in which slot they name compare equal.
+/// Replace every subscript of a handle buffer with one token, so two bodies
+/// that differ only in which slot they name compare equal.
+///
+/// BOTH spellings, because a peek binds each buffer's BASE to a local of the
+/// same name (issue #316) and then subscripts that: the same slot reads
+/// `sp->ring[i]` in the update frame and `ring[i]` in the peek. Masking only
+/// the qualified one leaves the two textually different wherever a buffer read
+/// sits inside an expression the frames are compared on, which is what
+/// [`unrewritten`] means when it says the buffers are already masked by there.
 fn mask_buffer_reads(body: &str, buffers: &BTreeSet<String>) -> String {
     let b: Vec<char> = body.chars().collect();
     let mut out = String::with_capacity(body.len());
     let mut i = 0usize;
-    while i < b.len() {
-        if b[i..].starts_with(&['s', 'p', '-', '>']) {
-            let rest: String = b[i + 4..].iter().collect();
-            if let Some(br) = rest.find('[') {
-                let name = &rest[..br];
-                if buffers.contains(name) {
-                    // Skip to the bracket that closes this subscript.
-                    let mut depth = 0usize;
-                    let mut k = i + 4 + br;
-                    while k < b.len() {
-                        match b[k] {
-                            '[' => depth += 1,
-                            ']' => {
-                                depth -= 1;
-                                if depth == 0 {
-                                    break;
-                                }
-                            }
-                            _ => {}
-                        }
-                        k += 1;
+    // The index just past the closing bracket of the buffer subscript starting
+    // at `at`, if that is what is there.
+    let end_of_subscript = |at: usize| -> Option<usize> {
+        let mut n = at;
+        while n < b.len() && (b[n].is_ascii_alphanumeric() || b[n] == '_') {
+            n += 1;
+        }
+        if n == at || n >= b.len() || b[n] != '[' {
+            return None;
+        }
+        if !buffers.contains(&b[at..n].iter().collect::<String>()) {
+            return None;
+        }
+        let mut depth = 0usize;
+        let mut k = n;
+        while k < b.len() {
+            match b[k] {
+                '[' => depth += 1,
+                ']' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        break;
                     }
-                    out.push_str("<BUF>");
-                    i = k + 1;
-                    continue;
                 }
+                _ => {}
+            }
+            k += 1;
+        }
+        Some(k + 1)
+    };
+    while i < b.len() {
+        let qualified = b[i..].starts_with(&['s', 'p', '-', '>']);
+        // A bare name counts only where an identifier starts and nothing
+        // dereferences into it: `foo_ring[i]` must not mask as `foo_<BUF>`, and
+        // `stream->bank[i]` must stay whole rather than become `stream-><BUF>`.
+        let bare = !qualified
+            && (i == 0
+                || !(b[i - 1].is_ascii_alphanumeric()
+                    || b[i - 1] == '_'
+                    || b[i - 1] == '>'
+                    || b[i - 1] == '.'));
+        let at = if qualified { i + 4 } else { i };
+        if (qualified || bare) && at <= b.len() {
+            if let Some(k) = end_of_subscript(at) {
+                out.push_str("<BUF>");
+                i = k;
+                continue;
             }
         }
         out.push(b[i]);

@@ -38,15 +38,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -513,15 +513,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
@@ -613,15 +613,15 @@
     *        default).
     * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param optInSlowD_Period Smoothing period for the SlowD signal line
     *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
     *        default).
     * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold

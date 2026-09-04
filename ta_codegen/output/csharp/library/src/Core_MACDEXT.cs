@@ -71,20 +71,20 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MACDEXT_Lookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
    {
@@ -468,20 +468,20 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>endIdx - startIdx
    /// + 1</c> values.</param>
    /// <param name="outMACDSignal">Signal line: MA of the MACD line. Must hold at least <c>endIdx - startIdx
@@ -572,20 +572,20 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInFastMAType">MA type for the fast MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="optInSlowPeriod">Period of the slow MA (default 26; range 2..100000; <c>int.MinValue</c>
    /// selects the default).</param>
    /// <param name="optInSlowMAType">MA type for the slow MA (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="optInSignalPeriod">Period of the signal-line MA (default 9; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">MA type for the signal line (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT; <c>MAType.DEFAULT</c> (or <c>(MAType)int.MinValue</c>) selects
-   /// the default).</param>
+   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>endIdx - startIdx
    /// + 1</c> values.</param>
    /// <param name="outMACDSignal">Signal line: MA of the MACD line. Must hold at least <c>endIdx - startIdx

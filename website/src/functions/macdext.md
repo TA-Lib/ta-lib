@@ -41,7 +41,7 @@ Hist = MACD - Signal
 | `optInSignalPeriod` | integer | 9 | 1–100000 | Period of the signal-line MA |
 | `optInSignalMAType` | MAType | SMA (0) | any MAType | MA type for the signal line |
 
-*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT*
+*`MAType` values: 0 SMA · 1 EMA · 2 WMA · 3 DEMA · 4 TEMA · 5 TRIMA · 6 KAMA · 7 MAMA · 8 T3 · 9 HMA · 10 DISABLED · 11 DEFAULT · 12 ZLEMA*
 
 ## Properties
 

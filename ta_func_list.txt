@@ -178,3 +178,4 @@ WAD                 Williams' Accumulation/Distribution
 WCLPRICE            Weighted Close Price
 WILLR               Williams' %R
 WMA                 Weighted Moving Average
+ZLEMA               Zero-Lag Exponential Moving Average

@@ -61,6 +61,7 @@ public partial class Core
     *  060907 MF   Use TA_SMA/TA_EMA instead of internal implementation.
     *  072226 MF,CC Add HMA (issue #139).
     *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
+    *  090426 MF,CC Add ZLEMA (issue #347).
     */
    /// <summary>
    /// Number of leading input bars <c>MA</c> consumes before it can produce its
@@ -75,7 +76,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MA_Lookback( int optInTimePeriod, MAType optInMAType )
@@ -125,6 +126,9 @@ public partial class Core
          break;
       case MAType.HMA:
          retValue = HMA_Lookback(optInTimePeriod);
+         break;
+      case MAType.ZLEMA:
+         retValue = ZLEMA_Lookback(optInTimePeriod);
          break;
       default:
          retValue = 0;
@@ -275,6 +279,12 @@ public partial class Core
          outNBElement = _xr9.Count;
          retCode = RetCode.Success;
          break;
+      case MAType.ZLEMA:
+         OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr10.BegIdx;
+         outNBElement = _xr10.Count;
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -388,6 +398,12 @@ public partial class Core
          outNBElement = _xr9.Count;
          retCode = RetCode.Success;
          break;
+      case MAType.ZLEMA:
+         OutRange _xr10 = ZLEMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx = _xr10.BegIdx;
+         outNBElement = _xr10.Count;
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -424,7 +440,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
@@ -500,7 +516,7 @@ public partial class Core
    /// selects the default).</param>
    /// <param name="optInMAType">Which moving-average algorithm to dispatch to (default 0 = SMA; values:
    /// 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-   /// 10=DISABLED, 11=DEFAULT; <c>MAType.DEFAULT</c> (or
+   /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outReal">Selected moving average of the input. Must hold at least <c>endIdx -
    /// startIdx + 1</c> values.</param>
@@ -624,6 +640,9 @@ public partial class Core
             case MAType.HMA:
                this.sub = new HmaStream((HmaStream) other.sub!);
                break;
+            case MAType.ZLEMA:
+               this.sub = new ZlemaStream((ZlemaStream) other.sub!);
+               break;
             default:
                throw new InvalidOperationException("unreachable: open rejects arms without a sub-stream");
             }
@@ -722,6 +741,10 @@ public partial class Core
          }
          case MAType.HMA: {
             cur_outReal = ((HmaStream) sp.sub!).Peek(inReal);
+            break;
+         }
+         case MAType.ZLEMA: {
+            cur_outReal = ((ZlemaStream) sp.sub!).Peek(inReal);
             break;
          }
          default:
@@ -826,6 +849,10 @@ public partial class Core
       }
       case MAType.HMA: {
          sp.cur_outReal = ((HmaStream) sp.sub!).Update(inReal);
+         break;
+      }
+      case MAType.ZLEMA: {
+         sp.cur_outReal = ((ZlemaStream) sp.sub!).Update(inReal);
          break;
       }
       default:
@@ -948,6 +975,14 @@ public partial class Core
       }
       case MAType.HMA: {
          HmaStream sub = HmaOpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAType.ZLEMA: {
+         ZlemaStream sub = ZlemaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -1087,6 +1122,14 @@ public partial class Core
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case MAType.ZLEMA: {
+         ZlemaStream sub = ZlemaOpenAndFill(inReal, optInTimePeriod, outReal);
+         outBegIdx = sub.outRangeBegIdx;
+         outNBElement = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BadParam;
       }
@@ -1197,6 +1240,12 @@ public partial class Core
       }
       case MAType.HMA: {
          HmaStream sub = HmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case MAType.ZLEMA: {
+         ZlemaStream sub = ZlemaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, out outBegIdx, out outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;

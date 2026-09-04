@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 404
+next: 405
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -243,3 +243,4 @@ sites:
   WILLR.extrema: 400
   WMA.ringcap.trailingIdx: 402
   WMA.wincap.j: 401
+  ZLEMA.ringcap.trailingIdx: 404

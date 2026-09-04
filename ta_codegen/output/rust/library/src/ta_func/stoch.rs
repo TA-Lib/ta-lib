@@ -86,12 +86,12 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -402,12 +402,12 @@ impl Core {
     ///   1..=100000)
     /// * `optInSlowK_MAType` — MA type used to smooth into SlowK (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `optInSlowD_Period` — Smoothing period for the SlowD signal line (default 3, range
     ///   1..=100000)
     /// * `optInSlowD_MAType` — MA type used for the SlowD line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `outSlowK` — Raw FastK smoothed by SlowK_Period MA.
     /// * `outSlowD` — Signal line: SlowK smoothed by SlowD_Period MA.
     ///

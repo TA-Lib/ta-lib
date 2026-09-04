@@ -63,6 +63,8 @@ public enum MAType
     DISABLED = 10,
     /// <summary>Not a moving average: selects the documented default of whichever parameter it is passed to.</summary>
     DEFAULT = 11,
+    /// <summary>The <c>TA_MAType_ZLEMA</c> moving average.</summary>
+    ZLEMA = 12,
 }
 
 /// <summary>Companion constants for <see cref="MAType"/>.</summary>
@@ -75,5 +77,5 @@ public static class MATypes
 
     /// <summary>Highest value <see cref="MAType"/> defines. Grows when a
     /// member is appended.</summary>
-    public const int Max = 11;
+    public const int Max = 12;
 }

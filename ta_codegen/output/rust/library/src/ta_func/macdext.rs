@@ -75,15 +75,15 @@ impl Core {
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -323,15 +323,15 @@ impl Core {
     /// * `optInFastPeriod` — Period of the fast MA (default 12, range 2..=100000)
     /// * `optInFastMAType` — MA type for the fast MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `optInSlowPeriod` — Period of the slow MA (default 26, range 2..=100000)
     /// * `optInSlowMAType` — MA type for the slow MA (default 0 = SMA, values: 0=SMA, 1=EMA,
     ///   2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT,
-    ///   `MAType::DEFAULT` selects the default)
+    ///   12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `optInSignalPeriod` — Period of the signal-line MA (default 9, range 1..=100000)
     /// * `optInSignalMAType` — MA type for the signal line (default 0 = SMA, values: 0=SMA,
     ///   1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-    ///   11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `outMACD` — MACD line: fast MA minus slow MA.
     /// * `outMACDSignal` — Signal line: MA of the MACD line.
     /// * `outMACDHist` — Histogram: MACD minus signal.

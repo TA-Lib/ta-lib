@@ -111,6 +111,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [TRIMA](/functions/trima.md) — Triangular Moving Average
 - [VWMA](/functions/vwma.md) — Volume Weighted Moving Average
 - [WMA](/functions/wma.md) — Weighted Moving Average
+- [ZLEMA](/functions/zlema.md) — Zero-Lag Exponential Moving Average
 
 ## Pattern Recognition
 

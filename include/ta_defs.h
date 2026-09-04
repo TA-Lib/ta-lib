@@ -178,7 +178,8 @@ typedef enum {
     TA_MAType_T3       =  8,
     TA_MAType_HMA      =  9,
     TA_MAType_DISABLED = 10,
-    TA_MAType_DEFAULT  = 11
+    TA_MAType_DEFAULT  = 11,
+    TA_MAType_ZLEMA    = 12
 } TA_MAType;
 
 /* Inclusive value limits of TA_MAType: the domain an optional parameter of
@@ -186,7 +187,7 @@ typedef enum {
  * appending one widens every generated range check that names them.
  */
 #define TA_MATYPE_MIN 0
-#define TA_MATYPE_MAX 11
+#define TA_MATYPE_MAX 12
 
 typedef enum {
     TA_FUNC_UNST_ADX          =  0,

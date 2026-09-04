@@ -87,7 +87,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     ///
     /// # Errors
     ///
@@ -367,7 +367,7 @@ impl Core {
     /// * `optInFastD_Period` — Smoothing period for the Fast-D line (default 3, range 1..=100000)
     /// * `optInFastD_MAType` — Moving-average type used to smooth Fast-D (default 0 = SMA,
     ///   values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-    ///   10=DISABLED, 11=DEFAULT, `MAType::DEFAULT` selects the default)
+    ///   10=DISABLED, 11=DEFAULT, 12=ZLEMA, `MAType::DEFAULT` selects the default)
     /// * `outFastK` — Raw %K stochastic line.
     /// * `outFastD` — MA-smoothed %K (signal line)
     ///

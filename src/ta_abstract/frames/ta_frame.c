@@ -4049,3 +4049,23 @@ unsigned int TA_WMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_WMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_ZLEMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_ZLEMA(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_ZLEMA_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_ZLEMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}

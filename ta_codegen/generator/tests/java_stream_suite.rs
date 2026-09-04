@@ -282,8 +282,10 @@ fn test_java_ma_dispatch() {
     // Tagged handle: Object sub, null on the identity path.
     assert!(s.contains("Object sub;"));
     // The copy constructor and the step switch derive from the SAME arm table
-    // (design-review obligation): all 9 MATypes appear in both.
-    for label in ["SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3"] {
+    // (design-review obligation): every MAType naming a function appears in both.
+    for label in [
+        "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3", "HMA", "ZLEMA",
+    ] {
         assert!(
             s.matches(&format!("case {label}:")).count() >= 2,
             "arm {label} must appear in both the copy constructor and dispatch switches"

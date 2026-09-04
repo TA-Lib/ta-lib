@@ -32,8 +32,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -285,8 +285,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
     *        least {@code endIdx - startIdx + 1} values.
     * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
@@ -373,8 +373,8 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
     *        least {@code endIdx - startIdx + 1} values.
     * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at

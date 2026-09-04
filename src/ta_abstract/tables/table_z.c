@@ -38,12 +38,38 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* ZLEMA BEGIN */
+static const TA_InputParameterInfo    *TA_ZLEMA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ZLEMA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ZLEMA_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_30,
+  NULL
+};
+
+DEF_FUNCTION( ZLEMA,
+              TA_GroupId_OverlapStudies,
+              "Zero-Lag Exponential Moving Average",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PERIOD1_IDENTITY
+             );
+/* ZLEMA END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableZ[] =
 {
+   ADD_TO_TABLE(ZLEMA),
    NULL
 };
 

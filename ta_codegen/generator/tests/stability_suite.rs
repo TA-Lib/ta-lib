@@ -59,6 +59,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("SUPERTREND", "ATR"),
     ("TEMA", "EMA"),
     ("TRIX", "EMA"),
+    ("ZLEMA", "EMA"),
 ];
 
 /// Functions whose stability is the caller's MA-type choice. Measured: BBANDS, MA,

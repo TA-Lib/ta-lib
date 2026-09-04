@@ -31,8 +31,8 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int PPO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -242,8 +242,8 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param outReal PPO value in percent. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -320,8 +320,8 @@
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
     *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT; {@code MAType.DEFAULT} selects the
-    *        default).
+    *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
+    *        selects the default).
     * @param outReal PPO value in percent. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

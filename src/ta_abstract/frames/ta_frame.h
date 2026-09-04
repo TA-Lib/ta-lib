@@ -1667,5 +1667,14 @@ TA_RetCode TA_WMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_WMA_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_ZLEMA_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ZLEMA_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 
 #endif
