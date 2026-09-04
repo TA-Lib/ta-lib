@@ -463,7 +463,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLTASUKIGAP peek: BadParam", RetCode.BadParam);
          CdltasukigapStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int Near_rangeType = sp.cs_Near_rangeType;
          int Near_avgPeriod = sp.cs_Near_avgPeriod;
          double Near_factor = sp.cs_Near_factor;

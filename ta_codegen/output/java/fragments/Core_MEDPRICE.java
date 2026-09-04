@@ -318,7 +318,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
             throw new TaLibArgumentException("MEDPRICE peek: BadParam", RetCode.BadParam);
          MedpriceStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow) / 2.0;
          return cur_outReal;
       }

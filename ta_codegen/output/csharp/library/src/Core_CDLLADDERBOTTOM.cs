@@ -504,7 +504,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLLADDERBOTTOM", "peek", RetCode.BadParam);
          CdlladderbottomStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
          int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
          double ShadowVeryShort_factor = sp.cs_ShadowVeryShort_factor;

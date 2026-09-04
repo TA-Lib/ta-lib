@@ -772,7 +772,7 @@ public partial class Core
          double tempReal = 0.0;
          int windowStart = 0;
          int barsSinceReseed = sp.barsSinceReseed;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int j = sp.j;
          double shiftX = sp.shiftX;
          double shiftY = sp.shiftY;

@@ -763,9 +763,9 @@ public partial class Core
          MacdStream sp = this;
          double macdValue = 0.0;
          double tempReal = 0.0;
-         double cur_outMACD = sp.cur_outMACD;
-         double cur_outMACDHist = sp.cur_outMACDHist;
-         double cur_outMACDSignal = sp.cur_outMACDSignal;
+         double cur_outMACD = 0.0;
+         double cur_outMACDHist = 0.0;
+         double cur_outMACDSignal = 0.0;
          double prevFast = sp.prevFast;
          double prevSignal = sp.prevSignal;
          double prevSlow = sp.prevSlow;

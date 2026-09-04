@@ -301,7 +301,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LN peek: BadParam", RetCode.BadParam);
          LnStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.log(inReal);
          return cur_outReal;
       }

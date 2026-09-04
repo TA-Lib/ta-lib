@@ -658,7 +658,7 @@ public partial class Core
          double meanValue1 = 0.0;
          double variance = 0.0;
          int barsSinceReseed = sp.barsSinceReseed;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int i = sp.i;
          int j = sp.j;
          double periodTotal1 = sp.periodTotal1;

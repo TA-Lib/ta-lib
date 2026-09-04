@@ -487,7 +487,7 @@
             throw new TaLibArgumentException("CDLHIKKAKE peek: BadParam", RetCode.BadParam);
          CdlhikkakeStream sp = this;
          int cd = sp.cd;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int patternResult = sp.patternResult;
          double savedHigh = sp.savedHigh;
          double savedLow = sp.savedLow;

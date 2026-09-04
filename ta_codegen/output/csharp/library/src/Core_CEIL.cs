@@ -329,7 +329,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("CEIL", "peek", RetCode.BadParam);
          CeilStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Ceiling(inReal);
          return cur_outReal;
       }

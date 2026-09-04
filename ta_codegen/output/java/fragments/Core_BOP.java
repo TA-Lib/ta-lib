@@ -344,7 +344,7 @@
             throw new TaLibArgumentException("BOP peek: BadParam", RetCode.BadParam);
          BopStream sp = this;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          /* BOP is a fraction of the bar's own range, so it is scale-free and the
           * divisor only has to be positive. An exact test, not the fixed
           * TA_IS_ZERO_OR_NEG band it used to be: the range carries the quote unit,

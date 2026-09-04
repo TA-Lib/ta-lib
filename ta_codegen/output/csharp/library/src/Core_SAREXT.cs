@@ -1021,7 +1021,7 @@ public partial class Core
          double prevLow = 0.0;
          double afLong = sp.afLong;
          double afShort = sp.afShort;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double ep = sp.ep;
          int isLong = sp.isLong;
          double newHigh = sp.newHigh;

@@ -1507,6 +1507,17 @@ fn peek_frame_arm_named(
         let (jty, default) = field_type_and_default(ty);
         let _ = writeln!(out, "{pad}{jty} {name} = {default};");
     }
+    // An output local whose every mentioning path writes it before any read
+    // does not need the handle's value: a peek commits nothing, so the previous
+    // bar's output is never an input to the transition (issue #343). Seeding it
+    // anyway is a dead field load on every call. Anything the analysis cannot
+    // prove keeps the seed.
+    let dead_seeds: BTreeSet<String> = func
+        .outputs
+        .iter()
+        .map(|o| format!("cur_{}", o.name))
+        .filter(|n| locals.contains(n) && streaming::peek_seed_is_dead(&body_ir, n))
+        .collect();
     for name in &locals {
         if predeclared.contains(name) {
             continue;
@@ -1514,7 +1525,9 @@ fn peek_frame_arm_named(
         let jty = types.get(name.as_str()).copied()?;
         // A Java array field is a reference: taking it plain would write the
         // handle through it.
-        let init = if jty.ends_with("[]") {
+        let init = if dead_seeds.contains(name) {
+            if jty == "int" { "0".to_string() } else { "0.0".to_string() }
+        } else if jty.ends_with("[]") {
             format!("sp.{name}.clone()")
         } else {
             format!("sp.{name}")

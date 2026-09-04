@@ -1172,8 +1172,8 @@
          double I1ForOddPrev3 = sp.I1ForOddPrev3;
          double Im = sp.Im;
          double Re = sp.Re;
-         double cur_outLeadSine = sp.cur_outLeadSine;
-         double cur_outSine = sp.cur_outSine;
+         double cur_outLeadSine = 0.0;
+         double cur_outSine = 0.0;
          int hilbertIdx = sp.hilbertIdx;
          double period = sp.period;
          double periodWMASub = sp.periodWMASub;

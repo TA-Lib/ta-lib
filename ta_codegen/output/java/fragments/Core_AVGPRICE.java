@@ -331,7 +331,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("AVGPRICE peek: BadParam", RetCode.BadParam);
          AvgpriceStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
          return cur_outReal;
       }

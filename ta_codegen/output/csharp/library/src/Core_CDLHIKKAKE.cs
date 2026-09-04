@@ -521,7 +521,7 @@ public partial class Core
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLHIKKAKE", "peek", RetCode.BadParam);
          CdlhikkakeStream sp = this;
          int cd = sp.cd;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int patternResult = sp.patternResult;
          double savedHigh = sp.savedHigh;
          double savedLow = sp.savedLow;

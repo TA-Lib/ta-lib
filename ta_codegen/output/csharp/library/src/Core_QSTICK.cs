@@ -480,7 +480,7 @@ public partial class Core
          if( !double.IsFinite(inOpen) || !double.IsFinite(inClose) ) throw Core.StreamFailure("QSTICK", "peek", RetCode.BadParam);
          QstickStream sp = this;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double periodTotal = sp.periodTotal;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;

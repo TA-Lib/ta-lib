@@ -508,7 +508,7 @@
          double tempPV = 0.0;
          double tempV = 0.0;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double sumPV = sp.sumPV;
          double sumV = sp.sumV;
          int pkSlot0 = -1;

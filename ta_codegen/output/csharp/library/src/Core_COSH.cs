@@ -327,7 +327,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("COSH", "peek", RetCode.BadParam);
          CoshStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Cosh(inReal);
          return cur_outReal;
       }

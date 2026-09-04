@@ -443,7 +443,7 @@
             throw new TaLibArgumentException("MAXINDEX peek: BadParam", RetCode.BadParam);
          MaxindexStream sp = this;
          double tmp = 0.0;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

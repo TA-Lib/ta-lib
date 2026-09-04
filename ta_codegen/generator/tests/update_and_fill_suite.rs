@@ -19,7 +19,7 @@
 //! Both are cross-backend, so they live together here rather than one copy per
 //! per-language suite.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::PathBuf;
 use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::registry::Registry;
@@ -319,6 +319,55 @@ fn no_managed_handle_caches_the_multi_output_value() {
         assert!(
             section(func, lang).contains(ty),
             "{func}/{lang} has no {ty}, so its lack of a cache is not evidence"
+        );
+    }
+}
+
+/// A peek frame does not seed an output local from the handle when its own
+/// body provably overwrites it before any read (issue #343): a peek commits
+/// nothing, so the previous bar's output is never an input to the transition,
+/// and the seed was one dead field load per output per call. Swept over both
+/// managed backends — C writes through an out-param and Rust rebinds its
+/// locals, so only these two ever carried the shape. Exact-set in both
+/// directions: a frame that grows a seed back fails, and so does a change
+/// that silently drops the one seed the analysis deliberately keeps — IMI,
+/// whose sole store sits inside the period loop, and the IR cannot prove a
+/// loop body runs.
+#[test]
+fn no_managed_peek_seeds_a_dead_output_local() {
+    for (lang, needle) in [("java", " peek("), ("csharp", " Peek(")] {
+        let mut swept = 0usize;
+        let mut seedless = 0usize;
+        let mut seeded: BTreeSet<String> = BTreeSet::new();
+        for name in streaming_funcs() {
+            let (func, _) = load(&name);
+            let sect = section(&name, lang);
+            if !sect.contains(needle) {
+                continue;
+            }
+            let body = body_of(&sect, needle);
+            swept += 1;
+            let mut any = false;
+            for out in &func.outputs {
+                let seed = format!("cur_{} = sp.cur_{};", out.name, out.name);
+                if body.contains(&seed) {
+                    any = true;
+                    seeded.insert(name.clone());
+                }
+            }
+            if !any {
+                seedless += 1;
+            }
+        }
+        // Non-vacuity floors: the sweep must have found the corpus AND the
+        // subject. A needle that stops matching peeks would zero `swept`; an
+        // emitter that re-grew every seed would zero `seedless`.
+        assert!(swept > 150, "{lang}: swept only {swept} peek frames");
+        assert!(seedless > 150, "{lang}: only {seedless} seed-free frames");
+        let expected: BTreeSet<String> = ["imi".to_string()].into_iter().collect();
+        assert_eq!(
+            seeded, expected,
+            "{lang}: peek frames seeding an output local from the handle"
         );
     }
 }

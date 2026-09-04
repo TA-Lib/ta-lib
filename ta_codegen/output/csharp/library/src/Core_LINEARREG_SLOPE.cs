@@ -634,7 +634,7 @@ public partial class Core
          double SumXY = sp.SumXY;
          double SumY = sp.SumY;
          int barsSinceReseed = sp.barsSinceReseed;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int j = sp.j;
          double sumAbs = sp.sumAbs;
          int today = sp.today;

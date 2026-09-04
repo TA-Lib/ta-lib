@@ -398,7 +398,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MOM peek: BadParam", RetCode.BadParam);
          MomStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          if( sp.ringCap_trailingIdx == 0 ) {

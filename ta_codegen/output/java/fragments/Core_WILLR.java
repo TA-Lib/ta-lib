@@ -673,7 +673,7 @@
             throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
          WillrStream sp = this;
          double tmp = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double diff = sp.diff;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;

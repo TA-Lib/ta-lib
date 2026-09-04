@@ -687,8 +687,8 @@ public partial class Core
          MinmaxStream sp = this;
          double tmpHigh = 0.0;
          double tmpLow = 0.0;
-         double cur_outMax = sp.cur_outMax;
-         double cur_outMin = sp.cur_outMin;
+         double cur_outMax = 0.0;
+         double cur_outMin = 0.0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

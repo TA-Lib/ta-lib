@@ -327,7 +327,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("SINH", "peek", RetCode.BadParam);
          SinhStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Sinh(inReal);
          return cur_outReal;
       }

@@ -649,7 +649,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("T3 peek: BadParam", RetCode.BadParam);
          T3Stream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double e1 = sp.e1;
          double e2 = sp.e2;
          double e3 = sp.e3;

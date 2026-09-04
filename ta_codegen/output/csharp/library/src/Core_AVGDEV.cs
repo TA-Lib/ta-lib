@@ -422,7 +422,7 @@ public partial class Core
          double todaySum = 0.0;
          double todayDev = 0.0;
          int i = 0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          pkSlot0 = sp.winPos_i;

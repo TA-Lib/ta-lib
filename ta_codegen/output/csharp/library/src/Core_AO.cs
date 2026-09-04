@@ -584,7 +584,7 @@ public partial class Core
          AoStream sp = this;
          double medianPrice = 0.0;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double sumFast = sp.sumFast;
          double sumSlow = sp.sumSlow;
          int pkSlot0 = -1;

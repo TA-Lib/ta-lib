@@ -572,9 +572,9 @@
          DonchianStream sp = this;
          double tmpLow = 0.0;
          double tmpHigh = 0.0;
-         double cur_outRealLowerBand = sp.cur_outRealLowerBand;
-         double cur_outRealMiddleBand = sp.cur_outRealMiddleBand;
-         double cur_outRealUpperBand = sp.cur_outRealUpperBand;
+         double cur_outRealLowerBand = 0.0;
+         double cur_outRealMiddleBand = 0.0;
+         double cur_outRealUpperBand = 0.0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

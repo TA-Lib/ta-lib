@@ -473,7 +473,7 @@ public partial class Core
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MININDEX", "peek", RetCode.BadParam);
          MinindexStream sp = this;
          double tmp = 0.0;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int i = sp.i;
          double lowest = sp.lowest;
          int lowestIdx = sp.lowestIdx;

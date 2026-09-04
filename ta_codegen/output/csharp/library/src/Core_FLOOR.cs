@@ -329,7 +329,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("FLOOR", "peek", RetCode.BadParam);
          FloorStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Floor(inReal);
          return cur_outReal;
       }

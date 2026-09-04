@@ -327,7 +327,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("TAN", "peek", RetCode.BadParam);
          TanStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.Tan(inReal);
          return cur_outReal;
       }

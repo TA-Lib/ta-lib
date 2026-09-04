@@ -711,7 +711,7 @@
          double tempReal = 0.0;
          double tempReal2 = 0.0;
          double periodROC = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int nullRun = sp.nullRun;
          double prevKAMA = sp.prevKAMA;
          double sumROC1 = sp.sumROC1;

@@ -537,7 +537,7 @@ public partial class Core
       {
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("ZLEMA", "peek", RetCode.BadParam);
          ZlemaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;

@@ -711,7 +711,7 @@ public partial class Core
          double medianPrice = 0.0;
          double osc = 0.0;
          double tempReal = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int oscBuffer_Idx = sp.oscBuffer_Idx;
          double sumFast = sp.sumFast;
          double sumSignal = sp.sumSignal;

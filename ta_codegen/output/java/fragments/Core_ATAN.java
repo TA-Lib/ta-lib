@@ -294,7 +294,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ATAN peek: BadParam", RetCode.BadParam);
          AtanStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.atan(inReal);
          return cur_outReal;
       }

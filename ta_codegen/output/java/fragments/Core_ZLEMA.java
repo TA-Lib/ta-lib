@@ -508,7 +508,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("ZLEMA peek: BadParam", RetCode.BadParam);
          ZlemaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevMA = sp.prevMA;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;

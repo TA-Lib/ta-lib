@@ -525,7 +525,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("DEMA peek: BadParam", RetCode.BadParam);
          DemaStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevEMA1 = sp.prevEMA1;
          double prevEMA2 = sp.prevEMA2;
          if( sp.optInTimePeriod == 1 ) {

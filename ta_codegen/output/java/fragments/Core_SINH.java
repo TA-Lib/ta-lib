@@ -291,7 +291,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("SINH peek: BadParam", RetCode.BadParam);
          SinhStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.sinh(inReal);
          return cur_outReal;
       }

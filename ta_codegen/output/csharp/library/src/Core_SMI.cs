@@ -1020,8 +1020,8 @@ public partial class Core
          double den = 0.0;
          double halfDen = 0.0;
          double smiValue = 0.0;
-         double cur_outSMI = sp.cur_outSMI;
-         double cur_outSMISignal = sp.cur_outSMISignal;
+         double cur_outSMI = 0.0;
+         double cur_outSMISignal = 0.0;
          double emaFastDen = sp.emaFastDen;
          double emaFastNum = sp.emaFastNum;
          double emaSlowDen = sp.emaSlowDen;

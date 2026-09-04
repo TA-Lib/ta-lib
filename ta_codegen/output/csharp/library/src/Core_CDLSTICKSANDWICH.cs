@@ -489,7 +489,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSTICKSANDWICH", "peek", RetCode.BadParam);
          CdlsticksandwichStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int Equal_rangeType = sp.cs_Equal_rangeType;
          int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
          double Equal_factor = sp.cs_Equal_factor;

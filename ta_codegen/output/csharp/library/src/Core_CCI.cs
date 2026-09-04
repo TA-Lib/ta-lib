@@ -559,7 +559,7 @@ public partial class Core
          double theAverage = 0.0;
          double lastValue = 0.0;
          int j = 0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          lastValue = (inHigh + inLow + inClose) / 3;

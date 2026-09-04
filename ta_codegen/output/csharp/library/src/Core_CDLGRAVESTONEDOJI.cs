@@ -523,7 +523,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLGRAVESTONEDOJI", "peek", RetCode.BadParam);
          CdlgravestonedojiStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
          int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
          double BodyDoji_factor = sp.cs_BodyDoji_factor;

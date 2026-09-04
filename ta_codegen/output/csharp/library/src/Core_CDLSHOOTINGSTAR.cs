@@ -566,7 +566,7 @@ public partial class Core
       {
          if( !double.IsFinite(inOpen) || !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("CDLSHOOTINGSTAR", "peek", RetCode.BadParam);
          CdlshootingstarStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
          int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
          double BodyShort_factor = sp.cs_BodyShort_factor;

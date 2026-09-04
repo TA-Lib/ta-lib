@@ -543,7 +543,7 @@
             throw new TaLibArgumentException("MAX peek: BadParam", RetCode.BadParam);
          MaxStream sp = this;
          double tmp = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;

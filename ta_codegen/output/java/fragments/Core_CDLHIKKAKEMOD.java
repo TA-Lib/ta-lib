@@ -557,7 +557,7 @@
          if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("CDLHIKKAKEMOD peek: BadParam", RetCode.BadParam);
          CdlhikkakemodStream sp = this;
-         int cur_outInteger = sp.cur_outInteger;
+         int cur_outInteger = 0;
          int patternCount = sp.patternCount;
          double patternHigh = sp.patternHigh;
          double patternLow = sp.patternLow;

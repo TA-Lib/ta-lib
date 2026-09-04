@@ -627,7 +627,7 @@ public partial class Core
          double tempCY = 0.0;
          double tempLT = 0.0;
          double tempHT = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double prevATR = sp.prevATR;
          /* Find the greatest of the 3 values. */
          tempLT = inLow;

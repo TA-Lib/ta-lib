@@ -299,7 +299,7 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("LOG10 peek: BadParam", RetCode.BadParam);
          Log10Stream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = Math.log10(inReal);
          return cur_outReal;
       }

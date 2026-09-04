@@ -575,7 +575,7 @@ public partial class Core
          if( !double.IsFinite(inReal) ) throw Core.StreamFailure("MIN", "peek", RetCode.BadParam);
          MinStream sp = this;
          double tmp = 0.0;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          int i = sp.i;
          double lowest = sp.lowest;
          int lowestIdx = sp.lowestIdx;

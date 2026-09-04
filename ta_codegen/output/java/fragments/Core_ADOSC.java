@@ -586,7 +586,7 @@
          double close = 0.0;
          double tmp = 0.0;
          double ad = sp.ad;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          double fastEMA = sp.fastEMA;
          double slowEMA = sp.slowEMA;
          high = inHigh;

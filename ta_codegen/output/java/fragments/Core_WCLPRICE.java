@@ -320,7 +320,7 @@
          if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
             throw new TaLibArgumentException("WCLPRICE peek: BadParam", RetCode.BadParam);
          WclpriceStream sp = this;
-         double cur_outReal = sp.cur_outReal;
+         double cur_outReal = 0.0;
          cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
          return cur_outReal;
       }
