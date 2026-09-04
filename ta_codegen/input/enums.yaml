@@ -36,6 +36,7 @@ MAType:
     # A real average sitting after the two pseudo-members, because 10 and 11 are
     # shipped ABI. Cosmetic, and not to be "fixed" by renumbering.
     - { name: ZLEMA,    value: 12 }
+    - { name: RMA,      value: 13 }
 
 # FuncUnstId — the unstable-period function IDs. This list IS the source of truth
 # for the FuncUnstId enum generated into the GENCODE section of include/ta_defs.h

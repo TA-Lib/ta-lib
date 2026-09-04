@@ -23205,6 +23205,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -24591,6 +24592,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -41228,6 +41230,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -41624,6 +41627,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -42390,6 +42394,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -45831,6 +45836,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -46180,6 +46186,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -48944,6 +48951,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -49139,6 +49147,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }
@@ -49335,6 +49344,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
     for rd in 0..rounds {
         let _ = rd;
         let mut cb = core.to_builder();
+        if let Some(id) = func_unst_id_from_int(24usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(5usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(23usize) { cb = cb.unstable_period(id, svK); }
         if let Some(id) = func_unst_id_from_int(14usize) { cb = cb.unstable_period(id, svK); }

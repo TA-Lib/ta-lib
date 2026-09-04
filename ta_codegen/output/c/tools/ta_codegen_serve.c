@@ -4191,6 +4191,9 @@ static int sv_steq_TA_MA( const struct TA_MA_Stream *a, const struct TA_MA_Strea
       case TA_MAType_ZLEMA:
          if( sv_steq_TA_ZLEMA( (const struct TA_ZLEMA_Stream *)a->sub, (const struct TA_ZLEMA_Stream *)b->sub, w, z ) ) return 1;
          break;
+      case TA_MAType_RMA:
+         if( sv_steq_TA_RMA( (const struct TA_RMA_Stream *)a->sub, (const struct TA_RMA_Stream *)b->sub, w, z ) ) return 1;
+         break;
       default:
          *w = "sub"; return 1;
       }
@@ -8275,6 +8278,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -8285,6 +8289,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_APO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_APO_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_APO_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -8535,6 +8540,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -10605,6 +10611,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -10615,6 +10622,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_BBANDS_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_BBANDS_Open(&st, sv_c, svN, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_BBANDS_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -10912,6 +10920,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -38355,6 +38364,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -38365,6 +38375,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_MA_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MA_Open(&st, sv_c, svN, optInTimePeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MA_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -38615,6 +38626,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -38996,6 +39008,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -39006,6 +39019,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_MACDEXT_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; TA_RetCode orc = TA_MACDEXT_Open(&st, sv_c, svN, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, &v0, &v1, &v2);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MACDEXT_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -39303,6 +39317,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -40282,6 +40297,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -40292,6 +40308,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_MAVP_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MAVP_Open(&st, sv_c, sv_v, svN, optInMinPeriod, optInMaxPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MAVP_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -40542,6 +40559,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -46057,6 +46075,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -46067,6 +46086,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_PPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PPO_Open(&st, sv_c, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PPO_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -46317,6 +46337,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -46642,6 +46663,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -46652,6 +46674,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_PVO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PVO_Open(&st, sv_v, svN, optInFastPeriod, optInSlowPeriod, optInMAType, &v0);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PVO_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -46902,6 +46925,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -51279,6 +51303,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -51289,6 +51314,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_STOCH_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCH_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCH_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -51566,6 +51592,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -51606,6 +51633,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -51616,6 +51644,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_STOCHF_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHF_Open(&st, sv_h, sv_l, sv_c, svN, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHF_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -51893,6 +51922,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);
@@ -51934,6 +51964,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
         int svZsign = 0;
         int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(24, (unsigned int)svK);
         TA_SetUnstablePeriod(5, (unsigned int)svK);
         TA_SetUnstablePeriod(23, (unsigned int)svK);
         TA_SetUnstablePeriod(14, (unsigned int)svK);
@@ -51945,6 +51976,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             int openRejects = 0;
             { TA_STOCHRSI_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; TA_RetCode orc = TA_STOCHRSI_Open(&st, sv_c, svN, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, &v0, &v1);
               if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_STOCHRSI_Close(st); }
+            TA_SetUnstablePeriod(24, 0);
             TA_SetUnstablePeriod(5, 0);
             TA_SetUnstablePeriod(23, 0);
             TA_SetUnstablePeriod(14, 0);
@@ -52223,6 +52255,7 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                 }
             }
         }
+        TA_SetUnstablePeriod(24, 0);
         TA_SetUnstablePeriod(5, 0);
         TA_SetUnstablePeriod(23, 0);
         TA_SetUnstablePeriod(14, 0);

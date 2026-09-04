@@ -257,6 +257,7 @@ static int g_rmaOracleCmp;
 static int g_rmaBookCmp;
 static int g_rmaPeriod1Cmp;
 static int g_rmaAliasCmp;
+static int g_rmaMaTypeCmp;
 
 /* (1) DIFFERENTIAL, memcmp-exact: TA_RMA(TA_TRANGE(h,l,c), N) IS TA_ATR(N).
  *
@@ -692,6 +693,141 @@ static ErrorNumber test_rma_aliasing( const TA_Real *in, int nbBars )
    return TA_TEST_PASS;
 }
 
+/* (9) MATYPE ARM: TA_MAType_RMA == 13 dispatches to the same code.
+ * (a) MA(period, RMA) == TA_RMA(period), bit-for-bit, across the grid AND at a
+ *     nonzero unstable period -- RMA is the first MAType member added that owns
+ *     a TA_FUNC_UNST_ id, so ma_lookback has to forward the knob, not just the
+ *     period. HMA's arm (#139) could not check that.
+ *     The lookback is compared SEPARATELY, and it has to be: ma() forwards to
+ *     rma(), which clamps startIdx to its own lookback, so the values and the
+ *     reported range stay right even when ma_lookback is wrong. Sabotaged to
+ *     sma_lookback, every value check here still passes; only the comparison
+ *     below fails (and, corpus-wide, MAVP's ma_lookback monotonicity contract).
+ * (b) MA(1, RMA) copies the input, and does so through ma()'s identity path,
+ *     which runs BEFORE the dispatch and before any lookback consults the
+ *     unstable period. So MA(1, RMA) still yields lookback 0 with the knob set,
+ *     where TA_RMA(1) is delayed by it -- an existing MA-family divergence,
+ *     shared with EMA, pinned here because this leg is where a reader meets it.
+ * (c) BBANDS middle band with TA_MAType_RMA == TA_RMA, bit-for-bit, through the
+ *     abstract-visible param surface (smoke for every other MAType taker).
+ */
+static ErrorNumber test_rma_matype( const TA_History *history )
+{
+   static const int periods[] = { 2, 3, 14, 30 };
+   static const unsigned int unstables[] = { 0, 5 };
+   static TA_Real outMA[RMA_CAP], outRMA[RMA_CAP];
+   static TA_Real outUpper[RMA_CAP], outMiddle[RMA_CAP], outLower[RMA_CAP];
+   TA_RetCode rcM, rcR;
+   TA_Integer begM, nbM, begR, nbR;
+   int nbBars = (int)history->nbBars;
+   unsigned int u;
+   int pi, i;
+
+   if( nbBars > RMA_CAP )
+      nbBars = RMA_CAP;
+
+   /* (a) dispatch parity, over the period grid x the unstable period. */
+   for( u = 0; u < sizeof(unstables)/sizeof(unstables[0]); u++ )
+   {
+      TA_SetUnstablePeriod( TA_FUNC_UNST_RMA, unstables[u] );
+
+      for( pi = 0; pi < (int)(sizeof(periods)/sizeof(periods[0])); pi++ )
+      {
+         int period = periods[pi];
+
+         /* The lookback tier, which no value comparison can reach. */
+         if( TA_MA_Lookback( period, TA_MAType_RMA )
+             != TA_RMA_Lookback( period ) )
+         {
+            printf( "RMA matype Fail [period %d unst %u]: MA_Lookback %d != "
+                    "RMA_Lookback %d\n", period, unstables[u],
+                    TA_MA_Lookback( period, TA_MAType_RMA ),
+                    TA_RMA_Lookback( period ) );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_rmaMaTypeCmp++;
+
+         rcM = TA_MA( 0, nbBars - 1, history->close, period, TA_MAType_RMA,
+                      &begM, &nbM, outMA );
+         rcR = TA_RMA( 0, nbBars - 1, history->close, period,
+                       &begR, &nbR, outRMA );
+         if( rcM != TA_SUCCESS || rcR != TA_SUCCESS )
+         {
+            printf( "RMA matype Fail [period %d unst %u]: rc MA=%d RMA=%d\n",
+                    period, unstables[u], (int)rcM, (int)rcR );
+            return TA_TESTUTIL_TFRR_BAD_RETCODE;
+         }
+         if( begM != begR || nbM != nbR )
+         {
+            printf( "RMA matype Fail [period %d unst %u]: range MA(%d,%d) "
+                    "RMA(%d,%d)\n", period, unstables[u],
+                    (int)begM, (int)nbM, (int)begR, (int)nbR );
+            return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+         }
+         if( memcmp( outMA, outRMA, (size_t)nbM * sizeof(TA_Real) ) != 0 )
+         {
+            for( i = 0; i < nbM; i++ )
+               if( outMA[i] != outRMA[i] )
+               {
+                  printf( "RMA matype Fail [period %d unst %u] at out[%d]: "
+                          "MA %.17g != RMA %.17g (must be BIT-exact)\n",
+                          period, unstables[u], i, outMA[i], outRMA[i] );
+                  break;
+               }
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+         g_rmaMaTypeCmp += nbM;
+      }
+
+      /* (b) MA(1, RMA) is the identity copy at lookback 0, unstable period or
+       * not -- ma() answers before the dispatch can consult it. */
+      rcM = TA_MA( 0, nbBars - 1, history->close, 1, TA_MAType_RMA,
+                   &begM, &nbM, outMA );
+      if( rcM != TA_SUCCESS || begM != 0 || nbM != nbBars )
+      {
+         printf( "RMA matype Fail: MA(1,RMA) unst %u rc=%d (%d,%d) "
+                 "expected (0,%d)\n",
+                 unstables[u], (int)rcM, (int)begM, (int)nbM, nbBars );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < nbBars; i++ )
+      {
+         g_rmaMaTypeCmp++;
+         if( outMA[i] != history->close[i] )
+         {
+            printf( "RMA matype Fail: MA(1,RMA) unst %u at out[%d] is not an "
+                    "input copy\n", unstables[u], i );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   TA_SetUnstablePeriod( TA_FUNC_UNST_RMA, 0 );
+
+   /* (c) BBANDS(20, 2, 2, RMA): the middle band IS MA(close, 20, RMA). */
+   rcM = TA_BBANDS( 0, nbBars - 1, history->close, 20, 2.0, 2.0, TA_MAType_RMA,
+                    &begM, &nbM, outUpper, outMiddle, outLower );
+   rcR = TA_RMA( 0, nbBars - 1, history->close, 20, &begR, &nbR, outRMA );
+   if( rcM != TA_SUCCESS || rcR != TA_SUCCESS || begM != begR || nbM != nbR )
+   {
+      printf( "RMA matype Fail: BBANDS(RMA) rc=%d (%d,%d) vs RMA rc=%d (%d,%d)\n",
+              (int)rcM, (int)begM, (int)nbM, (int)rcR, (int)begR, (int)nbR );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < nbM; i++ )
+   {
+      g_rmaMaTypeCmp++;
+      if( outMiddle[i] != outRMA[i] )
+      {
+         printf( "RMA matype Fail: BBANDS(RMA) middle[%d] %.17g != RMA %.17g\n",
+                 i, outMiddle[i], outRMA[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
 /* (8) The startIdx/endIdx range sweep. RMA is an IIR recursion whose output
  * depends on how far back it started, so it is TA_STABLE_CONVERGING with its
  * own unstable id: the residual between two anchors decays by a factor of
@@ -737,7 +873,7 @@ ErrorNumber test_func_rma( TA_History *history )
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    g_rmaDiffCmp = g_rmaOracleCmp = g_rmaBookCmp = 0;
-   g_rmaPeriod1Cmp = g_rmaAliasCmp = 0;
+   g_rmaPeriod1Cmp = g_rmaAliasCmp = g_rmaMaTypeCmp = 0;
 
    rmaBuildCrossing( crossing, nbBars > RMA_CAP ? RMA_CAP : nbBars );
 
@@ -802,6 +938,10 @@ ErrorNumber test_func_rma( TA_History *history )
       return err;
 
    err = test_rma_aliasing( history->close, nbBars );
+   if( err != TA_TEST_PASS )
+      return err;
+
+   err = test_rma_matype( history );
    if( err != TA_TEST_PASS )
       return err;
 

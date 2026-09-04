@@ -9,6 +9,8 @@ Wilder's smoothed moving average: an exponential average whose smoothing factor 
 
 Because the smoothing factor is smaller than an EMA's at the same period, RMA reacts more slowly and gives noticeably more weight to old data: it takes about twice the period to shed the influence of a bar. Read it as a slow trend line — direction and slope matter, individual crossings much less than on a faster average.
 
+RMA is also selectable as a moving-average type (`TA_MAType_RMA`) wherever an `optInMAType` parameter is accepted ([`MA`](/functions/ma.md), [`BBANDS`](/functions/bbands.md), [`STOCH`](/functions/stoch.md), [`MACDEXT`](/functions/macdext.md), ...).
+
 It travels under five names for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim), `wilders` (Tulip), WilderMA (Wealth-Lab).
 
 ## Formula

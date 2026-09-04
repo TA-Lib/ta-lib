@@ -136,7 +136,7 @@ fn classification_matches_the_measured_library() {
 #[test]
 fn ma_types_split_into_recursive_and_windowed() {
     let st = stability::classify(&load());
-    for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA"] {
+    for name in ["EMA", "KAMA", "MAMA", "T3", "DEMA", "TEMA", "RMA"] {
         assert!(st[name].unconditional(), "{name} carries an unstable period");
     }
     for name in ["SMA", "WMA", "TRIMA", "HMA"] {

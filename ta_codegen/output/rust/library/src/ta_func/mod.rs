@@ -40,6 +40,8 @@ pub enum MAType {
     DEFAULT = 11,
     /// The `TA_MAType_ZLEMA` moving average.
     ZLEMA = 12,
+    /// The `TA_MAType_RMA` moving average.
+    RMA = 13,
 }
 
 impl TryFrom<i32> for MAType {
@@ -72,6 +74,7 @@ impl TryFrom<i32> for MAType {
             10 => Self::DISABLED,
             11 => Self::DEFAULT,
             12 => Self::ZLEMA,
+            13 => Self::RMA,
             i32::MIN => Self::DEFAULT,
             _ => return Err(RetCode::BadParam),
         })

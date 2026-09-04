@@ -38,6 +38,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - TA_MAType_DISABLED — no smoothing at any period; the output is a copy of the input (#93)
   - TA_MAType_DEFAULT — selects that parameter's documented MA type (#182)
   - TA_MAType_ZLEMA (#347)
+  - TA_MAType_RMA (#348)
 
 ### Faster
 - ~8x: MACD, MACDFIX and MACDEXT (when MA type is EMA).

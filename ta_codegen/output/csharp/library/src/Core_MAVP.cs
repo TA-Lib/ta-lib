@@ -76,7 +76,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -589,7 +589,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outReal">variable-period moving average. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>
@@ -670,7 +670,7 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">Moving-average type applied (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA,
    /// 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED,
-   /// 11=DEFAULT, 12=ZLEMA; <c>MAType.DEFAULT</c> (or
+   /// 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
    /// <c>(MAType)int.MinValue</c>) selects the default).</param>
    /// <param name="outReal">variable-period moving average. Must hold at least <c>endIdx - startIdx +
    /// 1</c> values.</param>

@@ -219,9 +219,13 @@ impl Core {
     /// its own right. Because the smoothing factor is smaller than an EMA's at the same period, RMA
     /// reacts more slowly and gives noticeably more weight to old data: it takes about twice the
     /// period to shed the influence of a bar. Read it as a slow trend line — direction and slope
-    /// matter, individual crossings much less than on a faster average. It travels under five names
-    /// for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's Smoothing or
-    /// Wilder's Average (thinkorswim), `wilders` (Tulip), WilderMA (Wealth-Lab).
+    /// matter, individual crossings much less than on a faster average. RMA is also selectable as a
+    /// moving-average type (`TA_MAType_RMA`) wherever an `optInMAType` parameter is accepted
+    /// ([`MA`](https://ta-lib.org/functions/ma), [`BBANDS`](https://ta-lib.org/functions/bbands),
+    /// [`STOCH`](https://ta-lib.org/functions/stoch),
+    /// [`MACDEXT`](https://ta-lib.org/functions/macdext), ...). It travels under five names for one
+    /// object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's Smoothing or Wilder's
+    /// Average (thinkorswim), `wilders` (Tulip), WilderMA (Wealth-Lab).
     ///
     /// Formula and more info at [ta-lib.org/functions/rma](https://ta-lib.org/functions/rma).
     ///

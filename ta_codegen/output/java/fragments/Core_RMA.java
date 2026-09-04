@@ -200,7 +200,11 @@
     * same period, RMA reacts more slowly and gives noticeably more weight to
     * old data: it takes about twice the period to shed the influence of a bar.
     * Read it as a slow trend line — direction and slope matter, individual
-    * crossings much less than on a faster average. It travels under five names
+    * crossings much less than on a faster average. RMA is also selectable as a
+    * moving-average type ({@code TA_MAType_RMA}) wherever an
+    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
+    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+    * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
     * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
     * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
     * WilderMA (Wealth-Lab).
@@ -282,7 +286,11 @@
     * same period, RMA reacts more slowly and gives noticeably more weight to
     * old data: it takes about twice the period to shed the influence of a bar.
     * Read it as a slow trend line — direction and slope matter, individual
-    * crossings much less than on a faster average. It travels under five names
+    * crossings much less than on a faster average. RMA is also selectable as a
+    * moving-average type ({@code TA_MAType_RMA}) wherever an
+    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
+    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+    * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
     * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
     * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
     * WilderMA (Wealth-Lab).

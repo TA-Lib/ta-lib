@@ -31,7 +31,7 @@ enum FuncUnstId {
 }
 
 enum MAType {
-    SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA;
+    SMA, EMA, WMA, DEMA, TEMA, TRIMA, KAMA, MAMA, T3, HMA, DISABLED, DEFAULT, ZLEMA, RMA;
 }
 
 enum RangeType {
@@ -7835,8 +7835,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int APO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -8033,8 +8033,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -8112,8 +8112,8 @@ class Core {
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Fast MA minus slow MA. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -13354,8 +13354,8 @@ class Core {
         *        (default 2; {@code -4e37} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int BBANDS_Lookback( int optInTimePeriod, double optInNbDevUp, double optInNbDevDn, MAType optInMAType )
@@ -13941,8 +13941,8 @@ class Core {
         *        (default 2; {@code -4e37} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - startIdx + 1} values.
         * @param outRealMiddleBand The moving average. Must hold at least
@@ -14038,8 +14038,8 @@ class Core {
         *        (default 2; {@code -4e37} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outRealUpperBand Middle band plus nbDevUp standard deviations. Must
         *        hold at least {@code endIdx - startIdx + 1} values.
         * @param outRealMiddleBand The moving average. Must hold at least
@@ -104256,6 +104256,7 @@ class Core {
      *  072226 MF,CC Add HMA (issue #139).
      *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
      *  090426 MF,CC Add ZLEMA (issue #347).
+     *  090426 MF,CC Add RMA (issue #348).
      */
 
        /**
@@ -104269,7 +104270,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -104321,6 +104322,9 @@ class Core {
              break;
           case ZLEMA:
              retValue = ZLEMA_Lookback(optInTimePeriod);
+             break;
+          case RMA:
+             retValue = RMA_Lookback(optInTimePeriod);
              break;
           default:
              retValue = 0;
@@ -104470,6 +104474,12 @@ class Core {
              outNBElement.value = _xr10.count();
              retCode = RetCode.Success;
              break;
+          case RMA:
+             OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+             outBegIdx.value = _xr11.begIdx();
+             outNBElement.value = _xr11.count();
+             retCode = RetCode.Success;
+             break;
           default:
              retCode = RetCode.BadParam;
              break;
@@ -104585,6 +104595,12 @@ class Core {
              outNBElement.value = _xr10.count();
              retCode = RetCode.Success;
              break;
+          case RMA:
+             OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+             outBegIdx.value = _xr11.begIdx();
+             outNBElement.value = _xr11.count();
+             retCode = RetCode.Success;
+             break;
           default:
              retCode = RetCode.BadParam;
              break;
@@ -104618,7 +104634,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -104647,6 +104663,7 @@ class Core {
         * @see Core#T3
         * @see Core#HMA
         * @see Core#ZLEMA
+        * @see Core#RMA
         */
        public OutRange MA( int startIdx,
                            int endIdx,
@@ -104700,7 +104717,7 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Which moving-average algorithm to dispatch to (default
         *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+        *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outReal Selected moving average of the input. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -104729,6 +104746,7 @@ class Core {
         * @see Core#T3
         * @see Core#HMA
         * @see Core#ZLEMA
+        * @see Core#RMA
         */
        public OutRange MA( int startIdx,
                            int endIdx,
@@ -104835,6 +104853,9 @@ class Core {
                    break;
                 case ZLEMA:
                    this.sub = new ZlemaStream((ZlemaStream) other.sub);
+                   break;
+                case RMA:
+                   this.sub = new RmaStream((RmaStream) other.sub);
                    break;
                 default:
                    throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -104967,6 +104988,10 @@ class Core {
                 cur_outReal = ((ZlemaStream) sp.sub).peek(inReal);
                 break;
              }
+             case RMA: {
+                cur_outReal = ((RmaStream) sp.sub).peek(inReal);
+                break;
+             }
              default:
                 throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
              }
@@ -105051,6 +105076,10 @@ class Core {
           }
           case ZLEMA: {
              sp.cur_outReal = ((ZlemaStream) sp.sub).update(inReal);
+             break;
+          }
+          case RMA: {
+             sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
              break;
           }
           default:
@@ -105178,6 +105207,14 @@ class Core {
           }
           case ZLEMA: {
              ZlemaStream sub = zlemaOpenInternal(inReal, startIdx, optInTimePeriod);
+             sp.outRangeBegIdx = sub.outRangeBegIdx;
+             sp.outRangeCount = sub.outRangeCount;
+             sp.sub = sub;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
+          case RMA: {
+             RmaStream sub = rmaOpenInternal(inReal, startIdx, optInTimePeriod);
              sp.outRangeBegIdx = sub.outRangeBegIdx;
              sp.outRangeCount = sub.outRangeCount;
              sp.sub = sub;
@@ -105320,6 +105357,14 @@ class Core {
              sp.cur_outReal = sub.cur_outReal;
              break;
           }
+          case RMA: {
+             RmaStream sub = rmaOpenAndFill(inReal, optInTimePeriod, outReal);
+             outBegIdx.value = sub.outRangeBegIdx;
+             outNBElement.value = sub.outRangeCount;
+             sp.sub = sub;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
           default:
              return RetCode.BadParam;
           }
@@ -105431,6 +105476,12 @@ class Core {
           }
           case ZLEMA: {
              ZlemaStream sub = zlemaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+             sp.sub = sub;
+             sp.cur_outReal = sub.cur_outReal;
+             break;
+          }
+          case RMA: {
+             RmaStream sub = rmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
              sp.sub = sub;
              sp.cur_outReal = sub.cur_outReal;
              break;
@@ -106680,20 +106731,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int MACDEXT_Lookback( int optInFastPeriod, MAType optInFastMAType, int optInSlowPeriod, MAType optInSlowMAType, int optInSignalPeriod, MAType optInSignalMAType )
@@ -107050,20 +107101,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
@@ -107157,20 +107208,20 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastMAType MA type for the fast MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param optInSlowPeriod Period of the slow MA (default 26; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInSlowMAType MA type for the slow MA (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param optInSignalPeriod Period of the signal-line MA (default 9; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInSignalMAType MA type for the signal line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outMACD MACD line: fast MA minus slow MA. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outMACDSignal Signal line: MA of the MACD line. Must hold at least
@@ -111442,8 +111493,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int MAVP_Lookback( int optInMinPeriod, int optInMaxPeriod, MAType optInMAType )
@@ -111945,8 +111996,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param outReal variable-period moving average. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -112025,8 +112076,8 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving-average type applied (default 0 = SMA; values:
         *        0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
-        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT} selects the
-        *        default).
+        *        10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; {@code MAType.DEFAULT} selects
+        *        the default).
         * @param outReal variable-period moving average. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -129933,8 +129984,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int PPO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -130144,8 +130195,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -130222,8 +130273,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PPO value in percent. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -131306,8 +131357,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int PVO_Lookback( int optInFastPeriod, int optInSlowPeriod, MAType optInMAType )
@@ -131519,8 +131570,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -131599,8 +131650,8 @@ class Core {
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInMAType Moving average type used for both MAs (default 1 = EMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outReal PVO value in percent. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -132916,7 +132967,11 @@ class Core {
         * same period, RMA reacts more slowly and gives noticeably more weight to
         * old data: it takes about twice the period to shed the influence of a bar.
         * Read it as a slow trend line — direction and slope matter, individual
-        * crossings much less than on a faster average. It travels under five names
+        * crossings much less than on a faster average. RMA is also selectable as a
+        * moving-average type ({@code TA_MAType_RMA}) wherever an
+        * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
+        * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+        * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
         * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
         * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
         * WilderMA (Wealth-Lab).
@@ -132998,7 +133053,11 @@ class Core {
         * same period, RMA reacts more slowly and gives noticeably more weight to
         * old data: it takes about twice the period to shed the influence of a bar.
         * Read it as a slow trend line — direction and slope matter, individual
-        * crossings much less than on a faster average. It travels under five names
+        * crossings much less than on a faster average. RMA is also selectable as a
+        * moving-average type ({@code TA_MAType_RMA}) wherever an
+        * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
+        * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
+        * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
         * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
         * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
         * WilderMA (Wealth-Lab).
@@ -144343,15 +144402,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
@@ -144818,15 +144877,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
@@ -144918,15 +144977,15 @@ class Core {
         *        default).
         * @param optInSlowK_MAType MA type used to smooth into SlowK (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param optInSlowD_Period Smoothing period for the SlowD signal line
         *        (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
         *        default).
         * @param optInSlowD_MAType MA type used for the SlowD line (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outSlowK Raw FastK smoothed by SlowK_Period MA. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outSlowD Signal line: SlowK smoothed by SlowD_Period MA. Must hold
@@ -145783,7 +145842,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
@@ -146202,7 +146261,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -146290,7 +146349,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType Moving-average type used to smooth Fast-D
         *        (default 0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA,
-        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+        *        6=KAMA, 7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
         *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Raw %K stochastic line. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -147103,8 +147162,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int STOCHRSI_Lookback( int optInTimePeriod, int optInFastK_Period, int optInFastD_Period, MAType optInFastD_MAType )
@@ -147356,8 +147415,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - startIdx + 1} values.
         * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
@@ -147444,8 +147503,8 @@ class Core {
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInFastD_MAType MA type used to smooth %D (default 0 = SMA;
         *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
-        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA; {@code MAType.DEFAULT}
-        *        selects the default).
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
         * @param outFastK Unsmoothed stochastic of the RSI (raw %K) Must hold at
         *        least {@code endIdx - startIdx + 1} values.
         * @param outFastD %K smoothed over FastD_Period (signal line) Must hold at
@@ -166158,7 +166217,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "83a415a2571230dc";
+    static final String SPLICED_GENCODE_DIGEST = "742712a042391041";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -166360,7 +166419,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",16) }));
         ABSTRACT.put("APO", new AbsFunc("APO", "Momentum Indicators", "Absolute Price Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("AROON", new AbsFunc("AROON", "Momentum Indicators", "Aroon", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
@@ -166392,7 +166451,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("BBANDS", new AbsFunc("BBANDS", "Overlap Studies", "Bollinger Bands", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(0,"optInNbDevUp",0,"Deviations up","Deviation multiplier for upper band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(0,"optInNbDevDn",0,"Deviations down","Deviation multiplier for lower band",2.0, -3e37,3e37,2,-2.0,2.0,0.2, 0,0,0,0,0, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
         ABSTRACT.put("BETA", new AbsFunc("BETA", "Statistic Functions", "Beta", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -166776,7 +166835,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MA", new AbsFunc("MA", "Overlap Studies", "Moving average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MACD", new AbsFunc("MACD", "Momentum Indicators", "Moving Average Convergence/Divergence", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -166784,7 +166843,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDEXT", new AbsFunc("MACDEXT", "Momentum Indicators", "MACD with controllable MA type", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInFastMAType",0,"Fast MA","Type of Moving Average for fast MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInSlowMAType",0,"Slow MA","Type of Moving Average for slow MA",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSignalPeriod",0,"Signal Period","Smoothing for the signal line (period length)",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSignalMAType",0,"Signal MA","Type of Moving Average for signal line",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outMACD",1), new AbsOut(0,"outMACDSignal",4), new AbsOut(0,"outMACDHist",16) }));
         ABSTRACT.put("MACDFIX", new AbsFunc("MACDFIX", "Momentum Indicators", "Moving Average Convergence/Divergence Fix 12/26", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -166800,7 +166859,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAVP", new AbsFunc("MAVP", "Overlap Studies", "Moving average with variable period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0), new AbsIn(1,"inPeriods",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInMinPeriod",0,"Minimum Period","Value less than minimum will be changed to Minimum period",2.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInMaxPeriod",0,"Maximum Period","Value higher than maximum will be changed to Maximum period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("MAX", new AbsFunc("MAX", "Math Operators", "Highest value over a specified period", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
@@ -166880,7 +166939,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PPO", new AbsFunc("PPO", "Momentum Indicators", "Percentage Price Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVI", new AbsFunc("PVI", "Volume Indicators", "Positive Volume Index", 570425344,
             new AbsIn[]{ new AbsIn(0,"inPriceCV",24) },
@@ -166888,7 +166947,7 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("PVO", new AbsFunc("PVO", "Volume Indicators", "Percentage Volume Oscillator", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastPeriod",0,"Fast Period","Period of the fast MA",12.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInSlowPeriod",0,"Slow Period","Period of the slow MA",26.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(3,"optInMAType",0,"MA Type","Type of Moving Average",1.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("QSTICK", new AbsFunc("QSTICK", "Momentum Indicators", "Qstick", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceOC",9) },
@@ -166952,15 +167011,15 @@ public class TaCodegenServe {
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("STOCH", new AbsFunc("STOCH", "Momentum Indicators", "Stochastic", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outSlowK",4), new AbsOut(0,"outSlowD",4) }));
         ABSTRACT.put("STOCHF", new AbsFunc("STOCHF", "Momentum Indicators", "Stochastic Fast", 33554432,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
-            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("STOCHRSI", new AbsFunc("STOCHRSI", "Momentum Indicators", "Stochastic Relative Strength Index", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
-            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA") },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",5.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInFastD_Period",0,"Fast-D Period","Smoothing for making the Fast-D line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInFastD_MAType",0,"Fast-D MA","Type of Moving Average for Fast-D",0.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
             new AbsOut[]{ new AbsOut(0,"outFastK",1), new AbsOut(0,"outFastD",1) }));
         ABSTRACT.put("SUB", new AbsFunc("SUB", "Math Operators", "Vector Arithmetic Subtraction", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal0",0), new AbsIn(1,"inReal1",0) },
@@ -197334,6 +197393,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -198780,6 +198840,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -215835,6 +215896,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -216262,6 +216324,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -217079,6 +217142,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -220672,6 +220736,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -221033,6 +221098,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -223903,6 +223969,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -224119,6 +224186,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;
@@ -224336,6 +224404,7 @@ public class TaCodegenServe {
         int rounds = 1;
         for (int rd = 0; rd < rounds; rd++) {
             Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
             c2.unstablePeriod[5] = svK;
             c2.unstablePeriod[23] = svK;
             c2.unstablePeriod[14] = svK;

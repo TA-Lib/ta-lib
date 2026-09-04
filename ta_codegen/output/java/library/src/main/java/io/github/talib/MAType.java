@@ -62,5 +62,6 @@ public enum MAType
    DISABLED,
    /** Not a moving average: selects the documented default of whichever parameter it is passed to. */
    DEFAULT,
-   ZLEMA
+   ZLEMA,
+   RMA
 };

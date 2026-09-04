@@ -285,6 +285,7 @@ fn test_java_ma_dispatch() {
     // (design-review obligation): every MAType naming a function appears in both.
     for label in [
         "SMA", "EMA", "WMA", "DEMA", "TEMA", "TRIMA", "KAMA", "MAMA", "T3", "HMA", "ZLEMA",
+        "RMA",
     ] {
         assert!(
             s.matches(&format!("case {label}:")).count() >= 2,

@@ -2585,12 +2585,12 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * max, and the affected run summaries print the skip count so the exclusion
  * is loud, never silent. Current-vs-current gates are unaffected and DO
  * exercise the new value: --xlang-hash, stream_verify's enum sweep, the
- * VARIANT gate and the per-function hand tests (TA_MAType_HMA and
- * TA_MAType_ZLEMA dispatch parity). When a frozen oracle is re-frozen on a tag
+ * VARIANT gate and the per-function hand tests (TA_MAType_HMA, TA_MAType_ZLEMA
+ * and TA_MAType_RMA dispatch parity). When a frozen oracle is re-frozen on a tag
  * that includes #139, raise (or retire) this max accordingly. */
 #define FROZEN_ORACLE_MATYPE_MAX 8   /* == TA_MAType_T3; 9+ postdate the frozen
                                         oracles (HMA #139, DISABLED #93,
-                                        DEFAULT #182, ZLEMA #347) */
+                                        DEFAULT #182, ZLEMA #347, RMA #348) */
 static long long g_frozenEnumSkips = 0;
 
 static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int value)
@@ -4822,7 +4822,7 @@ static ErrorNumber test_codegen_for_language(
 
         if( g_frozenEnumSkips > 0 )
             printf("  post-freeze enums: %lld MAType value(s) > %d excluded vs ta_ref_serve "
-                   "(#139, #93, #182, #347; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+                   "(#139, #93, #182, #347, #348; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
                    g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     }
 
@@ -6849,7 +6849,7 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                ctx.mfiSkipped);
     if( g_frozenEnumSkips > 0 )
         printf("post-freeze enums: %lld MAType value(s) > %d excluded vs v0.6.4 "
-               "(#139, #93, #182, #347; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
+               "(#139, #93, #182, #347, #348; covered current-vs-current by xlang-hash/stream/COMPOSITE)\n",
                g_frozenEnumSkips, FROZEN_ORACLE_MATYPE_MAX);
     if( ctx.varianceSkipped > 0 )
         printf("variance-skipped: %lld VAR/STDDEV/BBANDS case(s) ill-conditioned for 0.6.4 (kappa > %.0e, issue #118); every better-conditioned case was compared\n",

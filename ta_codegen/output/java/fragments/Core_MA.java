@@ -18,6 +18,7 @@
  *  072226 MF,CC Add HMA (issue #139).
  *  072426 MF,CC TA_MAType_DISABLED: period-independent identity copy (issue #93).
  *  090426 MF,CC Add ZLEMA (issue #347).
+ *  090426 MF,CC Add RMA (issue #348).
  */
 
    /**
@@ -31,7 +32,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
@@ -83,6 +84,9 @@
          break;
       case ZLEMA:
          retValue = ZLEMA_Lookback(optInTimePeriod);
+         break;
+      case RMA:
+         retValue = RMA_Lookback(optInTimePeriod);
          break;
       default:
          retValue = 0;
@@ -232,6 +236,12 @@
          outNBElement.value = _xr10.count();
          retCode = RetCode.Success;
          break;
+      case RMA:
+         OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx.value = _xr11.begIdx();
+         outNBElement.value = _xr11.count();
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -347,6 +357,12 @@
          outNBElement.value = _xr10.count();
          retCode = RetCode.Success;
          break;
+      case RMA:
+         OutRange _xr11 = RMA(startIdx, endIdx, inReal, optInTimePeriod, outReal);
+         outBegIdx.value = _xr11.begIdx();
+         outNBElement.value = _xr11.count();
+         retCode = RetCode.Success;
+         break;
       default:
          retCode = RetCode.BadParam;
          break;
@@ -380,7 +396,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -409,6 +425,7 @@
     * @see Core#T3
     * @see Core#HMA
     * @see Core#ZLEMA
+    * @see Core#RMA
     */
    public OutRange MA( int startIdx,
                        int endIdx,
@@ -462,7 +479,7 @@
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMAType Which moving-average algorithm to dispatch to (default
     *        0 = SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA,
-    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA;
+    *        7=MAMA, 8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
     *        {@code MAType.DEFAULT} selects the default).
     * @param outReal Selected moving average of the input. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -491,6 +508,7 @@
     * @see Core#T3
     * @see Core#HMA
     * @see Core#ZLEMA
+    * @see Core#RMA
     */
    public OutRange MA( int startIdx,
                        int endIdx,
@@ -597,6 +615,9 @@
                break;
             case ZLEMA:
                this.sub = new ZlemaStream((ZlemaStream) other.sub);
+               break;
+            case RMA:
+               this.sub = new RmaStream((RmaStream) other.sub);
                break;
             default:
                throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
@@ -729,6 +750,10 @@
             cur_outReal = ((ZlemaStream) sp.sub).peek(inReal);
             break;
          }
+         case RMA: {
+            cur_outReal = ((RmaStream) sp.sub).peek(inReal);
+            break;
+         }
          default:
             throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
          }
@@ -813,6 +838,10 @@
       }
       case ZLEMA: {
          sp.cur_outReal = ((ZlemaStream) sp.sub).update(inReal);
+         break;
+      }
+      case RMA: {
+         sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
          break;
       }
       default:
@@ -940,6 +969,14 @@
       }
       case ZLEMA: {
          ZlemaStream sub = zlemaOpenInternal(inReal, startIdx, optInTimePeriod);
+         sp.outRangeBegIdx = sub.outRangeBegIdx;
+         sp.outRangeCount = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case RMA: {
+         RmaStream sub = rmaOpenInternal(inReal, startIdx, optInTimePeriod);
          sp.outRangeBegIdx = sub.outRangeBegIdx;
          sp.outRangeCount = sub.outRangeCount;
          sp.sub = sub;
@@ -1082,6 +1119,14 @@
          sp.cur_outReal = sub.cur_outReal;
          break;
       }
+      case RMA: {
+         RmaStream sub = rmaOpenAndFill(inReal, optInTimePeriod, outReal);
+         outBegIdx.value = sub.outRangeBegIdx;
+         outNBElement.value = sub.outRangeCount;
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
       default:
          return RetCode.BadParam;
       }
@@ -1193,6 +1238,12 @@
       }
       case ZLEMA: {
          ZlemaStream sub = zlemaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
+         sp.sub = sub;
+         sp.cur_outReal = sub.cur_outReal;
+         break;
+      }
+      case RMA: {
+         RmaStream sub = rmaOpenAndFillInternal(inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal);
          sp.sub = sub;
          sp.cur_outReal = sub.cur_outReal;
          break;
