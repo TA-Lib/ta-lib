@@ -10154,6 +10154,9 @@ mod tests {
         "cur_outReal"
     }
 
+    // Owned rather than a slice so the cases below stay `dead(vec![..])`; the
+    // lint is right that nothing consumes it, and wrong that it matters here.
+    #[allow(clippy::needless_pass_by_value)]
     fn dead(body: Vec<Statement>) -> bool {
         peek_seed_is_dead(&body, out_local())
     }
