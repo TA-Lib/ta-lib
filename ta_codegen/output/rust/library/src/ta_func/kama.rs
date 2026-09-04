@@ -1026,7 +1026,6 @@ impl KamaStream {
             let mut tempReal: f64 = 0.0_f64;
             let mut tempReal2: f64 = 0.0_f64;
             let mut periodROC: f64 = 0.0_f64;
-            let mut cur_outReal = sp.cur_outReal;
             let mut nullRun = sp.nullRun;
             let mut prevKAMA = sp.prevKAMA;
             let mut sumROC1 = sp.sumROC1;
@@ -1035,7 +1034,6 @@ impl KamaStream {
             let mut pkVal0: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             if sp.ringCap_trailingIdx == 0 {

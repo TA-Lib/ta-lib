@@ -328,8 +328,8 @@ fn no_managed_handle_caches_the_multi_output_value() {
 /// nothing, so the previous bar's output is never an input to the transition,
 /// and the seed was one dead field load per output per call. Swept over both
 /// managed backends: C writes the output through an out-param and has no such
-/// local, while Rust's period-1 identity frames do still carry the shape and
-/// are not covered here. Exact-set in both
+/// local, and Rust deletes the wholly dead local outright — declaration and
+/// stores together (issue #353, gated in rust_stream_suite). Exact-set in both
 /// directions: a frame that grows a seed back fails, and so does a change
 /// that silently drops the one seed the analysis deliberately keeps — IMI,
 /// whose sole store sits inside the period loop, and the IR cannot prove a

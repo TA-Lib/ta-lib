@@ -978,7 +978,6 @@ impl WmaStream {
             let mut rw: usize = 0_usize;
             let mut tempReal: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut cur_outReal = sp.cur_outReal;
             let mut periodSub = sp.periodSub;
             let mut periodSum = sp.periodSum;
             let mut trailingValue = sp.trailingValue;
@@ -988,7 +987,6 @@ impl WmaStream {
             let mut pkVal1: f64 = 0.0_f64;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             if sp.ringCap_trailingIdx == 0 {

@@ -701,11 +701,9 @@ impl EmaStream {
         {
             let sp = &self.state;
             let outReal = &mut outReal;
-            let mut cur_outReal = sp.cur_outReal;
             let mut prevMA = sp.prevMA;
             if sp.optInTimePeriod == 1 {
                 (*outReal) = inReal;
-                cur_outReal = (*outReal);
                 return Ok((*outReal));
             }
             prevMA = (inReal - prevMA as f64).mul_add(sp.optInK_1, prevMA);
