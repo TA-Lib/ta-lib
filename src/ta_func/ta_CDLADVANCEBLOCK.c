@@ -212,8 +212,8 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK( int    startIdx,
           inOpen[i] > inOpen[i - 1] &&                                             /* 3rd opens within/near 2nd real body */
           inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1) &&
           fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long real body */
-          (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) &&
-          ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && /* 1st: short upper shadow ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+          (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) && /* 1st: short upper shadow */
+          ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
             fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1)) ||
            fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[1],i - 1) || /* 3 far smaller than 2 advance blocked with the 3rd */
            (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
@@ -482,8 +482,8 @@ static void TA_CDLADVANCEBLOCK_StepImpl( struct TA_CDLADVANCEBLOCK_Stream *sp, d
        inOpen > sp->lag1_inOpen &&                                            /* 3rd opens within/near 2nd real body */
        inOpen <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
        fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long real body */
-       (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
-       ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+       (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow */
+       ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
          fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) ||
         fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) || /* 3 far smaller than 2 advance blocked with the 3rd */
         (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
@@ -688,8 +688,8 @@ static TA_RetCode TA_CDLADVANCEBLOCK_OpenImpl( struct TA_CDLADVANCEBLOCK_Stream 
              inOpen[i] > inOpen[i - 1] &&                                             /* 3rd opens within/near 2nd real body */
              inOpen[i] <= inClose[i - 1] + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1) &&
              fabs(inClose[i - 2] - inOpen[i - 2]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 2) && /* 1st: long real body */
-             (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) &&
-             ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && /* 1st: short upper shadow ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+             (inHigh[i - 2] - ((inClose[i - 2] >= inOpen[i - 2]) ? inClose[i - 2] : inOpen[i - 2])) < TA_CANDLEAVERAGE(ShadowShort,ShadowShortPeriodTotal[2],i - 2) && /* 1st: short upper shadow */
+             ((fabs(inClose[i - 1] - inOpen[i - 1]) < fabs(inClose[i - 2] - inOpen[i - 2]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[2],i - 2) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
                fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) + TA_CANDLEAVERAGE(Near,NearPeriodTotal[1],i - 1)) ||
               fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) - TA_CANDLEAVERAGE(Far,FarPeriodTotal[1],i - 1) || /* 3 far smaller than 2 advance blocked with the 3rd */
               (fabs(inClose[i] - inOpen[i]) < fabs(inClose[i - 1] - inOpen[i - 1]) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */
@@ -888,8 +888,8 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Peek( const TA_CDLADVANCEBLOCK_Stream *
        inOpen > sp->lag1_inOpen &&                                            /* 3rd opens within/near 2nd real body */
        inOpen <= sp->lag1_inClose + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) &&
        fabs(sp->lag2_inClose - sp->lag2_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: long real body */
-       (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) &&
-       ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
+       (sp->lag2_inHigh - ((sp->lag2_inClose >= sp->lag2_inOpen) ? sp->lag2_inClose : sp->lag2_inOpen)) < TA_STREAM_CANDLEAVERAGE(ShadowShort,sp->ShadowShortPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* 1st: short upper shadow */
+       ((fabs(sp->lag1_inClose - sp->lag1_inOpen) < fabs(sp->lag2_inClose - sp->lag2_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[2],sp->lag2_inOpen,sp->lag2_inHigh,sp->lag2_inLow,sp->lag2_inClose) && /* ( 2 far smaller than 1 && 3 not longer than 2 ) advance blocked with the 2nd, 3rd must not carry on the advance */
          fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) + TA_STREAM_CANDLEAVERAGE(Near,sp->NearPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose)) ||
         fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) - TA_STREAM_CANDLEAVERAGE(Far,sp->FarPeriodTotal[1],sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) || /* 3 far smaller than 2 advance blocked with the 3rd */
         (fabs(inClose - inOpen) < fabs(sp->lag1_inClose - sp->lag1_inOpen) && /* ( 3 smaller than 2 && 2 smaller than 1 && (3 or 2 not short upper shadow) ) advance blocked with progressively smaller real bodies and some upper shadows */

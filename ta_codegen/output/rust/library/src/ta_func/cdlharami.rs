@@ -206,10 +206,10 @@ impl Core {
         // in an uptrend when bearish, while this function does not consider the trend
         outIdx = 0;
         loop {
-            if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // 1st: long
-                if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                    // 2nd: short
+            if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) // 1st: long
+            {
+                if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) // 2nd: short
+                {
                     // 2nd is engulfed by 1st
                     if (inClose[i]).max(inOpen[i]) < (inClose[i - 1]).max(inOpen[i - 1]) && (inClose[i]).min(inOpen[i]) > (inClose[i - 1]).min(inOpen[i - 1]) {
                         outInteger[outIdx] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
@@ -521,10 +521,10 @@ impl Core {
             }
             sp.ring_BodyShortTrailingIdx_derived[0] = _candlerange_1;
         }
-        if (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) {
-            // 1st: long
-            if (inClose - inOpen).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // 2nd: short
+        if (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) // 1st: long
+        {
+            if (inClose - inOpen).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) // 2nd: short
+            {
                 // 2nd is engulfed by 1st
                 if (inClose).max(inOpen) < (sp.lag1_inClose).max(sp.lag1_inOpen) && (inClose).min(inOpen) > (sp.lag1_inClose).min(sp.lag1_inOpen) {
                     (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 100) as i32;
@@ -740,10 +740,10 @@ impl Core {
         // in an uptrend when bearish, while this function does not consider the trend
         outIdx = 0;
         loop {
-            if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // 1st: long
-                if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                    // 2nd: short
+            if (inClose[i - 1] - inOpen[i - 1]).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((inClose[i - 1]) - (inOpen[i - 1])).abs(), 1 => (inHigh[i - 1]) - (inLow[i - 1]), 2 => ((inHigh[i - 1]) - (if (inClose[i - 1]) >= (inOpen[i - 1]) { (inClose[i - 1]) } else { (inOpen[i - 1]) })) + ((if (inClose[i - 1]) >= (inOpen[i - 1]) { (inOpen[i - 1]) } else { (inClose[i - 1]) }) - (inLow[i - 1])), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) // 1st: long
+            {
+                if (inClose[i] - inOpen[i]).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose[i]) - (inOpen[i])).abs(), 1 => (inHigh[i]) - (inLow[i]), 2 => ((inHigh[i]) - (if (inClose[i]) >= (inOpen[i]) { (inClose[i]) } else { (inOpen[i]) })) + ((if (inClose[i]) >= (inOpen[i]) { (inOpen[i]) } else { (inClose[i]) }) - (inLow[i])), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) // 2nd: short
+                {
                     // 2nd is engulfed by 1st
                     if (inClose[i]).max(inOpen[i]) < (inClose[i - 1]).max(inOpen[i - 1]) && (inClose[i]).min(inOpen[i]) > (inClose[i - 1]).min(inOpen[i - 1]) {
                         outInteger[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = ((0 - (if inClose[i - 1] >= inOpen[i - 1] { 1 } else { 0 - 1 })) * 100) as i32;
@@ -1105,10 +1105,10 @@ impl CdlharamiStream {
             let BodyShort_avgPeriod: i32 = self.cs_body_short.avg_period;
             #[allow(non_snake_case)]
             let BodyShort_factor: f64 = self.cs_body_short.factor;
-            if (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                // 1st: long
-                if (inClose - inOpen).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) {
-                    // 2nd: short
+            if (sp.lag1_inClose - sp.lag1_inOpen).abs() > ((BodyLong_factor) * (if (BodyLong_avgPeriod) != 0 { (sp.BodyLongPeriodTotal) / (BodyLong_avgPeriod as f64) } else { match BodyLong_rangeType { 0 => ((sp.lag1_inClose) - (sp.lag1_inOpen)).abs(), 1 => (sp.lag1_inHigh) - (sp.lag1_inLow), 2 => ((sp.lag1_inHigh) - (if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inClose) } else { (sp.lag1_inOpen) })) + ((if (sp.lag1_inClose) >= (sp.lag1_inOpen) { (sp.lag1_inOpen) } else { (sp.lag1_inClose) }) - (sp.lag1_inLow)), _ => 0.0 } }) / (if (BodyLong_rangeType) == 2 { 2.0 } else { 1.0 })) // 1st: long
+            {
+                if (inClose - inOpen).abs() <= ((BodyShort_factor) * (if (BodyShort_avgPeriod) != 0 { (sp.BodyShortPeriodTotal) / (BodyShort_avgPeriod as f64) } else { match BodyShort_rangeType { 0 => ((inClose) - (inOpen)).abs(), 1 => (inHigh) - (inLow), 2 => ((inHigh) - (if (inClose) >= (inOpen) { (inClose) } else { (inOpen) })) + ((if (inClose) >= (inOpen) { (inOpen) } else { (inClose) }) - (inLow)), _ => 0.0 } }) / (if (BodyShort_rangeType) == 2 { 2.0 } else { 1.0 })) // 2nd: short
+                {
                     // 2nd is engulfed by 1st
                     if (inClose).max(inOpen) < (sp.lag1_inClose).max(sp.lag1_inOpen) && (inClose).min(inOpen) > (sp.lag1_inClose).min(sp.lag1_inOpen) {
                         (*outInteger) = ((0 - (if sp.lag1_inClose >= sp.lag1_inOpen { 1 } else { 0 - 1 })) * 100) as i32;

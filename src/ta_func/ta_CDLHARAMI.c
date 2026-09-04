@@ -155,12 +155,10 @@ TA_LIB_API TA_RetCode TA_CDLHARAMI( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+      if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
       {
-         /* 1st: long */
-         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
+         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) ) /* 2nd: short */
          {
-            /* 2nd: short */
             /* 2nd is engulfed by 1st */
             if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
             {
@@ -344,12 +342,10 @@ static void TA_CDLHARAMI_StepImpl( struct TA_CDLHARAMI_Stream *sp, double inOpen
    {
       sp->ring_BodyShortTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyShort,inOpen,inHigh,inLow,inClose);
    }
-   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) )
+   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) ) /* 1st: long */
    {
-      /* 1st: long */
-      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* 2nd: short */
       {
-         /* 2nd: short */
          /* 2nd is engulfed by 1st */
          if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
          {
@@ -478,12 +474,10 @@ static TA_RetCode TA_CDLHARAMI_OpenImpl( struct TA_CDLHARAMI_Stream **stream, co
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
          {
-            /* 1st: long */
-            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) )
+            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyShort,BodyShortPeriodTotal,i) ) /* 2nd: short */
             {
-               /* 2nd: short */
                /* 2nd is engulfed by 1st */
                if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
                {
@@ -621,12 +615,10 @@ TA_LIB_API TA_RetCode TA_CDLHARAMI_Peek( const TA_CDLHARAMI_Stream *stream, doub
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) )
+   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) ) /* 1st: long */
    {
-      /* 1st: long */
-      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyShortPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* 2nd: short */
       {
-         /* 2nd: short */
          /* 2nd is engulfed by 1st */
          if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
          {

@@ -165,9 +165,8 @@ TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER( int    startIdx,
       if( ((max(inOpen[i],inClose[i]) < min(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) && /* gap down */
           fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && /* small rb */
           (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long upper shadow */
-          (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
+          (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) ) /* very short lower shadow */
       {
-         /* very short lower shadow */
          outInteger[outIdx++] = 100;
       } else 
       {
@@ -342,9 +341,8 @@ static void TA_CDLINVERTEDHAMMER_StepImpl( struct TA_CDLINVERTEDHAMMER_Stream *s
    if( ((max(inOpen,inClose) < min(sp->lag1_inOpen,sp->lag1_inClose)) ? 1 : 0) && /* gap down */
        fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal,inOpen,inHigh,inLow,inClose) && /* small rb */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long upper shadow */
-       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* very short lower shadow */
    {
-      /* very short lower shadow */
       *outInteger= 100;
    } else 
    {
@@ -471,9 +469,8 @@ static TA_RetCode TA_CDLINVERTEDHAMMER_OpenImpl( struct TA_CDLINVERTEDHAMMER_Str
          if( ((max(inOpen[i],inClose[i]) < min(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) && /* gap down */
              fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && /* small rb */
              (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long upper shadow */
-             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
+             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) ) /* very short lower shadow */
          {
-            /* very short lower shadow */
             outInteger[outIdx++ * outStride] = 100;
          } else 
          {
@@ -608,9 +605,8 @@ TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Peek( const TA_CDLINVERTEDHAMMER_Stre
    if( ((max(inOpen,inClose) < min(sp->lag1_inOpen,sp->lag1_inClose)) ? 1 : 0) && /* gap down */
        fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal,inOpen,inHigh,inLow,inClose) && /* small rb */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long upper shadow */
-       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* very short lower shadow */
    {
-      /* very short lower shadow */
       *outInteger= 100;
    } else 
    {

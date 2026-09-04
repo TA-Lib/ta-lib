@@ -74,7 +74,8 @@ TA_RetCode cdltristar(int startIdx, int endIdx,
    {
       if( ta_realbody(inClose[i-2], inOpen[i-2]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&    // 1st: doji
          ta_realbody(inClose[i-1], inOpen[i-1]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&    // 2nd: doji
-         ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) ) {     // 3rd: doji
+         ta_realbody(inClose[i], inOpen[i]) <= ta_candleaverage(BodyDoji_rangeType, BodyDoji_avgPeriod, BodyDoji_factor, BodyPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2])   // 3rd: doji
+      ) {
          outInteger[outIdx] = 0;
          if ( ta_realbodygapup(inOpen[i-1], inClose[i-1], inOpen[i-2], inClose[i-2])                                                  // 2nd gaps up
             &&

@@ -152,20 +152,17 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS( int    startIdx,
    outIdx = 0;
    do
    {
-      if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+      if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
       {
-         /* 1st: long */
-         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+         if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) ) /* 2nd: doji */
          {
-            /* 2nd: doji */
             if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
                 min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
             {
                outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
             } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
-                min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; */
+                min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
             {
-               /* engulfing guaranteed by "long" and "doji") */
                outInteger[outIdx++] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
             } else 
             {
@@ -339,20 +336,17 @@ static void TA_CDLHARAMICROSS_StepImpl( struct TA_CDLHARAMICROSS_Stream *sp, dou
    {
       sp->ring_BodyLongTrailingIdx_derived[0] = TA_STREAM_CANDLERANGE(BodyLong,inOpen,inHigh,inLow,inClose);
    }
-   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) )
+   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) ) /* 1st: long */
    {
-      /* 1st: long */
-      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* 2nd: doji */
       {
-         /* 2nd: doji */
          if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
              min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
          {
             *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 100;
          } else if( max(inClose,inOpen) <= max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
-             min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; */
+             min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
          {
-            /* engulfing guaranteed by "long" and "doji") */
             *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 80;
          } else 
          {
@@ -468,20 +462,17 @@ static TA_RetCode TA_CDLHARAMICROSS_OpenImpl( struct TA_CDLHARAMICROSS_Stream **
       outIdx = 0;
       do
       {
-         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) )
+         if( fabs(inClose[i - 1] - inOpen[i - 1]) > TA_CANDLEAVERAGE(BodyLong,BodyLongPeriodTotal,i - 1) ) /* 1st: long */
          {
-            /* 1st: long */
-            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) )
+            if( fabs(inClose[i] - inOpen[i]) <= TA_CANDLEAVERAGE(BodyDoji,BodyDojiPeriodTotal,i) ) /* 2nd: doji */
             {
-               /* 2nd: doji */
                if( max(inClose[i],inOpen[i]) < max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
                    min(inClose[i],inOpen[i]) > min(inClose[i - 1],inOpen[i - 1]) )
                {
                   outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 100;
                } else if( max(inClose[i],inOpen[i]) <= max(inClose[i - 1],inOpen[i - 1]) && /* 2nd is engulfed by 1st */
-                   min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; */
+                   min(inClose[i],inOpen[i]) >= min(inClose[i - 1],inOpen[i - 1]) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
                {
-                  /* engulfing guaranteed by "long" and "doji") */
                   outInteger[outIdx++ * outStride] = (0 - ((inClose[i - 1] >= inOpen[i - 1]) ? 1 : 0 - 1)) * 80;
                } else 
                {
@@ -609,20 +600,17 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Peek( const TA_CDLHARAMICROSS_Stream *st
 
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) )
+   if( fabs(sp->lag1_inClose - sp->lag1_inOpen) > TA_STREAM_CANDLEAVERAGE(BodyLong,sp->BodyLongPeriodTotal,sp->lag1_inOpen,sp->lag1_inHigh,sp->lag1_inLow,sp->lag1_inClose) ) /* 1st: long */
    {
-      /* 1st: long */
-      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) )
+      if( fabs(inClose - inOpen) <= TA_STREAM_CANDLEAVERAGE(BodyDoji,sp->BodyDojiPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* 2nd: doji */
       {
-         /* 2nd: doji */
          if( max(inClose,inOpen) < max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
              min(inClose,inOpen) > min(sp->lag1_inClose,sp->lag1_inOpen) )
          {
             *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 100;
          } else if( max(inClose,inOpen) <= max(sp->lag1_inClose,sp->lag1_inOpen) && /* 2nd is engulfed by 1st */
-             min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; */
+             min(inClose,inOpen) >= min(sp->lag1_inClose,sp->lag1_inOpen) )  /* (one end of real body can match; engulfing guaranteed by "long" and "doji") */
          {
-            /* engulfing guaranteed by "long" and "doji") */
             *outInteger= (0 - ((sp->lag1_inClose >= sp->lag1_inOpen) ? 1 : 0 - 1)) * 80;
          } else 
          {

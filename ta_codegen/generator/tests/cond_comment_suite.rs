@@ -29,27 +29,13 @@ enum Placement {
 }
 
 /// Candlestick inputs whose own comment position does not say which operand a
-/// comment belongs to, so no emitter rule can place it:
-///
-/// - `Blob`: an own-line comment *following* the operand it describes. On its own
-///   line it reads as leading the next operand, and the two spellings are
-///   indistinguishable (`cdl3inside` puts one on the `||` itself, which is not an
-///   operand at all).
-/// - `Hoisted`: a comment written after the condition's `)`, outside the
-///   condition entirely (`if( x ) {   // 1st: long`).
-///
-/// Both are fixed by moving the comment in `ta_codegen/input/<name>/<name>.c`,
-/// not in the generator.
-const UNPLACED: &[(&str, Placement)] = &[
-    ("cdl3inside", Placement::Blob),
-    ("cdl3whitesoldiers", Placement::Blob),
-    ("cdladvanceblock", Placement::Blob),
-    ("cdlharami", Placement::Hoisted),
-    ("cdlharamicross", Placement::Hoisted),
-    ("cdlinvertedhammer", Placement::Hoisted),
-    ("cdlshootingstar", Placement::Hoisted),
-    ("cdltristar", Placement::Hoisted),
-];
+/// comment belongs to. Empty, and meant to stay that way: every such comment was
+/// moved in `ta_codegen/input/<name>/<name>.c` so the source says what it means --
+/// a comment describing the operand above it now trails that operand, one written
+/// after the condition's `)` now sits inside, and a sentence split over two lines
+/// is one line. An entry here is a comment the generator cannot place, so adding
+/// one is a claim that no input spelling would have worked.
+const UNPLACED: &[(&str, Placement)] = &[];
 
 /// The `//` comments an input body carries, longest first so the greedy match
 /// below never stops on a prefix of a longer one.

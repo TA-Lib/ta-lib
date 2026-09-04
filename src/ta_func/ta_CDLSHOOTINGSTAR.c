@@ -165,9 +165,8 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR( int    startIdx,
       if( ((min(inOpen[i],inClose[i]) > max(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) && /* gap up */
           fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && /* small rb */
           (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long upper shadow */
-          (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
+          (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) ) /* very short lower shadow */
       {
-         /* very short lower shadow */
          outInteger[outIdx++] = 0 - 100;
       } else 
       {
@@ -342,9 +341,8 @@ static void TA_CDLSHOOTINGSTAR_StepImpl( struct TA_CDLSHOOTINGSTAR_Stream *sp, d
    if( ((min(inOpen,inClose) > max(sp->lag1_inOpen,sp->lag1_inClose)) ? 1 : 0) && /* gap up */
        fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal,inOpen,inHigh,inLow,inClose) && /* small rb */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long upper shadow */
-       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* very short lower shadow */
    {
-      /* very short lower shadow */
       *outInteger= 0 - 100;
    } else 
    {
@@ -471,9 +469,8 @@ static TA_RetCode TA_CDLSHOOTINGSTAR_OpenImpl( struct TA_CDLSHOOTINGSTAR_Stream 
          if( ((min(inOpen[i],inClose[i]) > max(inOpen[i - 1],inClose[i - 1])) ? 1 : 0) && /* gap up */
              fabs(inClose[i] - inOpen[i]) < TA_CANDLEAVERAGE(BodyShort,BodyPeriodTotal,i) && /* small rb */
              (inHigh[i] - ((inClose[i] >= inOpen[i]) ? inClose[i] : inOpen[i])) > TA_CANDLEAVERAGE(ShadowLong,ShadowLongPeriodTotal,i) && /* long upper shadow */
-             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) )
+             (((inClose[i] >= inOpen[i]) ? inOpen[i] : inClose[i]) - inLow[i]) < TA_CANDLEAVERAGE(ShadowVeryShort,ShadowVeryShortPeriodTotal,i) ) /* very short lower shadow */
          {
-            /* very short lower shadow */
             outInteger[outIdx++ * outStride] = 0 - 100;
          } else 
          {
@@ -608,9 +605,8 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Peek( const TA_CDLSHOOTINGSTAR_Stream *
    if( ((min(inOpen,inClose) > max(sp->lag1_inOpen,sp->lag1_inClose)) ? 1 : 0) && /* gap up */
        fabs(inClose - inOpen) < TA_STREAM_CANDLEAVERAGE(BodyShort,sp->BodyPeriodTotal,inOpen,inHigh,inLow,inClose) && /* small rb */
        (inHigh - ((inClose >= inOpen) ? inClose : inOpen)) > TA_STREAM_CANDLEAVERAGE(ShadowLong,sp->ShadowLongPeriodTotal,inOpen,inHigh,inLow,inClose) && /* long upper shadow */
-       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) )
+       (((inClose >= inOpen) ? inOpen : inClose) - inLow) < TA_STREAM_CANDLEAVERAGE(ShadowVeryShort,sp->ShadowVeryShortPeriodTotal,inOpen,inHigh,inLow,inClose) ) /* very short lower shadow */
    {
-      /* very short lower shadow */
       *outInteger= 0 - 100;
    } else 
    {

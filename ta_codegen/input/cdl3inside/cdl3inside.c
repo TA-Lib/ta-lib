@@ -84,8 +84,8 @@ TA_RetCode cdl3inside(int startIdx, int endIdx,
    {
       if( max( inClose[i-1], inOpen[i-1] ) < max( inClose[i-2], inOpen[i-2] ) &&                  //      engulfed by 1st
          min( inClose[i-1], inOpen[i-1] ) > min( inClose[i-2], inOpen[i-2] ) &&
-         ( ( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 && ta_candlecolor(inClose[i], inOpen[i]) == -1 && inClose[i] < inOpen[i-2] )   // 3rd: opposite to 1st
-         ||                                                                                    //      and closing out
+         ( ( ta_candlecolor(inClose[i-2], inOpen[i-2]) == 1 && ta_candlecolor(inClose[i], inOpen[i]) == -1 && inClose[i] < inOpen[i-2] )   // 3rd: opposite to 1st and closing out
+         ||
          ( ta_candlecolor(inClose[i-2], inOpen[i-2]) == -1 && ta_candlecolor(inClose[i], inOpen[i]) == 1 && inClose[i] > inOpen[i-2] )
       ) &&
          ta_realbody(inClose[i-2], inOpen[i-2]) > ta_candleaverage(BodyLong_rangeType, BodyLong_avgPeriod, BodyLong_factor, BodyLongPeriodTotal, inOpen[i-2], inHigh[i-2], inLow[i-2], inClose[i-2]) &&         // 1st: long
