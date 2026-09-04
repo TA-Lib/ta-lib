@@ -3904,6 +3904,42 @@ static TA_RetCode TA_COSH_VFrameS( int startIdx, int endIdx,
 static const TA_VInputKind TA_VIn_COSH[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_COSH[] = { 0 };
 
+static TA_RetCode TA_CUMSUM_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_CUMSUM(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CUMSUM_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_S_CUMSUM(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CUMSUM[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_CUMSUM[] = { 0 };
+
 static TA_RetCode TA_CVI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8231,6 +8267,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_COS, 0, NULL, 1, TA_VOutIsInt_COS, 0 },
    { "COSH", TA_COSH_VFrameD, TA_COSH_VFrameS,
      1, TA_VIn_COSH, 0, NULL, 1, TA_VOutIsInt_COSH, 0 },
+   { "CUMSUM", TA_CUMSUM_VFrameD, TA_CUMSUM_VFrameS,
+     1, TA_VIn_CUMSUM, 0, NULL, 1, TA_VOutIsInt_CUMSUM, 0 },
    { "CVI", TA_CVI_VFrameD, TA_CVI_VFrameS,
      2, TA_VIn_CVI, 2, TA_VOpt_CVI, 1, TA_VOutIsInt_CVI, 0 },
    { "DEMA", TA_DEMA_VFrameD, TA_DEMA_VFrameS,
@@ -8435,6 +8473,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 191
+#define TA_VARIANT_TABLE_SIZE 192
 
 #endif /* TA_VARIANT_FRAME_H */

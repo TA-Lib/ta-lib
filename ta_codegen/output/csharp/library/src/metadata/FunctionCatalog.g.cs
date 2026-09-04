@@ -203,6 +203,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeCorrel(),
             MakeCos(),
             MakeCosh(),
+            MakeCumsum(),
             MakeCvi(),
             MakeDema(),
             MakeDiv(),
@@ -2239,6 +2240,26 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.COSH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
             core.COSH(
+                startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeCumsum() => new(
+        name: "CUMSUM",
+        group: FunctionGroup.MathOperators,
+        hint: "Cumulative Sum",
+        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CUMSUM_Lookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.CUMSUM(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
     private static FunctionInfo MakeCvi() => new(

@@ -2088,6 +2088,26 @@ unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
    (void)params;
    return TA_COSH_Lookback( );
 }
+TA_RetCode TA_CUMSUM_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CUMSUM(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_CUMSUM_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   (void)params;
+   return TA_CUMSUM_Lookback( );
+}
 TA_RetCode TA_CVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

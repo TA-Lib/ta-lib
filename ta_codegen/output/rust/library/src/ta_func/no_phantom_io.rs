@@ -9133,6 +9133,61 @@ fn legs_COSH(r: &mut Report) {
     r.legs_done("COSH", 1);
 }
 
+const V_CUMSUM: &[&str] = &[
+    "defaults",
+];
+
+fn sub_CUMSUM(r: &mut Report) {
+    let core = Core::new();
+    for &label in V_CUMSUM {
+        let Ok(lb) = core.CUMSUM_Lookback() else { continue; };
+        r.control("CUMSUM", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.CUMSUM_Impl(0, lb, &inReal, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("CUMSUM", label); continue; }
+        r.quiet("CUMSUM", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.CUMSUM_Impl(0, lb - 1, &inReal, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_CUMSUM(r: &mut Report) {
+    let core = Core::new();
+    let Ok(lb) = core.CUMSUM_Lookback() else { r.no_legs("CUMSUM"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("CUMSUM", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.CUMSUM_Impl(startIdx, endIdx, &inReal, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("CUMSUM", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.CUMSUM_Impl(startIdx, endIdx, &inReal, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("CUMSUM", 1);
+}
+
 const V_CVI: &[(&str, i32, i32)] = &[
     ("defaults", i32::MIN, i32::MIN),
     ("minimums", 2i32, 1i32),
@@ -16303,6 +16358,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("CORREL", sub_CORREL, legs_CORREL),
     ("COS", sub_COS, legs_COS),
     ("COSH", sub_COSH, legs_COSH),
+    ("CUMSUM", sub_CUMSUM, legs_CUMSUM),
     ("CVI", sub_CVI, legs_CVI),
     ("DEMA", sub_DEMA, legs_DEMA),
     ("DIV", sub_DIV, legs_DIV),
@@ -16442,7 +16498,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 191, "probe count");
+    assert_eq!(PROBES.len(), 192, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 191 technical-analysis indicators — moving averages, momentum oscillators,
+//! 192 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -137,9 +137,10 @@
 //! * [`HT_SINE`](Core::HT_SINE) — Hilbert Transform - SineWave
 //! * [`HT_TRENDMODE`](Core::HT_TRENDMODE) — Hilbert Transform - Trend vs Cycle Mode
 //!
-//! ## Math Operators (11)
+//! ## Math Operators (12)
 //!
 //! * [`ADD`](Core::ADD) — Vector Arithmetic Add
+//! * [`CUMSUM`](Core::CUMSUM) — Cumulative Sum
 //! * [`DIV`](Core::DIV) — Vector Arithmetic Div
 //! * [`MAX`](Core::MAX) — Highest value over a specified period
 //! * [`MAXINDEX`](Core::MAXINDEX) — Index of highest value over a specified period

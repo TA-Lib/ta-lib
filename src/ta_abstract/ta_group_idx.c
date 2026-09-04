@@ -130,6 +130,7 @@ extern const TA_FuncDef TA_DEF_CMOU;
 extern const TA_FuncDef TA_DEF_CORREL;
 extern const TA_FuncDef TA_DEF_COS;
 extern const TA_FuncDef TA_DEF_COSH;
+extern const TA_FuncDef TA_DEF_CUMSUM;
 extern const TA_FuncDef TA_DEF_CVI;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_DIV;
@@ -234,6 +235,7 @@ extern const TA_FuncDef TA_DEF_ZLEMA;
 
 const TA_FuncDef *TA_PerGroupFunc_0[] = {
 &TA_DEF_ADD,
+&TA_DEF_CUMSUM,
 &TA_DEF_DIV,
 &TA_DEF_MAX,
 &TA_DEF_MAXINDEX,

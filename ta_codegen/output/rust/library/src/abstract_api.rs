@@ -222,6 +222,8 @@ pub enum FuncId {
     COS,
     /// Vector Trigonometric Cosh — [`Core::COSH`](crate::Core::COSH).
     COSH,
+    /// Cumulative Sum — [`Core::CUMSUM`](crate::Core::CUMSUM).
+    CUMSUM,
     /// Chaikin's Volatility — [`Core::CVI`](crate::Core::CVI).
     CVI,
     /// Double Exponential Moving Average — [`Core::DEMA`](crate::Core::DEMA).
@@ -428,7 +430,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 191;
+    pub const COUNT: usize = 192;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -753,7 +755,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 191] = [
+static FUNC_TABLE: [FuncInfo; 192] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1739,6 +1741,17 @@ static FUNC_TABLE: [FuncInfo; 191] = [
         group: Group::MathTransform,
         hint: "Vector Trigonometric Cosh",
         flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::CUMSUM,
+        name: "CUMSUM",
+        group: Group::MathOperators,
+        hint: "Cumulative Sum",
+        flags: FuncFlags(0x22000000),
         inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
         opt_inputs: &[],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
@@ -2963,6 +2976,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CORREL" => FuncId::CORREL,
         "COS" => FuncId::COS,
         "COSH" => FuncId::COSH,
+        "CUMSUM" => FuncId::CUMSUM,
         "CVI" => FuncId::CVI,
         "DEMA" => FuncId::DEMA,
         "DIV" => FuncId::DIV,
@@ -3411,6 +3425,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CORREL => self.core.CORREL_Lookback(self.int_opt[0]),
             FuncId::COS => self.core.COS_Lookback(),
             FuncId::COSH => self.core.COSH_Lookback(),
+            FuncId::CUMSUM => self.core.CUMSUM_Lookback(),
             FuncId::CVI => self.core.CVI_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
             FuncId::DIV => self.core.DIV_Lookback(),
@@ -4672,6 +4687,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.COSH(start_idx, end_idx, i0, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::CUMSUM => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.CUMSUM(start_idx, end_idx, i0, &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
