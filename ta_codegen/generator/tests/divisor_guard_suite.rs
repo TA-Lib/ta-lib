@@ -66,8 +66,11 @@ fn load() -> Vec<FuncDef> {
 /// a reason that a later edit can contradict -- a bare allowlist states nothing and
 /// silently keeps holding once its reason expires.
 ///
-/// Keyed `(FUNC, divisor variable, why)`.
-const ANNOTATED: &[(&str, &str, &str)] = &[
+/// Keyed `(FUNC, divisor variable, why, required_flag)`. A non-empty `required_flag`
+/// means the reason rests on that YAML flag still being declared, which
+/// `annotation_reasons_still_hold` asserts rather than trusts — an entry whose stated
+/// reason has expired is exactly the silent allowlist this table exists to avoid.
+const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     // The Hilbert-transform trio share one body shape. `period` is clamped to [6, 50]
     // (`ht_dcphase.c:359-361` and its twins) before `smoothPeriod` is formed as
     // `0.33*period + 0.67*smoothPeriod` -- a convex combination with positive
@@ -75,9 +78,9 @@ const ANNOTATED: &[(&str, &str, &str)] = &[
     // never reach zero. Reasoned from the clamp rather than proven by the sweep: it is
     // exactly the "provably non-zero from the lookback clamp" case, recorded so that
     // removing the clamp has something to contradict.
-    ("HT_DCPHASE", "smoothPeriod", "period clamped to [6,50] before the combination"),
-    ("HT_SINE", "smoothPeriod", "period clamped to [6,50] before the combination"),
-    ("HT_TRENDMODE", "smoothPeriod", "period clamped to [6,50] before the combination"),
+    ("HT_DCPHASE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
+    ("HT_SINE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
+    ("HT_TRENDMODE", "smoothPeriod", "period clamped to [6,50] before the combination", ""),
 
     // OPEN, not cleared. KAMA divides by the same running `sumROC1` that ER does, under
     // the same asymmetric clamp, and WITHOUT the exact denominator test ER gained in
@@ -86,16 +89,20 @@ const ANNOTATED: &[(&str, &str, &str)] = &[
     // touching KAMA parity". So the gap is deliberate and documented, and whether the
     // two should converge is a decision about KAMA's output, not a defect to patch
     // under a sweep. Listed so the sweep is green and the question stays visible.
-    ("KAMA", "sumROC1", "OPEN: same shape as the ER defect fixed in #350; see #381"),
+    ("KAMA", "sumROC1", "OPEN: same shape as the ER defect fixed in #350; see #381", ""),
 
-    // OPEN. VWMA divides the price-volume sum by the volume sum with NO guard at all:
-    // `tempV = sumV;` then `(tempPV/P) / (tempV/P)` (`vwma.c:115,124`). `sumV` is a
-    // rolling add/subtract sum of `inVolume`, so it reaches exactly 0.0 on any window
-    // whose bars all report zero volume -- a halted session, or a feed that pads
-    // non-trading days -- and reaches it through absorption on windows that are not
-    // all-zero. Unlike KAMA this is not a documented deviation; it is simply
-    // unguarded. Left for a decision about VWMA's output rather than patched here.
-    ("VWMA", "tempV", "OPEN: unguarded volume-sum divisor; see #381"),
+    // Unguarded BY DECISION, not by oversight. `vwma.c:124` divides by the rolling
+    // volume sum with no test, and `vwma.yaml` declares `nan_inf_output` to say so --
+    // the standing answer for this shape (set as the precedent for #56 RVOL; not 1.0,
+    // not 0.0, not carry-forward, which would force TA_FUNC_FLG_START_DEP onto an
+    // otherwise windowed function).
+    //
+    // What clears it is statelessness, not the flag alone: #112's concern is a NaN
+    // that POISONS AN ACCUMULATOR (#39's KVO B2 is the live case). VWMA carries
+    // nothing across bars, so a non-finite value is contained to the bar that produced
+    // it. KAMA below is the contrast -- it carries `sumROC1`, so the same reasoning
+    // does not reach it.
+    ("VWMA", "tempV", "unguarded by decision: stateless per bar", "nan_inf_output"),
 ];
 
 /// Every variable name mentioned anywhere in `e`.
@@ -481,7 +488,7 @@ fn loop_accumulated_divisors_are_guarded_on_themselves() {
     let mut flagged: Vec<String> = Vec::new();
     for f in &funcs {
         for fd in findings_for(f) {
-            if ANNOTATED.iter().any(|(fn_, v, _)| *fn_ == fd.func && *v == fd.divisor) {
+            if ANNOTATED.iter().any(|(fn_, v, _, _)| *fn_ == fd.func && *v == fd.divisor) {
                 continue;
             }
             flagged.push(format!("{}: divides by `{}`", fd.func, fd.divisor));
@@ -626,5 +633,31 @@ fn counter_gate_the_divide(body: &mut [Statement]) {
             | Statement::Block { body } => counter_gate_the_divide(body),
             _ => {}
         }
+    }
+}
+
+/// An annotation that rests on a YAML flag must be re-read when the flag goes.
+///
+/// The table's own argument is that a stated reason can be contradicted where a bare
+/// allowlist cannot. That only holds if something actually checks — VWMA's clearance
+/// rests on `nan_inf_output` declaring that non-finite output is intended, so removing
+/// the flag should surface the entry rather than leave it silently holding.
+#[test]
+fn annotation_reasons_still_hold() {
+    let funcs = load();
+    for (name, divisor, why, required_flag) in ANNOTATED {
+        if required_flag.is_empty() {
+            continue;
+        }
+        let f = funcs
+            .iter()
+            .find(|f| f.name == *name)
+            .unwrap_or_else(|| panic!("{name} is annotated but not in the input tree"));
+        assert!(
+            f.flags.iter().any(|fl| fl == required_flag),
+            "{name}'s divisor `{divisor}` is annotated \"{why}\", which rests on the \
+             `{required_flag}` flag -- and {name} no longer declares it. The reason has \
+             expired: re-read the division rather than re-adding the flag to silence this."
+        );
     }
 }
