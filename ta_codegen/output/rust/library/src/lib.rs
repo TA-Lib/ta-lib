@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 183 technical-analysis indicators — moving averages, momentum oscillators,
+//! 186 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -323,13 +323,14 @@
 //! * [`TSF`](Core::TSF) — Time Series Forecast
 //! * [`VAR`](Core::VAR) — Variance
 //!
-//! ## Volatility Indicators (3)
+//! ## Volatility Indicators (4)
 //!
+//! * [`ADR`](Core::ADR) — Average Day Range
 //! * [`ATR`](Core::ATR) — Average True Range
 //! * [`NATR`](Core::NATR) — Normalized Average True Range
 //! * [`TRANGE`](Core::TRANGE) — True Range
 //!
-//! ## Volume Indicators (10)
+//! ## Volume Indicators (12)
 //!
 //! * [`AD`](Core::AD) — Chaikin A/D Line
 //! * [`ADOSC`](Core::ADOSC) — Chaikin A/D Oscillator
@@ -340,6 +341,8 @@
 //! * [`OBV`](Core::OBV) — On Balance Volume
 //! * [`PVI`](Core::PVI) — Positive Volume Index
 //! * [`PVO`](Core::PVO) — Percentage Volume Oscillator
+//! * [`PVT`](Core::PVT) — Price Volume Trend
+//! * [`RVOL`](Core::RVOL) — Relative Volume
 //! * [`VWAP`](Core::VWAP) — Volume Weighted Average Price
 
 #![forbid(unsafe_code)]

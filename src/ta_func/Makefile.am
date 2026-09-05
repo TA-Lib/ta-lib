@@ -9,6 +9,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_AD.c \
 	ta_ADD.c \
 	ta_ADOSC.c \
+	ta_ADR.c \
 	ta_ADX.c \
 	ta_ADXR.c \
 	ta_AO.c \
@@ -146,6 +147,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_PPO.c \
 	ta_PVI.c \
 	ta_PVO.c \
+	ta_PVT.c \
 	ta_QSTICK.c \
 	ta_RMA.c \
 	ta_ROC.c \
@@ -153,6 +155,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_ROCR.c \
 	ta_ROCR100.c \
 	ta_RSI.c \
+	ta_RVOL.c \
 	ta_SAR.c \
 	ta_SAREXT.c \
 	ta_SIN.c \

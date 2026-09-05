@@ -168,11 +168,11 @@ to decide it cannot cross-compare the function's values across ranges. Dropping
 it is fail-safe — the sweep then value-compares the function and fails loudly if
 it is genuinely start-dependent (issue #98).
 
-`nan_inf_output` (issue #191) marks the seven functions with a hole in their own
+`nan_inf_output` (issue #191) marks the eight functions with a hole in their own
 domain — `ACOS`/`ASIN` outside [-1,1], `LN`/`LOG10`/`SQRT` on a negative value
 (and `LN`/`LOG10` on zero, which is -Inf), `DIV` on 0/0 or x/0, `VWMA` on a
-window with no volume at all. Each one's `<name>.md` says when, in a `## Notes`
-bullet, and the website renders the flag as a `Can Output NaN or ±Inf` display
+window with no volume at all, `RVOL` on a trailing window that traded
+nothing. Each one's `<name>.md` says when, in a `## Notes` bullet, and the website renders the flag as a `Can Output NaN or ±Inf` display
 flag. It is not set for a non-finite value that only appears once the
 intermediate arithmetic overflows on the *input* magnitudes themselves (around
 1e160 and up), which is a property of `double`, not of the indicator.

@@ -795,7 +795,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_sar,      "SAR,SAREXT" );
    DO_TEST( test_func_stoch,    "STOCH,STOCHF,STOCHRSI" );
    DO_TEST( test_func_per_hlcv, "MFI,AD,ADOSC" );
-   DO_TEST( test_func_per_cv,   "NVI,PVI" );
+   DO_TEST( test_func_per_cv,   "NVI,PVI,PVT" );
    DO_TEST( test_func_1in_2out, "PHASOR,SINE,HT_PHASOR,HT_SINE" );
    DO_TEST( test_func_per_ema,  "TRIX" );
    DO_TEST( test_func_macd,     "MACD,MACDFIX,MACDEXT" );
@@ -858,7 +858,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cmou,      "CMOU" );
    DO_TEST( test_func_zlema,     "ZLEMA" );
    DO_TEST( test_func_vhf,       "VHF" );
+   DO_TEST( test_func_adr,       "ADR" );
    DO_TEST( test_func_fosc,      "FOSC" );
+   DO_TEST( test_func_rvol,      "RVOL" );
    DO_TEST( test_func_variants,  "TA_S_,VARIANT" );
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );
    DO_TEST_LBL( test_func_rolling_extremum,

@@ -101,6 +101,15 @@ TA_RetCode TA_ADOSC_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_ADOSC_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_ADR_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ADR_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_ADX_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1334,6 +1343,15 @@ TA_RetCode TA_PVO_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_PVO_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_PVT_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_PVT_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_QSTICK_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1395,6 +1413,15 @@ TA_RetCode TA_RSI_FramePP( const TA_ParamHolderPriv *params,
                            int           *outNBElement )
 ;
 unsigned int TA_RSI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_RVOL_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_RVOL_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 TA_RetCode TA_SAR_FramePP( const TA_ParamHolderPriv *params,

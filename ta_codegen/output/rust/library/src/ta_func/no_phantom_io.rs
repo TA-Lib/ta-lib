@@ -910,6 +910,78 @@ fn legs_ADOSC(r: &mut Report) {
     r.legs_done("ADOSC", 4);
 }
 
+const V_ADR: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 1i32),
+];
+
+fn sub_ADR(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_ADR {
+        let Ok(lb) = core.ADR_Lookback(optInTimePeriod) else { continue; };
+        r.control("ADR", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ADR_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ADR", label); continue; }
+        r.quiet("ADR", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ADR_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ADR(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.ADR_Lookback(optInTimePeriod) else { r.no_legs("ADR"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ADR", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ADR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ADR", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ADR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ADR", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ADR_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ADR", 2);
+}
+
 const V_ADX: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -12822,6 +12894,76 @@ fn legs_PVO(r: &mut Report) {
     r.legs_done("PVO", 1);
 }
 
+const V_PVT: &[&str] = &[
+    "defaults",
+];
+
+fn sub_PVT(r: &mut Report) {
+    let core = Core::new();
+    for &label in V_PVT {
+        let Ok(lb) = core.PVT_Lookback() else { continue; };
+        r.control("PVT", label, run(|| {
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PVT_Impl(0, lb, &inClose, &inVolume, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("PVT", label); continue; }
+        r.quiet("PVT", label, lb, run(|| {
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PVT_Impl(0, lb - 1, &inClose, &inVolume, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_PVT(r: &mut Report) {
+    let core = Core::new();
+    let Ok(lb) = core.PVT_Lookback() else { r.no_legs("PVT"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PVT", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PVT_Impl(startIdx, endIdx, &inClose, &inVolume, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("PVT", "inClose", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PVT_Impl(startIdx, endIdx, &inClose, &inVolume, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let inVolume: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("PVT", "inVolume", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PVT_Impl(startIdx, endIdx, &inClose, &inVolume, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("PVT", 2);
+}
+
 const V_QSTICK: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -13234,6 +13376,63 @@ fn legs_RSI(r: &mut Report) {
         }));
     }
     r.legs_done("RSI", 1);
+}
+
+const V_RVOL: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 1i32),
+];
+
+fn sub_RVOL(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_RVOL {
+        let Ok(lb) = core.RVOL_Lookback(optInTimePeriod) else { continue; };
+        r.control("RVOL", label, run(|| {
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVOL_Impl(0, lb, &inVolume, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("RVOL", label); continue; }
+        r.quiet("RVOL", label, lb, run(|| {
+            let inVolume: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVOL_Impl(0, lb - 1, &inVolume, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_RVOL(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.RVOL_Lookback(optInTimePeriod) else { r.no_legs("RVOL"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inVolume: Vec<f64> = series("volume", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("RVOL", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVOL_Impl(startIdx, endIdx, &inVolume, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inVolume: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("RVOL", "inVolume", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVOL_Impl(startIdx, endIdx, &inVolume, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("RVOL", 1);
 }
 
 const V_SAR: &[(&str, f64, f64)] = &[
@@ -15702,6 +15901,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("AD", sub_AD, legs_AD),
     ("ADD", sub_ADD, legs_ADD),
     ("ADOSC", sub_ADOSC, legs_ADOSC),
+    ("ADR", sub_ADR, legs_ADR),
     ("ADX", sub_ADX, legs_ADX),
     ("ADXR", sub_ADXR, legs_ADXR),
     ("AO", sub_AO, legs_AO),
@@ -15839,6 +16039,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("PPO", sub_PPO, legs_PPO),
     ("PVI", sub_PVI, legs_PVI),
     ("PVO", sub_PVO, legs_PVO),
+    ("PVT", sub_PVT, legs_PVT),
     ("QSTICK", sub_QSTICK, legs_QSTICK),
     ("RMA", sub_RMA, legs_RMA),
     ("ROC", sub_ROC, legs_ROC),
@@ -15846,6 +16047,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ROCR", sub_ROCR, legs_ROCR),
     ("ROCR100", sub_ROCR100, legs_ROCR100),
     ("RSI", sub_RSI, legs_RSI),
+    ("RVOL", sub_RVOL, legs_RVOL),
     ("SAR", sub_SAR, legs_SAR),
     ("SAREXT", sub_SAREXT, legs_SAREXT),
     ("SIN", sub_SIN, legs_SIN),
@@ -15917,7 +16119,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 183, "probe count");
+    assert_eq!(PROBES.len(), 186, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

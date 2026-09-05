@@ -126,6 +126,7 @@ public final class Functions {
       put(m, f_AD());
       put(m, f_ADD());
       put(m, f_ADOSC());
+      put(m, f_ADR());
       put(m, f_ADX());
       put(m, f_ADXR());
       put(m, f_AO());
@@ -263,6 +264,7 @@ public final class Functions {
       put(m, f_PPO());
       put(m, f_PVI());
       put(m, f_PVO());
+      put(m, f_PVT());
       put(m, f_QSTICK());
       put(m, f_RMA());
       put(m, f_ROC());
@@ -270,6 +272,7 @@ public final class Functions {
       put(m, f_ROCR());
       put(m, f_ROCR100());
       put(m, f_RSI());
+      put(m, f_RVOL());
       put(m, f_SAR());
       put(m, f_SAREXT());
       put(m, f_SIN());
@@ -412,6 +415,24 @@ public final class Functions {
                "Slow Period", "Period of the slow MA", 10.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_ADR() {
+      return new FunctionInfo(
+         "ADR", "Volatility Indicators", "Average Day Range", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
@@ -2555,6 +2576,18 @@ public final class Functions {
          ));
    }
 
+   private static FunctionInfo f_PVT() {
+      return new FunctionInfo(
+         "PVT", "Volume Indicators", "Price Volume Trend", 0x22000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceCV", 0x00000018)
+         ),
+         List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
    private static FunctionInfo f_QSTICK() {
       return new FunctionInfo(
          "QSTICK", "Momentum Indicators", "Qstick", 0x02000000,
@@ -2675,6 +2708,24 @@ public final class Functions {
                "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_RVOL() {
+      return new FunctionInfo(
+         "RVOL", "Volume Indicators", "Relative Volume", 0x42000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

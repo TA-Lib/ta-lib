@@ -201,6 +201,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 ## Volatility Indicators
 
+- [ADR](/functions/adr.md) — Average Day Range
 - [ATR](/functions/atr.md) — Average True Range
 - [NATR](/functions/natr.md) — Normalized Average True Range
 - [TRANGE](/functions/trange.md) — True Range
@@ -216,4 +217,6 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [OBV](/functions/obv.md) — On Balance Volume
 - [PVI](/functions/pvi.md) — Positive Volume Index
 - [PVO](/functions/pvo.md) — Percentage Volume Oscillator
+- [PVT](/functions/pvt.md) — Price Volume Trend
+- [RVOL](/functions/rvol.md) — Relative Volume
 - [VWAP](/functions/vwap.md) — Volume Weighted Average Price

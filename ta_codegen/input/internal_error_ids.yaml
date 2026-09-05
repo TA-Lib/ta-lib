@@ -18,13 +18,14 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 407
+next: 409
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
   AC.ringcap.trailingFastIdx: 182
   AC.ringcap.trailingSlowIdx: 183
   ACCBANDS.ringcap.trailingIdx: 185
+  ADR.ringcap.trailingIdx: 407
   AO.ringcap.trailingFastIdx: 186
   AO.ringcap.trailingSlowIdx: 187
   AROON.extrema: 188
@@ -224,6 +225,7 @@ sites:
   ROCP.ringcap.trailingIdx: 380
   ROCR.ringcap.trailingIdx: 381
   ROCR100.ringcap.trailingIdx: 382
+  RVOL.ringcap.trailingIdx: 408
   SMA.ringcap.trailingIdx: 383
   SMI.extrema: 384
   STOCH.extrema: 385

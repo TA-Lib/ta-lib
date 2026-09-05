@@ -1,0 +1,12 @@
+name: PVT
+group: Volume Indicators
+hint: Price Volume Trend
+flags: [stream, path_dependent]
+inputs:
+  - name: inPriceCV
+    type: price
+    price_components: [close, volume]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]
