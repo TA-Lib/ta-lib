@@ -61,8 +61,9 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_zlema.c \
 	ta_test_func/test_vhf.c \
 	ta_test_func/test_fosc.c \
-	ta_test_func/test_cvi.c \
-	ta_test_func/test_massi.c \
+	ta_test_func/test_dpo.c \
+	ta_test_func/test_percentrank.c \
+	ta_test_func/test_percentile.c \
 	ta_test_func/test_adr.c \
 	ta_test_func/test_rvol.c \
 	ta_test_func/test_variants.c \

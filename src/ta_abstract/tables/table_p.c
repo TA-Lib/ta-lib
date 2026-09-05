@@ -38,6 +38,118 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* PERCENTILE BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_PERCENTILE_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   30,
+   "Number of bars in the window",
+
+   NULL
+};
+
+static const TA_RealRange TA_DEF_PERCENTILE_Percentile =
+{
+   0.0,
+   100.0,
+   2,
+   10.0,
+   90.0,
+   5.0
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_PERCENTILE_Percentile =
+{
+   TA_OptInput_RealRange,
+   "optInPercentile",
+   TA_OPTIN_IS_PERCENT,
+
+   "Percentile",
+   (const void *)&TA_DEF_PERCENTILE_Percentile,
+   50.0,
+   "Percentile to report",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_PERCENTILE_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PERCENTILE_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PERCENTILE_OptInputs[] =
+{ &TA_DEF_UI_D_PERCENTILE_TimePeriod,
+  &TA_DEF_UI_D_PERCENTILE_Percentile,
+  NULL
+};
+
+DEF_FUNCTION( PERCENTILE,
+              TA_GroupId_Statistic,
+              "Percentile (nearest rank)",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_STREAM
+             );
+/* PERCENTILE END */
+
+/* PERCENTRANK BEGIN */
+static const TA_IntegerRange TA_DEF_PERCENTRANK_TimePeriod =
+{
+   2,
+   100000,
+   20,
+   200,
+   20
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_PERCENTRANK_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_PERCENTRANK_TimePeriod,
+   100,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_PERCENTRANK_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PERCENTRANK_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PERCENTRANK_OptInputs[] =
+{ &TA_DEF_UI_D_PERCENTRANK_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( PERCENTRANK,
+              TA_GroupId_Statistic,
+              "Percent Rank",
+              TA_FUNC_FLG_STREAM
+             );
+/* PERCENTRANK END */
+
 /* PLUS_DI BEGIN */
 static const TA_InputParameterInfo    *TA_PLUS_DI_Inputs[]    =
 {
@@ -222,6 +334,8 @@ DEF_FUNCTION( PVT,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableP[] =
 {
+   ADD_TO_TABLE(PERCENTILE),
+   ADD_TO_TABLE(PERCENTRANK),
    ADD_TO_TABLE(PLUS_DI),
    ADD_TO_TABLE(PLUS_DM),
    ADD_TO_TABLE(PPO),

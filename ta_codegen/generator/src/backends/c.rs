@@ -196,6 +196,38 @@ impl Drop for CircBufOrderGuard {
     }
 }
 
+/// Scoped override of [`CIRCBUF_IDX_UNUSED`]: for the span, every CIRCBUF that
+/// `stmts` declares counts as having a live cursor, whatever the statements do.
+///
+/// The stream handle sizes its copy of each buffer from `maxIdx_<id>`, so a
+/// cursor no statement reads is still read there — eliding the assignment leaves
+/// the capture copying from an uninitialized local, and the handle then starts
+/// life holding a truncated window. The batch body has no such reader and must
+/// keep the elision, which is why this is scoped to the streaming section rather
+/// than folded into the function-wide set.
+struct CircBufIdxUsedScope(std::collections::BTreeSet<String>);
+
+impl CircBufIdxUsedScope {
+    fn new(stmts: &[Statement]) -> Self {
+        let mut order = Vec::new();
+        collect_circbuf_order(stmts, &mut order);
+        let declared: std::collections::BTreeSet<String> =
+            order.into_iter().map(|(id, _)| id).collect();
+        CIRCBUF_IDX_UNUSED.with(|c| {
+            let mut set = c.borrow_mut();
+            let prev = set.clone();
+            set.retain(|id| !declared.contains(id));
+            CircBufIdxUsedScope(prev)
+        })
+    }
+}
+
+impl Drop for CircBufIdxUsedScope {
+    fn drop(&mut self) {
+        CIRCBUF_IDX_UNUSED.with(|c| *c.borrow_mut() = std::mem::take(&mut self.0));
+    }
+}
+
 /// Collect the CIRCBUFs a body declares, in order, deduplicated by id.
 fn collect_circbuf_order(stmts: &[Statement], out: &mut Vec<(String, Vec<String>)>) {
     for s in stmts {
@@ -419,6 +451,7 @@ pub fn generate(
 
     // Streaming API section (only for YAML-declared streamable functions).
     if func.streaming {
+        let _stream_idx = CircBufIdxUsedScope::new(func.stream_source());
         out.push_str(&super::c_stream::generate(func, enums, registry, helpers));
     }
     // Last, over the finished file: the emitters above place their `(void)x;`

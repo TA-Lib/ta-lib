@@ -3813,64 +3813,6 @@
 	</FinancialFunction>
 
 
-	<!-- CVI -->
-	<FinancialFunction>
-		<Abbreviation>CVI</Abbreviation>
-		<ShortDescription>Chaikin&apos;s Volatility</ShortDescription>
-		<GroupId>Volatility Indicators</GroupId>
-		<Flags>
-			<Flag>Streaming</Flag>
-		</Flags>
-		<RequiredInputArguments>
-			<RequiredInputArgument>
-				<Type>High</Type>
-				<Name>High</Name>
-			</RequiredInputArgument>
-			<RequiredInputArgument>
-				<Type>Low</Type>
-				<Name>Low</Name>
-			</RequiredInputArgument>
-		</RequiredInputArguments>
-		<OptionalInputArguments>
-			<OptionalInputArgument>
-				<Name>Time Period</Name>
-				<ShortDescription>Period of the EMA smoothing the high-low spread</ShortDescription>
-				<Type>Integer</Type>
-				<Range>
-					<Minimum>2</Minimum>
-					<Maximum>100000</Maximum>
-					<SuggestedStart>4</SuggestedStart>
-					<SuggestedEnd>200</SuggestedEnd>
-					<SuggestedIncrement>1</SuggestedIncrement>
-				</Range>
-				<DefaultValue>10</DefaultValue>
-			</OptionalInputArgument>
-			<OptionalInputArgument>
-				<Name>ROC Period</Name>
-				<ShortDescription>Number of bars the rate of change reaches back</ShortDescription>
-				<Type>Integer</Type>
-				<Range>
-					<Minimum>1</Minimum>
-					<Maximum>100000</Maximum>
-					<SuggestedStart>4</SuggestedStart>
-					<SuggestedEnd>200</SuggestedEnd>
-					<SuggestedIncrement>1</SuggestedIncrement>
-				</Range>
-				<DefaultValue>10</DefaultValue>
-			</OptionalInputArgument>
-		</OptionalInputArguments>
-		<OutputArguments>
-			<OutputArgument>
-				<Type>Double Array</Type>
-				<Name>outReal</Name>
-				<Flags>
-					<Flag>Line</Flag>
-				</Flags>
-			</OutputArgument>
-		</OutputArguments>
-	</FinancialFunction>
-
-
 	<!-- DEMA -->
 	<FinancialFunction>
 		<Abbreviation>DEMA</Abbreviation>
@@ -3999,6 +3941,47 @@
 				<Name>outRealLowerBand</Name>
 				<Flags>
 					<Flag>Lower Limit</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- DPO -->
+	<FinancialFunction>
+		<Abbreviation>DPO</Abbreviation>
+		<ShortDescription>Detrended Price Oscillator</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>10</SuggestedStart>
+					<SuggestedEnd>60</SuggestedEnd>
+					<SuggestedIncrement>5</SuggestedIncrement>
+				</Range>
+				<DefaultValue>20</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
 				</Flags>
 			</OutputArgument>
 		</OutputArguments>
@@ -5241,64 +5224,6 @@
 	</FinancialFunction>
 
 
-	<!-- MASSI -->
-	<FinancialFunction>
-		<Abbreviation>MASSI</Abbreviation>
-		<ShortDescription>Mass Index</ShortDescription>
-		<GroupId>Volatility Indicators</GroupId>
-		<Flags>
-			<Flag>Streaming</Flag>
-		</Flags>
-		<RequiredInputArguments>
-			<RequiredInputArgument>
-				<Type>High</Type>
-				<Name>High</Name>
-			</RequiredInputArgument>
-			<RequiredInputArgument>
-				<Type>Low</Type>
-				<Name>Low</Name>
-			</RequiredInputArgument>
-		</RequiredInputArguments>
-		<OptionalInputArguments>
-			<OptionalInputArgument>
-				<Name>Fast Period</Name>
-				<ShortDescription>Period of both exponential averages of the high-low range</ShortDescription>
-				<Type>Integer</Type>
-				<Range>
-					<Minimum>2</Minimum>
-					<Maximum>100000</Maximum>
-					<SuggestedStart>2</SuggestedStart>
-					<SuggestedEnd>50</SuggestedEnd>
-					<SuggestedIncrement>1</SuggestedIncrement>
-				</Range>
-				<DefaultValue>9</DefaultValue>
-			</OptionalInputArgument>
-			<OptionalInputArgument>
-				<Name>Slow Period</Name>
-				<ShortDescription>Number of bars the ratio is summed over</ShortDescription>
-				<Type>Integer</Type>
-				<Range>
-					<Minimum>2</Minimum>
-					<Maximum>100000</Maximum>
-					<SuggestedStart>10</SuggestedStart>
-					<SuggestedEnd>50</SuggestedEnd>
-					<SuggestedIncrement>1</SuggestedIncrement>
-				</Range>
-				<DefaultValue>25</DefaultValue>
-			</OptionalInputArgument>
-		</OptionalInputArguments>
-		<OutputArguments>
-			<OutputArgument>
-				<Type>Double Array</Type>
-				<Name>outReal</Name>
-				<Flags>
-					<Flag>Line</Flag>
-				</Flags>
-			</OutputArgument>
-		</OutputArguments>
-	</FinancialFunction>
-
-
 	<!-- MAVP -->
 	<FinancialFunction>
 		<Abbreviation>MAVP</Abbreviation>
@@ -6066,6 +5991,106 @@
 				<Name>Volume</Name>
 			</RequiredInputArgument>
 		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- PERCENTILE -->
+	<FinancialFunction>
+		<Abbreviation>PERCENTILE</Abbreviation>
+		<ShortDescription>Percentile (nearest rank)</ShortDescription>
+		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Number of bars in the window</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>30</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Percentile</Name>
+				<ShortDescription>Percentile to report</ShortDescription>
+				<Flags>
+					<Flag>Percent</Flag>
+				</Flags>
+				<Type>Double</Type>
+				<Range>
+					<Minimum>0.000000e+0</Minimum>
+					<Maximum>1.000000e+2</Maximum>
+					<Precision>2</Precision>
+					<SuggestedStart>1.000000e+1</SuggestedStart>
+					<SuggestedEnd>9.000000e+1</SuggestedEnd>
+					<SuggestedIncrement>5.000000e+0</SuggestedIncrement>
+				</Range>
+				<DefaultValue>5.000000e+1</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- PERCENTRANK -->
+	<FinancialFunction>
+		<Abbreviation>PERCENTRANK</Abbreviation>
+		<ShortDescription>Percent Rank</ShortDescription>
+		<GroupId>Statistic Functions</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>20</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>20</SuggestedIncrement>
+				</Range>
+				<DefaultValue>100</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
 		<OutputArguments>
 			<OutputArgument>
 				<Type>Double Array</Type>

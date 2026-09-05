@@ -368,7 +368,7 @@ caller's business, at the caller's layer — never the stream's internal state.
 U4–U7 are faults in the *call* rather than in the data — no bar was ever handed
 over — and they leave the handle exactly as it was.
 
-The mirror case is a function whose *output* is legitimately non-finite: the eight
+The mirror case is a function whose *output* is legitimately non-finite: the seven
 carrying `TA_FUNC_FLG_NAN_INF_OUT` succeed, so the state **is** touched, `Value`
 answers that non-finite value, and `OutRange` advances by one exactly as above.
 Both directions leave the caller the same job — override the output at their own

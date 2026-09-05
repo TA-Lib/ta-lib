@@ -3783,46 +3783,6 @@ static TA_RetCode TA_COSH_SFrameClose( void *stream )
    return TA_COSH_Close( (TA_COSH_Stream *)stream );
 }
 
-static TA_RetCode TA_CVI_SFrameOpen( void **stream,
-                  const double *const in[], int historyLen,
-                  const double optIn[],
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CVI_Open(
-               (TA_CVI_Stream **)stream,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               historyLen,
-               (int)optIn[0] /* optInTimePeriod */,
-               (int)optIn[1] /* optInROCPeriod */,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CVI_SFrameFill( void **stream,
-                  const double *const in[], int historyLen,
-                  const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_CVI_OpenAndFill(
-               (TA_CVI_Stream **)stream,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               historyLen,
-               (int)optIn[0] /* optInTimePeriod */,
-               (int)optIn[1] /* optInROCPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_CVI_SFrameClose( void *stream )
-{
-   return TA_CVI_Close( (TA_CVI_Stream *)stream );
-}
-
 static TA_RetCode TA_DEMA_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -3937,6 +3897,42 @@ static TA_RetCode TA_DONCHIAN_SFrameFill( void **stream,
 static TA_RetCode TA_DONCHIAN_SFrameClose( void *stream )
 {
    return TA_DONCHIAN_Close( (TA_DONCHIAN_Stream *)stream );
+}
+
+static TA_RetCode TA_DPO_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_DPO_Open(
+               (TA_DPO_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_DPO_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_DPO_OpenAndFill(
+               (TA_DPO_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_DPO_SFrameClose( void *stream )
+{
+   return TA_DPO_Close( (TA_DPO_Stream *)stream );
 }
 
 static TA_RetCode TA_DX_SFrameOpen( void **stream,
@@ -5007,46 +5003,6 @@ static TA_RetCode TA_MARKETFI_SFrameClose( void *stream )
    return TA_MARKETFI_Close( (TA_MARKETFI_Stream *)stream );
 }
 
-static TA_RetCode TA_MASSI_SFrameOpen( void **stream,
-                  const double *const in[], int historyLen,
-                  const double optIn[],
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MASSI_Open(
-               (TA_MASSI_Stream **)stream,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               historyLen,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MASSI_SFrameFill( void **stream,
-                  const double *const in[], int historyLen,
-                  const double optIn[],
-                  int *outBegIdx, int *outNBElement,
-                  double *const outReal[], int *const outInteger[] )
-{
-   (void)outInteger;
-   return TA_MASSI_OpenAndFill(
-               (TA_MASSI_Stream **)stream,
-               in[0] /* inHigh */,
-               in[1] /* inLow */,
-               historyLen,
-               (int)optIn[0] /* optInFastPeriod */,
-               (int)optIn[1] /* optInSlowPeriod */,
-               outBegIdx,
-               outNBElement,
-               outReal[0] /* outReal */
-               );
-}
-static TA_RetCode TA_MASSI_SFrameClose( void *stream )
-{
-   return TA_MASSI_Close( (TA_MASSI_Stream *)stream );
-}
-
 static TA_RetCode TA_MAVP_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -5729,6 +5685,80 @@ static TA_RetCode TA_OBV_SFrameFill( void **stream,
 static TA_RetCode TA_OBV_SFrameClose( void *stream )
 {
    return TA_OBV_Close( (TA_OBV_Stream *)stream );
+}
+
+static TA_RetCode TA_PERCENTILE_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTILE_Open(
+               (TA_PERCENTILE_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInPercentile */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTILE_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTILE_OpenAndFill(
+               (TA_PERCENTILE_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               optIn[1] /* optInPercentile */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTILE_SFrameClose( void *stream )
+{
+   return TA_PERCENTILE_Close( (TA_PERCENTILE_Stream *)stream );
+}
+
+static TA_RetCode TA_PERCENTRANK_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTRANK_Open(
+               (TA_PERCENTRANK_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTRANK_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_PERCENTRANK_OpenAndFill(
+               (TA_PERCENTRANK_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_PERCENTRANK_SFrameClose( void *stream )
+{
+   return TA_PERCENTRANK_Close( (TA_PERCENTRANK_Stream *)stream );
 }
 
 static TA_RetCode TA_PLUS_DI_SFrameOpen( void **stream,
@@ -7738,14 +7768,14 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_COS, 0, NULL, 1, TA_VOutIsInt_COS },
    { "COSH", TA_COSH_SFrameOpen, TA_COSH_SFrameFill, TA_COSH_SFrameClose,
      1, TA_VIn_COSH, 0, NULL, 1, TA_VOutIsInt_COSH },
-   { "CVI", TA_CVI_SFrameOpen, TA_CVI_SFrameFill, TA_CVI_SFrameClose,
-     2, TA_VIn_CVI, 2, TA_VOpt_CVI, 1, TA_VOutIsInt_CVI },
    { "DEMA", TA_DEMA_SFrameOpen, TA_DEMA_SFrameFill, TA_DEMA_SFrameClose,
      1, TA_VIn_DEMA, 1, TA_VOpt_DEMA, 1, TA_VOutIsInt_DEMA },
    { "DIV", TA_DIV_SFrameOpen, TA_DIV_SFrameFill, TA_DIV_SFrameClose,
      2, TA_VIn_DIV, 0, NULL, 1, TA_VOutIsInt_DIV },
    { "DONCHIAN", TA_DONCHIAN_SFrameOpen, TA_DONCHIAN_SFrameFill, TA_DONCHIAN_SFrameClose,
      2, TA_VIn_DONCHIAN, 1, TA_VOpt_DONCHIAN, 3, TA_VOutIsInt_DONCHIAN },
+   { "DPO", TA_DPO_SFrameOpen, TA_DPO_SFrameFill, TA_DPO_SFrameClose,
+     1, TA_VIn_DPO, 1, TA_VOpt_DPO, 1, TA_VOutIsInt_DPO },
    { "DX", TA_DX_SFrameOpen, TA_DX_SFrameFill, TA_DX_SFrameClose,
      3, TA_VIn_DX, 1, TA_VOpt_DX, 1, TA_VOutIsInt_DX },
    { "EFI", TA_EFI_SFrameOpen, TA_EFI_SFrameFill, TA_EFI_SFrameClose,
@@ -7802,8 +7832,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_MAMA, 2, TA_VOpt_MAMA, 2, TA_VOutIsInt_MAMA },
    { "MARKETFI", TA_MARKETFI_SFrameOpen, TA_MARKETFI_SFrameFill, TA_MARKETFI_SFrameClose,
      3, TA_VIn_MARKETFI, 0, NULL, 1, TA_VOutIsInt_MARKETFI },
-   { "MASSI", TA_MASSI_SFrameOpen, TA_MASSI_SFrameFill, TA_MASSI_SFrameClose,
-     2, TA_VIn_MASSI, 2, TA_VOpt_MASSI, 1, TA_VOutIsInt_MASSI },
    { "MAVP", TA_MAVP_SFrameOpen, TA_MAVP_SFrameFill, TA_MAVP_SFrameClose,
      2, TA_VIn_MAVP, 3, TA_VOpt_MAVP, 1, TA_VOutIsInt_MAVP },
    { "MAX", TA_MAX_SFrameOpen, TA_MAX_SFrameFill, TA_MAX_SFrameClose,
@@ -7840,6 +7868,10 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_NVI, 0, NULL, 1, TA_VOutIsInt_NVI },
    { "OBV", TA_OBV_SFrameOpen, TA_OBV_SFrameFill, TA_OBV_SFrameClose,
      2, TA_VIn_OBV, 0, NULL, 1, TA_VOutIsInt_OBV },
+   { "PERCENTILE", TA_PERCENTILE_SFrameOpen, TA_PERCENTILE_SFrameFill, TA_PERCENTILE_SFrameClose,
+     1, TA_VIn_PERCENTILE, 2, TA_VOpt_PERCENTILE, 1, TA_VOutIsInt_PERCENTILE },
+   { "PERCENTRANK", TA_PERCENTRANK_SFrameOpen, TA_PERCENTRANK_SFrameFill, TA_PERCENTRANK_SFrameClose,
+     1, TA_VIn_PERCENTRANK, 1, TA_VOpt_PERCENTRANK, 1, TA_VOutIsInt_PERCENTRANK },
    { "PLUS_DI", TA_PLUS_DI_SFrameOpen, TA_PLUS_DI_SFrameFill, TA_PLUS_DI_SFrameClose,
      3, TA_VIn_PLUS_DI, 1, TA_VOpt_PLUS_DI, 1, TA_VOutIsInt_PLUS_DI },
    { "PLUS_DM", TA_PLUS_DM_SFrameOpen, TA_PLUS_DM_SFrameFill, TA_PLUS_DM_SFrameClose,
@@ -7936,6 +7968,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 188
+#define TA_STREAM_TABLE_SIZE 189
 
 #endif /* TA_STREAM_FRAME_H */

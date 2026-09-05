@@ -210,10 +210,10 @@ public final class Functions {
       put(m, f_CORREL());
       put(m, f_COS());
       put(m, f_COSH());
-      put(m, f_CVI());
       put(m, f_DEMA());
       put(m, f_DIV());
       put(m, f_DONCHIAN());
+      put(m, f_DPO());
       put(m, f_DX());
       put(m, f_EFI());
       put(m, f_EMA());
@@ -242,7 +242,6 @@ public final class Functions {
       put(m, f_MACDFIX());
       put(m, f_MAMA());
       put(m, f_MARKETFI());
-      put(m, f_MASSI());
       put(m, f_MAVP());
       put(m, f_MAX());
       put(m, f_MAXINDEX());
@@ -261,6 +260,8 @@ public final class Functions {
       put(m, f_NATR());
       put(m, f_NVI());
       put(m, f_OBV());
+      put(m, f_PERCENTILE());
+      put(m, f_PERCENTRANK());
       put(m, f_PLUS_DI());
       put(m, f_PLUS_DM());
       put(m, f_PPO());
@@ -1604,29 +1605,6 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_CVI() {
-      return new FunctionInfo(
-         "CVI", "Volatility Indicators", "Chaikin's Volatility", 0x02000000,
-         List.of(
-            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
-         ),
-         List.of(
-            new OptInputInfo(
-               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
-               "Time Period", "Period of the EMA smoothing the high-low spread", 10.0,
-               0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 4, 200, 1, null),
-            new OptInputInfo(
-               OptInputType.INTEGER_RANGE, "optInROCPeriod", 0x00000000,
-               "ROC Period", "Number of bars the rate of change reaches back", 10.0,
-               0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               1, 100000, 4, 200, 1, null)
-         ),
-         List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ));
-   }
-
    private static FunctionInfo f_DEMA() {
       return new FunctionInfo(
          "DEMA", "Overlap Studies", "Double Exponential Moving Average", 0x03000001,
@@ -1675,6 +1653,24 @@ public final class Functions {
             new OutputInfo(OutputType.REAL, "outRealUpperBand", 0x00000800),
             new OutputInfo(OutputType.REAL, "outRealMiddleBand", 0x00000001),
             new OutputInfo(OutputType.REAL, "outRealLowerBand", 0x00001000)
+         ));
+   }
+
+   private static FunctionInfo f_DPO() {
+      return new FunctionInfo(
+         "DPO", "Momentum Indicators", "Detrended Price Oscillator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 20.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 10, 60, 5, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));
    }
 
@@ -2182,29 +2178,6 @@ public final class Functions {
          ));
    }
 
-   private static FunctionInfo f_MASSI() {
-      return new FunctionInfo(
-         "MASSI", "Volatility Indicators", "Mass Index", 0x02000000,
-         List.of(
-            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
-         ),
-         List.of(
-            new OptInputInfo(
-               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
-               "Fast Period", "Period of both exponential averages of the high-low range", 9.0,
-               0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 2, 50, 1, null),
-            new OptInputInfo(
-               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
-               "Slow Period", "Number of bars the ratio is summed over", 25.0,
-               0.0, 0.0, 0, 0.0, 0.0, 0.0,
-               2, 100000, 10, 50, 1, null)
-         ),
-         List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
-         ));
-   }
-
    private static FunctionInfo f_MAVP() {
       return new FunctionInfo(
          "MAVP", "Overlap Studies", "Moving average with variable period", 0x03000000,
@@ -2515,6 +2488,47 @@ public final class Functions {
             new InputInfo(InputType.PRICE, "inPriceV", 0x00000010)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_PERCENTILE() {
+      return new FunctionInfo(
+         "PERCENTILE", "Statistic Functions", "Percentile (nearest rank)", 0x03000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the window", 30.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.REAL_RANGE, "optInPercentile", 0x00100000,
+               "Percentile", "Percentile to report", 50.0,
+               0.0, 100.0, 2, 10.0, 90.0, 5.0,
+               0, 0, 0, 0, 0, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_PERCENTRANK() {
+      return new FunctionInfo(
+         "PERCENTRANK", "Statistic Functions", "Percent Rank", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Time period", 100.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 20, 200, 20, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

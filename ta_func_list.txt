@@ -88,10 +88,10 @@ CMOU                Chande Momentum Oscillator (Unsmoothed)
 CORREL              Pearson's Correlation Coefficient (r)
 COS                 Vector Trigonometric Cos
 COSH                Vector Trigonometric Cosh
-CVI                 Chaikin's Volatility
 DEMA                Double Exponential Moving Average
 DIV                 Vector Arithmetic Div
 DONCHIAN            Donchian Channels
+DPO                 Detrended Price Oscillator
 DX                  Directional Movement Index
 EFI                 Elder's Force Index
 EMA                 Exponential Moving Average
@@ -120,7 +120,6 @@ MACDEXT             MACD with controllable MA type
 MACDFIX             Moving Average Convergence/Divergence Fix 12/26
 MAMA                MESA Adaptive Moving Average
 MARKETFI            Market Facilitation Index
-MASSI               Mass Index
 MAVP                Moving average with variable period
 MAX                 Highest value over a specified period
 MAXINDEX            Index of highest value over a specified period
@@ -139,6 +138,8 @@ MULT                Vector Arithmetic Mult
 NATR                Normalized Average True Range
 NVI                 Negative Volume Index
 OBV                 On Balance Volume
+PERCENTILE          Percentile (nearest rank)
+PERCENTRANK         Percent Rank
 PLUS_DI             Plus Directional Indicator
 PLUS_DM             Plus Directional Movement
 PPO                 Percentage Price Oscillator

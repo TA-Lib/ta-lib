@@ -51,22 +51,21 @@ namespace TALib.Metadata;
    non-vacuous. */
 internal static class CatalogFacts
 {
-    internal const int FunctionCount = 188;
+    internal const int FunctionCount = 189;
     internal const uint AllFunctionFlags = 0x7B000001U;
     internal const uint AllPriceComponents = 0x0000001FU;
-    internal const uint AllOptInputFlags = 0x00000000U;
+    internal const uint AllOptInputFlags = 0x00100000U;
     internal const uint AllOutputFlags = 0x00003815U;
 
     /* Flag members no shipped function sets. Pinned rather than deleted:
       these are the C vocabulary, and the day a definition starts using
       one this list is what tells you, instead of the fact changing
       quietly under consumers. */
-    internal const int DeadFlagCount = 14;
+    internal const int DeadFlagCount = 13;
     internal static readonly string[] DeadFlags =
     [
         "FunctionFlags.VolumeUsed",
         "PriceComponents.OpenInterest",
-        "OptInputFlags.IsPercent",
         "OptInputFlags.IsDegree",
         "OptInputFlags.IsCurrency",
         "OptInputFlags.Advanced",

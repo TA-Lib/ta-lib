@@ -93,10 +93,10 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_CORREL.c \
 	ta_COS.c \
 	ta_COSH.c \
-	ta_CVI.c \
 	ta_DEMA.c \
 	ta_DIV.c \
 	ta_DONCHIAN.c \
+	ta_DPO.c \
 	ta_DX.c \
 	ta_EFI.c \
 	ta_EMA.c \
@@ -125,7 +125,6 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_MACDFIX.c \
 	ta_MAMA.c \
 	ta_MARKETFI.c \
-	ta_MASSI.c \
 	ta_MAVP.c \
 	ta_MAX.c \
 	ta_MAXINDEX.c \
@@ -144,6 +143,8 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_NATR.c \
 	ta_NVI.c \
 	ta_OBV.c \
+	ta_PERCENTILE.c \
+	ta_PERCENTRANK.c \
 	ta_PLUS_DI.c \
 	ta_PLUS_DM.c \
 	ta_PPO.c \

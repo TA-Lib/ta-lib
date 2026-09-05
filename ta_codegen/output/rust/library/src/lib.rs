@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 188 technical-analysis indicators — moving averages, momentum oscillators,
+//! 189 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -169,7 +169,7 @@
 //! * [`TAN`](Core::TAN) — Vector Trigonometric Tan
 //! * [`TANH`](Core::TANH) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (39)
+//! ## Momentum Indicators (40)
 //!
 //! * [`AC`](Core::AC) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::ADX) — Average Directional Movement Index
@@ -182,6 +182,7 @@
 //! * [`CCI`](Core::CCI) — Commodity Channel Index
 //! * [`CMO`](Core::CMO) — Chande Momentum Oscillator
 //! * [`CMOU`](Core::CMOU) — Chande Momentum Oscillator (Unsmoothed)
+//! * [`DPO`](Core::DPO) — Detrended Price Oscillator
 //! * [`DX`](Core::DX) — Directional Movement Index
 //! * [`FOSC`](Core::FOSC) — Forecast Oscillator
 //! * [`IMI`](Core::IMI) — Intraday Momentum Index
@@ -311,7 +312,7 @@
 //! * [`TYPPRICE`](Core::TYPPRICE) — Typical Price
 //! * [`WCLPRICE`](Core::WCLPRICE) — Weighted Close Price
 //!
-//! ## Statistic Functions (9)
+//! ## Statistic Functions (11)
 //!
 //! * [`BETA`](Core::BETA) — Beta
 //! * [`CORREL`](Core::CORREL) — Pearson's Correlation Coefficient (r)
@@ -319,16 +320,16 @@
 //! * [`LINEARREG_ANGLE`](Core::LINEARREG_ANGLE) — Linear Regression Angle
 //! * [`LINEARREG_INTERCEPT`](Core::LINEARREG_INTERCEPT) — Linear Regression Intercept
 //! * [`LINEARREG_SLOPE`](Core::LINEARREG_SLOPE) — Linear Regression Slope
+//! * [`PERCENTILE`](Core::PERCENTILE) — Percentile (nearest rank)
+//! * [`PERCENTRANK`](Core::PERCENTRANK) — Percent Rank
 //! * [`STDDEV`](Core::STDDEV) — Standard Deviation
 //! * [`TSF`](Core::TSF) — Time Series Forecast
 //! * [`VAR`](Core::VAR) — Variance
 //!
-//! ## Volatility Indicators (6)
+//! ## Volatility Indicators (4)
 //!
 //! * [`ADR`](Core::ADR) — Average Day Range
 //! * [`ATR`](Core::ATR) — Average True Range
-//! * [`CVI`](Core::CVI) — Chaikin's Volatility
-//! * [`MASSI`](Core::MASSI) — Mass Index
 //! * [`NATR`](Core::NATR) — Normalized Average True Range
 //! * [`TRANGE`](Core::TRANGE) — True Range
 //!

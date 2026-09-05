@@ -1650,69 +1650,6 @@ DEF_FUNCTION( COSH,
              );
 /* COSH END */
 
-/* CVI BEGIN */
-static const TA_OptInputParameterInfo TA_DEF_UI_D_CVI_TimePeriod =
-{
-   TA_OptInput_IntegerRange,
-   "optInTimePeriod",
-   0,
-
-   "Time Period",
-   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
-   10,
-   "Period of the EMA smoothing the high-low spread",
-
-   NULL
-};
-
-static const TA_IntegerRange TA_DEF_CVI_ROCPeriod =
-{
-   1,
-   100000,
-   4,
-   200,
-   1
-};
-
-static const TA_OptInputParameterInfo TA_DEF_UI_D_CVI_ROCPeriod =
-{
-   TA_OptInput_IntegerRange,
-   "optInROCPeriod",
-   0,
-
-   "ROC Period",
-   (const void *)&TA_DEF_CVI_ROCPeriod,
-   10,
-   "Number of bars the rate of change reaches back",
-
-   NULL
-};
-
-static const TA_InputParameterInfo    *TA_CVI_Inputs[]    =
-{
-  &TA_DEF_UI_Input_Price_HL,
-  NULL
-};
-
-static const TA_OutputParameterInfo   *TA_CVI_Outputs[]   =
-{
-  &TA_DEF_UI_Output_Real,
-  NULL
-};
-
-static const TA_OptInputParameterInfo *TA_CVI_OptInputs[] =
-{ &TA_DEF_UI_D_CVI_TimePeriod,
-  &TA_DEF_UI_D_CVI_ROCPeriod,
-  NULL
-};
-
-DEF_FUNCTION( CVI,
-              TA_GroupId_VolatilityIndicators,
-              "Chaikin's Volatility",
-              TA_FUNC_FLG_STREAM
-             );
-/* CVI END */
-
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -1788,7 +1725,6 @@ const TA_FuncDef *TA_DEF_TableC[] =
    ADD_TO_TABLE(CORREL),
    ADD_TO_TABLE(COS),
    ADD_TO_TABLE(COSH),
-   ADD_TO_TABLE(CVI),
    NULL
 };
 

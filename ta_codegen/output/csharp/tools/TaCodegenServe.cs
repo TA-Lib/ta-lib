@@ -211,10 +211,10 @@ public class TaCodegenServe {
             else if (method == "TA_CORREL") return Handle_CORREL(p, startIdx, endIdx);
             else if (method == "TA_COS") return Handle_COS(p, startIdx, endIdx);
             else if (method == "TA_COSH") return Handle_COSH(p, startIdx, endIdx);
-            else if (method == "TA_CVI") return Handle_CVI(p, startIdx, endIdx);
             else if (method == "TA_DEMA") return Handle_DEMA(p, startIdx, endIdx);
             else if (method == "TA_DIV") return Handle_DIV(p, startIdx, endIdx);
             else if (method == "TA_DONCHIAN") return Handle_DONCHIAN(p, startIdx, endIdx);
+            else if (method == "TA_DPO") return Handle_DPO(p, startIdx, endIdx);
             else if (method == "TA_DX") return Handle_DX(p, startIdx, endIdx);
             else if (method == "TA_EFI") return Handle_EFI(p, startIdx, endIdx);
             else if (method == "TA_EMA") return Handle_EMA(p, startIdx, endIdx);
@@ -243,7 +243,6 @@ public class TaCodegenServe {
             else if (method == "TA_MACDFIX") return Handle_MACDFIX(p, startIdx, endIdx);
             else if (method == "TA_MAMA") return Handle_MAMA(p, startIdx, endIdx);
             else if (method == "TA_MARKETFI") return Handle_MARKETFI(p, startIdx, endIdx);
-            else if (method == "TA_MASSI") return Handle_MASSI(p, startIdx, endIdx);
             else if (method == "TA_MAVP") return Handle_MAVP(p, startIdx, endIdx);
             else if (method == "TA_MAX") return Handle_MAX(p, startIdx, endIdx);
             else if (method == "TA_MAXINDEX") return Handle_MAXINDEX(p, startIdx, endIdx);
@@ -262,6 +261,8 @@ public class TaCodegenServe {
             else if (method == "TA_NATR") return Handle_NATR(p, startIdx, endIdx);
             else if (method == "TA_NVI") return Handle_NVI(p, startIdx, endIdx);
             else if (method == "TA_OBV") return Handle_OBV(p, startIdx, endIdx);
+            else if (method == "TA_PERCENTILE") return Handle_PERCENTILE(p, startIdx, endIdx);
+            else if (method == "TA_PERCENTRANK") return Handle_PERCENTRANK(p, startIdx, endIdx);
             else if (method == "TA_PLUS_DI") return Handle_PLUS_DI(p, startIdx, endIdx);
             else if (method == "TA_PLUS_DM") return Handle_PLUS_DM(p, startIdx, endIdx);
             else if (method == "TA_PPO") return Handle_PPO(p, startIdx, endIdx);
@@ -491,13 +492,13 @@ public class TaCodegenServe {
                 sb.Append(",");
                 sb.Append("\"TA_COSH\"");
                 sb.Append(",");
-                sb.Append("\"TA_CVI\"");
-                sb.Append(",");
                 sb.Append("\"TA_DEMA\"");
                 sb.Append(",");
                 sb.Append("\"TA_DIV\"");
                 sb.Append(",");
                 sb.Append("\"TA_DONCHIAN\"");
+                sb.Append(",");
+                sb.Append("\"TA_DPO\"");
                 sb.Append(",");
                 sb.Append("\"TA_DX\"");
                 sb.Append(",");
@@ -555,8 +556,6 @@ public class TaCodegenServe {
                 sb.Append(",");
                 sb.Append("\"TA_MARKETFI\"");
                 sb.Append(",");
-                sb.Append("\"TA_MASSI\"");
-                sb.Append(",");
                 sb.Append("\"TA_MAVP\"");
                 sb.Append(",");
                 sb.Append("\"TA_MAX\"");
@@ -592,6 +591,10 @@ public class TaCodegenServe {
                 sb.Append("\"TA_NVI\"");
                 sb.Append(",");
                 sb.Append("\"TA_OBV\"");
+                sb.Append(",");
+                sb.Append("\"TA_PERCENTILE\"");
+                sb.Append(",");
+                sb.Append("\"TA_PERCENTRANK\"");
                 sb.Append(",");
                 sb.Append("\"TA_PLUS_DI\"");
                 sb.Append(",");
@@ -21628,223 +21631,6 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
-    static string Sv_CVI(JsonElement req) {
-        int svShape = GetInt(req, "gen_shape", 0);
-        int svSeed = GetInt(req, "gen_seed", 0);
-        int svN = GetInt(req, "gen_n", 0);
-        if (svN < 2) svN = 2;
-        if (svN > 256) svN = 256;
-        int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
-        int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
-        int optInROCPeriod = GetInt(req, "optInROCPeriod", 10);
-        double[] fz_o = new double[svN];
-        double[] fz_h = new double[svN];
-        double[] fz_l = new double[svN];
-        double[] fz_c = new double[svN];
-        double[] fz_v = new double[svN];
-        double[] fz_oi = new double[svN];
-        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
-        double[] b0 = new double[svN];
-        long legs = 0;
-        bool allOk = true;
-        bool peekAll = true;
-        long peekReps = 0;
-        long peekRejects = 0;
-        bool peekRepAll = true;
-        int fillChecked = 0;
-        bool fillOk = true;
-        int beg = 0, nb = 0;
-        string diag = "";
-        int rangeChecked = 0;
-        bool rangeOk = true;
-        long rangeLegs = 0;
-        int rangeSites = 0;
-        int ufillChecked = 0;
-        bool ufillOk = true;
-        long zsign = 0;
-        long updAlloc = 0;
-        int rounds = 1;
-        for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
-            cb = cb.UnstablePeriod((FuncUnstId)5, svK);
-            Core c2;
-            try { c2 = cb.Build(); }
-            catch (ArgumentOutOfRangeException) {
-                return "{\"error\":\"unstablePeriod out of range\"}";
-            }
-            RetCode rc;
-            try { rc = c2.CVI_Impl(0, svN - 1, fz_h, fz_l, optInTimePeriod, optInROCPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
-            int lb = c2.CVI_Lookback(optInTimePeriod, optInROCPeriod);
-            if (rc != RetCode.Success || nb == 0) {
-                bool openRejects;
-                try { _ = c2.CviOpen(fz_h, fz_l, optInTimePeriod, optInROCPeriod); openRejects = false; }
-                catch (ArgumentException) { openRejects = true; }
-                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
-            }
-            fillChecked = 1;
-            try {
-                double[] f0 = new double[svN];
-                Array.Fill(f0, (double)-1.2345678901234e300);
-                Core.CviStream _fh = c2.CviOpenAndFill(fz_h, fz_l, optInTimePeriod, optInROCPeriod, f0);
-                OutRange _fr = _fh.OutRange;
-                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
-                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
-                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
-                else {
-                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
-                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
-                }
-                /* R2: aliasing cross product -- every real output x every input,
-                   then every same-typed output pair. Each must throw. */
-                try { _ = c2.CviOpenAndFill(fz_h, fz_l, optInTimePeriod, optInROCPeriod, fz_h); fillOk = false; }
-                catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
-                try { _ = c2.CviOpenAndFill(fz_h, fz_l, optInTimePeriod, optInROCPeriod, fz_l); fillOk = false; }
-                catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
-                double[] ovIn = new double[svN + 1];
-                Array.Copy(fz_h, ovIn, svN);
-                /* R2b: PARTIAL overlap -- only spans can express it, and it is
-                   the only shape that separates Overlaps from identity. */
-                try { _ = c2.CviOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, optInROCPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
-                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-            } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
-            Array.Sort(pcs);
-            int prevP = -1;
-            for (int pi = 0; pi < pcs.Length; pi++) {
-                int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
-                prevP = p;
-                Core.CviStream st;
-                try { st = c2.CviOpen(fz_h[..p], fz_l[..p], optInTimePeriod, optInROCPeriod); }
-                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
-                double v0 = st.Value;
-                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                for (int t = p; t < svN; t++) {
-                    bool pkTook = true;
-                    double pk = default;
-                    try { pk = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
-                    if (t % 7 == 0) {
-                        bool rpTook = pkTook;
-                        try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
-                        double rp = default;
-                        try { rp = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { rpTook = false; }
-                        if (rpTook) {
-                            peekReps++;
-                            if (SvBne(rp, pk)) peekRepAll = false;
-                        } else { peekRejects++; }
-                    }
-                    double up = st.Update(fz_h[t], fz_l[t]);
-                    if (pkTook && (SvBne(pk, up))) peekAll = false;
-                    try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
-                    double vc = st.Value;
-                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                }
-                if (allOk) {
-                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
-                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
-                }
-            }
-            {
-                int p = lb + 1 + seedShift;
-                if (p <= svN - 1) {
-                    ufillChecked = 1;
-                    try {
-                        Core.CviStream stu = c2.CviOpen(fz_h[..p], fz_l[..p], optInTimePeriod, optInROCPeriod);
-                        OutRange ur0 = stu.OutRange;
-                        double[] u0 = new double[svN];
-                        Array.Fill(u0, (double)-1.2345678901234e300);
-                        stu.UpdateAndFill(fz_h.AsSpan(p, 0), fz_l.AsSpan(p, 0), u0);
-                        try { stu.UpdateAndFill(fz_h.AsSpan(p), fz_l.AsSpan(p), new double[0]); ufillOk = false; } catch (ArgumentException) { /* expected: output shorter than the run */ }
-                        try { stu.UpdateAndFill(fz_h.AsSpan(p), fz_l.AsSpan(p), fz_h.AsSpan(p)); ufillOk = false; } catch (ArgumentException) { /* expected: output overlaps input */ }
-                        if (stu.OutRange.BegIdx != ur0.BegIdx || stu.OutRange.Count != ur0.Count) ufillOk = false;
-                        stu.UpdateAndFill(fz_h.AsSpan(p), fz_l.AsSpan(p), u0);
-                        for (int t = p; t < svN; t++) if (SvXtierNe(u0[t - p], b0[t - beg], ref zsign)) ufillOk = false;
-                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
-                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
-                        if (stu.OutRange.BegIdx != beg || stu.OutRange.Count != nb) { ufillOk = false; rangeOk = false; }
-                    } catch (ArgumentException) { ufillOk = false; }
-                }
-            }
-            {
-                int p0 = lb + 1 + seedShift;
-                if (p0 <= svN - 1) {
-                    try {
-                        Core.CviStream sA = c2.CviOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod, optInROCPeriod);
-                        int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
-                        Core.CviStream sB = sA.Clone();
-                        for (int t = mid; t < svN; t++) {
-                            double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                        }
-                        if (allOk) {
-                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
-                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
-                        }
-                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
-                }
-            }
-            {
-                int pa = lb + 1 + seedShift;
-                if (pa <= svN - 1) {
-                    try {
-                        Core.CviStream sQ = c2.CviOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod, optInROCPeriod);
-                        double sink = 0.0;
-                        long a0 = GC.GetAllocatedBytesForCurrentThread();
-                        for (int t = pa; t < svN; t++) {
-                            double uq = sQ.Update(fz_h[t], fz_l[t]);
-                            sink += uq;
-                        }
-                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
-                        svUpdSink += sink;
-                        if (ad > updAlloc) updAlloc = ad;
-                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
-                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
-                }
-            }
-            if (lb >= 1 && lb < svN) {
-                try { _ = c2.CviOpen(fz_h[..lb], fz_l[..lb], optInTimePeriod, optInROCPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
-                catch (InsufficientHistoryException) { /* expected, typed */ }
-                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
-            }
-            try {
-                Core.CviStream sD = c2.CviOpen(fz_h, fz_l, int.MinValue, int.MinValue);
-                Core.CviStream sE = c2.CviOpen(fz_h, fz_l, 10, 10);
-                double vD = sD.Value;
-                double vE = sE.Value;
-                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
-            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
-            {
-                int Sidx = lb + (svN - lb) / 3;
-                if (Sidx > lb && Sidx < svN - 1) {
-                    int begS = 0, nbS = 0;
-                    RetCode rcS;
-                    try { rcS = c2.CVI_Impl(Sidx, svN - 1, fz_h, fz_l, optInTimePeriod, optInROCPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
-                    if (rcS == RetCode.Success && nbS > 0) {
-                        try {
-                            Core.CviStream stA = c2.CviOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod, optInROCPeriod);
-                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
-                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
-                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
-                    }
-                }
-            }
-        }
-        string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
-    }
-
     static string Sv_DEMA(JsonElement req) {
         int svShape = GetInt(req, "gen_shape", 0);
         int svSeed = GetInt(req, "gen_seed", 0);
@@ -22533,6 +22319,219 @@ public class TaCodegenServe {
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.DonchianStream stA = c2.DonchianOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+    }
+
+    static string Sv_DPO(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int svCompat = GetInt(req, "compatibility", 0);
+        if (svCompat != 0) {
+            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        bool ufillOk = true;
+        long zsign = 0;
+        long updAlloc = 0;
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.DPO_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.DPO_Lookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.DpoOpen(fz_c, optInTimePeriod); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                Core.DpoStream _fh = c2.DpoOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.DpoOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.DpoOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.DpoStream st;
+                try { st = c2.DpoOpen(fz_c[..p], optInTimePeriod); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                double v0 = st.Value;
+                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    double pk = default;
+                    try { pk = st.Peek(fz_c[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        double rp = default;
+                        try { rp = st.Peek(fz_c[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.Update(fz_c[t]);
+                    if (pkTook && (SvBne(pk, up))) peekAll = false;
+                    try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.DpoStream stu = c2.DpoOpen(fz_c[..p], optInTimePeriod);
+                        OutRange ur0 = stu.OutRange;
+                        double[] u0 = new double[svN];
+                        Array.Fill(u0, (double)-1.2345678901234e300);
+                        stu.UpdateAndFill(fz_c.AsSpan(p, 0), u0);
+                        try { stu.UpdateAndFill(fz_c.AsSpan(p), new double[0]); ufillOk = false; } catch (ArgumentException) { /* expected: output shorter than the run */ }
+                        try { stu.UpdateAndFill(fz_c.AsSpan(p), fz_c.AsSpan(p)); ufillOk = false; } catch (ArgumentException) { /* expected: output overlaps input */ }
+                        if (stu.OutRange.BegIdx != ur0.BegIdx || stu.OutRange.Count != ur0.Count) ufillOk = false;
+                        stu.UpdateAndFill(fz_c.AsSpan(p), u0);
+                        for (int t = p; t < svN; t++) if (SvXtierNe(u0[t - p], b0[t - beg], ref zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.OutRange.BegIdx != beg || stu.OutRange.Count != nb) { ufillOk = false; rangeOk = false; }
+                    } catch (ArgumentException) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.DpoStream sA = c2.DpoOpen(fz_c[..p0], optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
+                        Core.DpoStream sB = sA.Clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.Update(fz_c[t]);
+                            double uB = sB.Update(fz_c[t]);
+                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1 + seedShift;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.DpoStream sQ = c2.DpoOpen(fz_c[..pa], optInTimePeriod);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            double uq = sQ.Update(fz_c[t]);
+                            sink += uq;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.DpoOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.DpoStream sD = c2.DpoOpen(fz_c, int.MinValue);
+                Core.DpoStream sE = c2.DpoOpen(fz_c, 20);
+                double vD = sD.Value;
+                double vE = sE.Value;
+                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.DPO_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
+                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.DpoStream stA = c2.DpoOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
                         } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
@@ -28811,223 +28810,6 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
     }
 
-    static string Sv_MASSI(JsonElement req) {
-        int svShape = GetInt(req, "gen_shape", 0);
-        int svSeed = GetInt(req, "gen_seed", 0);
-        int svN = GetInt(req, "gen_n", 0);
-        if (svN < 2) svN = 2;
-        if (svN > 256) svN = 256;
-        int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
-        int optInFastPeriod = GetInt(req, "optInFastPeriod", 9);
-        int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 25);
-        double[] fz_o = new double[svN];
-        double[] fz_h = new double[svN];
-        double[] fz_l = new double[svN];
-        double[] fz_c = new double[svN];
-        double[] fz_v = new double[svN];
-        double[] fz_oi = new double[svN];
-        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
-        double[] b0 = new double[svN];
-        long legs = 0;
-        bool allOk = true;
-        bool peekAll = true;
-        long peekReps = 0;
-        long peekRejects = 0;
-        bool peekRepAll = true;
-        int fillChecked = 0;
-        bool fillOk = true;
-        int beg = 0, nb = 0;
-        string diag = "";
-        int rangeChecked = 0;
-        bool rangeOk = true;
-        long rangeLegs = 0;
-        int rangeSites = 0;
-        int ufillChecked = 0;
-        bool ufillOk = true;
-        long zsign = 0;
-        long updAlloc = 0;
-        int rounds = 1;
-        for (int rd = 0; rd < rounds; rd++) {
-            CoreBuilder cb = Core.Builder();
-            cb = cb.UnstablePeriod((FuncUnstId)5, svK);
-            Core c2;
-            try { c2 = cb.Build(); }
-            catch (ArgumentOutOfRangeException) {
-                return "{\"error\":\"unstablePeriod out of range\"}";
-            }
-            RetCode rc;
-            try { rc = c2.MASSI_Impl(0, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out beg, out nb, b0); }
-            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
-            int lb = c2.MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
-            if (rc != RetCode.Success || nb == 0) {
-                bool openRejects;
-                try { _ = c2.MassiOpen(fz_h, fz_l, optInFastPeriod, optInSlowPeriod); openRejects = false; }
-                catch (ArgumentException) { openRejects = true; }
-                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
-            }
-            fillChecked = 1;
-            try {
-                double[] f0 = new double[svN];
-                Array.Fill(f0, (double)-1.2345678901234e300);
-                Core.MassiStream _fh = c2.MassiOpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, f0);
-                OutRange _fr = _fh.OutRange;
-                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
-                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
-                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
-                else {
-                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
-                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
-                }
-                /* R2: aliasing cross product -- every real output x every input,
-                   then every same-typed output pair. Each must throw. */
-                try { _ = c2.MassiOpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, fz_h); fillOk = false; }
-                catch (ArgumentException) { /* expected: output 0 aliases input inHigh */ }
-                try { _ = c2.MassiOpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, fz_l); fillOk = false; }
-                catch (ArgumentException) { /* expected: output 0 aliases input inLow */ }
-                double[] ovIn = new double[svN + 1];
-                Array.Copy(fz_h, ovIn, svN);
-                /* R2b: PARTIAL overlap -- only spans can express it, and it is
-                   the only shape that separates Overlaps from identity. */
-                try { _ = c2.MassiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInFastPeriod, optInSlowPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
-                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
-            } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
-            Array.Sort(pcs);
-            int prevP = -1;
-            for (int pi = 0; pi < pcs.Length; pi++) {
-                int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
-                prevP = p;
-                Core.MassiStream st;
-                try { st = c2.MassiOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod); }
-                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
-                legs++;
-                double v0 = st.Value;
-                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                for (int t = p; t < svN; t++) {
-                    bool pkTook = true;
-                    double pk = default;
-                    try { pk = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
-                    if (t % 7 == 0) {
-                        bool rpTook = pkTook;
-                        try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
-                        double rp = default;
-                        try { rp = st.Peek(fz_h[t], fz_l[t]); } catch (ArgumentException) { rpTook = false; }
-                        if (rpTook) {
-                            peekReps++;
-                            if (SvBne(rp, pk)) peekRepAll = false;
-                        } else { peekRejects++; }
-                    }
-                    double up = st.Update(fz_h[t], fz_l[t]);
-                    if (pkTook && (SvBne(pk, up))) peekAll = false;
-                    try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1]); } catch (ArgumentException) { peekRejects++; }
-                    double vc = st.Value;
-                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
-                }
-                if (allOk) {
-                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
-                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
-                }
-            }
-            {
-                int p = lb + 1 + seedShift;
-                if (p <= svN - 1) {
-                    ufillChecked = 1;
-                    try {
-                        Core.MassiStream stu = c2.MassiOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod);
-                        OutRange ur0 = stu.OutRange;
-                        double[] u0 = new double[svN];
-                        Array.Fill(u0, (double)-1.2345678901234e300);
-                        stu.UpdateAndFill(fz_h.AsSpan(p, 0), fz_l.AsSpan(p, 0), u0);
-                        try { stu.UpdateAndFill(fz_h.AsSpan(p), fz_l.AsSpan(p), new double[0]); ufillOk = false; } catch (ArgumentException) { /* expected: output shorter than the run */ }
-                        try { stu.UpdateAndFill(fz_h.AsSpan(p), fz_l.AsSpan(p), fz_h.AsSpan(p)); ufillOk = false; } catch (ArgumentException) { /* expected: output overlaps input */ }
-                        if (stu.OutRange.BegIdx != ur0.BegIdx || stu.OutRange.Count != ur0.Count) ufillOk = false;
-                        stu.UpdateAndFill(fz_h.AsSpan(p), fz_l.AsSpan(p), u0);
-                        for (int t = p; t < svN; t++) if (SvXtierNe(u0[t - p], b0[t - beg], ref zsign)) ufillOk = false;
-                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
-                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
-                        if (stu.OutRange.BegIdx != beg || stu.OutRange.Count != nb) { ufillOk = false; rangeOk = false; }
-                    } catch (ArgumentException) { ufillOk = false; }
-                }
-            }
-            {
-                int p0 = lb + 1 + seedShift;
-                if (p0 <= svN - 1) {
-                    try {
-                        Core.MassiStream sA = c2.MassiOpen(fz_h[..p0], fz_l[..p0], optInFastPeriod, optInSlowPeriod);
-                        int mid = (p0 + svN) / 2;
-                        for (int t = p0; t < mid; t++) sA.Update(fz_h[t], fz_l[t]);
-                        Core.MassiStream sB = sA.Clone();
-                        for (int t = mid; t < svN; t++) {
-                            double uA = sA.Update(fz_h[t], fz_l[t]);
-                            double uB = sB.Update(fz_h[t], fz_l[t]);
-                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                        }
-                        if (allOk) {
-                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
-                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
-                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
-                        }
-                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
-                }
-            }
-            {
-                int pa = lb + 1 + seedShift;
-                if (pa <= svN - 1) {
-                    try {
-                        Core.MassiStream sQ = c2.MassiOpen(fz_h[..pa], fz_l[..pa], optInFastPeriod, optInSlowPeriod);
-                        double sink = 0.0;
-                        long a0 = GC.GetAllocatedBytesForCurrentThread();
-                        for (int t = pa; t < svN; t++) {
-                            double uq = sQ.Update(fz_h[t], fz_l[t]);
-                            sink += uq;
-                        }
-                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
-                        svUpdSink += sink;
-                        if (ad > updAlloc) updAlloc = ad;
-                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
-                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
-                }
-            }
-            if (lb >= 1 && lb < svN) {
-                try { _ = c2.MassiOpen(fz_h[..lb], fz_l[..lb], optInFastPeriod, optInSlowPeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
-                catch (InsufficientHistoryException) { /* expected, typed */ }
-                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
-            }
-            try {
-                Core.MassiStream sD = c2.MassiOpen(fz_h, fz_l, int.MinValue, int.MinValue);
-                Core.MassiStream sE = c2.MassiOpen(fz_h, fz_l, 9, 25);
-                double vD = sD.Value;
-                double vE = sE.Value;
-                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
-            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
-            {
-                int Sidx = lb + (svN - lb) / 3;
-                if (Sidx > lb && Sidx < svN - 1) {
-                    int begS = 0, nbS = 0;
-                    RetCode rcS;
-                    try { rcS = c2.MASSI_Impl(Sidx, svN - 1, fz_h, fz_l, optInFastPeriod, optInSlowPeriod, out begS, out nbS, b0); }
-                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
-                    if (rcS == RetCode.Success && nbS > 0) {
-                        try {
-                            Core.MassiStream stA = c2.MassiOpenInternal(fz_h[..svN], fz_l[..svN], Sidx, optInFastPeriod, optInSlowPeriod);
-                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
-                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
-                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
-                    }
-                }
-            }
-        }
-        string extra = ",\"updAlloc\":" + updAlloc;
-        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
-    }
-
     static string Sv_MAVP(JsonElement req) {
         int svShape = GetInt(req, "gen_shape", 0);
         int svSeed = GetInt(req, "gen_seed", 0);
@@ -32900,6 +32682,433 @@ public class TaCodegenServe {
                     if (rcS == RetCode.Success && nbS > 0) {
                         try {
                             Core.ObvStream stA = c2.ObvOpenInternal(fz_c[..svN], fz_v[..svN], Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+    }
+
+    static string Sv_PERCENTILE(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int svCompat = GetInt(req, "compatibility", 0);
+        if (svCompat != 0) {
+            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
+        double optInPercentile = GetDouble(req, "optInPercentile", 5e1);
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        bool ufillOk = true;
+        long zsign = 0;
+        long updAlloc = 0;
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.PERCENTILE_Impl(0, svN - 1, fz_c, optInTimePeriod, optInPercentile, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.PercentileOpen(fz_c, optInTimePeriod, optInPercentile); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                Core.PercentileStream _fh = c2.PercentileOpenAndFill(fz_c, optInTimePeriod, optInPercentile, f0);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.PercentileOpenAndFill(fz_c, optInTimePeriod, optInPercentile, fz_c); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PercentileOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInPercentile, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.PercentileStream st;
+                try { st = c2.PercentileOpen(fz_c[..p], optInTimePeriod, optInPercentile); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                double v0 = st.Value;
+                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    double pk = default;
+                    try { pk = st.Peek(fz_c[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        double rp = default;
+                        try { rp = st.Peek(fz_c[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.Update(fz_c[t]);
+                    if (pkTook && (SvBne(pk, up))) peekAll = false;
+                    try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.PercentileStream stu = c2.PercentileOpen(fz_c[..p], optInTimePeriod, optInPercentile);
+                        OutRange ur0 = stu.OutRange;
+                        double[] u0 = new double[svN];
+                        Array.Fill(u0, (double)-1.2345678901234e300);
+                        stu.UpdateAndFill(fz_c.AsSpan(p, 0), u0);
+                        try { stu.UpdateAndFill(fz_c.AsSpan(p), new double[0]); ufillOk = false; } catch (ArgumentException) { /* expected: output shorter than the run */ }
+                        try { stu.UpdateAndFill(fz_c.AsSpan(p), fz_c.AsSpan(p)); ufillOk = false; } catch (ArgumentException) { /* expected: output overlaps input */ }
+                        if (stu.OutRange.BegIdx != ur0.BegIdx || stu.OutRange.Count != ur0.Count) ufillOk = false;
+                        stu.UpdateAndFill(fz_c.AsSpan(p), u0);
+                        for (int t = p; t < svN; t++) if (SvXtierNe(u0[t - p], b0[t - beg], ref zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.OutRange.BegIdx != beg || stu.OutRange.Count != nb) { ufillOk = false; rangeOk = false; }
+                    } catch (ArgumentException) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.PercentileStream sA = c2.PercentileOpen(fz_c[..p0], optInTimePeriod, optInPercentile);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
+                        Core.PercentileStream sB = sA.Clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.Update(fz_c[t]);
+                            double uB = sB.Update(fz_c[t]);
+                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1 + seedShift;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.PercentileStream sQ = c2.PercentileOpen(fz_c[..pa], optInTimePeriod, optInPercentile);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            double uq = sQ.Update(fz_c[t]);
+                            sink += uq;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.PercentileOpen(fz_c[..lb], optInTimePeriod, optInPercentile); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.PercentileStream sD = c2.PercentileOpen(fz_c, int.MinValue, optInPercentile);
+                Core.PercentileStream sE = c2.PercentileOpen(fz_c, 30, optInPercentile);
+                double vD = sD.Value;
+                double vE = sE.Value;
+                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.PERCENTILE_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInPercentile, out begS, out nbS, b0); }
+                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.PercentileStream stA = c2.PercentileOpenInternal(fz_c[..svN], Sidx, optInTimePeriod, optInPercentile);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
+                        } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        string extra = ",\"updAlloc\":" + updAlloc;
+        return "{\"retCode\":0,\"beg\":" + beg + ",\"nb\":" + nb + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign + extra + diag + "}";
+    }
+
+    static string Sv_PERCENTRANK(JsonElement req) {
+        int svShape = GetInt(req, "gen_shape", 0);
+        int svSeed = GetInt(req, "gen_seed", 0);
+        int svN = GetInt(req, "gen_n", 0);
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = GetInt(req, "unstablePeriod", 0);
+        int svCompat = GetInt(req, "compatibility", 0);
+        if (svCompat != 0) {
+            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = GetInt(req, "optInTimePeriod", 100);
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.FuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        bool allOk = true;
+        bool peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        bool peekRepAll = true;
+        int fillChecked = 0;
+        bool fillOk = true;
+        int beg = 0, nb = 0;
+        string diag = "";
+        int rangeChecked = 0;
+        bool rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        bool ufillOk = true;
+        long zsign = 0;
+        long updAlloc = 0;
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            CoreBuilder cb = Core.Builder();
+            Core c2;
+            try { c2 = cb.Build(); }
+            catch (ArgumentOutOfRangeException) {
+                return "{\"error\":\"unstablePeriod out of range\"}";
+            }
+            RetCode rc;
+            try { rc = c2.PERCENTRANK_Impl(0, svN - 1, fz_c, optInTimePeriod, out beg, out nb, b0); }
+            catch (Exception _sve) when (_sve is ITaLibFailure) { rc = ((ITaLibFailure)_sve).RetCode; beg = 0; nb = 0; }
+            int lb = c2.PERCENTRANK_Lookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb == 0) {
+                bool openRejects;
+                try { _ = c2.PercentrankOpen(fz_c, optInTimePeriod); openRejects = false; }
+                catch (ArgumentException) { openRejects = true; }
+                return "{\"retCode\":" + (int)rc + ",\"legs\":0,\"nb\":" + nb + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                Array.Fill(f0, (double)-1.2345678901234e300);
+                Core.PercentrankStream _fh = c2.PercentrankOpenAndFill(fz_c, optInTimePeriod, f0);
+                OutRange _fr = _fh.OutRange;
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.BegIdx != beg || _fr.Count != nb) rangeOk = false;
+                if (_fr.BegIdx != beg || _fr.Count != nb) fillOk = false;
+                else {
+                    for (int bi = 0; bi < nb; bi++) if (SvXtierNe(f0[bi], b0[bi], ref zsign)) fillOk = false;
+                    for (int bi = nb; bi < svN; bi++) if (f0[bi] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                /* R2: aliasing cross product -- every real output x every input,
+                   then every same-typed output pair. Each must throw. */
+                try { _ = c2.PercentrankOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 aliases input inReal */ }
+                double[] ovIn = new double[svN + 1];
+                Array.Copy(fz_c, ovIn, svN);
+                /* R2b: PARTIAL overlap -- only spans can express it, and it is
+                   the only shape that separates Overlaps from identity. */
+                try { _ = c2.PercentrankOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
+                catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
+            } catch (ArgumentException) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            Array.Sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.Length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.PercentrankStream st;
+                try { st = c2.PercentrankOpen(fz_c[..p], optInTimePeriod); }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                double v0 = st.Value;
+                if (SvXtierNe(v0, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    bool pkTook = true;
+                    double pk = default;
+                    try { pk = st.Peek(fz_c[t]); } catch (ArgumentException) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        bool rpTook = pkTook;
+                        try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                        double rp = default;
+                        try { rp = st.Peek(fz_c[t]); } catch (ArgumentException) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (SvBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.Update(fz_c[t]);
+                    if (pkTook && (SvBne(pk, up))) peekAll = false;
+                    try { _ = st.Peek(fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
+                    double vc = st.Value;
+                    if (SvBne(vc, up)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up).ToString("x16") + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.OutRange.BegIdx != beg || st.OutRange.Count != nb) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.PercentrankStream stu = c2.PercentrankOpen(fz_c[..p], optInTimePeriod);
+                        OutRange ur0 = stu.OutRange;
+                        double[] u0 = new double[svN];
+                        Array.Fill(u0, (double)-1.2345678901234e300);
+                        stu.UpdateAndFill(fz_c.AsSpan(p, 0), u0);
+                        try { stu.UpdateAndFill(fz_c.AsSpan(p), new double[0]); ufillOk = false; } catch (ArgumentException) { /* expected: output shorter than the run */ }
+                        try { stu.UpdateAndFill(fz_c.AsSpan(p), fz_c.AsSpan(p)); ufillOk = false; } catch (ArgumentException) { /* expected: output overlaps input */ }
+                        if (stu.OutRange.BegIdx != ur0.BegIdx || stu.OutRange.Count != ur0.Count) ufillOk = false;
+                        stu.UpdateAndFill(fz_c.AsSpan(p), u0);
+                        for (int t = p; t < svN; t++) if (SvXtierNe(u0[t - p], b0[t - beg], ref zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.OutRange.BegIdx != beg || stu.OutRange.Count != nb) { ufillOk = false; rangeOk = false; }
+                    } catch (ArgumentException) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.PercentrankStream sA = c2.PercentrankOpen(fz_c[..p0], optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.Update(fz_c[t]);
+                        Core.PercentrankStream sB = sA.Clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.Update(fz_c[t]);
+                            double uB = sB.Update(fz_c[t]);
+                            if (SvBne(uA, uB) || SvXtierNe(uA, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.OutRange.BegIdx != beg || sA.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.OutRange.BegIdx != beg || sB.OutRange.Count != nb) { rangeOk = false; if (diag.Length == 0) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            {
+                int pa = lb + 1 + seedShift;
+                if (pa <= svN - 1) {
+                    try {
+                        Core.PercentrankStream sQ = c2.PercentrankOpen(fz_c[..pa], optInTimePeriod);
+                        double sink = 0.0;
+                        long a0 = GC.GetAllocatedBytesForCurrentThread();
+                        for (int t = pa; t < svN; t++) {
+                            double uq = sQ.Update(fz_c[t]);
+                            sink += uq;
+                        }
+                        long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
+                        svUpdSink += sink;
+                        if (ad > updAlloc) updAlloc = ad;
+                        if (ad != 0) { allOk = false; if (diag.Length == 0) diag = ",\"updAllocBytes\":" + ad; }
+                    } catch (ArgumentException) { /* open rejects here -- nothing to measure */ }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { _ = c2.PercentrankOpen(fz_c[..lb], optInTimePeriod); allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException) { /* expected, typed */ }
+                catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.PercentrankStream sD = c2.PercentrankOpen(fz_c, int.MinValue);
+                Core.PercentrankStream sE = c2.PercentrankOpen(fz_c, 100);
+                double vD = sD.Value;
+                double vE = sE.Value;
+                if (SvBne(vD, vE)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+            } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    int begS = 0, nbS = 0;
+                    RetCode rcS;
+                    try { rcS = c2.PERCENTRANK_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, out begS, out nbS, b0); }
+                    catch (Exception _sve) when (_sve is ITaLibFailure) { rcS = ((ITaLibFailure)_sve).RetCode; }
+                    if (rcS == RetCode.Success && nbS > 0) {
+                        try {
+                            Core.PercentrankStream stA = c2.PercentrankOpenInternal(fz_c[..svN], Sidx, optInTimePeriod);
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
                             if (stA.OutRange.BegIdx != begS || stA.OutRange.Count != nbS) rangeOk = false;
                         } catch (ArgumentException) { rangeOk = false; if (diag.Length == 0) diag = ",\"anchoredOpenRejected\":1"; }
@@ -43257,10 +43466,10 @@ public class TaCodegenServe {
         case "TA_CORREL": return Sv_CORREL(req);
         case "TA_COS": return Sv_COS(req);
         case "TA_COSH": return Sv_COSH(req);
-        case "TA_CVI": return Sv_CVI(req);
         case "TA_DEMA": return Sv_DEMA(req);
         case "TA_DIV": return Sv_DIV(req);
         case "TA_DONCHIAN": return Sv_DONCHIAN(req);
+        case "TA_DPO": return Sv_DPO(req);
         case "TA_DX": return Sv_DX(req);
         case "TA_EFI": return Sv_EFI(req);
         case "TA_EMA": return Sv_EMA(req);
@@ -43289,7 +43498,6 @@ public class TaCodegenServe {
         case "TA_MACDFIX": return Sv_MACDFIX(req);
         case "TA_MAMA": return Sv_MAMA(req);
         case "TA_MARKETFI": return Sv_MARKETFI(req);
-        case "TA_MASSI": return Sv_MASSI(req);
         case "TA_MAVP": return Sv_MAVP(req);
         case "TA_MAX": return Sv_MAX(req);
         case "TA_MAXINDEX": return Sv_MAXINDEX(req);
@@ -43308,6 +43516,8 @@ public class TaCodegenServe {
         case "TA_NATR": return Sv_NATR(req);
         case "TA_NVI": return Sv_NVI(req);
         case "TA_OBV": return Sv_OBV(req);
+        case "TA_PERCENTILE": return Sv_PERCENTILE(req);
+        case "TA_PERCENTRANK": return Sv_PERCENTRANK(req);
         case "TA_PLUS_DI": return Sv_PLUS_DI(req);
         case "TA_PLUS_DM": return Sv_PLUS_DM(req);
         case "TA_PPO": return Sv_PPO(req);
@@ -43666,11 +43876,6 @@ public class TaCodegenServe {
         case "COSH": {
             return core.COSH_Lookback();
         }
-        case "CVI": {
-            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-            int optInROCPeriod = GetInt(p, "optInROCPeriod", 0);
-            return core.CVI_Lookback(optInTimePeriod, optInROCPeriod);
-        }
         case "DEMA": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             return core.DEMA_Lookback(optInTimePeriod);
@@ -43681,6 +43886,10 @@ public class TaCodegenServe {
         case "DONCHIAN": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
             return core.DONCHIAN_Lookback(optInTimePeriod);
+        }
+        case "DPO": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.DPO_Lookback(optInTimePeriod);
         }
         case "DX": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -43794,11 +44003,6 @@ public class TaCodegenServe {
         case "MARKETFI": {
             return core.MARKETFI_Lookback();
         }
-        case "MASSI": {
-            int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
-            int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-            return core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
-        }
         case "MAVP": {
             int optInMinPeriod = GetInt(p, "optInMinPeriod", 0);
             int optInMaxPeriod = GetInt(p, "optInMaxPeriod", 0);
@@ -43868,6 +44072,15 @@ public class TaCodegenServe {
         }
         case "OBV": {
             return core.OBV_Lookback();
+        }
+        case "PERCENTILE": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            double optInPercentile = GetDouble(p, "optInPercentile", 0.0);
+            return core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
+        }
+        case "PERCENTRANK": {
+            int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+            return core.PERCENTRANK_Lookback(optInTimePeriod);
         }
         case "PLUS_DI": {
             int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
@@ -56407,136 +56620,6 @@ public class TaCodegenServe {
         return sb.ToString();
     }
 
-    static string Handle_CVI(JsonElement p, int startIdx, int endIdx) {
-        int use_preloaded = GetInt(p, "use_preloaded", 0);
-        int bench_iters = GetInt(p, "iters", 1);
-        if (bench_iters < 1) bench_iters = 1;
-        int bench_mode = GetInt(p, "bench_mode", 0);
-        double[] inHigh;
-        double[] inLow;
-        if (use_preloaded != 0 && refN > 0) {
-            inHigh = new double[refN]; Array.Copy(refHigh, inHigh, refN);
-            inLow = new double[refN]; Array.Copy(refLow, inLow, refN);
-        } else {
-            inHigh = GetDoubleArray(p, "inHigh");
-            inLow = GetDoubleArray(p, "inLow");
-        }
-        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
-        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
-        int optInROCPeriod = GetInt(p, "optInROCPeriod", 0);
-        // The output buffers are sized to the count the call actually PRODUCES --
-        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
-        // never below one. Not to the width of the requested range: that is the bound the
-        // managed backends check and the Rust asserts state, and at the range width it was
-        // slack by exactly the lookback, so no call could ever approach it.
-        // The pad is there because a bound is a MINIMUM, never an equality. A caller
-        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
-        // the reported OutRange is what says which part was written. So the harness sends
-        // both: the startIdx axis sends no pad (the bound is reachable) while the
-        // full-range value comparison sends one (slack is legal). Sizing every call one way
-        // would silently drop the other property.
-        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
-        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
-        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
-        // sizes and cannot make the check, so an exact buffer would test nothing there.
-        int _lb = core.CVI_Lookback(optInTimePeriod, optInROCPeriod);
-        int _cs = startIdx > _lb ? startIdx : _lb;
-        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
-        double[] outArr0 = new double[_outLen];
-        int outBegIdx = 0, outNBElement = 0;
-        RetCode rc = RetCode.Success;
-        long _t0 = 0;
-        for (int _bi = 0; _bi <= bench_iters; _bi++) {
-            if (_bi == 1) _t0 = GetNanoTime();
-            if (bench_mode == 0) {
-            if (GetInt(p, "timed", 0) != 0) {
-                try {
-                    rc = core.CVI_Impl(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
-                    outBegIdx = 0;
-                    outNBElement = 0;
-                }
-            } else {
-                try {
-                    OutRange _pr = core.CVI(startIdx, endIdx, inHigh, inLow, optInTimePeriod, optInROCPeriod, outArr0);
-                    outBegIdx = _pr.BegIdx;
-                    outNBElement = _pr.Count;
-                    rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
-                    outBegIdx = 0;
-                    outNBElement = 0;
-                }
-            }
-            } else if (bench_mode == 1) {
-                try {
-                    core.CviOpen(_warm_inHigh, _warm_inLow, optInTimePeriod, optInROCPeriod);
-                    rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
-                }
-            } else {
-                try {
-                    Core.CviStream _wh = core.CviOpenAndFill(_warm_inHigh, _warm_inLow, optInTimePeriod, optInROCPeriod, outArr0);
-                    outBegIdx = _wh.OutRange.BegIdx;
-                    outNBElement = _wh.OutRange.Count;
-                    rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
-                    outBegIdx = 0;
-                    outNBElement = 0;
-                }
-            }
-        }
-        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
-        int usedFloat = 0;
-        if (GetInt(p, "use_float", 0) != 0) {
-            var f_inHigh = new float[inHigh.Length];
-            for (int _fi = 0; _fi < inHigh.Length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
-            var f_inLow = new float[inLow.Length];
-            for (int _fi = 0; _fi < inLow.Length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            try {
-                OutRange _fr = core.CVI(startIdx, endIdx, f_inHigh, f_inLow, optInTimePeriod, optInROCPeriod, outArr0);
-                outBegIdx = _fr.BegIdx;
-                outNBElement = _fr.Count;
-                rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
-                outBegIdx = 0;
-                outNBElement = 0;
-            }
-            usedFloat = 1;
-        }
-        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
-            ulong _h = SvHashInit();
-            if (rc == RetCode.Success && outNBElement > 0) {
-                _h = SvHashF64(_h, outArr0, outNBElement);
-            }
-            _h = SvHashFin(_h);
-            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
-        }
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
-        sb.Append($",\"out_len\":{_outLen}");
-        if (GetInt(p, "no_output", 0) == 0) {
-            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
-        }
-        sb.Append($",\"used_float\":{usedFloat}");
-        sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append("}");
-        return sb.ToString();
-    }
-
     static string Handle_DEMA(JsonElement p, int startIdx, int endIdx) {
         int use_preloaded = GetInt(p, "use_preloaded", 0);
         int bench_iters = GetInt(p, "iters", 1);
@@ -56916,6 +56999,129 @@ public class TaCodegenServe {
             sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
             sb.Append(",\"outReal1\":"); sb.Append(FormatArray(outArr1, outNBElement));
             sb.Append(",\"outReal2\":"); sb.Append(FormatArray(outArr2, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_DPO(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[refN]; Array.Copy(refClose, inReal, refN);
+        } else {
+            inReal = GetDoubleArray(p, "inReal");
+        }
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.DPO_Lookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.DPO_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.DPO(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            } else if (bench_mode == 1) {
+                try {
+                    core.DpoOpen(_warm_inReal, optInTimePeriod);
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                }
+            } else {
+                try {
+                    Core.DpoStream _wh = core.DpoOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                    outBegIdx = _wh.OutRange.BegIdx;
+                    outNBElement = _wh.OutRange.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inReal = new float[inReal.Length];
+            for (int _fi = 0; _fi < inReal.Length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            try {
+                OutRange _fr = core.DPO(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITaLibFailure) {
+                rc = ((ITaLibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
         }
         sb.Append($",\"used_float\":{usedFloat}");
         sb.Append($",\"timing_ns\":{elapsedNs}");
@@ -60458,136 +60664,6 @@ public class TaCodegenServe {
         return sb.ToString();
     }
 
-    static string Handle_MASSI(JsonElement p, int startIdx, int endIdx) {
-        int use_preloaded = GetInt(p, "use_preloaded", 0);
-        int bench_iters = GetInt(p, "iters", 1);
-        if (bench_iters < 1) bench_iters = 1;
-        int bench_mode = GetInt(p, "bench_mode", 0);
-        double[] inHigh;
-        double[] inLow;
-        if (use_preloaded != 0 && refN > 0) {
-            inHigh = new double[refN]; Array.Copy(refHigh, inHigh, refN);
-            inLow = new double[refN]; Array.Copy(refLow, inLow, refN);
-        } else {
-            inHigh = GetDoubleArray(p, "inHigh");
-            inLow = GetDoubleArray(p, "inLow");
-        }
-        ReadOnlySpan<double> _warm_inHigh = bench_mode == 0 ? default : inHigh.AsSpan(0, endIdx + 1);
-        ReadOnlySpan<double> _warm_inLow = bench_mode == 0 ? default : inLow.AsSpan(0, endIdx + 1);
-        int optInFastPeriod = GetInt(p, "optInFastPeriod", 0);
-        int optInSlowPeriod = GetInt(p, "optInSlowPeriod", 0);
-        // The output buffers are sized to the count the call actually PRODUCES --
-        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
-        // never below one. Not to the width of the requested range: that is the bound the
-        // managed backends check and the Rust asserts state, and at the range width it was
-        // slack by exactly the lookback, so no call could ever approach it.
-        // The pad is there because a bound is a MINIMUM, never an equality. A caller
-        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
-        // the reported OutRange is what says which part was written. So the harness sends
-        // both: the startIdx axis sends no pad (the bound is reachable) while the
-        // full-range value comparison sends one (slack is legal). Sizing every call one way
-        // would silently drop the other property.
-        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
-        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
-        // for a range shorter than the lookback, where the output bound switches off and
-        // the spec says any length will do, including none. It does not: two EMPTY output
-        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
-        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
-        // accepted by C and Java -- a four-way divergence on a call the specification says
-        // all four accept. Sizing to zero here would reach it on every multi-output
-        // function, which is a semantic question, not a harness one. Recorded as
-        // error-handling-spec, open item 11.
-        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
-        // sizes and cannot make the check, so an exact buffer would test nothing there.
-        int _lb = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
-        int _cs = startIdx > _lb ? startIdx : _lb;
-        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
-        double[] outArr0 = new double[_outLen];
-        int outBegIdx = 0, outNBElement = 0;
-        RetCode rc = RetCode.Success;
-        long _t0 = 0;
-        for (int _bi = 0; _bi <= bench_iters; _bi++) {
-            if (_bi == 1) _t0 = GetNanoTime();
-            if (bench_mode == 0) {
-            if (GetInt(p, "timed", 0) != 0) {
-                try {
-                    rc = core.MASSI_Impl(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, out outBegIdx, out outNBElement, outArr0);
-                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e2).RetCode;
-                    outBegIdx = 0;
-                    outNBElement = 0;
-                }
-            } else {
-                try {
-                    OutRange _pr = core.MASSI(startIdx, endIdx, inHigh, inLow, optInFastPeriod, optInSlowPeriod, outArr0);
-                    outBegIdx = _pr.BegIdx;
-                    outNBElement = _pr.Count;
-                    rc = RetCode.Success;
-                } catch (Exception _e) when (_e is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e).RetCode;
-                    outBegIdx = 0;
-                    outNBElement = 0;
-                }
-            }
-            } else if (bench_mode == 1) {
-                try {
-                    core.MassiOpen(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod);
-                    rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
-                }
-            } else {
-                try {
-                    Core.MassiStream _wh = core.MassiOpenAndFill(_warm_inHigh, _warm_inLow, optInFastPeriod, optInSlowPeriod, outArr0);
-                    outBegIdx = _wh.OutRange.BegIdx;
-                    outNBElement = _wh.OutRange.Count;
-                    rc = RetCode.Success;
-                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
-                    rc = ((ITaLibFailure)_e3).RetCode;
-                    outBegIdx = 0;
-                    outNBElement = 0;
-                }
-            }
-        }
-        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
-        int usedFloat = 0;
-        if (GetInt(p, "use_float", 0) != 0) {
-            var f_inHigh = new float[inHigh.Length];
-            for (int _fi = 0; _fi < inHigh.Length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
-            var f_inLow = new float[inLow.Length];
-            for (int _fi = 0; _fi < inLow.Length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
-            try {
-                OutRange _fr = core.MASSI(startIdx, endIdx, f_inHigh, f_inLow, optInFastPeriod, optInSlowPeriod, outArr0);
-                outBegIdx = _fr.BegIdx;
-                outNBElement = _fr.Count;
-                rc = RetCode.Success;
-            } catch (Exception _e) when (_e is ITaLibFailure) {
-                rc = ((ITaLibFailure)_e).RetCode;
-                outBegIdx = 0;
-                outNBElement = 0;
-            }
-            usedFloat = 1;
-        }
-        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
-            ulong _h = SvHashInit();
-            if (rc == RetCode.Success && outNBElement > 0) {
-                _h = SvHashF64(_h, outArr0, outNBElement);
-            }
-            _h = SvHashFin(_h);
-            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
-        }
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
-        sb.Append($",\"out_len\":{_outLen}");
-        if (GetInt(p, "no_output", 0) == 0) {
-            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
-        }
-        sb.Append($",\"used_float\":{usedFloat}");
-        sb.Append($",\"timing_ns\":{elapsedNs}");
-        sb.Append("}");
-        return sb.ToString();
-    }
-
     static string Handle_MAVP(JsonElement p, int startIdx, int endIdx) {
         int use_preloaded = GetInt(p, "use_preloaded", 0);
         int bench_iters = GetInt(p, "iters", 1);
@@ -62863,6 +62939,253 @@ public class TaCodegenServe {
             for (int _fi = 0; _fi < inVolume.Length; _fi++) f_inVolume[_fi] = (float)inVolume[_fi];
             try {
                 OutRange _fr = core.OBV(startIdx, endIdx, f_inReal, f_inVolume, outArr0);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITaLibFailure) {
+                rc = ((ITaLibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_PERCENTILE(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[refN]; Array.Copy(refClose, inReal, refN);
+        } else {
+            inReal = GetDoubleArray(p, "inReal");
+        }
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        double optInPercentile = GetDouble(p, "optInPercentile", 0.0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.PERCENTILE_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.PERCENTILE(startIdx, endIdx, inReal, optInTimePeriod, optInPercentile, outArr0);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            } else if (bench_mode == 1) {
+                try {
+                    core.PercentileOpen(_warm_inReal, optInTimePeriod, optInPercentile);
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                }
+            } else {
+                try {
+                    Core.PercentileStream _wh = core.PercentileOpenAndFill(_warm_inReal, optInTimePeriod, optInPercentile, outArr0);
+                    outBegIdx = _wh.OutRange.BegIdx;
+                    outNBElement = _wh.OutRange.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inReal = new float[inReal.Length];
+            for (int _fi = 0; _fi < inReal.Length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            try {
+                OutRange _fr = core.PERCENTILE(startIdx, endIdx, f_inReal, optInTimePeriod, optInPercentile, outArr0);
+                outBegIdx = _fr.BegIdx;
+                outNBElement = _fr.Count;
+                rc = RetCode.Success;
+            } catch (Exception _e) when (_e is ITaLibFailure) {
+                rc = ((ITaLibFailure)_e).RetCode;
+                outBegIdx = 0;
+                outNBElement = 0;
+            }
+            usedFloat = 1;
+        }
+        if (GetInt(p, "want_hash", 0) != 0 && GetInt(p, "full_output", 0) == 0) {
+            ulong _h = SvHashInit();
+            if (rc == RetCode.Success && outNBElement > 0) {
+                _h = SvHashF64(_h, outArr0, outNBElement);
+            }
+            _h = SvHashFin(_h);
+            return $"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement},\"out_hash\":\"{_h:x16}\"}}";
+        }
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"{{\"retCode\":{(int)rc},\"outBegIdx\":{outBegIdx},\"outNBElement\":{outNBElement}");
+        sb.Append($",\"out_len\":{_outLen}");
+        if (GetInt(p, "no_output", 0) == 0) {
+            sb.Append(",\"outReal\":"); sb.Append(FormatArray(outArr0, outNBElement));
+        }
+        sb.Append($",\"used_float\":{usedFloat}");
+        sb.Append($",\"timing_ns\":{elapsedNs}");
+        sb.Append("}");
+        return sb.ToString();
+    }
+
+    static string Handle_PERCENTRANK(JsonElement p, int startIdx, int endIdx) {
+        int use_preloaded = GetInt(p, "use_preloaded", 0);
+        int bench_iters = GetInt(p, "iters", 1);
+        if (bench_iters < 1) bench_iters = 1;
+        int bench_mode = GetInt(p, "bench_mode", 0);
+        double[] inReal;
+        if (use_preloaded != 0 && refN > 0) {
+            inReal = new double[refN]; Array.Copy(refClose, inReal, refN);
+        } else {
+            inReal = GetDoubleArray(p, "inReal");
+        }
+        ReadOnlySpan<double> _warm_inReal = bench_mode == 0 ? default : inReal.AsSpan(0, endIdx + 1);
+        int optInTimePeriod = GetInt(p, "optInTimePeriod", 0);
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.PERCENTRANK_Lookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + GetInt(p, "out_pad", 0);
+        double[] outArr0 = new double[_outLen];
+        int outBegIdx = 0, outNBElement = 0;
+        RetCode rc = RetCode.Success;
+        long _t0 = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+            if (_bi == 1) _t0 = GetNanoTime();
+            if (bench_mode == 0) {
+            if (GetInt(p, "timed", 0) != 0) {
+                try {
+                    rc = core.PERCENTRANK_Impl(startIdx, endIdx, inReal, optInTimePeriod, out outBegIdx, out outNBElement, outArr0);
+                } catch (Exception _e2) when (_e2 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e2).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            } else {
+                try {
+                    OutRange _pr = core.PERCENTRANK(startIdx, endIdx, inReal, optInTimePeriod, outArr0);
+                    outBegIdx = _pr.BegIdx;
+                    outNBElement = _pr.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e) when (_e is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+            } else if (bench_mode == 1) {
+                try {
+                    core.PercentrankOpen(_warm_inReal, optInTimePeriod);
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                }
+            } else {
+                try {
+                    Core.PercentrankStream _wh = core.PercentrankOpenAndFill(_warm_inReal, optInTimePeriod, outArr0);
+                    outBegIdx = _wh.OutRange.BegIdx;
+                    outNBElement = _wh.OutRange.Count;
+                    rc = RetCode.Success;
+                } catch (Exception _e3) when (_e3 is ITaLibFailure) {
+                    rc = ((ITaLibFailure)_e3).RetCode;
+                    outBegIdx = 0;
+                    outNBElement = 0;
+                }
+            }
+        }
+        long elapsedNs = (GetNanoTime() - _t0) / bench_iters;
+        int usedFloat = 0;
+        if (GetInt(p, "use_float", 0) != 0) {
+            var f_inReal = new float[inReal.Length];
+            for (int _fi = 0; _fi < inReal.Length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            try {
+                OutRange _fr = core.PERCENTRANK(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
                 outBegIdx = _fr.BegIdx;
                 outNBElement = _fr.Count;
                 rc = RetCode.Success;

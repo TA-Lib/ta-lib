@@ -165,7 +165,7 @@ public enum OptInputFlags : uint
     /// <summary>No flags.</summary>
     None = 0,
 
-    /// <summary>The value is expressed as a percentage. No shipped function sets this bit.</summary>
+    /// <summary>The value is expressed as a percentage.</summary>
     IsPercent = 0x00100000,
 
     /// <summary>The value is expressed in degrees. No shipped function sets this bit.</summary>

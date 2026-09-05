@@ -1,0 +1,28 @@
+name: PERCENTILE
+group: Statistic Functions
+hint: Percentile (nearest rank)
+flags: [overlap, stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Number of bars in the window
+    range: [2, 100000]
+    default: 30
+    suggested: [4, 200, 1]
+  - name: optInPercentile
+    type: real
+    display_name: Percentile
+    hint: Percentile to report
+    range: [0, 100]
+    default: 50
+    precision: 2
+    flags: [percent]
+    suggested: [10, 90, 5]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

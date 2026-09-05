@@ -326,9 +326,6 @@ final class Dispatch {
          case "COSH":
             return core.COSH(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
-         case "CVI":
-            return core.CVI(
-               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "DEMA":
             return core.DEMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -338,6 +335,9 @@ final class Dispatch {
          case "DONCHIAN":
             return core.DONCHIAN(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "DPO":
+            return core.DPO(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "DX":
             return core.DX(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -422,9 +422,6 @@ final class Dispatch {
          case "MARKETFI":
             return core.MARKETFI(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 4), h.realOutput(0));
-         case "MASSI":
-            return core.MASSI(
-               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "MAVP":
             return core.MAVP(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
@@ -479,6 +476,12 @@ final class Dispatch {
          case "OBV":
             return core.OBV(
                startIdx, endIdx, h.realInput(0), h.price(1, 4), h.realOutput(0));
+         case "PERCENTILE":
+            return core.PERCENTILE(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOpt(1), h.realOutput(0));
+         case "PERCENTRANK":
+            return core.PERCENTRANK(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
          case "PLUS_DI":
             return core.PLUS_DI(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -811,14 +814,14 @@ final class Dispatch {
             return core.COS_Lookback();
          case "COSH":
             return core.COSH_Lookback();
-         case "CVI":
-            return core.CVI_Lookback(h.intOpt(0), h.intOpt(1));
          case "DEMA":
             return core.DEMA_Lookback(h.intOpt(0));
          case "DIV":
             return core.DIV_Lookback();
          case "DONCHIAN":
             return core.DONCHIAN_Lookback(h.intOpt(0));
+         case "DPO":
+            return core.DPO_Lookback(h.intOpt(0));
          case "DX":
             return core.DX_Lookback(h.intOpt(0));
          case "EFI":
@@ -875,8 +878,6 @@ final class Dispatch {
             return core.MAMA_Lookback(h.realOpt(0), h.realOpt(1));
          case "MARKETFI":
             return core.MARKETFI_Lookback();
-         case "MASSI":
-            return core.MASSI_Lookback(h.intOpt(0), h.intOpt(1));
          case "MAVP":
             return core.MAVP_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "MAX":
@@ -913,6 +914,10 @@ final class Dispatch {
             return core.NVI_Lookback();
          case "OBV":
             return core.OBV_Lookback();
+         case "PERCENTILE":
+            return core.PERCENTILE_Lookback(h.intOpt(0), h.realOpt(1));
+         case "PERCENTRANK":
+            return core.PERCENTRANK_Lookback(h.intOpt(0));
          case "PLUS_DI":
             return core.PLUS_DI_Lookback(h.intOpt(0));
          case "PLUS_DM":

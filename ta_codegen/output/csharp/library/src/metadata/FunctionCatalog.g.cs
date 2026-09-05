@@ -203,10 +203,10 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeCorrel(),
             MakeCos(),
             MakeCosh(),
-            MakeCvi(),
             MakeDema(),
             MakeDiv(),
             MakeDonchian(),
+            MakeDpo(),
             MakeDx(),
             MakeEfi(),
             MakeEma(),
@@ -235,7 +235,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeMacdfix(),
             MakeMama(),
             MakeMarketfi(),
-            MakeMassi(),
             MakeMavp(),
             MakeMax(),
             MakeMaxindex(),
@@ -254,6 +253,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeNatr(),
             MakeNvi(),
             MakeObv(),
+            MakePercentile(),
+            MakePercentrank(),
             MakePlusDi(),
             MakePlusDm(),
             MakePpo(),
@@ -2238,30 +2239,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.COSH(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
-    private static FunctionInfo MakeCvi() => new(
-        name: "CVI",
-        group: FunctionGroup.VolatilityIndicators,
-        hint: "Chaikin's Volatility",
-        flags: FunctionFlags.Stream,
-        unstableId: null,
-        inputs:
-        [
-            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
-        ],
-        optInputs:
-        [
-            new OptInputInfo("optInTimePeriod", "Time Period", "Period of the EMA smoothing the high-low spread", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 4, 200, 1)),
-            new OptInputInfo("optInROCPeriod", "ROC Period", "Number of bars the rate of change reaches back", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 4, 200, 1)),
-        ],
-        outputs:
-        [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
-        ],
-        lookback: static (core, c) => core.CVI_Lookback(c.IntOpt(0), c.IntOpt(1)),
-        invoke: static (core, c, startIdx, endIdx) =>
-            core.CVI(
-                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
-
     private static FunctionInfo MakeDema() => new(
         name: "DEMA",
         group: FunctionGroup.OverlapStudies,
@@ -2330,6 +2307,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.DONCHIAN(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
+    private static FunctionInfo MakeDpo() => new(
+        name: "DPO",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Detrended Price Oscillator",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 20, 10, 60, 5)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.DPO_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.DPO(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeDx() => new(
         name: "DX",
@@ -2964,30 +2964,6 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.MARKETFI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
 
-    private static FunctionInfo MakeMassi() => new(
-        name: "MASSI",
-        group: FunctionGroup.VolatilityIndicators,
-        hint: "Mass Index",
-        flags: FunctionFlags.Stream,
-        unstableId: null,
-        inputs:
-        [
-            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
-        ],
-        optInputs:
-        [
-            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of both exponential averages of the high-low range", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 9, 2, 50, 1)),
-            new OptInputInfo("optInSlowPeriod", "Slow Period", "Number of bars the ratio is summed over", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 25, 10, 50, 1)),
-        ],
-        outputs:
-        [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
-        ],
-        lookback: static (core, c) => core.MASSI_Lookback(c.IntOpt(0), c.IntOpt(1)),
-        invoke: static (core, c, startIdx, endIdx) =>
-            core.MASSI(
-                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
-
     private static FunctionInfo MakeMavp() => new(
         name: "MAVP",
         group: FunctionGroup.OverlapStudies,
@@ -3396,6 +3372,53 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.OBV(
                 startIdx, endIdx, c.Series(0), c.Price(1, PriceComponents.Volume), c.RealOut(0)));
+
+    private static FunctionInfo MakePercentile() => new(
+        name: "PERCENTILE",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Percentile (nearest rank)",
+        flags: FunctionFlags.Overlap | FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the window", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 30, 4, 200, 1)),
+            new OptInputInfo("optInPercentile", "Percentile", "Percentile to report", OptInputFlags.IsPercent, new OptInputDomain.RealRange(0.0, 100.0, 2, 50.0, 10.0, 90.0, 5.0)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.PERCENTILE_Lookback(c.IntOpt(0), c.RealOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.PERCENTILE(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOpt(1), c.RealOut(0)));
+
+    private static FunctionInfo MakePercentrank() => new(
+        name: "PERCENTRANK",
+        group: FunctionGroup.StatisticFunctions,
+        hint: "Percent Rank",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 100, 20, 200, 20)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.PERCENTRANK_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.PERCENTRANK(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakePlusDi() => new(
         name: "PLUS_DI",

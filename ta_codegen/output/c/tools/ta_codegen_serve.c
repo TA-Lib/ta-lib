@@ -110,10 +110,10 @@
 #include "ta_func/ta_CORREL.c"
 #include "ta_func/ta_COS.c"
 #include "ta_func/ta_COSH.c"
-#include "ta_func/ta_CVI.c"
 #include "ta_func/ta_DEMA.c"
 #include "ta_func/ta_DIV.c"
 #include "ta_func/ta_DONCHIAN.c"
+#include "ta_func/ta_DPO.c"
 #include "ta_func/ta_DX.c"
 #include "ta_func/ta_EFI.c"
 #include "ta_func/ta_EMA.c"
@@ -141,7 +141,6 @@
 #include "ta_func/ta_MACDFIX.c"
 #include "ta_func/ta_MAMA.c"
 #include "ta_func/ta_MARKETFI.c"
-#include "ta_func/ta_MASSI.c"
 #include "ta_func/ta_MAVP.c"
 #include "ta_func/ta_MAX.c"
 #include "ta_func/ta_MAXINDEX.c"
@@ -160,6 +159,8 @@
 #include "ta_func/ta_NATR.c"
 #include "ta_func/ta_NVI.c"
 #include "ta_func/ta_OBV.c"
+#include "ta_func/ta_PERCENTILE.c"
+#include "ta_func/ta_PERCENTRANK.c"
 #include "ta_func/ta_PLUS_DI.c"
 #include "ta_func/ta_PLUS_DM.c"
 #include "ta_func/ta_PPO.c"
@@ -600,10 +601,10 @@ static int sv_steq_TA_CMOU( const struct TA_CMOU_Stream *a, const struct TA_CMOU
 static int sv_steq_TA_CORREL( const struct TA_CORREL_Stream *a, const struct TA_CORREL_Stream *b, const char **w, int *z );
 static int sv_steq_TA_COS( const struct TA_COS_Stream *a, const struct TA_COS_Stream *b, const char **w, int *z );
 static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH_Stream *b, const char **w, int *z );
-static int sv_steq_TA_CVI( const struct TA_CVI_Stream *a, const struct TA_CVI_Stream *b, const char **w, int *z );
 static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA_Stream *b, const char **w, int *z );
 static int sv_steq_TA_DIV( const struct TA_DIV_Stream *a, const struct TA_DIV_Stream *b, const char **w, int *z );
 static int sv_steq_TA_DONCHIAN( const struct TA_DONCHIAN_Stream *a, const struct TA_DONCHIAN_Stream *b, const char **w, int *z );
+static int sv_steq_TA_DPO( const struct TA_DPO_Stream *a, const struct TA_DPO_Stream *b, const char **w, int *z );
 static int sv_steq_TA_DX( const struct TA_DX_Stream *a, const struct TA_DX_Stream *b, const char **w, int *z );
 static int sv_steq_TA_EFI( const struct TA_EFI_Stream *a, const struct TA_EFI_Stream *b, const char **w, int *z );
 static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_Stream *b, const char **w, int *z );
@@ -632,7 +633,6 @@ static int sv_steq_TA_MACDEXT( const struct TA_MACDEXT_Stream *a, const struct T
 static int sv_steq_TA_MACDFIX( const struct TA_MACDFIX_Stream *a, const struct TA_MACDFIX_Stream *b, const char **w, int *z );
 static int sv_steq_TA_MAMA( const struct TA_MAMA_Stream *a, const struct TA_MAMA_Stream *b, const char **w, int *z );
 static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct TA_MARKETFI_Stream *b, const char **w, int *z );
-static int sv_steq_TA_MASSI( const struct TA_MASSI_Stream *a, const struct TA_MASSI_Stream *b, const char **w, int *z );
 static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP_Stream *b, const char **w, int *z );
 static int sv_steq_TA_MAX( const struct TA_MAX_Stream *a, const struct TA_MAX_Stream *b, const char **w, int *z );
 static int sv_steq_TA_MAXINDEX( const struct TA_MAXINDEX_Stream *a, const struct TA_MAXINDEX_Stream *b, const char **w, int *z );
@@ -651,6 +651,8 @@ static int sv_steq_TA_MULT( const struct TA_MULT_Stream *a, const struct TA_MULT
 static int sv_steq_TA_NATR( const struct TA_NATR_Stream *a, const struct TA_NATR_Stream *b, const char **w, int *z );
 static int sv_steq_TA_NVI( const struct TA_NVI_Stream *a, const struct TA_NVI_Stream *b, const char **w, int *z );
 static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PERCENTILE( const struct TA_PERCENTILE_Stream *a, const struct TA_PERCENTILE_Stream *b, const char **w, int *z );
+static int sv_steq_TA_PERCENTRANK( const struct TA_PERCENTRANK_Stream *a, const struct TA_PERCENTRANK_Stream *b, const char **w, int *z );
 static int sv_steq_TA_PLUS_DI( const struct TA_PLUS_DI_Stream *a, const struct TA_PLUS_DI_Stream *b, const char **w, int *z );
 static int sv_steq_TA_PLUS_DM( const struct TA_PLUS_DM_Stream *a, const struct TA_PLUS_DM_Stream *b, const char **w, int *z );
 static int sv_steq_TA_PPO( const struct TA_PPO_Stream *a, const struct TA_PPO_Stream *b, const char **w, int *z );
@@ -3361,25 +3363,6 @@ static int sv_steq_TA_COSH( const struct TA_COSH_Stream *a, const struct TA_COSH
    return 0;
 }
 
-static int sv_steq_TA_CVI( const struct TA_CVI_Stream *a, const struct TA_CVI_Stream *b, const char **w, int *z )
-{
-   int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)ix; (void)ia; (void)ib;
-   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
-   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
-   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
-   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
-   if( a->optInROCPeriod != b->optInROCPeriod ) { *w = "optInROCPeriod"; return 1; }
-   if( sv_xtier_ne(a->prevEMA, b->prevEMA, z) ) { *w = "prevEMA"; return 1; }
-   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
-   if( a->emaRing_Idx != b->emaRing_Idx ) { *w = "emaRing_Idx"; return 1; }
-   if( a->maxIdx_emaRing != b->maxIdx_emaRing ) { *w = "maxIdx_emaRing"; return 1; }
-   if( a->cbSize_emaRing != b->cbSize_emaRing ) { *w = "cbSize_emaRing"; return 1; }
-   if( (a->cb_emaRing == NULL) != (b->cb_emaRing == NULL) ) { *w = "cb_emaRing"; return 1; }
-   if( a->cb_emaRing ) for( k = 0; k < a->cbSize_emaRing; k++ ) if( sv_xtier_ne(a->cb_emaRing[k], b->cb_emaRing[k], z) ) { *w = "cb_emaRing"; return 1; }
-   return 0;
-}
-
 static int sv_steq_TA_DEMA( const struct TA_DEMA_Stream *a, const struct TA_DEMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
@@ -3435,6 +3418,34 @@ static int sv_steq_TA_DONCHIAN( const struct TA_DONCHIAN_Stream *a, const struct
    {
       ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
       if( sv_xtier_ne(a->x_inLow[ix], b->x_inLow[ix], z) ) { *w = "x_inLow"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_DPO( const struct TA_DPO_Stream *a, const struct TA_DPO_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)ix;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->periodTotal, b->periodTotal, z) ) { *w = "periodTotal"; return 1; }
+   if( a->ringCap_dispIdx != b->ringCap_dispIdx ) { *w = "ringCap_dispIdx"; return 1; }
+   if( (a->ring_dispIdx_inReal == NULL) != (b->ring_dispIdx_inReal == NULL) ) { *w = "ring_dispIdx_inReal"; return 1; }
+   if( a->ring_dispIdx_inReal ) for( k = 0; k < a->ringCap_dispIdx; k++ )
+   {
+      ia = (a->ringPos_dispIdx + k) % a->ringCap_dispIdx;
+      ib = (b->ringPos_dispIdx + k) % b->ringCap_dispIdx;
+      if( sv_xtier_ne(a->ring_dispIdx_inReal[ia], b->ring_dispIdx_inReal[ib], z) ) { *w = "ring_dispIdx_inReal"; return 1; }
+   }
+   if( a->ringCap_trailingIdx != b->ringCap_trailingIdx ) { *w = "ringCap_trailingIdx"; return 1; }
+   if( (a->ring_trailingIdx_inReal == NULL) != (b->ring_trailingIdx_inReal == NULL) ) { *w = "ring_trailingIdx_inReal"; return 1; }
+   if( a->ring_trailingIdx_inReal ) for( k = 0; k < a->ringCap_trailingIdx; k++ )
+   {
+      ia = (a->ringPos_trailingIdx + k) % a->ringCap_trailingIdx;
+      ib = (b->ringPos_trailingIdx + k) % b->ringCap_trailingIdx;
+      if( sv_xtier_ne(a->ring_trailingIdx_inReal[ia], b->ring_trailingIdx_inReal[ib], z) ) { *w = "ring_trailingIdx_inReal"; return 1; }
    }
    return 0;
 }
@@ -4424,27 +4435,6 @@ static int sv_steq_TA_MARKETFI( const struct TA_MARKETFI_Stream *a, const struct
    return 0;
 }
 
-static int sv_steq_TA_MASSI( const struct TA_MASSI_Stream *a, const struct TA_MASSI_Stream *b, const char **w, int *z )
-{
-   int k = 0, ix = 0, ia = 0, ib = 0;
-   (void)ix; (void)ia; (void)ib;
-   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
-   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
-   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
-   if( a->optInFastPeriod != b->optInFastPeriod ) { *w = "optInFastPeriod"; return 1; }
-   if( a->optInSlowPeriod != b->optInSlowPeriod ) { *w = "optInSlowPeriod"; return 1; }
-   if( sv_xtier_ne(a->optInK_1, b->optInK_1, z) ) { *w = "optInK_1"; return 1; }
-   if( sv_xtier_ne(a->ema1, b->ema1, z) ) { *w = "ema1"; return 1; }
-   if( sv_xtier_ne(a->ema2, b->ema2, z) ) { *w = "ema2"; return 1; }
-   if( sv_xtier_ne(a->total, b->total, z) ) { *w = "total"; return 1; }
-   if( a->ratioRing_Idx != b->ratioRing_Idx ) { *w = "ratioRing_Idx"; return 1; }
-   if( a->maxIdx_ratioRing != b->maxIdx_ratioRing ) { *w = "maxIdx_ratioRing"; return 1; }
-   if( a->cbSize_ratioRing != b->cbSize_ratioRing ) { *w = "cbSize_ratioRing"; return 1; }
-   if( (a->cb_ratioRing == NULL) != (b->cb_ratioRing == NULL) ) { *w = "cb_ratioRing"; return 1; }
-   if( a->cb_ratioRing ) for( k = 0; k < a->cbSize_ratioRing; k++ ) if( sv_xtier_ne(a->cb_ratioRing[k], b->cb_ratioRing[k], z) ) { *w = "cb_ratioRing"; return 1; }
-   return 0;
-}
-
 static int sv_steq_TA_MAVP( const struct TA_MAVP_Stream *a, const struct TA_MAVP_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
@@ -4811,6 +4801,49 @@ static int sv_steq_TA_OBV( const struct TA_OBV_Stream *a, const struct TA_OBV_St
    if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
    if( sv_xtier_ne(a->prevReal, b->prevReal, z) ) { *w = "prevReal"; return 1; }
    if( sv_xtier_ne(a->prevOBV, b->prevOBV, z) ) { *w = "prevOBV"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_PERCENTILE( const struct TA_PERCENTILE_Stream *a, const struct TA_PERCENTILE_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)ix; (void)ia; (void)ib;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( sv_xtier_ne(a->optInPercentile, b->optInPercentile, z) ) { *w = "optInPercentile"; return 1; }
+   if( a->lookbackTotal != b->lookbackTotal ) { *w = "lookbackTotal"; return 1; }
+   if( a->rank != b->rank ) { *w = "rank"; return 1; }
+   if( a->ring_Idx != b->ring_Idx ) { *w = "ring_Idx"; return 1; }
+   if( a->maxIdx_ring != b->maxIdx_ring ) { *w = "maxIdx_ring"; return 1; }
+   if( a->sorted_Idx != b->sorted_Idx ) { *w = "sorted_Idx"; return 1; }
+   if( a->maxIdx_sorted != b->maxIdx_sorted ) { *w = "maxIdx_sorted"; return 1; }
+   if( a->cbSize_ring != b->cbSize_ring ) { *w = "cbSize_ring"; return 1; }
+   if( (a->cb_ring == NULL) != (b->cb_ring == NULL) ) { *w = "cb_ring"; return 1; }
+   if( a->cb_ring ) for( k = 0; k < a->cbSize_ring; k++ ) if( sv_xtier_ne(a->cb_ring[k], b->cb_ring[k], z) ) { *w = "cb_ring"; return 1; }
+   if( a->cbSize_sorted != b->cbSize_sorted ) { *w = "cbSize_sorted"; return 1; }
+   if( (a->cb_sorted == NULL) != (b->cb_sorted == NULL) ) { *w = "cb_sorted"; return 1; }
+   if( a->cb_sorted ) for( k = 0; k < a->cbSize_sorted; k++ ) if( sv_xtier_ne(a->cb_sorted[k], b->cb_sorted[k], z) ) { *w = "cb_sorted"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_PERCENTRANK( const struct TA_PERCENTRANK_Stream *a, const struct TA_PERCENTRANK_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)ix;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
+   if( (a->win_i_inReal == NULL) != (b->win_i_inReal == NULL) ) { *w = "win_i_inReal"; return 1; }
+   if( a->win_i_inReal ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inReal[ia], b->win_i_inReal[ib], z) ) { *w = "win_i_inReal"; return 1; }
+   }
    return 0;
 }
 
@@ -31753,296 +31786,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
-    else if( fnLen == 6 && strncmp(fn, "TA_CVI", 6) == 0 ) {
-        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
-        int optInROCPeriod = json_find_int(json, "optInROCPeriod");
-        TA_RetCode rc;
-        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
-        int peekChecked = 0;
-        int peekReps = 0, peekRepAll = 1;
-        int peekRejects = 0;
-        TA_RetCode pkRc = TA_SUCCESS;
-        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
-        int valueChecked = 0, valueOk = 1, valueLegs = 0;
-        const char *valueBad = "-";
-        const char *cloneBad = "-";
-        const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0, fillBars = 0;
-        int stateChecked = 0, stateOk = 1, stateLegs = 0;
-        const char *stateWhat = "-";
-        TA_CVI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
-        int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
-        int svZsign = 0;
-        int pref[4]; int pc[4];
-        TA_SetUnstablePeriod(5, (unsigned int)svK);
-        rc = TA_CVI(0, svN - 1, sv_h, sv_l, optInTimePeriod, optInROCPeriod, &svBeg, &svNb, sv_b0);
-        lb = TA_CVI_Lookback(optInTimePeriod, optInROCPeriod);
-        if( rc != TA_SUCCESS || svNb <= 0 ) {
-            int openRejects = 0;
-            { TA_CVI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_CVI_Open(&st, sv_h, sv_l, svN, optInTimePeriod, optInROCPeriod, &v0);
-              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_CVI_Close(st); }
-            TA_SetUnstablePeriod(5, 0);
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
-            return;
-        }
-        {
-            int fBeg = 0, fNb = 0, ft;
-            TA_CVI_Stream *stf = NULL;
-            TA_RetCode frc;
-            for( ft = 0; ft < SV_MAXN; ft++ ) {
-               sv_f0[ft] = SV_FILL_CANARY;
-            }
-            frc = TA_CVI_OpenAndFill(&stf, sv_h, sv_l, svN, optInTimePeriod, optInROCPeriod, &fBeg, &fNb, sv_f0);
-            fillChecked = 1;
-            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
-            if( fillOk && stf )
-            {
-               double vq0 = 0.0;
-               valueChecked = 1; valueLegs++;
-               if( TA_CVI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
-               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
-            }
-            for( ft = 0; fillOk && ft < svNb; ft++ ) {
-                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
-                fillBars++;
-            }
-            if( frc == TA_SUCCESS )
-               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
-                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
-               }
-            if( frc == TA_SUCCESS && stf )
-            {
-                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
-                rB = -1; rN = -1;
-                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
-            }
-            if( stf ) TA_CVI_Close(stf);
-        }
-        {
-            int alB = 0, alN = 0;
-            TA_CVI_Stream *sal = NULL;
-            TA_RetCode alrc = TA_CVI_OpenAndFill(&sal, sv_h, sv_l, svN, optInTimePeriod, optInROCPeriod, &alB, &alN, sv_h);
-            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
-            if( sal ) TA_CVI_Close(sal);
-        }
-        npref = 0;
-        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
-        for( li = 0; li < 4; li++ ) {
-            int P = pc[li]; int seen = 0, k;
-            if( P < lb + 1 ) P = lb + 1;
-            if( P > svN - 1 ) P = svN - 1;
-            if( P < 1 ) continue;
-            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
-            if( !seen ) pref[npref++] = P;
-        }
-        {
-            double e0 = 0.0;
-            if( TA_CVI_Open( &stEq, sv_h, sv_l, svN, optInTimePeriod, optInROCPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
-        }
-        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
-        for( li = 0; li < npref; li++ ) {
-            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
-            double bv = 0.0, sv = 0.0;
-            TA_CVI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
-            rc = TA_CVI_Open(&st, sv_h, sv_l, P, optInTimePeriod, optInROCPeriod, &v0);
-            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
-            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
-            if( ok && st )
-            {
-               double vq0 = 0.0;
-               valueChecked = 1; valueLegs++;
-               if( TA_CVI_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
-               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
-            }
-            for( t = P; ok && t < svN; t++ ) {
-                pkRc = TA_CVI_Peek(st, sv_h[t], sv_l[t], &pk0);
-                if( pkRc != TA_SUCCESS ) peekRejects++;
-                if( (t % SV_PEEK_EVERY) == 0 )
-                {
-                   if( TA_CVI_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
-                   if( pkRc == TA_SUCCESS && TA_CVI_Peek(st, sv_h[t], sv_l[t], &rp0) == TA_SUCCESS )
-                   {
-                      peekReps++;
-                      if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
-                   }
-                   else peekRejects++;
-                }
-                TA_CVI_Update(st, sv_h[t], sv_l[t], &v0);
-                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
-                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
-                if( ok )
-                {
-                   double vq0 = 0.0;
-                   valueChecked = 1; valueLegs++;
-                   if( TA_CVI_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
-                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
-                }
-            }
-            if( ok && st && stEq )
-            {
-                stateChecked = 1; stateLegs++;
-                if( sv_steq_TA_CVI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
-            }
-            if( ok && st )
-            {
-                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
-                rB = -1; rN = -1;
-                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
-            }
-            if( st ) TA_CVI_Close(st);
-            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
-            if( !pkOk ) peekAll = 0;
-        }
-        if( npref > 0 )
-        {
-            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
-            double uv0 = 0.0;
-            TA_CVI_Stream *stu = NULL;
-            TA_RetCode urc;
-            urc = TA_CVI_Open(&stu, sv_h, sv_l, P, optInTimePeriod, optInROCPeriod, &uv0);
-            ufillChecked = 1;
-            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
-            if( ufillOk )
-            {
-                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
-                if( TA_CVI_UpdateAndFill( stu, sv_h + P, sv_l + P, svN - P, sv_h + P ) != TA_BAD_PARAM ) ufillOk = 0;
-                if( TA_CVI_UpdateAndFill( stu, sv_h + P, sv_l + P, 0, sv_f0 ) != TA_SUCCESS ) ufillOk = 0;
-                if( TA_CVI_UpdateAndFill( stu, sv_h + P, sv_l + P, -1, sv_f0 ) != TA_BAD_PARAM ) ufillOk = 0;
-                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
-            }
-            if( ufillOk )
-            {
-                for( ut = 0; ut < SV_MAXN; ut++ ) {
-                    sv_f0[ut] = SV_FILL_CANARY;
-                }
-                urc = TA_CVI_UpdateAndFill( stu, sv_h + P, sv_l + P, svN - P, sv_f0 );
-                if( urc != TA_SUCCESS ) ufillOk = 0;
-                if( ufillOk && stu )
-                {
-                   double vq0 = 0.0;
-                   valueChecked = 1; valueLegs++;
-                   if( TA_CVI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
-                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
-                }
-                for( ut = P; ufillOk && ut < svN; ut++ ) {
-                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
-                    ufillBars++;
-                }
-                if( urc == TA_SUCCESS )
-                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
-                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
-                    }
-            }
-            if( ufillOk && stu )
-            {
-                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
-                rB = -1; rN = -1;
-                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
-            }
-            if( stu ) TA_CVI_Close(stu);
-        }
-        if( stEq )
-        {
-            TA_CVI_Stream *stPk = NULL; double q0 = 0.0;
-            if( TA_CVI_Open( &stPk, sv_h, sv_l, svN, optInTimePeriod, optInROCPeriod, &q0 ) == TA_SUCCESS && stPk )
-            {
-                int pi;
-                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
-                {
-                    if( TA_CVI_Peek(stPk, sv_h[pi], sv_l[pi], &q0) == TA_SUCCESS ) peekChecked++;
-                    else peekRejects++;
-                }
-                {
-                    const char *pkWhat = "-";
-                    if( sv_steq_TA_CVI( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
-                }
-            }
-            if( stPk ) TA_CVI_Close(stPk);
-        }
-        {
-            TA_CVI_Stream *cA = NULL, *cB = NULL;
-            double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
-            int cp0 = lb + 1, cmid, t, cOk = 1;
-            if( cp0 <= svN - 1 )
-            {
-                if( TA_CVI_Open(&cA, sv_h, sv_l, cp0, optInTimePeriod, optInROCPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
-                cmid = (cp0 + svN) / 2;
-                for( t = cp0; cOk && t < cmid; t++ )
-                    TA_CVI_Update(cA, sv_h[t], sv_l[t], &ca0);
-                if( cOk )
-                {
-                    if( TA_CVI_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
-                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
-                }
-                if( cOk )
-                {
-                    if( TA_CVI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
-                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
-                }
-                for( t = cmid; cOk && t < svN; t++ )
-                {
-                    TA_CVI_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_CVI_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
-                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                }
-                cloneChecked = 1; cloneLegs++;
-                if( !cOk ) cloneOk = 0;
-                if( cOk )
-                {
-                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
-                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
-                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
-                }
-                if( cA ) TA_CVI_Close(cA);
-                if( cB ) TA_CVI_Close(cB);
-            }
-        }
-        if( stEq ) { TA_CVI_Close(stEq); stEq = NULL; }
-        {
-            int Sidx = lb + (svN - lb) / 3;
-            if( Sidx > lb && Sidx < svN - 1 ) {
-                int svBegS = 0, svNbS = 0;
-                rc = TA_CVI(Sidx, svN - 1, sv_h, sv_l, optInTimePeriod, optInROCPeriod, &svBegS, &svNbS, sv_b0);
-                if( rc == TA_SUCCESS && svNbS > 0 ) {
-                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
-                    double v0 = 0.0;
-                    TA_CVI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_CVI_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInTimePeriod, optInROCPeriod, &v0);
-                    if( arc != TA_SUCCESS || !stA ) ok = 0;
-                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
-                    if( ok && stA )
-                    {
-                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
-                        rB = -1; rN = -1;
-                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
-                    }
-                    if( stA ) TA_CVI_Close(stA);
-                    if( !ok ) allOk = 0;
-                    (void)badBar; (void)badOut; (void)bv; (void)sv;
-                }
-            }
-        }
-        TA_SetUnstablePeriod(5, 0);
-        TA_SetCompatibility((TA_Compatibility)savedCompat);
-        if( fillChecked && !fillOk ) allOk = 0;
-        if( ufillChecked && !ufillOk ) allOk = 0;
-        if( stateChecked && !stateOk ) allOk = 0;
-        if( cloneChecked && !cloneOk ) allOk = 0;
-        if( valueChecked && !valueOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
-        if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
-        return;
-    }
     else if( fnLen == 7 && strncmp(fn, "TA_DEMA", 7) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         TA_RetCode rc;
@@ -32933,6 +32676,292 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
                     if( stA ) TA_DONCHIAN_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        if( ufillChecked && !ufillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        if( cloneChecked && !cloneOk ) allOk = 0;
+        if( valueChecked && !valueOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+        if( rangeChecked && !rangeOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        return;
+    }
+    else if( fnLen == 6 && strncmp(fn, "TA_DPO", 6) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
+        int peekRejects = 0;
+        TA_RetCode pkRc = TA_SUCCESS;
+        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+        int valueChecked = 0, valueOk = 1, valueLegs = 0;
+        const char *valueBad = "-";
+        const char *cloneBad = "-";
+        const char *peekBad = "-";
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_DPO_Stream *stEq = NULL;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+        int rB = 0, rN = 0;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        rc = TA_DPO(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
+        lb = TA_DPO_Lookback(optInTimePeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_DPO_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_DPO_Open(&st, sv_c, svN, optInTimePeriod, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_DPO_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_DPO_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_DPO_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            if( fillOk && stf )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_DPO_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+            }
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
+            if( frc == TA_SUCCESS && stf )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stf ) TA_DPO_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_DPO_Stream *sal = NULL;
+            TA_RetCode alrc = TA_DPO_OpenAndFill(&sal, sv_c, svN, optInTimePeriod, &alB, &alN, sv_c);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_DPO_Close(sal);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        {
+            double e0 = 0.0;
+            if( TA_DPO_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_DPO_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            rc = TA_DPO_Open(&st, sv_c, P, optInTimePeriod, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && st )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_DPO_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+            }
+            for( t = P; ok && t < svN; t++ ) {
+                pkRc = TA_DPO_Peek(st, sv_c[t], &pk0);
+                if( pkRc != TA_SUCCESS ) peekRejects++;
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   if( TA_DPO_Peek(st, sv_c[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
+                   if( pkRc == TA_SUCCESS && TA_DPO_Peek(st, sv_c[t], &rp0) == TA_SUCCESS )
+                   {
+                      peekReps++;
+                      if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                   }
+                   else peekRejects++;
+                }
+                TA_DPO_Update(st, sv_c[t], &v0);
+                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if( ok )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_DPO_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                }
+            }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_DPO( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
+            if( ok && st )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( st ) TA_DPO_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        if( npref > 0 )
+        {
+            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
+            double uv0 = 0.0;
+            TA_DPO_Stream *stu = NULL;
+            TA_RetCode urc;
+            urc = TA_DPO_Open(&stu, sv_c, P, optInTimePeriod, &uv0);
+            ufillChecked = 1;
+            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
+            if( ufillOk )
+            {
+                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_DPO_UpdateAndFill( stu, sv_c + P, svN - P, sv_c + P ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_DPO_UpdateAndFill( stu, sv_c + P, 0, sv_f0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_DPO_UpdateAndFill( stu, sv_c + P, -1, sv_f0 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
+            }
+            if( ufillOk )
+            {
+                for( ut = 0; ut < SV_MAXN; ut++ ) {
+                    sv_f0[ut] = SV_FILL_CANARY;
+                }
+                urc = TA_DPO_UpdateAndFill( stu, sv_c + P, svN - P, sv_f0 );
+                if( urc != TA_SUCCESS ) ufillOk = 0;
+                if( ufillOk && stu )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_DPO_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                }
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
+                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
+                }
+                if( urc == TA_SUCCESS )
+                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
+                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                    }
+            }
+            if( ufillOk && stu )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stu ) TA_DPO_Close(stu);
+        }
+        if( stEq )
+        {
+            TA_DPO_Stream *stPk = NULL; double q0 = 0.0;
+            if( TA_DPO_Open( &stPk, sv_c, svN, optInTimePeriod, &q0 ) == TA_SUCCESS && stPk )
+            {
+                int pi;
+                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+                {
+                    if( TA_DPO_Peek(stPk, sv_c[pi], &q0) == TA_SUCCESS ) peekChecked++;
+                    else peekRejects++;
+                }
+                {
+                    const char *pkWhat = "-";
+                    if( sv_steq_TA_DPO( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+                }
+            }
+            if( stPk ) TA_DPO_Close(stPk);
+        }
+        {
+            TA_DPO_Stream *cA = NULL, *cB = NULL;
+            double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
+            int cp0 = lb + 1, cmid, t, cOk = 1;
+            if( cp0 <= svN - 1 )
+            {
+                if( TA_DPO_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+                cmid = (cp0 + svN) / 2;
+                for( t = cp0; cOk && t < cmid; t++ )
+                    TA_DPO_Update(cA, sv_c[t], &ca0);
+                if( cOk )
+                {
+                    if( TA_DPO_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+                }
+                if( cOk )
+                {
+                    if( TA_DPO_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_DPO_Update(cA, sv_c[t], &ca0);
+                    TA_DPO_Update(cB, sv_c[t], &cb0);
+                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
+                cloneChecked = 1; cloneLegs++;
+                if( !cOk ) cloneOk = 0;
+                if( cOk )
+                {
+                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+                }
+                if( cA ) TA_DPO_Close(cA);
+                if( cB ) TA_DPO_Close(cB);
+            }
+        }
+        if( stEq ) { TA_DPO_Close(stEq); stEq = NULL; }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_DPO(Sidx, svN - 1, sv_c, optInTimePeriod, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_DPO_Stream *stA = NULL;
+                    TA_RetCode arc = TA_DPO_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( ok && stA )
+                    {
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                        rB = -1; rN = -1;
+                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                    }
+                    if( stA ) TA_DPO_Close(stA);
                     if( !ok ) allOk = 0;
                     (void)badBar; (void)badOut; (void)bv; (void)sv;
                 }
@@ -41291,296 +41320,6 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
-    else if( fnLen == 8 && strncmp(fn, "TA_MASSI", 8) == 0 ) {
-        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
-        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
-        TA_RetCode rc;
-        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
-        int peekChecked = 0;
-        int peekReps = 0, peekRepAll = 1;
-        int peekRejects = 0;
-        TA_RetCode pkRc = TA_SUCCESS;
-        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
-        int valueChecked = 0, valueOk = 1, valueLegs = 0;
-        const char *valueBad = "-";
-        const char *cloneBad = "-";
-        const char *peekBad = "-";
-        int fillOk = 1, fillChecked = 0, fillBars = 0;
-        int stateChecked = 0, stateOk = 1, stateLegs = 0;
-        const char *stateWhat = "-";
-        TA_MASSI_Stream *stEq = NULL;
-        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
-        int rB = 0, rN = 0;
-        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
-        int svZsign = 0;
-        int pref[4]; int pc[4];
-        TA_SetUnstablePeriod(5, (unsigned int)svK);
-        rc = TA_MASSI(0, svN - 1, sv_h, sv_l, optInFastPeriod, optInSlowPeriod, &svBeg, &svNb, sv_b0);
-        lb = TA_MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
-        if( rc != TA_SUCCESS || svNb <= 0 ) {
-            int openRejects = 0;
-            { TA_MASSI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_MASSI_Open(&st, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, &v0);
-              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_MASSI_Close(st); }
-            TA_SetUnstablePeriod(5, 0);
-            TA_SetCompatibility((TA_Compatibility)savedCompat);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
-            return;
-        }
-        {
-            int fBeg = 0, fNb = 0, ft;
-            TA_MASSI_Stream *stf = NULL;
-            TA_RetCode frc;
-            for( ft = 0; ft < SV_MAXN; ft++ ) {
-               sv_f0[ft] = SV_FILL_CANARY;
-            }
-            frc = TA_MASSI_OpenAndFill(&stf, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, &fBeg, &fNb, sv_f0);
-            fillChecked = 1;
-            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
-            if( fillOk && stf )
-            {
-               double vq0 = 0.0;
-               valueChecked = 1; valueLegs++;
-               if( TA_MASSI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
-               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
-            }
-            for( ft = 0; fillOk && ft < svNb; ft++ ) {
-                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
-                fillBars++;
-            }
-            if( frc == TA_SUCCESS )
-               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
-                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
-               }
-            if( frc == TA_SUCCESS && stf )
-            {
-                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
-                rB = -1; rN = -1;
-                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
-            }
-            if( stf ) TA_MASSI_Close(stf);
-        }
-        {
-            int alB = 0, alN = 0;
-            TA_MASSI_Stream *sal = NULL;
-            TA_RetCode alrc = TA_MASSI_OpenAndFill(&sal, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, &alB, &alN, sv_h);
-            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
-            if( sal ) TA_MASSI_Close(sal);
-        }
-        npref = 0;
-        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
-        for( li = 0; li < 4; li++ ) {
-            int P = pc[li]; int seen = 0, k;
-            if( P < lb + 1 ) P = lb + 1;
-            if( P > svN - 1 ) P = svN - 1;
-            if( P < 1 ) continue;
-            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
-            if( !seen ) pref[npref++] = P;
-        }
-        {
-            double e0 = 0.0;
-            if( TA_MASSI_Open( &stEq, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
-        }
-        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
-        for( li = 0; li < npref; li++ ) {
-            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
-            double bv = 0.0, sv = 0.0;
-            TA_MASSI_Stream *st = NULL;
-            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
-            rc = TA_MASSI_Open(&st, sv_h, sv_l, P, optInFastPeriod, optInSlowPeriod, &v0);
-            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
-            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
-            if( ok && st )
-            {
-               double vq0 = 0.0;
-               valueChecked = 1; valueLegs++;
-               if( TA_MASSI_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
-               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
-            }
-            for( t = P; ok && t < svN; t++ ) {
-                pkRc = TA_MASSI_Peek(st, sv_h[t], sv_l[t], &pk0);
-                if( pkRc != TA_SUCCESS ) peekRejects++;
-                if( (t % SV_PEEK_EVERY) == 0 )
-                {
-                   if( TA_MASSI_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
-                   if( pkRc == TA_SUCCESS && TA_MASSI_Peek(st, sv_h[t], sv_l[t], &rp0) == TA_SUCCESS )
-                   {
-                      peekReps++;
-                      if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
-                   }
-                   else peekRejects++;
-                }
-                TA_MASSI_Update(st, sv_h[t], sv_l[t], &v0);
-                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
-                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
-                if( ok )
-                {
-                   double vq0 = 0.0;
-                   valueChecked = 1; valueLegs++;
-                   if( TA_MASSI_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
-                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
-                }
-            }
-            if( ok && st && stEq )
-            {
-                stateChecked = 1; stateLegs++;
-                if( sv_steq_TA_MASSI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
-            }
-            if( ok && st )
-            {
-                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
-                rB = -1; rN = -1;
-                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
-            }
-            if( st ) TA_MASSI_Close(st);
-            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
-            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
-            if( !pkOk ) peekAll = 0;
-        }
-        if( npref > 0 )
-        {
-            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
-            double uv0 = 0.0;
-            TA_MASSI_Stream *stu = NULL;
-            TA_RetCode urc;
-            urc = TA_MASSI_Open(&stu, sv_h, sv_l, P, optInFastPeriod, optInSlowPeriod, &uv0);
-            ufillChecked = 1;
-            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
-            if( ufillOk )
-            {
-                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
-                if( TA_MASSI_UpdateAndFill( stu, sv_h + P, sv_l + P, svN - P, sv_h + P ) != TA_BAD_PARAM ) ufillOk = 0;
-                if( TA_MASSI_UpdateAndFill( stu, sv_h + P, sv_l + P, 0, sv_f0 ) != TA_SUCCESS ) ufillOk = 0;
-                if( TA_MASSI_UpdateAndFill( stu, sv_h + P, sv_l + P, -1, sv_f0 ) != TA_BAD_PARAM ) ufillOk = 0;
-                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
-            }
-            if( ufillOk )
-            {
-                for( ut = 0; ut < SV_MAXN; ut++ ) {
-                    sv_f0[ut] = SV_FILL_CANARY;
-                }
-                urc = TA_MASSI_UpdateAndFill( stu, sv_h + P, sv_l + P, svN - P, sv_f0 );
-                if( urc != TA_SUCCESS ) ufillOk = 0;
-                if( ufillOk && stu )
-                {
-                   double vq0 = 0.0;
-                   valueChecked = 1; valueLegs++;
-                   if( TA_MASSI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
-                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
-                }
-                for( ut = P; ufillOk && ut < svN; ut++ ) {
-                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
-                    ufillBars++;
-                }
-                if( urc == TA_SUCCESS )
-                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
-                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
-                    }
-            }
-            if( ufillOk && stu )
-            {
-                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
-                rB = -1; rN = -1;
-                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
-            }
-            if( stu ) TA_MASSI_Close(stu);
-        }
-        if( stEq )
-        {
-            TA_MASSI_Stream *stPk = NULL; double q0 = 0.0;
-            if( TA_MASSI_Open( &stPk, sv_h, sv_l, svN, optInFastPeriod, optInSlowPeriod, &q0 ) == TA_SUCCESS && stPk )
-            {
-                int pi;
-                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
-                {
-                    if( TA_MASSI_Peek(stPk, sv_h[pi], sv_l[pi], &q0) == TA_SUCCESS ) peekChecked++;
-                    else peekRejects++;
-                }
-                {
-                    const char *pkWhat = "-";
-                    if( sv_steq_TA_MASSI( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
-                }
-            }
-            if( stPk ) TA_MASSI_Close(stPk);
-        }
-        {
-            TA_MASSI_Stream *cA = NULL, *cB = NULL;
-            double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
-            int cp0 = lb + 1, cmid, t, cOk = 1;
-            if( cp0 <= svN - 1 )
-            {
-                if( TA_MASSI_Open(&cA, sv_h, sv_l, cp0, optInFastPeriod, optInSlowPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
-                cmid = (cp0 + svN) / 2;
-                for( t = cp0; cOk && t < cmid; t++ )
-                    TA_MASSI_Update(cA, sv_h[t], sv_l[t], &ca0);
-                if( cOk )
-                {
-                    if( TA_MASSI_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
-                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
-                }
-                if( cOk )
-                {
-                    if( TA_MASSI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
-                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
-                }
-                for( t = cmid; cOk && t < svN; t++ )
-                {
-                    TA_MASSI_Update(cA, sv_h[t], sv_l[t], &ca0);
-                    TA_MASSI_Update(cB, sv_h[t], sv_l[t], &cb0);
-                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
-                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
-                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
-                }
-                cloneChecked = 1; cloneLegs++;
-                if( !cOk ) cloneOk = 0;
-                if( cOk )
-                {
-                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
-                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
-                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
-                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
-                }
-                if( cA ) TA_MASSI_Close(cA);
-                if( cB ) TA_MASSI_Close(cB);
-            }
-        }
-        if( stEq ) { TA_MASSI_Close(stEq); stEq = NULL; }
-        {
-            int Sidx = lb + (svN - lb) / 3;
-            if( Sidx > lb && Sidx < svN - 1 ) {
-                int svBegS = 0, svNbS = 0;
-                rc = TA_MASSI(Sidx, svN - 1, sv_h, sv_l, optInFastPeriod, optInSlowPeriod, &svBegS, &svNbS, sv_b0);
-                if( rc == TA_SUCCESS && svNbS > 0 ) {
-                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
-                    double v0 = 0.0;
-                    TA_MASSI_Stream *stA = NULL;
-                    TA_RetCode arc = TA_MASSI_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInFastPeriod, optInSlowPeriod, &v0);
-                    if( arc != TA_SUCCESS || !stA ) ok = 0;
-                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
-                    if( ok && stA )
-                    {
-                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
-                        rB = -1; rN = -1;
-                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
-                    }
-                    if( stA ) TA_MASSI_Close(stA);
-                    if( !ok ) allOk = 0;
-                    (void)badBar; (void)badOut; (void)bv; (void)sv;
-                }
-            }
-        }
-        TA_SetUnstablePeriod(5, 0);
-        TA_SetCompatibility((TA_Compatibility)savedCompat);
-        if( fillChecked && !fillOk ) allOk = 0;
-        if( ufillChecked && !ufillOk ) allOk = 0;
-        if( stateChecked && !stateOk ) allOk = 0;
-        if( cloneChecked && !cloneOk ) allOk = 0;
-        if( valueChecked && !valueOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
-        if( rangeChecked && !rangeOk ) allOk = 0;
-        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
-        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
-        return;
-    }
     else if( fnLen == 7 && strncmp(fn, "TA_MAVP", 7) == 0 ) {
         int optInMinPeriod = json_find_int(json, "optInMinPeriod");
         int optInMaxPeriod = json_find_int(json, "optInMaxPeriod");
@@ -46765,6 +46504,579 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
                         if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
                     }
                     if( stA ) TA_OBV_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        if( ufillChecked && !ufillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        if( cloneChecked && !cloneOk ) allOk = 0;
+        if( valueChecked && !valueOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+        if( rangeChecked && !rangeOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        return;
+    }
+    else if( fnLen == 13 && strncmp(fn, "TA_PERCENTILE", 13) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        double optInPercentile = json_find_double(json, "optInPercentile");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
+        int peekRejects = 0;
+        TA_RetCode pkRc = TA_SUCCESS;
+        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+        int valueChecked = 0, valueOk = 1, valueLegs = 0;
+        const char *valueBad = "-";
+        const char *cloneBad = "-";
+        const char *peekBad = "-";
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PERCENTILE_Stream *stEq = NULL;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+        int rB = 0, rN = 0;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        rc = TA_PERCENTILE(0, svN - 1, sv_c, optInTimePeriod, optInPercentile, &svBeg, &svNb, sv_b0);
+        lb = TA_PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_PERCENTILE_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PERCENTILE_Open(&st, sv_c, svN, optInTimePeriod, optInPercentile, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PERCENTILE_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_PERCENTILE_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PERCENTILE_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInPercentile, &fBeg, &fNb, sv_f0);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            if( fillOk && stf )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_PERCENTILE_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+            }
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
+            if( frc == TA_SUCCESS && stf )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stf ) TA_PERCENTILE_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_PERCENTILE_Stream *sal = NULL;
+            TA_RetCode alrc = TA_PERCENTILE_OpenAndFill(&sal, sv_c, svN, optInTimePeriod, optInPercentile, &alB, &alN, sv_c);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_PERCENTILE_Close(sal);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        {
+            double e0 = 0.0;
+            if( TA_PERCENTILE_Open( &stEq, sv_c, svN, optInTimePeriod, optInPercentile, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_PERCENTILE_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            rc = TA_PERCENTILE_Open(&st, sv_c, P, optInTimePeriod, optInPercentile, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && st )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_PERCENTILE_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+            }
+            for( t = P; ok && t < svN; t++ ) {
+                pkRc = TA_PERCENTILE_Peek(st, sv_c[t], &pk0);
+                if( pkRc != TA_SUCCESS ) peekRejects++;
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   if( TA_PERCENTILE_Peek(st, sv_c[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
+                   if( pkRc == TA_SUCCESS && TA_PERCENTILE_Peek(st, sv_c[t], &rp0) == TA_SUCCESS )
+                   {
+                      peekReps++;
+                      if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                   }
+                   else peekRejects++;
+                }
+                TA_PERCENTILE_Update(st, sv_c[t], &v0);
+                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if( ok )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_PERCENTILE_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                }
+            }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PERCENTILE( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
+            if( ok && st )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( st ) TA_PERCENTILE_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        if( npref > 0 )
+        {
+            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
+            double uv0 = 0.0;
+            TA_PERCENTILE_Stream *stu = NULL;
+            TA_RetCode urc;
+            urc = TA_PERCENTILE_Open(&stu, sv_c, P, optInTimePeriod, optInPercentile, &uv0);
+            ufillChecked = 1;
+            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
+            if( ufillOk )
+            {
+                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_PERCENTILE_UpdateAndFill( stu, sv_c + P, svN - P, sv_c + P ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_PERCENTILE_UpdateAndFill( stu, sv_c + P, 0, sv_f0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_PERCENTILE_UpdateAndFill( stu, sv_c + P, -1, sv_f0 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
+            }
+            if( ufillOk )
+            {
+                for( ut = 0; ut < SV_MAXN; ut++ ) {
+                    sv_f0[ut] = SV_FILL_CANARY;
+                }
+                urc = TA_PERCENTILE_UpdateAndFill( stu, sv_c + P, svN - P, sv_f0 );
+                if( urc != TA_SUCCESS ) ufillOk = 0;
+                if( ufillOk && stu )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_PERCENTILE_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                }
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
+                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
+                }
+                if( urc == TA_SUCCESS )
+                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
+                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                    }
+            }
+            if( ufillOk && stu )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stu ) TA_PERCENTILE_Close(stu);
+        }
+        if( stEq )
+        {
+            TA_PERCENTILE_Stream *stPk = NULL; double q0 = 0.0;
+            if( TA_PERCENTILE_Open( &stPk, sv_c, svN, optInTimePeriod, optInPercentile, &q0 ) == TA_SUCCESS && stPk )
+            {
+                int pi;
+                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+                {
+                    if( TA_PERCENTILE_Peek(stPk, sv_c[pi], &q0) == TA_SUCCESS ) peekChecked++;
+                    else peekRejects++;
+                }
+                {
+                    const char *pkWhat = "-";
+                    if( sv_steq_TA_PERCENTILE( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+                }
+            }
+            if( stPk ) TA_PERCENTILE_Close(stPk);
+        }
+        {
+            TA_PERCENTILE_Stream *cA = NULL, *cB = NULL;
+            double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
+            int cp0 = lb + 1, cmid, t, cOk = 1;
+            if( cp0 <= svN - 1 )
+            {
+                if( TA_PERCENTILE_Open(&cA, sv_c, cp0, optInTimePeriod, optInPercentile, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+                cmid = (cp0 + svN) / 2;
+                for( t = cp0; cOk && t < cmid; t++ )
+                    TA_PERCENTILE_Update(cA, sv_c[t], &ca0);
+                if( cOk )
+                {
+                    if( TA_PERCENTILE_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+                }
+                if( cOk )
+                {
+                    if( TA_PERCENTILE_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PERCENTILE_Update(cA, sv_c[t], &ca0);
+                    TA_PERCENTILE_Update(cB, sv_c[t], &cb0);
+                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
+                cloneChecked = 1; cloneLegs++;
+                if( !cOk ) cloneOk = 0;
+                if( cOk )
+                {
+                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+                }
+                if( cA ) TA_PERCENTILE_Close(cA);
+                if( cB ) TA_PERCENTILE_Close(cB);
+            }
+        }
+        if( stEq ) { TA_PERCENTILE_Close(stEq); stEq = NULL; }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_PERCENTILE(Sidx, svN - 1, sv_c, optInTimePeriod, optInPercentile, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_PERCENTILE_Stream *stA = NULL;
+                    TA_RetCode arc = TA_PERCENTILE_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInPercentile, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( ok && stA )
+                    {
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                        rB = -1; rN = -1;
+                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                    }
+                    if( stA ) TA_PERCENTILE_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        if( ufillChecked && !ufillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        if( cloneChecked && !cloneOk ) allOk = 0;
+        if( valueChecked && !valueOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+        if( rangeChecked && !rangeOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        return;
+    }
+    else if( fnLen == 14 && strncmp(fn, "TA_PERCENTRANK", 14) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
+        int peekRejects = 0;
+        TA_RetCode pkRc = TA_SUCCESS;
+        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+        int valueChecked = 0, valueOk = 1, valueLegs = 0;
+        const char *valueBad = "-";
+        const char *cloneBad = "-";
+        const char *peekBad = "-";
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_PERCENTRANK_Stream *stEq = NULL;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+        int rB = 0, rN = 0;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        rc = TA_PERCENTRANK(0, svN - 1, sv_c, optInTimePeriod, &svBeg, &svNb, sv_b0);
+        lb = TA_PERCENTRANK_Lookback(optInTimePeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_PERCENTRANK_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_PERCENTRANK_Open(&st, sv_c, svN, optInTimePeriod, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_PERCENTRANK_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_PERCENTRANK_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_PERCENTRANK_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, &fBeg, &fNb, sv_f0);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            if( fillOk && stf )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_PERCENTRANK_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+            }
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
+            if( frc == TA_SUCCESS && stf )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stf ) TA_PERCENTRANK_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_PERCENTRANK_Stream *sal = NULL;
+            TA_RetCode alrc = TA_PERCENTRANK_OpenAndFill(&sal, sv_c, svN, optInTimePeriod, &alB, &alN, sv_c);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_PERCENTRANK_Close(sal);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        {
+            double e0 = 0.0;
+            if( TA_PERCENTRANK_Open( &stEq, sv_c, svN, optInTimePeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_PERCENTRANK_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            rc = TA_PERCENTRANK_Open(&st, sv_c, P, optInTimePeriod, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && st )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_PERCENTRANK_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+            }
+            for( t = P; ok && t < svN; t++ ) {
+                pkRc = TA_PERCENTRANK_Peek(st, sv_c[t], &pk0);
+                if( pkRc != TA_SUCCESS ) peekRejects++;
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   if( TA_PERCENTRANK_Peek(st, sv_c[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
+                   if( pkRc == TA_SUCCESS && TA_PERCENTRANK_Peek(st, sv_c[t], &rp0) == TA_SUCCESS )
+                   {
+                      peekReps++;
+                      if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                   }
+                   else peekRejects++;
+                }
+                TA_PERCENTRANK_Update(st, sv_c[t], &v0);
+                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if( ok )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_PERCENTRANK_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                }
+            }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_PERCENTRANK( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
+            if( ok && st )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( st ) TA_PERCENTRANK_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        if( npref > 0 )
+        {
+            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
+            double uv0 = 0.0;
+            TA_PERCENTRANK_Stream *stu = NULL;
+            TA_RetCode urc;
+            urc = TA_PERCENTRANK_Open(&stu, sv_c, P, optInTimePeriod, &uv0);
+            ufillChecked = 1;
+            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
+            if( ufillOk )
+            {
+                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_PERCENTRANK_UpdateAndFill( stu, sv_c + P, svN - P, sv_c + P ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_PERCENTRANK_UpdateAndFill( stu, sv_c + P, 0, sv_f0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_PERCENTRANK_UpdateAndFill( stu, sv_c + P, -1, sv_f0 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
+            }
+            if( ufillOk )
+            {
+                for( ut = 0; ut < SV_MAXN; ut++ ) {
+                    sv_f0[ut] = SV_FILL_CANARY;
+                }
+                urc = TA_PERCENTRANK_UpdateAndFill( stu, sv_c + P, svN - P, sv_f0 );
+                if( urc != TA_SUCCESS ) ufillOk = 0;
+                if( ufillOk && stu )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_PERCENTRANK_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                }
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
+                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
+                }
+                if( urc == TA_SUCCESS )
+                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
+                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                    }
+            }
+            if( ufillOk && stu )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stu ) TA_PERCENTRANK_Close(stu);
+        }
+        if( stEq )
+        {
+            TA_PERCENTRANK_Stream *stPk = NULL; double q0 = 0.0;
+            if( TA_PERCENTRANK_Open( &stPk, sv_c, svN, optInTimePeriod, &q0 ) == TA_SUCCESS && stPk )
+            {
+                int pi;
+                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+                {
+                    if( TA_PERCENTRANK_Peek(stPk, sv_c[pi], &q0) == TA_SUCCESS ) peekChecked++;
+                    else peekRejects++;
+                }
+                {
+                    const char *pkWhat = "-";
+                    if( sv_steq_TA_PERCENTRANK( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+                }
+            }
+            if( stPk ) TA_PERCENTRANK_Close(stPk);
+        }
+        {
+            TA_PERCENTRANK_Stream *cA = NULL, *cB = NULL;
+            double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
+            int cp0 = lb + 1, cmid, t, cOk = 1;
+            if( cp0 <= svN - 1 )
+            {
+                if( TA_PERCENTRANK_Open(&cA, sv_c, cp0, optInTimePeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+                cmid = (cp0 + svN) / 2;
+                for( t = cp0; cOk && t < cmid; t++ )
+                    TA_PERCENTRANK_Update(cA, sv_c[t], &ca0);
+                if( cOk )
+                {
+                    if( TA_PERCENTRANK_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+                }
+                if( cOk )
+                {
+                    if( TA_PERCENTRANK_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_PERCENTRANK_Update(cA, sv_c[t], &ca0);
+                    TA_PERCENTRANK_Update(cB, sv_c[t], &cb0);
+                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
+                cloneChecked = 1; cloneLegs++;
+                if( !cOk ) cloneOk = 0;
+                if( cOk )
+                {
+                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+                }
+                if( cA ) TA_PERCENTRANK_Close(cA);
+                if( cB ) TA_PERCENTRANK_Close(cB);
+            }
+        }
+        if( stEq ) { TA_PERCENTRANK_Close(stEq); stEq = NULL; }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_PERCENTRANK(Sidx, svN - 1, sv_c, optInTimePeriod, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_PERCENTRANK_Stream *stA = NULL;
+                    TA_RetCode arc = TA_PERCENTRANK_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( ok && stA )
+                    {
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                        rB = -1; rN = -1;
+                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                    }
+                    if( stA ) TA_PERCENTRANK_Close(stA);
                     if( !ok ) allOk = 0;
                     (void)badBar; (void)badOut; (void)bv; (void)sv;
                 }
@@ -68253,91 +68565,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
     }
-    else if ( methodLen == 6 && strncmp(method, "TA_CVI", 6) == 0 ) {
-        int startIdx = json_find_int(json, "startIdx");
-        int endIdx = json_find_int(json, "endIdx");
-        int use_preloaded = json_find_int(json, "use_preloaded");
-        if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
-        } else {
-            json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
-            json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
-        }
-        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
-        int optInROCPeriod = json_find_int(json, "optInROCPeriod");
-        int outBegIdx = 0, outNBElement = 0;
-        int bench_iters = json_find_int(json, "iters");
-        if( bench_iters < 1 ) bench_iters = 1;
-        int bench_mode = json_find_int(json, "bench_mode");
-#ifdef TA_REF_SERVE
-        if( bench_mode != 0 ) {
-            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
-            return;
-        }
-#endif /* TA_REF_SERVE */
-        TA_RetCode rc = 0;
-        if( use_preloaded ) {
-            preload_to_working(2, 1);
-        }
-        long _t0 = 0;
-        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
-        if( _bi == 1 ) _t0 = get_nanotime();
-        if( bench_mode == 0 )
-        rc = TA_CVI(
-            startIdx, endIdx,
-            g_inBuf0,
-            g_inBuf1,
-            optInTimePeriod,
-            optInROCPeriod,
-            &outBegIdx, &outNBElement, g_outBuf0);
-#ifndef TA_REF_SERVE
-        else if( bench_mode == 1 ) {
-            TA_CVI_Stream *_h = NULL;
-            double _openOut0 = 0;
-            rc = TA_CVI_Open( &_h, g_inBuf0, g_inBuf1, endIdx + 1, optInTimePeriod, optInROCPeriod, &_openOut0 );
-            if( _h ) TA_CVI_Close( _h );
-        }
-        else {
-            TA_CVI_Stream *_h = NULL;
-            rc = TA_CVI_OpenAndFill( &_h, g_inBuf0, g_inBuf1, endIdx + 1, optInTimePeriod, optInROCPeriod, &outBegIdx, &outNBElement, g_outBuf0 );
-            if( _h ) TA_CVI_Close( _h );
-        }
-#endif /* TA_REF_SERVE */
-        }
-        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
-#ifndef TA_REF_SERVE
-        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
-            unsigned long long _oh = fuzz_hash_init();
-            if( rc == TA_SUCCESS && outNBElement > 0 ) {
-                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
-            }
-            _oh = fuzz_hash_fin(_oh);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
-            return;
-        }
-#endif /* TA_REF_SERVE */
-        int usedFloat = 0;
-        if( json_find_int(json, "use_float") ) {
-            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
-            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf1[_fi] = (float)g_inBuf1[_fi];
-            rc = TA_S_CVI(
-                startIdx, endIdx,
-                g_sinBuf0,
-                g_sinBuf1,
-                optInTimePeriod,
-                optInROCPeriod,
-                &outBegIdx, &outNBElement, g_outBuf0);
-            usedFloat = 1;
-        }
-        int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
-        if( !json_find_int(json, "no_output") ) {
-        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
-        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
-        }
-        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
-    }
     else if ( methodLen == 7 && strncmp(method, "TA_DEMA", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -68582,6 +68809,84 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
         pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
         pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
+    else if ( methodLen == 6 && strncmp(method, "TA_DPO", 6) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(1, 0);
+        } else {
+            json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(1, 0);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_DPO(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            &outBegIdx, &outNBElement, g_outBuf0);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_DPO_Stream *_h = NULL;
+            double _openOut0 = 0;
+            rc = TA_DPO_Open( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, &_openOut0 );
+            if( _h ) TA_DPO_Close( _h );
+        }
+        else {
+            TA_DPO_Stream *_h = NULL;
+            rc = TA_DPO_OpenAndFill( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, &outBegIdx, &outNBElement, g_outBuf0 );
+            if( _h ) TA_DPO_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            rc = TA_S_DPO(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
+                &outBegIdx, &outNBElement, g_outBuf0);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
         }
         pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
     }
@@ -70855,91 +71160,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
     }
-    else if ( methodLen == 8 && strncmp(method, "TA_MASSI", 8) == 0 ) {
-        int startIdx = json_find_int(json, "startIdx");
-        int endIdx = json_find_int(json, "endIdx");
-        int use_preloaded = json_find_int(json, "use_preloaded");
-        if( use_preloaded && g_refN > 0 ) {
-            preload_to_working(2, 1);
-        } else {
-            json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
-            json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
-        }
-        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
-        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
-        int outBegIdx = 0, outNBElement = 0;
-        int bench_iters = json_find_int(json, "iters");
-        if( bench_iters < 1 ) bench_iters = 1;
-        int bench_mode = json_find_int(json, "bench_mode");
-#ifdef TA_REF_SERVE
-        if( bench_mode != 0 ) {
-            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
-            return;
-        }
-#endif /* TA_REF_SERVE */
-        TA_RetCode rc = 0;
-        if( use_preloaded ) {
-            preload_to_working(2, 1);
-        }
-        long _t0 = 0;
-        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
-        if( _bi == 1 ) _t0 = get_nanotime();
-        if( bench_mode == 0 )
-        rc = TA_MASSI(
-            startIdx, endIdx,
-            g_inBuf0,
-            g_inBuf1,
-            optInFastPeriod,
-            optInSlowPeriod,
-            &outBegIdx, &outNBElement, g_outBuf0);
-#ifndef TA_REF_SERVE
-        else if( bench_mode == 1 ) {
-            TA_MASSI_Stream *_h = NULL;
-            double _openOut0 = 0;
-            rc = TA_MASSI_Open( &_h, g_inBuf0, g_inBuf1, endIdx + 1, optInFastPeriod, optInSlowPeriod, &_openOut0 );
-            if( _h ) TA_MASSI_Close( _h );
-        }
-        else {
-            TA_MASSI_Stream *_h = NULL;
-            rc = TA_MASSI_OpenAndFill( &_h, g_inBuf0, g_inBuf1, endIdx + 1, optInFastPeriod, optInSlowPeriod, &outBegIdx, &outNBElement, g_outBuf0 );
-            if( _h ) TA_MASSI_Close( _h );
-        }
-#endif /* TA_REF_SERVE */
-        }
-        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
-#ifndef TA_REF_SERVE
-        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
-            unsigned long long _oh = fuzz_hash_init();
-            if( rc == TA_SUCCESS && outNBElement > 0 ) {
-                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
-            }
-            _oh = fuzz_hash_fin(_oh);
-            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
-            return;
-        }
-#endif /* TA_REF_SERVE */
-        int usedFloat = 0;
-        if( json_find_int(json, "use_float") ) {
-            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
-            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf1[_fi] = (float)g_inBuf1[_fi];
-            rc = TA_S_MASSI(
-                startIdx, endIdx,
-                g_sinBuf0,
-                g_sinBuf1,
-                optInFastPeriod,
-                optInSlowPeriod,
-                &outBegIdx, &outNBElement, g_outBuf0);
-            usedFloat = 1;
-        }
-        int pos = json_appendf(resp, resp_size, 0,
-            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
-            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
-        if( !json_find_int(json, "no_output") ) {
-        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
-        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
-        }
-        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
-    }
     else if ( methodLen == 7 && strncmp(method, "TA_MAVP", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -72393,6 +72613,165 @@ static void handle_request(const char *json, char *resp, int resp_size) {
                 startIdx, endIdx,
                 g_sinBuf0,
                 g_sinBuf1,
+                &outBegIdx, &outNBElement, g_outBuf0);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
+    else if ( methodLen == 13 && strncmp(method, "TA_PERCENTILE", 13) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(1, 0);
+        } else {
+            json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        double optInPercentile = json_find_double(json, "optInPercentile");
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(1, 0);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_PERCENTILE(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            optInPercentile,
+            &outBegIdx, &outNBElement, g_outBuf0);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_PERCENTILE_Stream *_h = NULL;
+            double _openOut0 = 0;
+            rc = TA_PERCENTILE_Open( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, optInPercentile, &_openOut0 );
+            if( _h ) TA_PERCENTILE_Close( _h );
+        }
+        else {
+            TA_PERCENTILE_Stream *_h = NULL;
+            rc = TA_PERCENTILE_OpenAndFill( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, optInPercentile, &outBegIdx, &outNBElement, g_outBuf0 );
+            if( _h ) TA_PERCENTILE_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            rc = TA_S_PERCENTILE(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
+                optInPercentile,
+                &outBegIdx, &outNBElement, g_outBuf0);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
+    else if ( methodLen == 14 && strncmp(method, "TA_PERCENTRANK", 14) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(1, 0);
+        } else {
+            json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(1, 0);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_PERCENTRANK(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            &outBegIdx, &outNBElement, g_outBuf0);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_PERCENTRANK_Stream *_h = NULL;
+            double _openOut0 = 0;
+            rc = TA_PERCENTRANK_Open( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, &_openOut0 );
+            if( _h ) TA_PERCENTRANK_Close( _h );
+        }
+        else {
+            TA_PERCENTRANK_Stream *_h = NULL;
+            rc = TA_PERCENTRANK_OpenAndFill( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, &outBegIdx, &outNBElement, g_outBuf0 );
+            if( _h ) TA_PERCENTRANK_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            rc = TA_S_PERCENTRANK(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
                 &outBegIdx, &outNBElement, g_outBuf0);
             usedFloat = 1;
         }
@@ -76764,13 +77143,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
-    else if ( methodLen == 15 && strncmp(method, "TA_CVI_Lookback", 15) == 0 ) {
-        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
-        int optInROCPeriod = json_find_int(json, "optInROCPeriod");
-        int lookback = TA_CVI_Lookback(optInTimePeriod, optInROCPeriod);
-        snprintf(resp, resp_size,
-            "{\"lookback\":%d}", lookback);
-    }
     else if ( methodLen == 16 && strncmp(method, "TA_DEMA_Lookback", 16) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         int lookback = TA_DEMA_Lookback(optInTimePeriod);
@@ -76785,6 +77157,12 @@ static void handle_request(const char *json, char *resp, int resp_size) {
     else if ( methodLen == 20 && strncmp(method, "TA_DONCHIAN_Lookback", 20) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         int lookback = TA_DONCHIAN_Lookback(optInTimePeriod);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
+    else if ( methodLen == 15 && strncmp(method, "TA_DPO_Lookback", 15) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int lookback = TA_DPO_Lookback(optInTimePeriod);
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
@@ -76956,13 +77334,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
-    else if ( methodLen == 17 && strncmp(method, "TA_MASSI_Lookback", 17) == 0 ) {
-        int optInFastPeriod = json_find_int(json, "optInFastPeriod");
-        int optInSlowPeriod = json_find_int(json, "optInSlowPeriod");
-        int lookback = TA_MASSI_Lookback(optInFastPeriod, optInSlowPeriod);
-        snprintf(resp, resp_size,
-            "{\"lookback\":%d}", lookback);
-    }
     else if ( methodLen == 16 && strncmp(method, "TA_MAVP_Lookback", 16) == 0 ) {
         int optInMinPeriod = json_find_int(json, "optInMinPeriod");
         int optInMaxPeriod = json_find_int(json, "optInMaxPeriod");
@@ -77066,6 +77437,19 @@ static void handle_request(const char *json, char *resp, int resp_size) {
     }
     else if ( methodLen == 15 && strncmp(method, "TA_OBV_Lookback", 15) == 0 ) {
         int lookback = TA_OBV_Lookback();
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
+    else if ( methodLen == 22 && strncmp(method, "TA_PERCENTILE_Lookback", 22) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        double optInPercentile = json_find_double(json, "optInPercentile");
+        int lookback = TA_PERCENTILE_Lookback(optInTimePeriod, optInPercentile);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
+    else if ( methodLen == 23 && strncmp(method, "TA_PERCENTRANK_Lookback", 23) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int lookback = TA_PERCENTRANK_Lookback(optInTimePeriod);
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
@@ -77460,10 +77844,10 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_CORREL\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_COS\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_COSH\"");
-        pos = json_appendf(resp, resp_size, pos, ",\"TA_CVI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_DEMA\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_DIV\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_DONCHIAN\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_DPO\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_DX\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_EFI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_EMA\"");
@@ -77492,7 +77876,6 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_MACDFIX\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_MAMA\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_MARKETFI\"");
-        pos = json_appendf(resp, resp_size, pos, ",\"TA_MASSI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_MAVP\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_MAX\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_MAXINDEX\"");
@@ -77511,6 +77894,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_NATR\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_NVI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_OBV\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PERCENTILE\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_PERCENTRANK\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_PLUS_DI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_PLUS_DM\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_PPO\"");

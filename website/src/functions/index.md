@@ -58,6 +58,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [CCI](/functions/cci.md) — Commodity Channel Index
 - [CMO](/functions/cmo.md) — Chande Momentum Oscillator
 - [CMOU](/functions/cmou.md) — Chande Momentum Oscillator (Unsmoothed)
+- [DPO](/functions/dpo.md) — Detrended Price Oscillator
 - [DX](/functions/dx.md) — Directional Movement Index
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [IMI](/functions/imi.md) — Intraday Momentum Index
@@ -195,6 +196,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [LINEARREG_ANGLE](/functions/linearreg_angle.md) — Linear Regression Angle
 - [LINEARREG_INTERCEPT](/functions/linearreg_intercept.md) — Linear Regression Intercept
 - [LINEARREG_SLOPE](/functions/linearreg_slope.md) — Linear Regression Slope
+- [PERCENTILE](/functions/percentile.md) — Percentile (nearest rank)
+- [PERCENTRANK](/functions/percentrank.md) — Percent Rank
 - [STDDEV](/functions/stddev.md) — Standard Deviation
 - [TSF](/functions/tsf.md) — Time Series Forecast
 - [VAR](/functions/var.md) — Variance
@@ -203,8 +206,6 @@ All technical-analysis functions, grouped by category. Each page documents the f
 
 - [ADR](/functions/adr.md) — Average Day Range
 - [ATR](/functions/atr.md) — Average True Range
-- [CVI](/functions/cvi.md) — Chaikin's Volatility
-- [MASSI](/functions/massi.md) — Mass Index
 - [NATR](/functions/natr.md) — Normalized Average True Range
 - [TRANGE](/functions/trange.md) — True Range
 

@@ -750,14 +750,6 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     /* ZLEMA de-lags the input and hands it to the same EMA recurrence, seeded
      * the same way, so its whole trajectory shifts with UNST_EMA. */
     {"ZLEMA",        TA_FUNC_UNST_EMA},
-    /* CVI smooths the high-low spread with the same EMA and takes a percent
-     * rate of change of it, so both the anchor and the whole line move with
-     * UNST_EMA. */
-    {"CVI",          TA_FUNC_UNST_EMA},
-    /* MASSI stacks two EMA of the high-low range and sums their ratio, so both
-     * of its stage anchors -- and therefore the whole line -- move with
-     * UNST_EMA. Its lookback carries the unstable period TWICE. */
-    {"MASSI",        TA_FUNC_UNST_EMA},
     /* KC is recursive through BOTH of its callees -- EMA of the typical price
      * and the Wilder ATR -- so it is converging, not finite-window, and it is
      * the first function here whose legs carry DIFFERENT ids. BOTH rows are
@@ -1915,6 +1907,11 @@ static TA_RangeStability stability_class(const TA_FuncInfo *funcInfo)
         "MIN", "MAX", "MINMAX", "MIDPOINT", "MIDPRICE", "WILLR", "AROON", "AROONOSC",
         /* fresh per-bar rescan (window re-summed in bar-absolute order each output) */
         "AVGDEV",
+        /* fresh per-bar rescan, integer count -- no FP total carried across bars */
+        "PERCENTRANK",
+        /* incrementally maintained sorted window -- the state is exact copies
+         * of input values, so the output is an input element verbatim */
+        "PERCENTILE",
         /* fresh sliding window, no accumulator */
         "IMI",
         /* NOTE: LINEARREG / LINEARREG_ANGLE / LINEARREG_INTERCEPT / LINEARREG_SLOPE
@@ -2080,7 +2077,7 @@ typedef struct {
     /* Of those, the ones whose class actually compared VALUES across ranges.
      * TA_STABLE_SKIP reaches the leg and checks coherency only, so counting it
      * as "verified" overstates the ratchet below -- and the inert set grows
-     * with every new post-cutover path-dependent indicator. */
+     * with every new path-dependent indicator (NVI, PVI, WAD today). */
     int               postCutRangeValueCompared;
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;

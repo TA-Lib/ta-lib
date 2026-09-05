@@ -50,12 +50,10 @@ fn load() -> Vec<FuncDef> {
 const INHERITED: &[(&str, &str)] = &[
     ("ADOSC", "EMA"),
     ("ADXR", "ADX"),
-    ("CVI", "EMA"),
     ("DEMA", "EMA"),
     ("KC", "ATR"),
     ("MACD", "EMA"),
     ("MACDFIX", "EMA"),
-    ("MASSI", "EMA"),
     ("SMI", "EMA"),
     ("STOCHRSI", "RSI"),
     ("SUPERTREND", "ATR"),

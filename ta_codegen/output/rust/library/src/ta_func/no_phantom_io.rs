@@ -9133,79 +9133,6 @@ fn legs_COSH(r: &mut Report) {
     r.legs_done("COSH", 1);
 }
 
-const V_CVI: &[(&str, i32, i32)] = &[
-    ("defaults", i32::MIN, i32::MIN),
-    ("minimums", 2i32, 1i32),
-];
-
-fn sub_CVI(r: &mut Report) {
-    let core = Core::new();
-    for &(label, optInTimePeriod, optInROCPeriod) in V_CVI {
-        let Ok(lb) = core.CVI_Lookback(optInTimePeriod, optInROCPeriod) else { continue; };
-        r.control("CVI", label, run(|| {
-            let inHigh: Vec<f64> = Vec::with_capacity(1);
-            let inLow: Vec<f64> = Vec::with_capacity(1);
-            let mut outReal: Vec<f64> = Vec::with_capacity(1);
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.CVI_Impl(0, lb, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-        if lb < 1 { r.no_quiet_range("CVI", label); continue; }
-        r.quiet("CVI", label, lb, run(|| {
-            let inHigh: Vec<f64> = Vec::with_capacity(1);
-            let inLow: Vec<f64> = Vec::with_capacity(1);
-            let mut outReal: Vec<f64> = Vec::with_capacity(1);
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.CVI_Impl(0, lb - 1, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-}
-
-fn legs_CVI(r: &mut Report) {
-    let core = Core::new();
-    let optInTimePeriod = i32::MIN;
-    let optInROCPeriod = i32::MIN;
-    let Ok(lb) = core.CVI_Lookback(optInTimePeriod, optInROCPeriod) else { r.no_legs("CVI"); return; };
-    let (startIdx, endIdx) = (lb, lb + 4);
-    {
-        let inHigh: Vec<f64> = series("high", endIdx + 1);
-        let inLow: Vec<f64> = series("low", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        r.legs_control("CVI", run(|| {
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.CVI_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-    {
-        let inHigh: Vec<f64> = Vec::with_capacity(1);
-        let inLow: Vec<f64> = series("low", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        r.leg("CVI", "inHigh", 0, run(|| {
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.CVI_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-    {
-        let inHigh: Vec<f64> = series("high", endIdx + 1);
-        let inLow: Vec<f64> = Vec::with_capacity(1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        r.leg("CVI", "inLow", 1, run(|| {
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.CVI_Impl(startIdx, endIdx, &inHigh, &inLow, optInTimePeriod, optInROCPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-    r.legs_done("CVI", 2);
-}
-
 const V_DEMA: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -9413,6 +9340,63 @@ fn legs_DONCHIAN(r: &mut Report) {
         }));
     }
     r.legs_done("DONCHIAN", 2);
+}
+
+const V_DPO: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_DPO(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_DPO {
+        let Ok(lb) = core.DPO_Lookback(optInTimePeriod) else { continue; };
+        r.control("DPO", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DPO_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("DPO", label); continue; }
+        r.quiet("DPO", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DPO_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_DPO(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.DPO_Lookback(optInTimePeriod) else { r.no_legs("DPO"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("DPO", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DPO_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("DPO", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.DPO_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("DPO", 1);
 }
 
 const V_DX: &[(&str, i32)] = &[
@@ -11286,79 +11270,6 @@ fn legs_MARKETFI(r: &mut Report) {
     r.legs_done("MARKETFI", 3);
 }
 
-const V_MASSI: &[(&str, i32, i32)] = &[
-    ("defaults", i32::MIN, i32::MIN),
-    ("minimums", 2i32, 2i32),
-];
-
-fn sub_MASSI(r: &mut Report) {
-    let core = Core::new();
-    for &(label, optInFastPeriod, optInSlowPeriod) in V_MASSI {
-        let Ok(lb) = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod) else { continue; };
-        r.control("MASSI", label, run(|| {
-            let inHigh: Vec<f64> = Vec::with_capacity(1);
-            let inLow: Vec<f64> = Vec::with_capacity(1);
-            let mut outReal: Vec<f64> = Vec::with_capacity(1);
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.MASSI_Impl(0, lb, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-        if lb < 1 { r.no_quiet_range("MASSI", label); continue; }
-        r.quiet("MASSI", label, lb, run(|| {
-            let inHigh: Vec<f64> = Vec::with_capacity(1);
-            let inLow: Vec<f64> = Vec::with_capacity(1);
-            let mut outReal: Vec<f64> = Vec::with_capacity(1);
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.MASSI_Impl(0, lb - 1, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-}
-
-fn legs_MASSI(r: &mut Report) {
-    let core = Core::new();
-    let optInFastPeriod = i32::MIN;
-    let optInSlowPeriod = i32::MIN;
-    let Ok(lb) = core.MASSI_Lookback(optInFastPeriod, optInSlowPeriod) else { r.no_legs("MASSI"); return; };
-    let (startIdx, endIdx) = (lb, lb + 4);
-    {
-        let inHigh: Vec<f64> = series("high", endIdx + 1);
-        let inLow: Vec<f64> = series("low", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        r.legs_control("MASSI", run(|| {
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.MASSI_Impl(startIdx, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-    {
-        let inHigh: Vec<f64> = Vec::with_capacity(1);
-        let inLow: Vec<f64> = series("low", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        r.leg("MASSI", "inHigh", 0, run(|| {
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.MASSI_Impl(startIdx, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-    {
-        let inHigh: Vec<f64> = series("high", endIdx + 1);
-        let inLow: Vec<f64> = Vec::with_capacity(1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        r.leg("MASSI", "inLow", 1, run(|| {
-            let mut _b: usize = 0;
-            let mut _n: usize = 0;
-            let rc = core.MASSI_Impl(startIdx, endIdx, &inHigh, &inLow, optInFastPeriod, optInSlowPeriod, &mut _b, &mut _n, &mut outReal);
-            (rc, _n)
-        }));
-    }
-    r.legs_done("MASSI", 2);
-}
-
 const V_MAVP: &[(&str, i32, i32, MAType)] = &[
     ("defaults", i32::MIN, i32::MIN, MAType::DEFAULT),
     ("minimums", 1i32, 1i32, MAType::DEFAULT),
@@ -12633,6 +12544,121 @@ fn legs_OBV(r: &mut Report) {
         }));
     }
     r.legs_done("OBV", 2);
+}
+
+const V_PERCENTILE: &[(&str, i32, f64)] = &[
+    ("defaults", i32::MIN, Core::REAL_DEFAULT),
+    ("minimums", 2i32, 0.0f64),
+];
+
+fn sub_PERCENTILE(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInPercentile) in V_PERCENTILE {
+        let Ok(lb) = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile) else { continue; };
+        r.control("PERCENTILE", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTILE_Impl(0, lb, &inReal, optInTimePeriod, optInPercentile, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("PERCENTILE", label); continue; }
+        r.quiet("PERCENTILE", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTILE_Impl(0, lb - 1, &inReal, optInTimePeriod, optInPercentile, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_PERCENTILE(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInPercentile = Core::REAL_DEFAULT;
+    let Ok(lb) = core.PERCENTILE_Lookback(optInTimePeriod, optInPercentile) else { r.no_legs("PERCENTILE"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PERCENTILE", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTILE_Impl(startIdx, endIdx, &inReal, optInTimePeriod, optInPercentile, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("PERCENTILE", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTILE_Impl(startIdx, endIdx, &inReal, optInTimePeriod, optInPercentile, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("PERCENTILE", 1);
+}
+
+const V_PERCENTRANK: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 2i32),
+];
+
+fn sub_PERCENTRANK(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_PERCENTRANK {
+        let Ok(lb) = core.PERCENTRANK_Lookback(optInTimePeriod) else { continue; };
+        r.control("PERCENTRANK", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTRANK_Impl(0, lb, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("PERCENTRANK", label); continue; }
+        r.quiet("PERCENTRANK", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTRANK_Impl(0, lb - 1, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_PERCENTRANK(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.PERCENTRANK_Lookback(optInTimePeriod) else { r.no_legs("PERCENTRANK"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("PERCENTRANK", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTRANK_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("PERCENTRANK", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.PERCENTRANK_Impl(startIdx, endIdx, &inReal, optInTimePeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("PERCENTRANK", 1);
 }
 
 const V_PLUS_DI: &[(&str, i32)] = &[
@@ -16131,10 +16157,10 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("CORREL", sub_CORREL, legs_CORREL),
     ("COS", sub_COS, legs_COS),
     ("COSH", sub_COSH, legs_COSH),
-    ("CVI", sub_CVI, legs_CVI),
     ("DEMA", sub_DEMA, legs_DEMA),
     ("DIV", sub_DIV, legs_DIV),
     ("DONCHIAN", sub_DONCHIAN, legs_DONCHIAN),
+    ("DPO", sub_DPO, legs_DPO),
     ("DX", sub_DX, legs_DX),
     ("EFI", sub_EFI, legs_EFI),
     ("EMA", sub_EMA, legs_EMA),
@@ -16163,7 +16189,6 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("MACDFIX", sub_MACDFIX, legs_MACDFIX),
     ("MAMA", sub_MAMA, legs_MAMA),
     ("MARKETFI", sub_MARKETFI, legs_MARKETFI),
-    ("MASSI", sub_MASSI, legs_MASSI),
     ("MAVP", sub_MAVP, legs_MAVP),
     ("MAX", sub_MAX, legs_MAX),
     ("MAXINDEX", sub_MAXINDEX, legs_MAXINDEX),
@@ -16182,6 +16207,8 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("NATR", sub_NATR, legs_NATR),
     ("NVI", sub_NVI, legs_NVI),
     ("OBV", sub_OBV, legs_OBV),
+    ("PERCENTILE", sub_PERCENTILE, legs_PERCENTILE),
+    ("PERCENTRANK", sub_PERCENTRANK, legs_PERCENTRANK),
     ("PLUS_DI", sub_PLUS_DI, legs_PLUS_DI),
     ("PLUS_DM", sub_PLUS_DM, legs_PLUS_DM),
     ("PPO", sub_PPO, legs_PPO),
@@ -16267,7 +16294,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 188, "probe count");
+    assert_eq!(PROBES.len(), 189, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

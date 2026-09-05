@@ -232,10 +232,15 @@ call that returns `TA_BAD_PARAM`.
 
 | Flag | Description | C equivalent |
 |------|-------------|--------------|
-| `is_percent` | Value is a percentage | `TA_OPTIN_IS_PERCENT` |
-| `is_degree` | Value is 0-360 degrees | `TA_OPTIN_IS_DEGREE` |
-| `is_currency` | Value is a currency amount | `TA_OPTIN_IS_CURRENCY` |
+| `percent` | Value is a percentage | `TA_OPTIN_IS_PERCENT` |
+| `degree` | Value is 0-360 degrees | `TA_OPTIN_IS_DEGREE` |
+| `currency` | Value is a currency amount | `TA_OPTIN_IS_CURRENCY` |
 | `advanced` | Rarely-changed parameter (hide in simple UIs) | `TA_OPTIN_ADVANCED` |
+
+An unrecognised flag string in any of the three lists is **dropped silently** —
+`deny_unknown_fields` guards field names, not list values, so a misspelling
+emits flags of 0 in all four backends and every gate that compares C against a
+server still passes, 0 against 0.
 
 ### Output Flags
 
