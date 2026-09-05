@@ -126,6 +126,7 @@
 #include "ta_DX.c"
 #include "ta_EFI.c"
 #include "ta_EMA.c"
+#include "ta_ER.c"
 #include "ta_EXP.c"
 #include "ta_FLOOR.c"
 #include "ta_FOSC.c"
@@ -1926,6 +1927,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("EMA %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ER") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_ER(0, g_nPoints - 1, g_close, 10, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("ER %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "EXP") ) {

@@ -2302,6 +2302,26 @@ unsigned int TA_EMA_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_EMA_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_ER_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_ER(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInTimePeriod*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_ER_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_ER_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
+}
 TA_RetCode TA_EXP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,

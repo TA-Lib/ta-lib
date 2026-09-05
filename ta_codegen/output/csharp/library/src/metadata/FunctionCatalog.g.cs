@@ -213,6 +213,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeDx(),
             MakeEfi(),
             MakeEma(),
+            MakeEr(),
             MakeExp(),
             MakeFloor(),
             MakeFosc(),
@@ -2473,6 +2474,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.EMA_Lookback(c.IntOpt(0)),
         invoke: static (core, c, startIdx, endIdx) =>
             core.EMA(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeEr() => new(
+        name: "ER",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Kaufman Efficiency Ratio",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of one-bar changes in the path sum", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 2, 100, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ER_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.ER(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeExp() => new(

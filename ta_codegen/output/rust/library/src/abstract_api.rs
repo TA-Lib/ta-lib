@@ -242,6 +242,8 @@ pub enum FuncId {
     EFI,
     /// Exponential Moving Average — [`Core::EMA`](crate::Core::EMA).
     EMA,
+    /// Kaufman Efficiency Ratio — [`Core::ER`](crate::Core::ER).
+    ER,
     /// Vector Arithmetic Exp — [`Core::EXP`](crate::Core::EXP).
     EXP,
     /// Vector Floor — [`Core::FLOOR`](crate::Core::FLOOR).
@@ -436,7 +438,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 195;
+    pub const COUNT: usize = 196;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -761,7 +763,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 195] = [
+static FUNC_TABLE: [FuncInfo; 196] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1861,6 +1863,17 @@ static FUNC_TABLE: [FuncInfo; 195] = [
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 30, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: Some(FuncUnstId::EMA),
+    },
+    FuncInfo {
+        id: FuncId::ER,
+        name: "ER",
+        group: Group::MomentumIndicators,
+        hint: "Kaufman Efficiency Ratio",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of one-bar changes in the path sum", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (2, 100, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
     },
     FuncInfo {
         id: FuncId::EXP,
@@ -3025,6 +3038,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "DX" => FuncId::DX,
         "EFI" => FuncId::EFI,
         "EMA" => FuncId::EMA,
+        "ER" => FuncId::ER,
         "EXP" => FuncId::EXP,
         "FLOOR" => FuncId::FLOOR,
         "FOSC" => FuncId::FOSC,
@@ -3477,6 +3491,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::DX => self.core.DX_Lookback(self.int_opt[0]),
             FuncId::EFI => self.core.EFI_Lookback(self.int_opt[0]),
             FuncId::EMA => self.core.EMA_Lookback(self.int_opt[0]),
+            FuncId::ER => self.core.ER_Lookback(self.int_opt[0]),
             FuncId::EXP => self.core.EXP_Lookback(),
             FuncId::FLOOR => self.core.FLOOR_Lookback(),
             FuncId::FOSC => self.core.FOSC_Lookback(self.int_opt[0]),
@@ -4843,6 +4858,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.EMA(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ER => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.ER(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

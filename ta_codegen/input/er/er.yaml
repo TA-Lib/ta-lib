@@ -1,0 +1,19 @@
+name: ER
+group: Momentum Indicators
+hint: Kaufman Efficiency Ratio
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Number of one-bar changes in the path sum
+    range: [2, 100000]
+    default: 10
+    suggested: [2, 100, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

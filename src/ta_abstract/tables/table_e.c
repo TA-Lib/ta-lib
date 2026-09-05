@@ -102,6 +102,54 @@ DEF_FUNCTION( EMA,
              );
 /* EMA END */
 
+/* ER BEGIN */
+static const TA_IntegerRange TA_DEF_ER_TimePeriod =
+{
+   2,
+   100000,
+   2,
+   100,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_ER_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_ER_TimePeriod,
+   10,
+   "Number of one-bar changes in the path sum",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_ER_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ER_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ER_OptInputs[] =
+{ &TA_DEF_UI_D_ER_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( ER,
+              TA_GroupId_MomentumIndicators,
+              "Kaufman Efficiency Ratio",
+              TA_FUNC_FLG_STREAM
+             );
+/* ER END */
+
 /* EXP BEGIN */
 static const TA_InputParameterInfo    *TA_EXP_Inputs[]    =
 {
@@ -133,6 +181,7 @@ const TA_FuncDef *TA_DEF_TableE[] =
 {
    ADD_TO_TABLE(EFI),
    ADD_TO_TABLE(EMA),
+   ADD_TO_TABLE(ER),
    ADD_TO_TABLE(EXP),
    NULL
 };

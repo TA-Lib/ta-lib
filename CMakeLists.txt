@@ -396,6 +396,7 @@ set(LIB_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_DX.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EFI.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EMA.c"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_ER.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_EXP.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FLOOR.c"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/ta_func/ta_FOSC.c"

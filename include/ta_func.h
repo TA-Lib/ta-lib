@@ -7854,6 +7854,84 @@ TA_LIB_API TA_RetCode TA_EMA_Value( const TA_EMA_Stream *stream, double *outReal
 TA_LIB_API TA_RetCode TA_EMA_Clone( const TA_EMA_Stream *stream, TA_EMA_Stream **clone );
 
 /*
+ * TA_ER - Kaufman Efficiency Ratio
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 2 to 100000)
+ *    Number of one-bar changes in the path sum
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ER( int    startIdx,
+                             int    endIdx,
+                                        const double inReal[],
+                                        int           optInTimePeriod, /* From 2 to 100000 */
+                                        int          *outBegIdx,
+                                        int          *outNBElement,
+                                        double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_ER( int    startIdx,
+                               int    endIdx,
+                                          const float  inReal[],
+                                          int           optInTimePeriod, /* From 2 to 100000 */
+                                          int          *outBegIdx,
+                                          int          *outNBElement,
+                                          double        outReal[] );
+
+TA_LIB_API int TA_ER_Lookback( int           optInTimePeriod );  /* From 2 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_ER — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_ER_Stream TA_ER_Stream;
+
+TA_LIB_API TA_RetCode TA_ER_Open( TA_ER_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ER_Update( TA_ER_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ER_Peek( const TA_ER_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_ER_Close( TA_ER_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_ER( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_ER_OpenAndFill( TA_ER_Stream **stream, const double inReal[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ER_Update calls, including the
+ * per-bar rejection. A rejected bar k leaves the bars before it committed and
+ * written, itself uncommitted and its output slot untouched; TA_StreamOutRange
+ * then reports k+1, the rejected bar being the last one counted. Outputs must
+ * not alias the inputs or each other.
+ */
+TA_LIB_API TA_RetCode TA_ER_UpdateAndFill( TA_ER_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update and UpdateAndFill, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ER_Value( const TA_ER_Stream *stream, double *outReal );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ER_Clone( const TA_ER_Stream *stream, TA_ER_Stream **clone );
+
+/*
  * TA_EXP - Vector Arithmetic Exp
  * 
  * Input  = double
