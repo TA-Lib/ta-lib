@@ -75,7 +75,7 @@ fn load_ledger() -> (u32, BTreeMap<String, u32>) {
 #[test]
 fn scan_is_not_vacuous() {
     let (sites, _, files) = scan_ta_func();
-    assert!(files > 100, "only {files} .c files scanned in src/ta_func");
+    assert!(files >= 200, "only {files} .c files scanned in src/ta_func");
     assert!(sites.len() > 100, "only {} internal-error sites found", sites.len());
     let (_, ledger) = load_ledger();
     assert!(ledger.len() > 100, "only {} ledger entries", ledger.len());

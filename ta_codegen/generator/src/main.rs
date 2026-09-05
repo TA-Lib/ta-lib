@@ -722,9 +722,6 @@ fn generate(func_filter: Option<&str>, backend_filter: Option<&str>) {
         // to regenerate.
         backends::java_enums::generate(&enums, &java_pkg.join("FuncUnstId.java"));
         backends::java_enums::generate_matype(&enums, &java_pkg.join("MAType.java"));
-        // Whole-corpus count regardless of --func: `all_funcs` is every
-        // definition even under a filtered run (see its own comment above).
-        sync_pom_indicator_count(&root, all_funcs.len());
         // Core.java's GENCODE section splices ALL indicators into a single file,
         // so only regenerate on a full (unfiltered) run — a --func subset would
         // drop every other indicator's methods.
@@ -2294,27 +2291,6 @@ const RUST_GENERATED_TEST_MODULES: &[&str] = &["no_phantom_io"];
 /// ta-lib's dependency does not resolve.
 const DISPATCH_VERSION: &str = "0.1.2";
 
-/// Rewrite the Java pom's `<description>` "<N> indicators" from the corpus
-/// count -- the one field `generate` overwrites in an otherwise hand-written,
-/// preserved file (see CLAUDE.md). It is published to Maven Central and
-/// immutable per version, so a stale count cannot be fixed after release
-/// (issue tracked in #317); tying it to `generate` means it can no longer go
-/// stale between the indicator that added it and the release that ships it.
-fn sync_pom_indicator_count(root: &Path, n_funcs: usize) {
-    let pom_path = root.join("ta_codegen/output/java/library/pom.xml");
-    let text = std::fs::read_to_string(&pom_path)
-        .unwrap_or_else(|e| panic!("cannot read {}: {e}", pom_path.display()));
-    let marker = " indicators";
-    let marker_pos = text
-        .find(marker)
-        .unwrap_or_else(|| panic!("{}: no \"{marker}\" found in <description>", pom_path.display()));
-    let digits_start = text[..marker_pos]
-        .rfind(|c: char| !c.is_ascii_digit())
-        .map_or(0, |i| i + 1);
-    let new_text = format!("{}{n_funcs}{}", &text[..digits_start], &text[marker_pos..]);
-    backends::write_if_changed(&pom_path, &new_text, "pom.xml", n_funcs);
-}
-
 /// A Rust sample that both crate front pages carry -- the `lib.rs` crate docs
 /// and `README.md`.
 struct FrontPageExample {
@@ -2451,13 +2427,11 @@ fn generate_rust_crate_scaffolding(
         .trim()
         .to_string();
     // The crate's shop window — the Cargo.toml description (the crates.io
-    // search-result tagline), the lib.rs crate docs and README.md — quotes an
-    // indicator count and an install requirement. Derive both, never re-type
-    // them: three independent copies of "161" survived seven added indicators
-    // (#179 A2), and the install line said `ta-lib = "0.6"`, which resolves to
-    // nothing at all (#179 A1). `funcs` is every definition even under
-    // `--func=`, so the counts are whole-corpus by construction.
-    let n_funcs = funcs.len();
+    // search-result tagline), the lib.rs crate docs and README.md — quotes a
+    // candlestick count and an install requirement. Derive both, never re-type
+    // them: the install line said `ta-lib = "0.6"`, which resolves to nothing at
+    // all (#179 A1). `funcs` is every definition even under `--func=`, so the
+    // count is whole-corpus by construction.
     let n_candles = funcs.iter().filter(|f| f.group == "Pattern Recognition").count();
     // The caret requirement a user should pin: the released major.minor.
     let install_req = crate_version
@@ -2473,8 +2447,7 @@ fn generate_rust_crate_scaffolding(
     // samples and so cannot be `format!` strings (every brace would need
     // doubling, in text that is read far more often than it is edited).
     let fill = |text: &str| {
-        text.replace("$N_FUNCS", &n_funcs.to_string())
-            .replace("$N_CANDLES", &n_candles.to_string())
+        text.replace("$N_CANDLES", &n_candles.to_string())
             .replace("$INSTALL_REQ", &install_req)
             .replace("$FUNC_INDEX", &func_index)
             .replace("$EX_QUICK_START_DOC", &EXAMPLE_QUICK_START.as_doc())
@@ -2610,7 +2583,7 @@ macro_rules! dispatch_fma {
     // clear MSRV message instead of an opaque E0658.
     let lib_toml_head = format!(
         "[package]\nname = \"ta-lib\"\nversion = \"{crate_version}\"\nedition = \"2021\"\nrust-version = \"1.86\"\n\
-         description = \"Technical analysis library: {n_funcs} indicators (SMA, EMA, RSI, MACD, \
+         description = \"Technical analysis library: 200+ indicators (SMA, EMA, RSI, MACD, \
          Bollinger Bands, ATR, Stochastic, candlestick patterns) — the official Rust port of \
          TA-Lib, verified against the C reference.\""
     );
@@ -2690,7 +2663,7 @@ path = "src/lib.rs"
     // --- src/lib.rs ---
     let lib_rs = r#"//! # TA-Lib: Technical Analysis Library
 //!
-//! $N_FUNCS technical-analysis indicators — moving averages, momentum oscillators,
+//! 200+ technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and $N_CANDLES candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -2827,7 +2800,7 @@ struct ReadmeExamples;
 [![crates.io](https://img.shields.io/crates/v/ta-lib.svg)](https://crates.io/crates/ta-lib) [![docs.rs](https://docs.rs/ta-lib/badge.svg)](https://docs.rs/ta-lib)
 
 [TA-Lib](https://ta-lib.org) — the widely used technical-analysis library — as a
-pure-Rust crate: $N_FUNCS indicators covering moving averages, momentum oscillators
+pure-Rust crate: 200+ indicators covering moving averages, momentum oscillators
 (RSI, MACD, Stochastic), volatility (Bollinger Bands, ATR), volume, Hilbert
 Transform cycle analysis, statistics, price transforms, and $N_CANDLES candlestick
 patterns.

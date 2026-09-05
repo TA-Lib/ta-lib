@@ -212,7 +212,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
         }
         checked += 1;
     }
-    assert!(checked >= 176, "only {checked} public fills inspected");
+    assert!(checked >= 200, "only {checked} public fills inspected");
 }
 
 /// Rule S1 on EVERY C# public opener — corpus-wide, for the same reason as the
@@ -556,7 +556,7 @@ fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
     // Non-vacuity, per backend: a def-keyword that stopped matching would make
     // the whole sweep skip in silence.
     for (b, n) in per_backend.iter().enumerate() {
-        assert!(*n >= 170, "{}: only {n} opener bodies inspected", specs[b].0);
+        assert!(*n >= 200, "{}: only {n} opener bodies inspected", specs[b].0);
     }
 }
 
@@ -858,7 +858,7 @@ fn every_declared_input_is_checked_in_every_backend() {
         "every discovered indicator is swept or counted ({scanned} + {no_inputs})"
     );
     // Literal floors: a derived one moves with whatever the scan happens to find.
-    assert!(scanned >= 170, "only {scanned} indicators scanned");
+    assert!(scanned >= 200, "only {scanned} indicators scanned");
     assert!(legs_checked >= 380, "only {legs_checked} declared input legs checked");
 
     // ---- part two: the seven legs the exemption used to drop ----
@@ -1297,7 +1297,7 @@ fn no_csharp_peek_copies_the_handle() {
         }
     }
 
-    assert!(swept > 170, "only {swept} Peek(s) swept");
+    assert!(swept >= 200, "only {swept} Peek(s) swept");
     assert_eq!(frames, swept, "{frames} of {swept} Peek(s) run a frame");
     assert!(
         fully_shadowed.len() >= 21,
@@ -1334,7 +1334,7 @@ fn rust_category_index_lists_every_function_once() {
         .iter()
         .map(|name| load_indicator(name).0)
         .collect();
-    assert!(funcs.len() >= 176, "only {} indicators in the corpus", funcs.len());
+    assert!(funcs.len() >= 200, "only {} indicators in the corpus", funcs.len());
 
     let index = backends::rust_doc::category_index(&funcs);
 

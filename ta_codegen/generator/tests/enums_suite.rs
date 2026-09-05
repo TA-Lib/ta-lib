@@ -439,7 +439,7 @@ fn rust_fma_dispatch_fires_for_exactly_the_fusing_functions() {
     }
     dispatched.sort();
     assert_eq!(dispatched, fusing, "FMA dispatch inventory drifted");
-    assert!(checked >= 150, "expected ~168 functions, checked {checked}");
+    assert!(checked >= 200, "expected the whole corpus, checked {checked}");
 }
 
 // ---------------------------------------------------------------------------

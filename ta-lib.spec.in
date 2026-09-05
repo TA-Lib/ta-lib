@@ -39,7 +39,7 @@ stock/future/commodity market data.
 
 TA-Lib is intended for software developers looking to add technical
 analysis functionality to their application. It is a library of more than
-150 functions that can be integrated in your application. It is not an
+200 functions that can be integrated in your application. It is not an
 application by itself.
 
 %package devel

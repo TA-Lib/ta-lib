@@ -39,7 +39,7 @@ fn generated_c() -> Vec<PathBuf> {
 #[test]
 fn no_committed_c_file_casts_away_a_name_its_block_reads() {
     let files = generated_c();
-    assert!(files.len() > 170, "only {} generated .c file(s) found", files.len());
+    assert!(files.len() >= 200, "only {} generated .c file(s) found", files.len());
     let (mut casts, mut with_casts) = (0usize, 0usize);
     let mut offenders: Vec<String> = Vec::new();
     for p in &files {

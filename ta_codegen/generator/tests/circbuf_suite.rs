@@ -355,7 +355,7 @@ fn c_circbuf_alloc_failure_frees_the_circbufs_before_it() {
         })
         .collect();
     names.sort();
-    assert!(names.len() > 100, "expected the full indicator set, got {}", names.len());
+    assert!(names.len() >= 200, "expected the full indicator set, got {}", names.len());
 
     let mut multi_circbuf_functions = 0usize;
     for name in &names {

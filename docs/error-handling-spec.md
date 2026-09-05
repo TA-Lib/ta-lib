@@ -212,7 +212,7 @@ answer — measured, it does not: the fill's writes stop where the handle's
 warm-up seeds begin, or overlap them by the single slot the next `Update`
 rewrites first. The ban is there because that margin is an accident of every
 body's arithmetic that nothing states or asserts, and supporting in-place would
-promise it for 176 functions in four backends, permanently.
+promise it for every function in four backends, permanently.
 
 **Test Coverage** (S1, S2, S4, S5, S6a and S7; the rest of this tier is not yet mapped):
 `testStreamShortHistory` drives S1, S2's rejecting side and S7 in C — 9, 3 and 8

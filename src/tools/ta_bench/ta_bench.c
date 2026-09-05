@@ -53,7 +53,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 #define MAX_POINTS        200000
 #define DEFAULT_POINTS    100000
 #define DEFAULT_ITERS     100
-#define MAX_FUNCTIONS     200
+#define MAX_FUNCTIONS     512
 #define JSON_BUF_SIZE     (32 * 1024 * 1024)
 
 /* ---- Timing ---- */

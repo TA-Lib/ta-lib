@@ -57,7 +57,7 @@ fn streaming_funcs() -> Vec<String> {
         }
     }
     out.sort();
-    assert!(out.len() > 150, "the corpus sweep found only {} functions", out.len());
+    assert!(out.len() >= 200, "the corpus sweep found only {} functions", out.len());
     out
 }
 
@@ -363,8 +363,8 @@ fn no_managed_peek_seeds_a_dead_output_local() {
         // Non-vacuity floors: the sweep must have found the corpus AND the
         // subject. A needle that stops matching peeks would zero `swept`; an
         // emitter that re-grew every seed would zero `seedless`.
-        assert!(swept > 150, "{lang}: swept only {swept} peek frames");
-        assert!(seedless > 150, "{lang}: only {seedless} seed-free frames");
+        assert!(swept >= 200, "{lang}: swept only {swept} peek frames");
+        assert!(seedless >= 200, "{lang}: only {seedless} seed-free frames");
         let expected: BTreeSet<String> = ["imi".to_string()].into_iter().collect();
         assert_eq!(
             seeded, expected,

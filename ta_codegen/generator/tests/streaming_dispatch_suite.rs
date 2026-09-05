@@ -1303,7 +1303,7 @@ fn test_c_state_struct_text_is_the_emitted_struct() {
         );
         checked += 1;
     }
-    assert!(checked >= 170, "expected the streaming corpus, saw {checked}");
+    assert!(checked >= 200, "expected the streaming corpus, saw {checked}");
 }
 
 /// The layout `TA_StreamOutRange` reads through (#241). One public accessor
@@ -1350,7 +1350,7 @@ fn c_stream_every_tier_leads_with_the_range_head() {
         tiers.insert(format!("{:?}", std::mem::discriminant(&plan)));
         checked += 1;
     }
-    assert!(checked >= 170, "expected the streaming corpus, saw {checked}");
+    assert!(checked >= 200, "expected the streaming corpus, saw {checked}");
     assert_eq!(tiers.len(), 5, "all five stream tiers must be covered, saw {}", tiers.len());
 }
 
@@ -1594,7 +1594,7 @@ fn test_c_server_state_equivalence_leg() {
         .map(|n| load_indicator(n).0)
         .collect();
     let streaming: Vec<&ir::FuncDef> = funcs.iter().filter(|f| f.streaming).collect();
-    assert!(streaming.len() >= 170, "expected the streaming corpus, saw {}", streaming.len());
+    assert!(streaming.len() >= 200, "expected the streaming corpus, saw {}", streaming.len());
     let srv = ta_codegen_lib::server_gen::generate_c_server(&funcs, &enums);
 
     for f in &streaming {
@@ -1930,7 +1930,7 @@ fn test_c_no_step_impl_stores_a_ring_slot_twice() {
     // Both floors matter: the first proves the sweep still walks the streaming
     // corpus, the second that it is actually looking at rings — a skip that
     // silently emptied `stores` would keep the first green on its own.
-    assert!(stepped >= 170, "expected the streaming corpus, saw {stepped}");
+    assert!(stepped >= 195, "expected the streaming corpus, saw {stepped}");
     assert!(with_rings >= 80, "expected the ring-carrying corpus, saw {with_rings}");
 }
 

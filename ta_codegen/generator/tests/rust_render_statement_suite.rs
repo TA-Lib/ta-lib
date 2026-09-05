@@ -1064,7 +1064,7 @@ fn rust_public_entry_documents_exactly_its_parameters() {
         assert!(!params.is_empty(), "{name}: parsed no parameters -- the test would be vacuous");
         checked += 1;
     }
-    assert!(checked > 150, "expected the whole corpus, checked only {checked}");
+    assert!(checked >= 200, "expected the whole corpus, checked only {checked}");
 }
 
 #[test]

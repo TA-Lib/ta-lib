@@ -201,7 +201,7 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
         }
     }
 
-    assert!(peek_frames > 170, "only {peek_frames} peek entry points swept");
+    assert!(peek_frames >= 200, "only {peek_frames} peek entry points swept");
     assert!(
         buffers_seen > 150,
         "only {buffers_seen} handle buffer(s) found across the corpus, so the store scan \
@@ -685,7 +685,7 @@ fn no_c_peek_copies_the_handle() {
             }
         }
     }
-    assert!(swept > 170, "only {swept} peek(s) swept");
+    assert!(swept >= 200, "only {swept} peek(s) swept");
     assert_eq!(
         frames + dispatchers + stateless,
         swept,
@@ -790,7 +790,7 @@ fn no_peek_frame_reads_a_field_it_has_bound() {
             reads += l.matches("sp->").count();
         }
     }
-    assert!(swept > 170, "only {swept} peek(s) swept");
+    assert!(swept >= 200, "only {swept} peek(s) swept");
     assert!(
         reads > 700 && binds > 400,
         "{reads} `sp->` read(s) over {binds} that name a bound local — too few for this \
@@ -828,7 +828,7 @@ fn a_fused_peek_carries_the_fma_multiversion_attribute() {
     }
 
     assert!(drifted.is_empty(), "TA_FMA_MULTIVERSION drifted from the fused peeks: {drifted:?}");
-    assert!(peeks > 170, "only {peeks} peek frame(s) rendered -- the signature moved");
+    assert!(peeks >= 200, "only {peeks} peek frame(s) rendered -- the signature moved");
     assert!(fused > 0, "no peek fuses, so this sweep proved nothing");
     assert_eq!(fused, attributed, "{fused} fused peek(s) but {attributed} attributed");
 }
@@ -1003,7 +1003,7 @@ fn no_tier_carries_a_peek_mirror_or_a_routing_flag() {
             func.name
         );
     }
-    assert!(swept > 170, "only {swept} function(s) examined");
+    assert!(swept >= 200, "only {swept} function(s) examined");
 }
 
 /// SMA is the whole mechanism in one function: the degenerate `cap == 0` store
@@ -1217,7 +1217,7 @@ fn a_peek_frame_stops_at_its_last_output_store() {
     }
 
     assert!(offenders.is_empty(), "{}", offenders.join("\n"));
-    assert!(swept > 170, "only {swept} peek frame(s) examined");
+    assert!(swept >= 200, "only {swept} peek frame(s) examined");
     assert!(phasor_seen, "HT_PHASOR was not swept, so its pin did not run");
     for (k, (mark, floor)) in tail_marks.iter().enumerate() {
         assert!(

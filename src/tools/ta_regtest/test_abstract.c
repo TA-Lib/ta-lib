@@ -3715,7 +3715,7 @@ static ErrorNumber test_default_calls(void)
        * A single "at least N cases" floor would not: the six rejection rows
        * alone satisfy it, and the boundary-accept half could vanish unnoticed.
        * That half is precisely what catches a `>=` off-by-one. */
-      if( errNumber == TA_TEST_PASS && indexRangeNbFuncs < 150 )
+      if( errNumber == TA_TEST_PASS && indexRangeNbFuncs < 200 )
       {
          printf( "Failed: index-range gate saw only %d function(s)\n",
                  indexRangeNbFuncs );

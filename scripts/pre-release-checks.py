@@ -39,12 +39,10 @@ if __name__ == "__main__":
         print("Error: Version inconsistencies found. Did you forget to run scripts/sync.py?")
         exit(1)
 
-    # The Java pom's <description> names an indicator count. It is published to
-    # Central and immutable per version, so a stale number cannot be corrected after
-    # release -- it had already drifted from 168 to 174 before anything checked it.
-    # `ta_codegen generate` now rewrites it from ta_codegen/input/ on every run
-    # (sync_pom_indicator_count in main.rs); this check is the release-time
-    # backstop in case generate wasn't run since the last indicator was added.
+    # Every shipped description claims "200+ indicators" -- a floor, so that no
+    # release has to restate a count that is published immutably (Maven Central,
+    # crates.io) and cannot be corrected afterwards. The floor is only worth
+    # claiming while it is true, which is what this checks.
     pom_path = path_join(root_dir, 'ta_codegen', 'output', 'java', 'library', 'pom.xml')
     input_dir = path_join(root_dir, 'ta_codegen', 'input')
     func_count = sum(
@@ -53,12 +51,14 @@ if __name__ == "__main__":
         and d not in ('helpers', 'lib')
         and os.path.exists(path_join(input_dir, d, f'{d}.yaml'))
     )
+    if func_count < 200:
+        print(f"Error: only {func_count} indicators in {input_dir}, but the shipped")
+        print("       descriptions claim '200+ indicators'. Lower the claim or stop shipping it.")
+        exit(1)
     with open(pom_path, 'r') as f:
         pom_text = f.read()
-    if f'{func_count} indicators' not in pom_text:
-        print(f"Error: {pom_path} <description> does not say '{func_count} indicators'.")
-        print("       It is published to Maven Central and is immutable per version.")
-        print("       Did you forget to run `ta_codegen generate`?")
+    if '200+ indicators' not in pom_text:
+        print(f"Error: {pom_path} <description> does not say '200+ indicators'.")
         exit(1)
 
     sources_digest = check_sources_digest(root_dir)

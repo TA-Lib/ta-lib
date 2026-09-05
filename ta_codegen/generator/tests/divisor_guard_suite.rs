@@ -55,7 +55,7 @@ fn load() -> Vec<FuncDef> {
         parser::c_source::wire_parsed_source(&mut f, &parsed);
         funcs.push(f);
     }
-    assert!(funcs.len() > 160, "expected the whole input tree, got {}", funcs.len());
+    assert!(funcs.len() >= 200, "expected the whole input tree, got {}", funcs.len());
     funcs
 }
 

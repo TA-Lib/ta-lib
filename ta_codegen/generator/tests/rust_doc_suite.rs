@@ -111,7 +111,7 @@ fn expected(func: &ir::FuncDef) -> BTreeSet<String> {
 #[test]
 fn every_rust_function_names_exactly_its_own_c_symbols() {
     let names = indicators();
-    assert!(names.len() > 170, "expected the whole input tree, got {}", names.len());
+    assert!(names.len() >= 200, "expected the whole input tree, got {}", names.len());
 
     let (mut streamed, mut total) = (0usize, 0usize);
     for name in &names {
@@ -134,7 +134,7 @@ fn every_rust_function_names_exactly_its_own_c_symbols() {
 
     // Floors, so an emitter that stopped writing aliases altogether cannot make
     // this pass by making every expected set empty.
-    assert!(streamed > 170, "expected a streaming tier on nearly every function, got {streamed}");
+    assert!(streamed >= 200, "expected a streaming tier on nearly every function, got {streamed}");
     assert!(total > 1700, "too few C-symbol aliases across the corpus: {total}");
 }
 

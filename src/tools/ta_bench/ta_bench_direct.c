@@ -52,7 +52,7 @@ static char *win_strcasestr(const char *haystack, const char *needle)
 #define MAX_POINTS     200000
 #define DEFAULT_POINTS 100000
 #define DEFAULT_ITERS  200
-#define MAX_FUNCTIONS  200
+#define MAX_FUNCTIONS  512
 #define BENCH_PASSES   3
 
 /* ---- Timing ---- */

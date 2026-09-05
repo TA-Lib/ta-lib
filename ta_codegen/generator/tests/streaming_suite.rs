@@ -257,7 +257,7 @@ fn all_declared_functions_are_streamable() {
             checked += 1;
         }
     }
-    assert!(checked >= 136, "expected 136+ declared functions, saw {checked}");
+    assert!(checked >= 200, "expected the whole declared corpus, saw {checked}");
 }
 
 /* ---- CDL tranche: candle helpers, offset rings, array state ---- */

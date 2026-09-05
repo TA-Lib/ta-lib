@@ -64,7 +64,7 @@ fn declared() -> Vec<(String, Vec<DeclaredOpt>)> {
             .collect();
         out.push((f.name.clone(), opts));
     }
-    assert!(out.len() > 160, "expected the whole input tree, got {}", out.len());
+    assert!(out.len() >= 200, "expected the whole input tree, got {}", out.len());
     out
 }
 

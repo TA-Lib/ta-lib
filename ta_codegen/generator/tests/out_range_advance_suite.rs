@@ -62,7 +62,7 @@ fn streaming_funcs() -> Vec<String> {
         }
     }
     out.sort();
-    assert!(out.len() > 150, "the corpus sweep found only {} functions", out.len());
+    assert!(out.len() >= 200, "the corpus sweep found only {} functions", out.len());
     out
 }
 

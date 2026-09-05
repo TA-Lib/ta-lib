@@ -374,7 +374,7 @@ static void note_compat_skip(const char *lang, const char *what)
 
 /* ---- Global timing results store (Task 12) ---- */
 
-#define MAX_FUNCTIONS 200
+#define MAX_FUNCTIONS 512
 
 typedef struct {
     char   funcName[64];
