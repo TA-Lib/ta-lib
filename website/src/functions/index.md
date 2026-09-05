@@ -62,6 +62,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [COPPOCK](/functions/coppock.md) — Coppock Curve
 - [DPO](/functions/dpo.md) — Detrended Price Oscillator
 - [DX](/functions/dx.md) — Directional Movement Index
+- [ER](/functions/er.md) — Kaufman Efficiency Ratio
+- [ERI](/functions/eri.md) — Elder Ray Index (Bull Power / Bear Power)
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [FRACTAL](/functions/fractal.md) — Williams Fractal
 - [IMI](/functions/imi.md) — Intraday Momentum Index
@@ -90,6 +92,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [TSI](/functions/tsi.md) — True Strength Index
 - [ULTOSC](/functions/ultosc.md) — Ultimate Oscillator
 - [VHF](/functions/vhf.md) — Vertical Horizontal Filter
+- [VORTEX](/functions/vortex.md) — Vortex Indicator
 - [WAD](/functions/wad.md) — Williams' Accumulation/Distribution
 - [WILLR](/functions/willr.md) — Williams' %R
 

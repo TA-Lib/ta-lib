@@ -356,6 +356,12 @@ final class Dispatch {
          case "EMA":
             return core.EMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "ER":
+            return core.ER(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "ERI":
+            return core.ERI(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "EXP":
             return core.EXP(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -629,6 +635,9 @@ final class Dispatch {
          case "VHF":
             return core.VHF(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "VORTEX":
+            return core.VORTEX(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "VWAP":
             return core.VWAP(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.realOutput(0));
@@ -861,6 +870,10 @@ final class Dispatch {
             return core.EFI_Lookback(h.intOpt(0));
          case "EMA":
             return core.EMA_Lookback(h.intOpt(0));
+         case "ER":
+            return core.ER_Lookback(h.intOpt(0));
+         case "ERI":
+            return core.ERI_Lookback(h.intOpt(0));
          case "EXP":
             return core.EXP_Lookback();
          case "FLOOR":
@@ -1043,6 +1056,8 @@ final class Dispatch {
             return core.VAR_Lookback(h.intOpt(0), h.realOpt(1));
          case "VHF":
             return core.VHF_Lookback(h.intOpt(0));
+         case "VORTEX":
+            return core.VORTEX_Lookback(h.intOpt(0));
          case "VWAP":
             return core.VWAP_Lookback();
          case "VWMA":

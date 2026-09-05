@@ -84897,6 +84897,1825 @@ public final class Core {
  *
  *  Initial  Name/description
  *  -------------------------------------------------------------------
+ *  KL       Kevin Lin
+ *
+ * Change history:
+ *
+ *  MMDDYY BY     Description
+ *  -------------------------------------------------------------------
+ *  090626 KL     First version (issue #350).
+ */
+
+   /**
+    * Number of leading input bars {@link Core#ER} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Number of one-bar changes in the path sum
+    *        ({@code KAMA}'s {@code optInTimePeriod} is the same window, under its own
+    *        default) (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
+   public int ER_Lookback( int optInTimePeriod )
+   {
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 10;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return -1;
+      }
+      /* P one-bar changes need P+1 prices: first output at index P. */
+      return optInTimePeriod ;
+
+   }
+   RetCode ER_Impl( int startIdx,
+                    int endIdx,
+                    double inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      int nullRun = 0;
+      double sumROC1 = 0;
+      double periodROC = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double trailingValue = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 10;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      /* Kaufman Efficiency Ratio (Perry J. Kaufman, Smarter Trading, 1995):
+       * net directional movement over the period divided by the total path
+       * travelled,
+       *
+       *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
+       *
+       * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
+       * two stay bit-identical -- the KAMA-reconstruction differential in
+       * test_composite2.c exists to keep it that way. Two guards are
+       * load-bearing and shared with kama.c:
+       *
+       *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
+       *     would give 1.0000000000000002. The comparison is against the
+       *     SIGNED numerator, so it only fires on up-moves; on sustained
+       *     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
+       *     "fix" this with fabs -- it changes TA_KAMA's output.
+       *   - a genuinely flat window is recognized by COUNTING exactly-zero
+       *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
+       *     running sum's rounding residue), after which `0 <= 0` pins the
+       *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+       *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
+       *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
+       *     price-carrying sum).
+       *
+       * A third guard is this function's own, and the one thing kama.c has
+       * no equivalent of: the division runs only where sumROC1 is exactly
+       * positive. The clamp above cannot serve as the denominator test,
+       * because it compares against the SIGNED numerator and so is false for
+       * every down move -- and a subtract-then-add sum can reach 0.0, or
+       * below it, on a window that is not flat, when a term absorbed on the
+       * way in is subtracted later at full precision. Without the guard those
+       * bars divide by zero. Where it fires, this function answers 1.0 and
+       * kama.c's inner ratio does not; no window the KAMA differential covers
+       * reaches it.
+       *
+       * The subtract-then-add update order matches TA_SUM's recurrence,
+       * which is what makes the composite differential bit-exact. The
+       * trailing value is cached one iteration ahead, which is what keeps
+       * outReal == inReal aliasing safe.
+       */
+      lookbackTotal = ER_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      /* Prime the path sum over the optInTimePeriod one-bar changes ending
+       * at the first output bar's predecessor.
+       */
+      sumROC1 = 0.0;
+      nullRun = 0;
+      today = startIdx - lookbackTotal;
+      trailingIdx = today;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempReal = inReal[today++];
+         tempReal -= inReal[today];
+         sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+      }
+      /* First output: today == startIdx. */
+      tempReal = inReal[today];
+      tempReal2 = inReal[trailingIdx++];
+      periodROC = tempReal - tempReal2;
+      trailingValue = tempReal2;
+      /* A fully flat priming window sums to an exact 0.0 (no residue yet), so
+       * `0 <= 0` already answers 1.0 here without the nullRun purge. The
+       * denominator test below is unreachable at this site -- a priming sum only
+       * ever has non-negative terms added to it -- and is written anyway so both
+       * sites read as one rule.
+       */
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+         outReal[0] = 1.0;
+      } else {
+         outReal[0] = Math.abs(periodROC / sumROC1);
+      }
+      outIdx = 1;
+      today += 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         /* Subtract-then-add, TA_SUM's own order. */
+         sumROC1 -= Math.abs(trailingValue - tempReal2);
+         sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of one-bar changes is exactly zero, the sum's
+          * only content is rounding residue from the subtract/add carry --
+          * purge it so the flat window is recognized exactly (kama.c #253).
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
+         /* Save the trailing value: outReal may alias inReal, and the next
+          * iteration's subtraction needs the ORIGINAL bar, not the slot the
+          * write below may have clobbered.
+          */
+         trailingValue = tempReal2;
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            outReal[outIdx++] = 1.0;
+         } else {
+            outReal[outIdx++] = Math.abs(periodROC / sumROC1);
+         }
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
+   }
+   RetCode ER_Impl( int startIdx,
+                    int endIdx,
+                    float inReal[],
+                    int optInTimePeriod,
+                    MInteger outBegIdx,
+                    MInteger outNBElement,
+                    double outReal[] )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      int nullRun = 0;
+      double sumROC1 = 0;
+      double periodROC = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double trailingValue = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 10;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      lookbackTotal = ER_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      sumROC1 = 0.0;
+      nullRun = 0;
+      today = startIdx - lookbackTotal;
+      trailingIdx = today;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempReal = (double)inReal[today++];
+         tempReal -= (double)inReal[today];
+         sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+      }
+      tempReal = (double)inReal[today];
+      tempReal2 = (double)inReal[trailingIdx++];
+      periodROC = tempReal - tempReal2;
+      trailingValue = tempReal2;
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+         outReal[0] = 1.0;
+      } else {
+         outReal[0] = Math.abs(periodROC / sumROC1);
+      }
+      outIdx = 1;
+      today += 1;
+      while( today <= endIdx ) {
+         tempReal = (double)inReal[today];
+         tempReal2 = (double)inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         sumROC1 -= Math.abs(trailingValue - tempReal2);
+         sumROC1 += Math.abs(tempReal - (double)inReal[today - 1]);
+         if( tempReal - (double)inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
+         trailingValue = tempReal2;
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            outReal[outIdx++] = 1.0;
+         } else {
+            outReal[outIdx++] = Math.abs(periodROC / sumROC1);
+         }
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
+   }
+   /**
+    * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
+    * measure from *Smarter Trading* (1995) — the net directional movement over
+    * the period divided by the total path travelled to get there. 1.0 is a
+    * perfectly efficient (straight-line) move; values near 0 are churn. This is
+    * exactly the efficiency ratio [{@code KAMA}](/functions/kama) computes
+    * internally to set its adaptive smoothing constant, exposed standalone and
+    * kept bit-identical to it.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
+    * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
+    * The clamp compares against the *signed* net move, so it only fires on advances: on sustained declines the output may exceed 1.0 by a few ULP. The range is "0..1, may exceed 1 by a few ULP on sustained declines", not a hard bound.
+    * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#ER_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source price/value series (canonically close)
+    * @param optInTimePeriod Number of one-bar changes in the path sum
+    *        ({@code KAMA}'s {@code optInTimePeriod} is the same window, under its own
+    *        default) (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outReal Efficiency ratio. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#KAMA
+    * @see Core#MAMA
+    * @see Core#STDDEV
+    * @see Core#VHF
+    */
+   public OutRange ER( int startIdx,
+                       int endIdx,
+                       double inReal[],
+                       int optInTimePeriod,
+                       double outReal[] )
+   {
+      requireIndexRange("ER", startIdx, endIdx);
+      int guardStart = clampedStart("ER", startIdx, ER_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("ER", "inReal", inReal, guardInLen);
+      requireLength("ER", "outReal", outReal, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ER_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ER", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   /**
+    * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
+    * measure from *Smarter Trading* (1995) — the net directional movement over
+    * the period divided by the total path travelled to get there. 1.0 is a
+    * perfectly efficient (straight-line) move; values near 0 are churn. This is
+    * exactly the efficiency ratio [{@code KAMA}](/functions/kama) computes
+    * internally to set its adaptive smoothing constant, exposed standalone and
+    * kept bit-identical to it.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
+    * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
+    * The clamp compares against the *signed* net move, so it only fires on advances: on sustained declines the output may exceed 1.0 by a few ULP. The range is "0..1, may exceed 1 by a few ULP on sustained declines", not a hard bound.
+    * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#ER_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inReal Source price/value series (canonically close)
+    * @param optInTimePeriod Number of one-bar changes in the path sum
+    *        ({@code KAMA}'s {@code optInTimePeriod} is the same window, under its own
+    *        default) (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects
+    *        the default).
+    * @param outReal Efficiency ratio. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#KAMA
+    * @see Core#MAMA
+    * @see Core#STDDEV
+    * @see Core#VHF
+    */
+   public OutRange ER( int startIdx,
+                       int endIdx,
+                       float inReal[],
+                       int optInTimePeriod,
+                       double outReal[] )
+   {
+      requireIndexRange("ER", startIdx, endIdx);
+      int guardStart = clampedStart("ER", startIdx, ER_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("ER", "inReal", inReal, guardInLen);
+      requireLength("ER", "outReal", outReal, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ER_Impl(startIdx, endIdx, inReal, optInTimePeriod, outBegIdx, outNBElement, outReal);
+      if( retCode != RetCode.Success ) {
+         throw failure("ER", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+/**** Streaming API *****/
+
+   /**
+    * A live ER stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#ER} over the same series.
+    * Open with {@link Core#erOpen}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code clone} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code clone} never write the stream and may be called
+    * concurrently after safe publication. Independent streams (a
+    * {@code clone()} result included) are fully independent.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class ErStream {
+      Core core;
+      int optInTimePeriod;
+      int nullRun;
+      double sumROC1;
+      double trailingValue;
+      double lag1_inReal;
+      int ringPos_trailingIdx;
+      int ringCap_trailingIdx;
+      double[] ring_trailingIdx_inReal;
+      double cur_outReal;
+      int outRangeBegIdx;
+      int outRangeCount;
+
+      ErStream( Core core ) { this.core = core; }
+
+      /**
+       * The bars this stream has an output for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#ER} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * {@code update} adds one to the count — a bar rejected for being
+       * non-finite included, because it still happened — {@code peek} leaves
+       * it alone, and {@code clone()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
+       */
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+      ErStream( ErStream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.nullRun = other.nullRun;
+         this.sumROC1 = other.sumROC1;
+         this.trailingValue = other.trailingValue;
+         this.lag1_inReal = other.lag1_inReal;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();
+         this.cur_outReal = other.cur_outReal;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
+      }
+
+      /**
+       * Commit one closed bar, returning the new current value.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value()} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
+       * history. {@link #outRange()} does advance: the bar happened and
+       * occupies a position in the series, so the handle counts it, which is
+       * what keeps two handles on one feed aligned when only one rejects.
+       * This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
+       */
+      public double update( double inReal ) {
+         if( !Double.isFinite(inReal) ) {
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+            throw new TaLibArgumentException("ER update: BadParam", RetCode.BadParam);
+         }
+         core.erStepImpl(this, inReal);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         return this.cur_outReal;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inReal.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what this call took in, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
+       */
+      public void updateAndFill( double inReal[], double outReal[] ) {
+         requireArgument("ER updateAndFill", "inReal", inReal);
+         requireArgument("ER updateAndFill", "outReal", outReal);
+         final int barCount = inReal.length;
+         if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+            throw new TaLibArgumentException("ER updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inReal[i]) ) {
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               throw new TaLibArgumentException("ER updateAndFill: BadParam", RetCode.BadParam);
+            }
+            core.erStepImpl(this, inReal[i]);
+            outReal[i] = this.cur_outReal;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would return — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+       * buffers and storing what the step would commit into locals, so the cost
+       * does not grow with the period and {@code peek} never allocates.
+       */
+      public double peek( double inReal ) {
+         if( !Double.isFinite(inReal) )
+            throw new TaLibArgumentException("ER peek: BadParam", RetCode.BadParam);
+         ErStream sp = this;
+         double periodROC = 0.0;
+         double tempReal = 0.0;
+         double tempReal2 = 0.0;
+         double cur_outReal = 0.0;
+         int nullRun = sp.nullRun;
+         double sumROC1 = sp.sumROC1;
+         double trailingValue = sp.trailingValue;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         if( sp.ringCap_trailingIdx == 0 ) {
+            pkSlot0 = 0;
+            pkVal0 = inReal;
+         }
+         tempReal = inReal;
+         tempReal2 = (sp.ringPos_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] : pkVal0;
+         periodROC = tempReal - tempReal2;
+         /* Subtract-then-add, TA_SUM's own order. */
+         sumROC1 -= Math.abs(trailingValue - tempReal2);
+         sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
+         /* Once a whole window of one-bar changes is exactly zero, the sum's
+          * only content is rounding residue from the subtract/add carry --
+          * purge it so the flat window is recognized exactly (kama.c #253).
+          */
+         if( tempReal - sp.lag1_inReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            sumROC1 = 0.0;
+         }
+         /* Save the trailing value: outReal may alias inReal, and the next
+          * iteration's subtraction needs the ORIGINAL bar, not the slot the
+          * write below may have clobbered.
+          */
+         trailingValue = tempReal2;
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            cur_outReal = 1.0;
+         } else {
+            cur_outReal = Math.abs(periodROC / sumROC1);
+         }
+         return cur_outReal;
+      }
+
+      /**
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} returned.
+       * A pure field read; {@code peek} does not change it.
+       */
+      public double value() {
+         return this.cur_outReal;
+      }
+
+      /**
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
+       */
+      @Override
+      public ErStream clone() {
+         return new ErStream(this);
+      }
+   }
+   void erStepImpl( ErStream sp, double inReal )
+   {
+      double periodROC = 0.0;
+      double tempReal = 0.0;
+      double tempReal2 = 0.0;
+      if( sp.ringCap_trailingIdx == 0 ) {
+         sp.ring_trailingIdx_inReal[0] = inReal;
+      }
+      tempReal = inReal;
+      tempReal2 = sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx];
+      periodROC = tempReal - tempReal2;
+      /* Subtract-then-add, TA_SUM's own order. */
+      sp.sumROC1 -= Math.abs(sp.trailingValue - tempReal2);
+      sp.sumROC1 += Math.abs(tempReal - sp.lag1_inReal);
+      /* Once a whole window of one-bar changes is exactly zero, the sum's
+       * only content is rounding residue from the subtract/add carry --
+       * purge it so the flat window is recognized exactly (kama.c #253).
+       */
+      if( tempReal - sp.lag1_inReal == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.sumROC1 = 0.0;
+      }
+      /* Save the trailing value: outReal may alias inReal, and the next
+       * iteration's subtraction needs the ORIGINAL bar, not the slot the
+       * write below may have clobbered.
+       */
+      sp.trailingValue = tempReal2;
+      if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
+         sp.cur_outReal = 1.0;
+      } else {
+         sp.cur_outReal = Math.abs(periodROC / sp.sumROC1);
+      }
+      sp.lag1_inReal = inReal;
+      sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+   private RetCode erOpenImpl( ErStream sp, double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      int nullRun = 0;
+      double sumROC1 = 0;
+      double periodROC = 0;
+      double tempReal = 0;
+      double tempReal2 = 0;
+      double trailingValue = 0;
+      int historyLen = inReal.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 10;
+      } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
+      /* Kaufman Efficiency Ratio (Perry J. Kaufman, Smarter Trading, 1995):
+       * net directional movement over the period divided by the total path
+       * travelled,
+       *
+       *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
+       *
+       * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
+       * two stay bit-identical -- the KAMA-reconstruction differential in
+       * test_composite2.c exists to keep it that way. Two guards are
+       * load-bearing and shared with kama.c:
+       *
+       *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
+       *     would give 1.0000000000000002. The comparison is against the
+       *     SIGNED numerator, so it only fires on up-moves; on sustained
+       *     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
+       *     "fix" this with fabs -- it changes TA_KAMA's output.
+       *   - a genuinely flat window is recognized by COUNTING exactly-zero
+       *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
+       *     running sum's rounding residue), after which `0 <= 0` pins the
+       *     0/0 to 1.0 -- never NaN (#112). This is kama.c's #253 form; the
+       *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
+       *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
+       *     price-carrying sum).
+       *
+       * A third guard is this function's own, and the one thing kama.c has
+       * no equivalent of: the division runs only where sumROC1 is exactly
+       * positive. The clamp above cannot serve as the denominator test,
+       * because it compares against the SIGNED numerator and so is false for
+       * every down move -- and a subtract-then-add sum can reach 0.0, or
+       * below it, on a window that is not flat, when a term absorbed on the
+       * way in is subtracted later at full precision. Without the guard those
+       * bars divide by zero. Where it fires, this function answers 1.0 and
+       * kama.c's inner ratio does not; no window the KAMA differential covers
+       * reaches it.
+       *
+       * The subtract-then-add update order matches TA_SUM's recurrence,
+       * which is what makes the composite differential bit-exact. The
+       * trailing value is cached one iteration ahead, which is what keeps
+       * outReal == inReal aliasing safe.
+       */
+      lookbackTotal = ER_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory ;
+      }
+      /* Prime the path sum over the optInTimePeriod one-bar changes ending
+       * at the first output bar's predecessor.
+       */
+      sumROC1 = 0.0;
+      nullRun = 0;
+      today = startIdx - lookbackTotal;
+      trailingIdx = today;
+      i = optInTimePeriod;
+      while( i-- > 0 ) {
+         tempReal = inReal[today++];
+         tempReal -= inReal[today];
+         sumROC1 += Math.abs(tempReal);
+         if( tempReal == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+      }
+      /* First output: today == startIdx. */
+      tempReal = inReal[today];
+      tempReal2 = inReal[trailingIdx++];
+      periodROC = tempReal - tempReal2;
+      trailingValue = tempReal2;
+      /* A fully flat priming window sums to an exact 0.0 (no residue yet), so
+       * `0 <= 0` already answers 1.0 here without the nullRun purge. The
+       * denominator test below is unreachable at this site -- a priming sum only
+       * ever has non-negative terms added to it -- and is written anyway so both
+       * sites read as one rule.
+       */
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+         outReal[0 * outStride] = 1.0;
+      } else {
+         outReal[0 * outStride] = Math.abs(periodROC / sumROC1);
+      }
+      outIdx = 1;
+      today += 1;
+      while( today <= endIdx ) {
+         tempReal = inReal[today];
+         tempReal2 = inReal[trailingIdx++];
+         periodROC = tempReal - tempReal2;
+         /* Subtract-then-add, TA_SUM's own order. */
+         sumROC1 -= Math.abs(trailingValue - tempReal2);
+         sumROC1 += Math.abs(tempReal - inReal[today - 1]);
+         /* Once a whole window of one-bar changes is exactly zero, the sum's
+          * only content is rounding residue from the subtract/add carry --
+          * purge it so the flat window is recognized exactly (kama.c #253).
+          */
+         if( tempReal - inReal[today - 1] == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sumROC1 = 0.0;
+         }
+         /* Save the trailing value: outReal may alias inReal, and the next
+          * iteration's subtraction needs the ORIGINAL bar, not the slot the
+          * write below may have clobbered.
+          */
+         trailingValue = tempReal2;
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
+            outReal[outIdx++ * outStride] = 1.0;
+         } else {
+            outReal[outIdx++ * outStride] = Math.abs(periodROC / sumROC1);
+         }
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      /* Capture the live batch state into the handle. */
+      int cap_trailingIdx = today - trailingIdx;
+      if( cap_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inReal = new double[allocN_trailingIdx];
+      System.arraycopy(inReal, historyLen - cap_trailingIdx, capRing_trailingIdx_inReal, 0, cap_trailingIdx);
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.nullRun = nullRun;
+      sp.sumROC1 = sumROC1;
+      sp.trailingValue = trailingValue;
+      sp.lag1_inReal = inReal[historyLen - 1];
+      sp.ringPos_trailingIdx = 0;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ring_trailingIdx_inReal = capRing_trailingIdx_inReal;
+      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+      return RetCode.Success;
+   }
+   /* erOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   ErStream erOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+   {
+      ErStream sp = new ErStream(this);
+      RetCode retCode = erOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, outReal, 1);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw new InsufficientHistoryException("ER openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new TaLibStateException("ER openAndFill: internal error", retCode);
+      }
+      throw new TaLibArgumentException("ER openAndFill: " + retCode, retCode);
+   }
+   /* Internal startIdx-anchored open behind erOpen (composition seam). */
+   ErStream erOpenInternal( double inReal[], int startIdx, int optInTimePeriod )
+   {
+      ErStream sp = new ErStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outReal = new double[1];
+      RetCode retCode = erOpenImpl(sp, inReal, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outReal, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw new InsufficientHistoryException("ER open: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new TaLibStateException("ER open: internal error", retCode);
+      }
+      throw new TaLibArgumentException("ER open: " + retCode, retCode);
+   }
+   /**
+    * Open a live ER stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#ER} at that bar.
+    * <p>The history must hold at least {@code ER_Lookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
+    */
+   public ErStream erOpen( double inReal[], int optInTimePeriod )
+   {
+      requireArgument("ER open", "inReal", inReal);
+      requireHistory("ER open", inReal.length);
+      return erOpenInternal(inReal, 0, optInTimePeriod);
+   }
+   /**
+    * {@link Core#erOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#ER} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>The range written is on the returned handle:
+    * {@link ErStream#outRange()}.
+    */
+   public ErStream erOpenAndFill( double inReal[], int optInTimePeriod, double outReal[] )
+   {
+      requireArgument("ER openAndFill", "inReal", inReal);
+      requireHistory("ER openAndFill", inReal.length);
+      int guardOutLen = openFillCount("ER openAndFill", inReal.length, ER_Lookback(optInTimePeriod));
+      requireLength("ER openAndFill", "outReal", outReal, guardOutLen);
+      if( (Object)outReal == (Object)inReal ) {
+         throw new TaLibArgumentException("ER openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      return erOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+   }
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  KL       Kevin Lin
+ *
+ * Change history:
+ *
+ *  MMDDYY BY     Description
+ *  -------------------------------------------------------------------
+ *  090626 KL     First version (issue #361).
+ */
+
+   /**
+    * Number of leading input bars {@link Core#ERI} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
+   public int ERI_Lookback( int optInTimePeriod )
+   {
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 13;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return -1;
+      }
+      /* Exactly the EMA of close underneath: its lookback, unstable period
+       * included, is this function's lookback.
+       */
+      return EMA_Lookback(optInTimePeriod) ;
+
+   }
+   RetCode ERI_Impl( int startIdx,
+                     int endIdx,
+                     double inHigh[],
+                     double inLow[],
+                     double inClose[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outBullPower[],
+                     double outBearPower[] )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      double prevMA = 0;
+      double tempReal = 0;
+      double k = 0;
+      double tempHT = 0;
+      double tempLT = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 13;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( outBullPower == outBearPower ) {
+         return RetCode.BadParam ;
+      }
+      /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+       * the bar's extremes sit from one shared EMA of close.
+       *
+       *   Bull Power = High - EMA(Close, n)
+       *   Bear Power = Low  - EMA(Close, n)
+       *
+       * One fused loop, not ema() + a combine map: a composed form cannot
+       * stream (raw bar inputs are outside check_map_step's provenance), which
+       * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+       * op for op -- sequential seed sum from 0.0 then one divide, the
+       * unstable-period warm-up consumed bar by bar -- so the differential
+       * against shipped TA_EMA holds bitwise. No compatibility branch: the
+       * Metastock arm is unreachable from three of the four backends, and a
+       * new function honouring it would make C diverge from them (EFI/SMI
+       * precedent).
+       *
+       * No division in the per-bar map: no 0/0, no NaN path (#112 by
+       * construction). Bull >= Bear on every bar since high >= low.
+       */
+      lookbackTotal = ERI_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+       * which returns x only while consecutive closes stay within a factor of
+       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * what this function returns. The unstable period still delays the first
+       * output, through the shared lookback above.
+       */
+      if( optInTimePeriod == 1 ) {
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            tempHT = inHigh[today];
+            tempLT = inLow[today];
+            tempReal = inClose[today];
+            outBullPower[outIdx] = tempHT - tempReal;
+            outBearPower[outIdx] = tempLT - tempReal;
+            outIdx += 1;
+            today += 1;
+         }
+         outBegIdx.value = startIdx;
+         outNBElement.value = outIdx;
+         return RetCode.Success ;
+      }
+      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      /* Seed: ema.c's DEFAULT arm, op for op. */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += inClose[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
+      /* The warm-up also consumes the EMA unstable period. */
+      while( today <= startIdx ) {
+         prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+      }
+      /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
+       * extremes into temps BEFORE writing either output: with two outputs
+       * over three inputs the caller may alias any pair, and the second write
+       * must not read a clobbered bar.
+       */
+      tempHT = inHigh[startIdx];
+      tempLT = inLow[startIdx];
+      outBullPower[0] = tempHT - prevMA;
+      outBearPower[0] = tempLT - prevMA;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+         tempHT = inHigh[today];
+         tempLT = inLow[today];
+         outBullPower[outIdx] = tempHT - prevMA;
+         outBearPower[outIdx] = tempLT - prevMA;
+         outIdx += 1;
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
+   }
+   RetCode ERI_Impl( int startIdx,
+                     int endIdx,
+                     float inHigh[],
+                     float inLow[],
+                     float inClose[],
+                     int optInTimePeriod,
+                     MInteger outBegIdx,
+                     MInteger outNBElement,
+                     double outBullPower[],
+                     double outBearPower[] )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      double prevMA = 0;
+      double tempReal = 0;
+      double k = 0;
+      double tempHT = 0;
+      double tempLT = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 13;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( outBullPower == outBearPower ) {
+         return RetCode.BadParam ;
+      }
+      lookbackTotal = ERI_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      if( optInTimePeriod == 1 ) {
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            tempHT = (double)inHigh[today];
+            tempLT = (double)inLow[today];
+            tempReal = (double)inClose[today];
+            outBullPower[outIdx] = tempHT - tempReal;
+            outBearPower[outIdx] = tempLT - tempReal;
+            outIdx += 1;
+            today += 1;
+         }
+         outBegIdx.value = startIdx;
+         outNBElement.value = outIdx;
+         return RetCode.Success ;
+      }
+      k = 2.0 / ((double)optInTimePeriod + 1.0);
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 ) {
+         tempReal += (double)inClose[today++];
+      }
+      prevMA = tempReal / optInTimePeriod;
+      while( today <= startIdx ) {
+         prevMA = Math.fma((double)inClose[today++] - prevMA, k, prevMA);
+      }
+      tempHT = (double)inHigh[startIdx];
+      tempLT = (double)inLow[startIdx];
+      outBullPower[0] = tempHT - prevMA;
+      outBearPower[0] = tempLT - prevMA;
+      outIdx = 1;
+      while( today <= endIdx ) {
+         prevMA = Math.fma((double)inClose[today] - prevMA, k, prevMA);
+         tempHT = (double)inHigh[today];
+         tempLT = (double)inLow[today];
+         outBullPower[outIdx] = tempHT - prevMA;
+         outBearPower[outIdx] = tempLT - prevMA;
+         outIdx += 1;
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
+   }
+   /**
+    * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
+    * *Trading for a Living* (1993) — how far the bar's high and low sit from an
+    * EMA of the close. Bulls strong enough to push the high above the average
+    * read as positive Bull Power; bears dragging the low below it read as
+    * negative Bear Power.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
+    * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
+    * <li>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#ERI_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price series.
+    * @param inLow Low price series.
+    * @param inClose Close price series.
+    * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outBullPower High minus the EMA of close. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outBearPower Low minus the EMA of close. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#EMA
+    * @see Core#EFI
+    * @see Core#MACD
+    */
+   public OutRange ERI( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        double outBullPower[],
+                        double outBearPower[] )
+   {
+      requireIndexRange("ERI", startIdx, endIdx);
+      int guardStart = clampedStart("ERI", startIdx, ERI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("ERI", "inHigh", inHigh, guardInLen);
+      requireLength("ERI", "inLow", inLow, guardInLen);
+      requireLength("ERI", "inClose", inClose, guardInLen);
+      requireLength("ERI", "outBullPower", outBullPower, guardOutLen);
+      requireLength("ERI", "outBearPower", outBearPower, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+      if( retCode != RetCode.Success ) {
+         throw failure("ERI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   /**
+    * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
+    * *Trading for a Living* (1993) — how far the bar's high and low sit from an
+    * EMA of the close. Bulls strong enough to push the high above the average
+    * read as positive Bull Power; bears dragging the low below it read as
+    * negative Bear Power.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
+    * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
+    * <li>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#ERI_Lookback} is a <b>success with no
+    * values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price series.
+    * @param inLow Low price series.
+    * @param inClose Close price series.
+    * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outBullPower High minus the EMA of close. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outBearPower Low minus the EMA of close. Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#EMA
+    * @see Core#EFI
+    * @see Core#MACD
+    */
+   public OutRange ERI( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        double outBullPower[],
+                        double outBearPower[] )
+   {
+      requireIndexRange("ERI", startIdx, endIdx);
+      int guardStart = clampedStart("ERI", startIdx, ERI_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("ERI", "inHigh", inHigh, guardInLen);
+      requireLength("ERI", "inLow", inLow, guardInLen);
+      requireLength("ERI", "inClose", inClose, guardInLen);
+      requireLength("ERI", "outBullPower", outBullPower, guardOutLen);
+      requireLength("ERI", "outBearPower", outBearPower, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+      if( retCode != RetCode.Success ) {
+         throw failure("ERI", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+/**** Streaming API *****/
+
+   /**
+    * A live ERI stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#ERI} over the same series.
+    * Open with {@link Core#eriOpen}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code clone} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code clone} never write the stream and may be called
+    * concurrently after safe publication. Independent streams (a
+    * {@code clone()} result included) are fully independent.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class EriStream {
+      Core core;
+      int optInTimePeriod;
+      double prevMA;
+      double k;
+      double cur_outBullPower;
+      double cur_outBearPower;
+      int outRangeBegIdx;
+      int outRangeCount;
+
+      EriStream( Core core ) { this.core = core; }
+
+      /**
+       * The bars this stream has an output for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#ERI} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * {@code update} adds one to the count — a bar rejected for being
+       * non-finite included, because it still happened — {@code peek} leaves
+       * it alone, and {@code clone()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
+       */
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+      EriStream( EriStream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.prevMA = other.prevMA;
+         this.k = other.k;
+         this.cur_outBullPower = other.cur_outBullPower;
+         this.cur_outBearPower = other.cur_outBearPower;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
+      }
+
+      /**
+       * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value(EriOut)} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
+       * history. {@link #outRange()} does advance: the bar happened and
+       * occupies a position in the series, so the handle counts it, which is
+       * what keeps two handles on one feed aligned when only one rejects.
+       * This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
+       */
+      public void update( double inHigh, double inLow, double inClose, EriOut out ) {
+         requireArgument("ERI update", "out", out);
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+            throw new TaLibArgumentException("ERI update: BadParam", RetCode.BadParam);
+         }
+         core.eriStepImpl(this, inHigh, inLow, inClose);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         out.bullPower = this.cur_outBullPower;
+         out.bearPower = this.cur_outBearPower;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what this call took in, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outBullPower[], double outBearPower[] ) {
+         requireArgument("ERI updateAndFill", "inHigh", inHigh);
+         requireArgument("ERI updateAndFill", "inLow", inLow);
+         requireArgument("ERI updateAndFill", "inClose", inClose);
+         requireArgument("ERI updateAndFill", "outBullPower", outBullPower);
+         requireArgument("ERI updateAndFill", "outBearPower", outBearPower);
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outBullPower.length < barCount || outBearPower.length < barCount || (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower )
+            throw new TaLibArgumentException("ERI updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               throw new TaLibArgumentException("ERI updateAndFill: BadParam", RetCode.BadParam);
+            }
+            core.eriStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outBullPower[i] = this.cur_outBullPower;
+            outBearPower[i] = this.cur_outBearPower;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would write — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+       * buffers and storing what the step would commit into locals, so the cost
+       * does not grow with the period and {@code peek} never allocates.
+       */
+      public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
+         requireArgument("ERI peek", "out", out);
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new TaLibArgumentException("ERI peek: BadParam", RetCode.BadParam);
+         EriStream sp = this;
+         double cur_outBullPower = 0.0;
+         double cur_outBearPower = 0.0;
+         if( sp.optInTimePeriod == 1 ) {
+            double tempReal = 0.0;
+            double tempHT = 0.0;
+            double tempLT = 0.0;
+            tempHT = inHigh;
+            tempLT = inLow;
+            tempReal = inClose;
+            cur_outBullPower = tempHT - tempReal;
+            cur_outBearPower = tempLT - tempReal;
+         } else {
+            double tempHT = 0.0;
+            double tempLT = 0.0;
+            double prevMA = sp.prevMA;
+            prevMA = Math.fma(inClose - prevMA, sp.k, prevMA);
+            tempHT = inHigh;
+            tempLT = inLow;
+            cur_outBullPower = tempHT - prevMA;
+            cur_outBearPower = tempLT - prevMA;
+         }
+         out.bullPower = cur_outBullPower;
+         out.bearPower = cur_outBearPower;
+      }
+
+      /**
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} wrote.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       */
+      public void value( EriOut out ) {
+         requireArgument("ERI value", "out", out);
+         out.bullPower = this.cur_outBullPower;
+         out.bearPower = this.cur_outBearPower;
+      }
+
+      /**
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
+       */
+      @Override
+      public EriStream clone() {
+         return new EriStream(this);
+      }
+   }
+
+   /**
+    * The outputs of one ERI bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields, so the sink itself costs
+    * nothing per bar.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class EriOut {
+      /** High minus the EMA of close. */
+      public double bullPower;
+      /** Low minus the EMA of close. */
+      public double bearPower;
+   }
+   void eriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
+   {
+      if( sp.optInTimePeriod == 1 ) {
+         double tempReal = 0.0;
+         double tempHT = 0.0;
+         double tempLT = 0.0;
+         tempHT = inHigh;
+         tempLT = inLow;
+         tempReal = inClose;
+         sp.cur_outBullPower = tempHT - tempReal;
+         sp.cur_outBearPower = tempLT - tempReal;
+      } else {
+         double tempHT = 0.0;
+         double tempLT = 0.0;
+         sp.prevMA = Math.fma(inClose - sp.prevMA, sp.k, sp.prevMA);
+         tempHT = inHigh;
+         tempLT = inLow;
+         sp.cur_outBullPower = tempHT - sp.prevMA;
+         sp.cur_outBearPower = tempLT - sp.prevMA;
+      }
+   }
+   private RetCode eriOpenImpl( EriStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outBullPower[], double outBearPower[], int outStride )
+   {
+      int historyLen = inHigh.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 13;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == 1 ) {
+         int outIdx = 0;
+         int today = 0;
+         int lookbackTotal = 0;
+         int i = 0;
+         double prevMA = 0;
+         double tempReal = 0;
+         double k = 0;
+         double tempHT = 0;
+         double tempLT = 0;
+         /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+          * the bar's extremes sit from one shared EMA of close.
+          *
+          *   Bull Power = High - EMA(Close, n)
+          *   Bear Power = Low  - EMA(Close, n)
+          *
+          * One fused loop, not ema() + a combine map: a composed form cannot
+          * stream (raw bar inputs are outside check_map_step's provenance), which
+          * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+          * op for op -- sequential seed sum from 0.0 then one divide, the
+          * unstable-period warm-up consumed bar by bar -- so the differential
+          * against shipped TA_EMA holds bitwise. No compatibility branch: the
+          * Metastock arm is unreachable from three of the four backends, and a
+          * new function honouring it would make C diverge from them (EFI/SMI
+          * precedent).
+          *
+          * No division in the per-bar map: no 0/0, no NaN path (#112 by
+          * construction). Bull >= Bear on every bar since high >= low.
+          */
+         lookbackTotal = ERI_Lookback(optInTimePeriod);
+         if( startIdx < lookbackTotal ) {
+            startIdx = lookbackTotal;
+         }
+         /* Make sure there is still something to evaluate. */
+         if( startIdx > endIdx ) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return RetCode.InsufficientHistory ;
+         }
+         /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+          * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+          * which returns x only while consecutive closes stay within a factor of
+          * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+          * what this function returns. The unstable period still delays the first
+          * output, through the shared lookback above.
+          */
+         outIdx = 0;
+         today = startIdx;
+         while( today <= endIdx ) {
+            tempHT = inHigh[today];
+            tempLT = inLow[today];
+            tempReal = inClose[today];
+            outBullPower[outIdx * outStride] = tempHT - tempReal;
+            outBearPower[outIdx * outStride] = tempLT - tempReal;
+            outIdx += 1;
+            today += 1;
+         }
+         outBegIdx.value = startIdx;
+         outNBElement.value = outIdx;
+         /* Capture the live batch state into the handle. */
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevMA = prevMA;
+         sp.k = k;
+         sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
+         sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
+         return RetCode.Success;
+      } else {
+         int outIdx = 0;
+         int today = 0;
+         int lookbackTotal = 0;
+         int i = 0;
+         double prevMA = 0;
+         double tempReal = 0;
+         double k = 0;
+         double tempHT = 0;
+         double tempLT = 0;
+         /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+          * the bar's extremes sit from one shared EMA of close.
+          *
+          *   Bull Power = High - EMA(Close, n)
+          *   Bear Power = Low  - EMA(Close, n)
+          *
+          * One fused loop, not ema() + a combine map: a composed form cannot
+          * stream (raw bar inputs are outside check_map_step's provenance), which
+          * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+          * op for op -- sequential seed sum from 0.0 then one divide, the
+          * unstable-period warm-up consumed bar by bar -- so the differential
+          * against shipped TA_EMA holds bitwise. No compatibility branch: the
+          * Metastock arm is unreachable from three of the four backends, and a
+          * new function honouring it would make C diverge from them (EFI/SMI
+          * precedent).
+          *
+          * No division in the per-bar map: no 0/0, no NaN path (#112 by
+          * construction). Bull >= Bear on every bar since high >= low.
+          */
+         lookbackTotal = ERI_Lookback(optInTimePeriod);
+         if( startIdx < lookbackTotal ) {
+            startIdx = lookbackTotal;
+         }
+         /* Make sure there is still something to evaluate. */
+         if( startIdx > endIdx ) {
+            outBegIdx.value = 0;
+            outNBElement.value = 0;
+            return RetCode.InsufficientHistory ;
+         }
+         /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+          * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+          * which returns x only while consecutive closes stay within a factor of
+          * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+          * what this function returns. The unstable period still delays the first
+          * output, through the shared lookback above.
+          */
+         k = 2.0 / ((double)optInTimePeriod + 1.0);
+         /* Seed: ema.c's DEFAULT arm, op for op. */
+         today = startIdx - lookbackTotal;
+         i = optInTimePeriod;
+         tempReal = 0.0;
+         while( i-- > 0 ) {
+            tempReal += inClose[today++];
+         }
+         prevMA = tempReal / optInTimePeriod;
+         /* The warm-up also consumes the EMA unstable period. */
+         while( today <= startIdx ) {
+            prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+         }
+         /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
+          * extremes into temps BEFORE writing either output: with two outputs
+          * over three inputs the caller may alias any pair, and the second write
+          * must not read a clobbered bar.
+          */
+         tempHT = inHigh[startIdx];
+         tempLT = inLow[startIdx];
+         outBullPower[0 * outStride] = tempHT - prevMA;
+         outBearPower[0 * outStride] = tempLT - prevMA;
+         outIdx = 1;
+         while( today <= endIdx ) {
+            prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+            tempHT = inHigh[today];
+            tempLT = inLow[today];
+            outBullPower[outIdx * outStride] = tempHT - prevMA;
+            outBearPower[outIdx * outStride] = tempLT - prevMA;
+            outIdx += 1;
+            today += 1;
+         }
+         outBegIdx.value = startIdx;
+         outNBElement.value = outIdx;
+         /* Capture the live batch state into the handle. */
+         sp.optInTimePeriod = optInTimePeriod;
+         sp.prevMA = prevMA;
+         sp.k = k;
+         sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
+         sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
+         return RetCode.Success;
+      }
+   }
+   /* eriOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   EriStream eriOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outBullPower[], double outBearPower[] )
+   {
+      EriStream sp = new EriStream(this);
+      RetCode retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw new InsufficientHistoryException("ERI openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new TaLibStateException("ERI openAndFill: internal error", retCode);
+      }
+      throw new TaLibArgumentException("ERI openAndFill: " + retCode, retCode);
+   }
+   /* Internal startIdx-anchored open behind eriOpen (composition seam). */
+   EriStream eriOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   {
+      EriStream sp = new EriStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outBullPower = new double[1];
+      double[] sink_outBearPower = new double[1];
+      RetCode retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outBullPower, sink_outBearPower, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw new InsufficientHistoryException("ERI open: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new TaLibStateException("ERI open: internal error", retCode);
+      }
+      throw new TaLibArgumentException("ERI open: " + retCode, retCode);
+   }
+   /**
+    * Open a live ERI stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#ERI} at that bar.
+    * <p>The history must hold at least {@code ERI_Lookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
+    */
+   public EriStream eriOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   {
+      requireArgument("ERI open", "inHigh", inHigh);
+      requireHistory("ERI open", inHigh.length);
+      requireArgument("ERI open", "inLow", inLow);
+      requireArgument("ERI open", "inClose", inClose);
+      requireHistoryLength("ERI open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ERI open", "inClose", inClose.length, inHigh.length);
+      return eriOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+   }
+   /**
+    * {@link Core#eriOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#ERI} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>The range written is on the returned handle:
+    * {@link EriStream#outRange()}.
+    */
+   public EriStream eriOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outBullPower[], double outBearPower[] )
+   {
+      requireArgument("ERI openAndFill", "inHigh", inHigh);
+      requireHistory("ERI openAndFill", inHigh.length);
+      requireArgument("ERI openAndFill", "inLow", inLow);
+      requireArgument("ERI openAndFill", "inClose", inClose);
+      int guardOutLen = openFillCount("ERI openAndFill", inHigh.length, ERI_Lookback(optInTimePeriod));
+      requireHistoryLength("ERI openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("ERI openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);
+      requireLength("ERI openAndFill", "outBearPower", outBearPower, guardOutLen);
+      if( (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower ) {
+         throw new TaLibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      return eriOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+   }
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
  *  MF       Mario Fortier
  *
  * Change history:
@@ -175237,6 +177056,1288 @@ public final class Core {
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
       return vhfOpenAndFillInternal(inReal, 0, optInTimePeriod, outBegIdx, outNBElement, outReal);
+   }
+/* List of contributors:
+ *
+ *  Initial  Name/description
+ *  -------------------------------------------------------------------
+ *  KL       Kevin Lin
+ *
+ * Change history:
+ *
+ *  MMDDYY BY     Description
+ *  -------------------------------------------------------------------
+ *  090626 KL     First version (issue #349).
+ */
+
+   /**
+    * Number of leading input bars {@link Core#VORTEX} consumes before it can
+    * produce its first value.
+    * <p>Equivalently, the index of the first bar with a value when the whole
+    * series is requested. Feed at least {@code lookback + 1} bars to get any
+    * output.
+    *
+    * @param optInTimePeriod Number of bars in the rolling sums (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @return The lookback, or {@code -1} if a parameter is out of range.
+    */
+   public int VORTEX_Lookback( int optInTimePeriod )
+   {
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return -1;
+      }
+      /* Every per-bar term (TR, |H-prevL|, |L-prevH|) needs the prior bar, so
+       * bar 0 is consumed exactly as TA_TRANGE consumes it, and the window then
+       * needs optInTimePeriod terms: 1 + (optInTimePeriod - 1) = optInTimePeriod.
+       * First valid output index is n, not n-1.
+       */
+      return optInTimePeriod ;
+
+   }
+   RetCode VORTEX_Impl( int startIdx,
+                        int endIdx,
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outPlusVI[],
+                        double outMinusVI[] )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      int nullRun = 0;
+      double sTR = 0;
+      double sVMP = 0;
+      double sVMM = 0;
+      double curTR = 0;
+      double curVMP = 0;
+      double curVMM = 0;
+      double trueRange = 0;
+      double tempDouble = 0;
+      double tempLT = 0;
+      double tempHT = 0;
+      double tempCY = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( outPlusVI == outMinusVI ) {
+         return RetCode.BadParam ;
+      }
+      /* Vortex Indicator (Botes & Siepman, TASC 28:1, Jan 2010): two lines,
+       * each a rolling sum of "vortex movement" normalized by the rolling sum
+       * of true range over the same optInTimePeriod bars.
+       *
+       *   TR[i]  = max( H[i]-L[i], |C[i-1]-H[i]|, |C[i-1]-L[i]| )   == TA_TRANGE
+       *   VMP[i] = |H[i] - L[i-1]|
+       *   VMM[i] = |L[i] - H[i-1]|
+       *   +VI = SUM(VMP, n) / SUM(TR, n),  -VI = SUM(VMM, n) / SUM(TR, n)
+       *
+       * No smoothing, no recursion, nothing to seed. The TR expansion below is
+       * TA_TRANGE's own operation order, bit for bit -- the differential test
+       * composes TA_TRANGE + TA_SUM and asserts equality with memcmp.
+       *
+       * The trailing terms are recomputed from the inputs rather than carried
+       * in a ring; the subtraction re-reads bars trailingIdx and trailingIdx-1,
+       * both of which sit at or ahead of the output slot, which is why the
+       * outputs are written LAST (see the loop comment).
+       */
+      lookbackTotal = VORTEX_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      /* Prime the three window sums over the optInTimePeriod-1 terms before the
+       * first output bar: [startIdx-optInTimePeriod+1, startIdx). Each term at
+       * bar i reads bar i-1, so the earliest read is bar startIdx-optInTimePeriod
+       * >= 0.
+       */
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      nullRun = 0;
+      for( i = startIdx - optInTimePeriod + 1; i < startIdx; i += 1 ) {
+         tempLT = inLow[i];
+         tempHT = inHigh[i];
+         tempCY = inClose[i - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
+         sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - optInTimePeriod + 1;
+      while( today <= endIdx ) {
+         /* Add on today's terms. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
+         sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         /* Once the whole window is flat, every TRUE-RANGE term in it is
+          * provably zero (nullRun counts exactly that), so sTR's only content
+          * is the running add/subtract's rounding residue -- purge it, and the
+          * exact division gate below recognizes the case with no absolute
+          * band. ONLY sTR: a zero true range (H == L == prevClose) does NOT
+          * zero that bar's vortex terms, which read the PREVIOUS bar's
+          * extremes -- a spread bar followed by a halt leaves |H - prevL| and
+          * |L - prevH| alive inside the window, and zeroing the numerator sums
+          * would poison both lines permanently (an unreachable negative -VI).
+          * ULTOSC can reseed all its totals because its predicate covers both
+          * of its per-bar terms; VORTEX's covers only the denominator's.
+          */
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sTR = 0.0;
+         }
+         /* Record the current window sums, then retire the trailing bar's
+          * terms so the sums are ready for the next iteration.
+          */
+         curTR = sTR;
+         curVMP = sVMP;
+         curVMM = sVMM;
+         tempLT = inLow[trailingIdx];
+         tempHT = inHigh[trailingIdx];
+         tempCY = inClose[trailingIdx - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR -= trueRange;
+         sVMP -= Math.abs(inHigh[trailingIdx] - inLow[trailingIdx - 1]);
+         sVMM -= Math.abs(inLow[trailingIdx] - inHigh[trailingIdx - 1]);
+         trailingIdx += 1;
+         /* Last operation is to write the outputs. Must be done after the
+          * trailing bar has been fully consumed: the caller is allowed to pass
+          * an output buffer aliasing any input, and the trailing reads above
+          * touch bars trailingIdx-1 == outIdx and trailingIdx == outIdx+1 --
+          * an emit-first order would have clobbered them (ULTOSC's own rule;
+          * ACCBANDS' multi-output form).
+          *
+          * Zero-denominator gate, on the DENOMINATOR itself and exact: the
+          * flat-run reseed above removes the running sums' residue, so
+          * `curTR > 0.0` is a precise test -- ULTOSC gates its divisions the
+          * same way after the same reseed. The flat-bar count alone is only a
+          * proxy for sTR == 0 in exact arithmetic: floating-point absorption
+          * can zero the running sum while the window still holds a live term
+          * (a large spread swallows a 1-ULP one; the later subtract leaves
+          * exactly 0.0 with nullRun far below n), and an ungated division
+          * then emits NaN/Inf, which VORTEX does not declare. An absolute
+          * TA_IS_ZERO band is no better: it zeroes legitimate ratios on any
+          * instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
+          * rejects it (VORTEX is homogeneous of degree 0).
+          */
+         if( curTR > 0.0 ) {
+            outPlusVI[outIdx] = curVMP / curTR;
+            outMinusVI[outIdx] = curVMM / curTR;
+         } else {
+            outPlusVI[outIdx] = 0.0;
+            outMinusVI[outIdx] = 0.0;
+         }
+         outIdx += 1;
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
+   }
+   RetCode VORTEX_Impl( int startIdx,
+                        int endIdx,
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        int optInTimePeriod,
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outPlusVI[],
+                        double outMinusVI[] )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      int nullRun = 0;
+      double sTR = 0;
+      double sVMP = 0;
+      double sVMM = 0;
+      double curTR = 0;
+      double curVMP = 0;
+      double curVMM = 0;
+      double trueRange = 0;
+      double tempDouble = 0;
+      double tempLT = 0;
+      double tempHT = 0;
+      double tempCY = 0;
+      if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+         return RetCode.OutOfRangeStartIndex ;
+      }
+      if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+         return RetCode.OutOfRangeEndIndex ;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( outPlusVI == outMinusVI ) {
+         return RetCode.BadParam ;
+      }
+      lookbackTotal = VORTEX_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.Success ;
+      }
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      nullRun = 0;
+      for( i = startIdx - optInTimePeriod + 1; i < startIdx; i += 1 ) {
+         tempLT = (double)inLow[i];
+         tempHT = (double)inHigh[i];
+         tempCY = (double)inClose[i - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs((double)inHigh[i] - (double)inLow[i - 1]);
+         sVMM += Math.abs((double)inLow[i] - (double)inHigh[i - 1]);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - optInTimePeriod + 1;
+      while( today <= endIdx ) {
+         tempLT = (double)inLow[today];
+         tempHT = (double)inHigh[today];
+         tempCY = (double)inClose[today - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs((double)inHigh[today] - (double)inLow[today - 1]);
+         sVMM += Math.abs((double)inLow[today] - (double)inHigh[today - 1]);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sTR = 0.0;
+         }
+         curTR = sTR;
+         curVMP = sVMP;
+         curVMM = sVMM;
+         tempLT = (double)inLow[trailingIdx];
+         tempHT = (double)inHigh[trailingIdx];
+         tempCY = (double)inClose[trailingIdx - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR -= trueRange;
+         sVMP -= Math.abs((double)inHigh[trailingIdx] - (double)inLow[trailingIdx - 1]);
+         sVMM -= Math.abs((double)inLow[trailingIdx] - (double)inHigh[trailingIdx - 1]);
+         trailingIdx += 1;
+         if( curTR > 0.0 ) {
+            outPlusVI[outIdx] = curVMP / curTR;
+            outMinusVI[outIdx] = curVMM / curTR;
+         } else {
+            outPlusVI[outIdx] = 0.0;
+            outMinusVI[outIdx] = 0.0;
+         }
+         outIdx += 1;
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      return RetCode.Success ;
+   }
+   /**
+    * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
+    * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
+    * 2010). Positive and negative "vortex movement" — the reach from today's
+    * high to yesterday's low and from today's low to yesterday's high — each
+    * summed over the period and normalized by the summed true range. A +VI line
+    * crossing above −VI is the bullish signal the authors describe; the two
+    * lines are conventionally plotted together.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
+    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [{@code TRANGE}](/functions/trange) consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
+    * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
+    * </ul>
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#VORTEX_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price series.
+    * @param inLow Low price series.
+    * @param inClose Close price series.
+    * @param optInTimePeriod Number of bars in the rolling sums (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outPlusVI Positive vortex line (+VI) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outMinusVI Negative vortex line (−VI) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#TRANGE
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
+    * @see Core#ADX
+    */
+   public OutRange VORTEX( int startIdx,
+                           int endIdx,
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           int optInTimePeriod,
+                           double outPlusVI[],
+                           double outMinusVI[] )
+   {
+      requireIndexRange("VORTEX", startIdx, endIdx);
+      int guardStart = clampedStart("VORTEX", startIdx, VORTEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("VORTEX", "inHigh", inHigh, guardInLen);
+      requireLength("VORTEX", "inLow", inLow, guardInLen);
+      requireLength("VORTEX", "inClose", inClose, guardInLen);
+      requireLength("VORTEX", "outPlusVI", outPlusVI, guardOutLen);
+      requireLength("VORTEX", "outMinusVI", outMinusVI, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = VORTEX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
+      if( retCode != RetCode.Success ) {
+         throw failure("VORTEX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+   /**
+    * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
+    * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
+    * 2010). Positive and negative "vortex movement" — the reach from today's
+    * high to yesterday's low and from today's low to yesterday's high — each
+    * summed over the period and normalized by the summed true range. A +VI line
+    * crossing above −VI is the bullish signal the authors describe; the two
+    * lines are conventionally plotted together.
+    * <p><b>Formula</b>
+    * <pre>{@code
+    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
+    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
+    * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [{@code TRANGE}](/functions/trange) consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
+    * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
+    * </ul>
+    * <p>This is the {@code float[]} overload. The arithmetic is performed in
+    * {@code double} before being written to the {@code double[]} output, so a
+    * result beyond {@code float} range is still representable.
+    * <p>Values are written only where the indicator is defined. The returned
+    * {@link OutRange} says where they start and how many there are; nothing
+    * outside that range is touched, and the library never pads with NaN. A
+    * valid range shorter than {@link Core#VORTEX_Lookback} is a <b>success with
+    * no values</b> ({@code count() == 0}), not an error.
+    *
+    * @param startIdx First bar of the requested range (inclusive).
+    * @param endIdx Last bar of the requested range (inclusive).
+    * @param inHigh High price series.
+    * @param inLow Low price series.
+    * @param inClose Close price series.
+    * @param optInTimePeriod Number of bars in the rolling sums (default 14;
+    *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+    * @param outPlusVI Positive vortex line (+VI) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @param outMinusVI Negative vortex line (−VI) Must hold at least
+    *        {@code endIdx - startIdx + 1} values.
+    * @return The range written: {@code begIdx} is the first bar with a value,
+    *        {@code count} how many were written.
+    * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+    *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+    * @throws IllegalArgumentException if an optional parameter is outside its
+    *        documented range, two outputs share one array, or an array is absent or
+    *        too short for the range requested — any input this function
+    *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+    *        cannot hold the values produced. Declared, not read: a few candlestick
+    *        patterns take an OHLC series they never index, and it is required all the
+    *        same. An output this function documents as declinable is the one
+    *        exception: {@code null} is how you decline it. Checked before anything is
+    *        written, so a rejected call leaves every buffer untouched.
+    *
+    * @see Core#TRANGE
+    * @see Core#PLUS_DI
+    * @see Core#MINUS_DI
+    * @see Core#ADX
+    */
+   public OutRange VORTEX( int startIdx,
+                           int endIdx,
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           int optInTimePeriod,
+                           double outPlusVI[],
+                           double outMinusVI[] )
+   {
+      requireIndexRange("VORTEX", startIdx, endIdx);
+      int guardStart = clampedStart("VORTEX", startIdx, VORTEX_Lookback(optInTimePeriod));
+      int guardInLen = endIdx + 1;
+      int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+      requireLength("VORTEX", "inHigh", inHigh, guardInLen);
+      requireLength("VORTEX", "inLow", inLow, guardInLen);
+      requireLength("VORTEX", "inClose", inClose, guardInLen);
+      requireLength("VORTEX", "outPlusVI", outPlusVI, guardOutLen);
+      requireLength("VORTEX", "outMinusVI", outMinusVI, guardOutLen);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      RetCode retCode = VORTEX_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
+      if( retCode != RetCode.Success ) {
+         throw failure("VORTEX", retCode);
+      }
+      return new OutRange(outBegIdx.value, outNBElement.value);
+   }
+/**** Streaming API *****/
+
+   /**
+    * A live VORTEX stream (unrelated to {@code java.util.stream}): one value per
+    * closed bar, bit-identical to {@link Core#VORTEX} over the same series.
+    * Open with {@link Core#vortexOpen}; there is no close — the handle is
+    * ordinary heap state, unreferenced handles are simply garbage-collected.
+    * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+    * {@code value} and {@code clone} must not race with an {@code update} on
+    * the same handle. With no concurrent {@code update}, {@code peek}/
+    * {@code value}/{@code clone} never write the stream and may be called
+    * concurrently after safe publication. Independent streams (a
+    * {@code clone()} result included) are fully independent.
+    * <p>Not serializable by design: to checkpoint, retain the history and
+    * re-open — the result is bit-identical by contract.
+    */
+   public static final class VortexStream {
+      Core core;
+      int optInTimePeriod;
+      int nullRun;
+      double sTR;
+      double sVMP;
+      double sVMM;
+      double lag1_inHigh;
+      double lag1_inLow;
+      double lag1_inClose;
+      int ringPos_trailingIdx;
+      int ringCap_trailingIdx;
+      int ringLag_trailingIdx;
+      double[] ring_trailingIdx_inHigh;
+      double[] ring_trailingIdx_inLow;
+      double[] ring_trailingIdx_inClose;
+      double cur_outPlusVI;
+      double cur_outMinusVI;
+      int outRangeBegIdx;
+      int outRangeCount;
+
+      VortexStream( Core core ) { this.core = core; }
+
+      /**
+       * The bars this stream has an output for, in the input series'
+       * coordinates: {@code [begIdx, begIdx + count)}.
+       * <p>It is what {@link Core#VORTEX} reports over the same bars: the
+       * opener sets it to {@code (lookback, historyLen - lookback)}, every
+       * {@code update} adds one to the count — a bar rejected for being
+       * non-finite included, because it still happened — {@code peek} leaves
+       * it alone, and {@code clone()} carries it verbatim. A plain
+       * {@code open} hands back only the last value, a subset of this range,
+       * because the caller chose not to take the fill.
+       */
+      public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+      VortexStream( VortexStream other ) {
+         this.core = other.core;
+         this.optInTimePeriod = other.optInTimePeriod;
+         this.nullRun = other.nullRun;
+         this.sTR = other.sTR;
+         this.sVMP = other.sVMP;
+         this.sVMM = other.sVMM;
+         this.lag1_inHigh = other.lag1_inHigh;
+         this.lag1_inLow = other.lag1_inLow;
+         this.lag1_inClose = other.lag1_inClose;
+         this.ringPos_trailingIdx = other.ringPos_trailingIdx;
+         this.ringCap_trailingIdx = other.ringCap_trailingIdx;
+         this.ringLag_trailingIdx = other.ringLag_trailingIdx;
+         this.ring_trailingIdx_inHigh = other.ring_trailingIdx_inHigh.clone();
+         this.ring_trailingIdx_inLow = other.ring_trailingIdx_inLow.clone();
+         this.ring_trailingIdx_inClose = other.ring_trailingIdx_inClose.clone();
+         this.cur_outPlusVI = other.cur_outPlusVI;
+         this.cur_outMinusVI = other.cur_outMinusVI;
+         this.outRangeBegIdx = other.outRangeBegIdx;
+         this.outRangeCount = other.outRangeCount;
+      }
+
+      /**
+       * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+       * Never allocates handle state.
+       * <p>Throws {@link IllegalArgumentException} if any bar value is not
+       * finite (NaN or an infinity). That check runs before anything is
+       * written, so the state is left exactly as it was: the rejected bar's
+       * output is the previous value, held, and {@link #value(VortexOut)} answers it.
+       * The stream stays usable, so skip the bar or re-open on a clean
+       * history. {@link #outRange()} does advance: the bar happened and
+       * occupies a position in the series, so the handle counts it, which is
+       * what keeps two handles on one feed aligned when only one rejects.
+       * This is the one place the streaming tier is stricter than
+       * the batch API, which computes on whatever it is given: a handle
+       * retains its state, so a single non-finite bar would poison every
+       * later value it produces.
+       */
+      public void update( double inHigh, double inLow, double inClose, VortexOut out ) {
+         requireArgument("VORTEX update", "out", out);
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+            throw new TaLibArgumentException("VORTEX update: BadParam", RetCode.BadParam);
+         }
+         core.vortexStepImpl(this, inHigh, inLow, inClose);
+         if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         out.plusVI = this.cur_outPlusVI;
+         out.minusVI = this.cur_outMinusVI;
+      }
+
+      /**
+       * Commit {@code n} closed bars and write their {@code n} values, in one
+       * call — exactly {@code n} back-to-back {@code update} calls, with one
+       * set of argument checks instead of {@code n}. {@code n} is
+       * {@code inHigh.length}; the outputs must hold at least that many, and must
+       * not be the same array as an input or as each other.
+       * <p>{@link #outRange()} counts what this call took in, which is what makes a
+       * rejection readable: a non-finite bar {@code k} throws
+       * {@link IllegalArgumentException} exactly as {@code update} would, with
+       * the bars before {@code k} committed and written, bar {@code k} and
+       * everything after it not, and the count advanced by {@code k + 1} —
+       * the committed bars plus the rejected one.
+       */
+      public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outPlusVI[], double outMinusVI[] ) {
+         requireArgument("VORTEX updateAndFill", "inHigh", inHigh);
+         requireArgument("VORTEX updateAndFill", "inLow", inLow);
+         requireArgument("VORTEX updateAndFill", "inClose", inClose);
+         requireArgument("VORTEX updateAndFill", "outPlusVI", outPlusVI);
+         requireArgument("VORTEX updateAndFill", "outMinusVI", outMinusVI);
+         final int barCount = inHigh.length;
+         if( inLow.length != barCount || inClose.length != barCount || outPlusVI.length < barCount || outMinusVI.length < barCount || (Object)outPlusVI == (Object)inHigh || (Object)outPlusVI == (Object)inLow || (Object)outPlusVI == (Object)inClose || (Object)outMinusVI == (Object)inHigh || (Object)outMinusVI == (Object)inLow || (Object)outMinusVI == (Object)inClose || (Object)outPlusVI == (Object)outMinusVI )
+            throw new TaLibArgumentException("VORTEX updateAndFill: BadParam", RetCode.BadParam);
+         for( int i = 0; i < barCount; i++ ) {
+            if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+               if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+               throw new TaLibArgumentException("VORTEX updateAndFill: BadParam", RetCode.BadParam);
+            }
+            core.vortexStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+            outPlusVI[i] = this.cur_outPlusVI;
+            outMinusVI[i] = this.cur_outMinusVI;
+            if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+         }
+      }
+
+      /**
+       * Evaluate a forming bar without committing — bit-identical to what the
+       * next {@code update} with the same bar would write — the same
+       * transition, with every store it would make carried in a local instead.
+       * Never writes this handle, so peeks may
+       * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+       * buffers and storing what the step would commit into locals, so the cost
+       * does not grow with the period and {@code peek} never allocates.
+       */
+      public void peek( double inHigh, double inLow, double inClose, VortexOut out ) {
+         requireArgument("VORTEX peek", "out", out);
+         if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+            throw new TaLibArgumentException("VORTEX peek: BadParam", RetCode.BadParam);
+         VortexStream sp = this;
+         double curTR = 0.0;
+         double curVMP = 0.0;
+         double curVMM = 0.0;
+         double trueRange = 0.0;
+         double tempDouble = 0.0;
+         double tempLT = 0.0;
+         double tempHT = 0.0;
+         double tempCY = 0.0;
+         double cur_outMinusVI = 0.0;
+         double cur_outPlusVI = 0.0;
+         int nullRun = sp.nullRun;
+         double sTR = sp.sTR;
+         double sVMM = sp.sVMM;
+         double sVMP = sp.sVMP;
+         int pkSlot0 = -1;
+         double pkVal0 = 0.0;
+         int pkSlot1 = -1;
+         double pkVal1 = 0.0;
+         int pkSlot2 = -1;
+         double pkVal2 = 0.0;
+         pkSlot0 = sp.ringPos_trailingIdx;
+         pkVal0 = inHigh;
+         pkSlot1 = sp.ringPos_trailingIdx;
+         pkVal1 = inLow;
+         pkSlot2 = sp.ringPos_trailingIdx;
+         pkVal2 = inClose;
+         /* Add on today's terms. */
+         tempLT = inLow;
+         tempHT = inHigh;
+         tempCY = sp.lag1_inClose;
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs(inHigh - sp.lag1_inLow);
+         sVMM += Math.abs(inLow - sp.lag1_inHigh);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         /* Once the whole window is flat, every TRUE-RANGE term in it is
+          * provably zero (nullRun counts exactly that), so sTR's only content
+          * is the running add/subtract's rounding residue -- purge it, and the
+          * exact division gate below recognizes the case with no absolute
+          * band. ONLY sTR: a zero true range (H == L == prevClose) does NOT
+          * zero that bar's vortex terms, which read the PREVIOUS bar's
+          * extremes -- a spread bar followed by a halt leaves |H - prevL| and
+          * |L - prevH| alive inside the window, and zeroing the numerator sums
+          * would poison both lines permanently (an unreachable negative -VI).
+          * ULTOSC can reseed all its totals because its predicate covers both
+          * of its per-bar terms; VORTEX's covers only the denominator's.
+          */
+         if( nullRun >= sp.optInTimePeriod ) {
+            nullRun = sp.optInTimePeriod;
+            sTR = 0.0;
+         }
+         /* Record the current window sums, then retire the trailing bar's
+          * terms so the sums are ready for the next iteration.
+          */
+         curTR = sTR;
+         curVMP = sVMP;
+         curVMM = sVMM;
+         tempLT = ((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] : pkVal1;
+         tempHT = ((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] : pkVal0;
+         tempCY = ((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx != pkSlot2) ? sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx] : pkVal2;
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR -= trueRange;
+         sVMP -= Math.abs((((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] : pkVal0) - (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx] : pkVal1));
+         sVMM -= Math.abs((((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx != pkSlot1) ? sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] : pkVal1) - (((sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx != pkSlot0) ? sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx] : pkVal0));
+         /* Last operation is to write the outputs. Must be done after the
+          * trailing bar has been fully consumed: the caller is allowed to pass
+          * an output buffer aliasing any input, and the trailing reads above
+          * touch bars trailingIdx-1 == outIdx and trailingIdx == outIdx+1 --
+          * an emit-first order would have clobbered them (ULTOSC's own rule;
+          * ACCBANDS' multi-output form).
+          *
+          * Zero-denominator gate, on the DENOMINATOR itself and exact: the
+          * flat-run reseed above removes the running sums' residue, so
+          * `curTR > 0.0` is a precise test -- ULTOSC gates its divisions the
+          * same way after the same reseed. The flat-bar count alone is only a
+          * proxy for sTR == 0 in exact arithmetic: floating-point absorption
+          * can zero the running sum while the window still holds a live term
+          * (a large spread swallows a 1-ULP one; the later subtract leaves
+          * exactly 0.0 with nullRun far below n), and an ungated division
+          * then emits NaN/Inf, which VORTEX does not declare. An absolute
+          * TA_IS_ZERO band is no better: it zeroes legitimate ratios on any
+          * instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
+          * rejects it (VORTEX is homogeneous of degree 0).
+          */
+         if( curTR > 0.0 ) {
+            cur_outPlusVI = curVMP / curTR;
+            cur_outMinusVI = curVMM / curTR;
+         } else {
+            cur_outPlusVI = 0.0;
+            cur_outMinusVI = 0.0;
+         }
+         out.plusVI = cur_outPlusVI;
+         out.minusVI = cur_outMinusVI;
+      }
+
+      /**
+       * The value at the last bar this stream counted — the bar
+       * {@link #outRange()} ends on. The last history bar right after open,
+       * then whatever the latest accepted {@code update} wrote.
+       * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+       */
+      public void value( VortexOut out ) {
+         requireArgument("VORTEX value", "out", out);
+         out.plusVI = this.cur_outPlusVI;
+         out.minusVI = this.cur_outMinusVI;
+      }
+
+      /**
+       * An independent fork of this stream: both evolve separately from here
+       * on. Buffers are copied and sub-streams cloned recursively; the
+       * {@link Core} reference is shared, since a {@code Core} is immutable
+       * for a stream's lifetime.
+       *
+       * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+       * never {@code super.clone()}, so it throws nothing.
+       *
+       * @return an independent stream at the same bar
+       */
+      @Override
+      public VortexStream clone() {
+         return new VortexStream(this);
+      }
+   }
+
+   /**
+    * The outputs of one VORTEX bar, written by the stream into an object the
+    * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+    * and {@code value} overwrite its fields, so the sink itself costs
+    * nothing per bar.
+    *
+    * <p><b>Its contents are only valid until the next call that writes it.</b>
+    * It is a mutable buffer, not a reading: a reference kept past that call,
+    * or one put in a collection, sees the value change underneath it. Copy the
+    * fields out if the reading has to outlive the call.
+    *
+    * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+    * with value equality breaks the {@code HashMap}/{@code HashSet}
+    * invariant the moment a reused instance becomes a key. Compare the fields.
+    */
+   public static final class VortexOut {
+      /** Positive vortex line (+VI) */
+      public double plusVI;
+      /** Negative vortex line (−VI) */
+      public double minusVI;
+   }
+   void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
+   {
+      double curTR = 0.0;
+      double curVMP = 0.0;
+      double curVMM = 0.0;
+      double trueRange = 0.0;
+      double tempDouble = 0.0;
+      double tempLT = 0.0;
+      double tempHT = 0.0;
+      double tempCY = 0.0;
+      sp.ring_trailingIdx_inHigh[sp.ringPos_trailingIdx] = inHigh;
+      sp.ring_trailingIdx_inLow[sp.ringPos_trailingIdx] = inLow;
+      sp.ring_trailingIdx_inClose[sp.ringPos_trailingIdx] = inClose;
+      /* Add on today's terms. */
+      tempLT = inLow;
+      tempHT = inHigh;
+      tempCY = sp.lag1_inClose;
+      trueRange = tempHT - tempLT;
+      tempDouble = Math.abs(tempCY - tempHT);
+      if( tempDouble > trueRange ) {
+         trueRange = tempDouble;
+      }
+      tempDouble = Math.abs(tempCY - tempLT);
+      if( tempDouble > trueRange ) {
+         trueRange = tempDouble;
+      }
+      sp.sTR += trueRange;
+      sp.sVMP += Math.abs(inHigh - sp.lag1_inLow);
+      sp.sVMM += Math.abs(inLow - sp.lag1_inHigh);
+      if( trueRange == 0.0 ) {
+         sp.nullRun += 1;
+      } else {
+         sp.nullRun = 0;
+      }
+      /* Once the whole window is flat, every TRUE-RANGE term in it is
+       * provably zero (nullRun counts exactly that), so sTR's only content
+       * is the running add/subtract's rounding residue -- purge it, and the
+       * exact division gate below recognizes the case with no absolute
+       * band. ONLY sTR: a zero true range (H == L == prevClose) does NOT
+       * zero that bar's vortex terms, which read the PREVIOUS bar's
+       * extremes -- a spread bar followed by a halt leaves |H - prevL| and
+       * |L - prevH| alive inside the window, and zeroing the numerator sums
+       * would poison both lines permanently (an unreachable negative -VI).
+       * ULTOSC can reseed all its totals because its predicate covers both
+       * of its per-bar terms; VORTEX's covers only the denominator's.
+       */
+      if( sp.nullRun >= sp.optInTimePeriod ) {
+         sp.nullRun = sp.optInTimePeriod;
+         sp.sTR = 0.0;
+      }
+      /* Record the current window sums, then retire the trailing bar's
+       * terms so the sums are ready for the next iteration.
+       */
+      curTR = sp.sTR;
+      curVMP = sp.sVMP;
+      curVMM = sp.sVMM;
+      tempLT = sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx];
+      tempHT = sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx];
+      tempCY = sp.ring_trailingIdx_inClose[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx];
+      trueRange = tempHT - tempLT;
+      tempDouble = Math.abs(tempCY - tempHT);
+      if( tempDouble > trueRange ) {
+         trueRange = tempDouble;
+      }
+      tempDouble = Math.abs(tempCY - tempLT);
+      if( tempDouble > trueRange ) {
+         trueRange = tempDouble;
+      }
+      sp.sTR -= trueRange;
+      sp.sVMP -= Math.abs(sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] - sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx]);
+      sp.sVMM -= Math.abs(sp.ring_trailingIdx_inLow[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx) % sp.ringCap_trailingIdx] - sp.ring_trailingIdx_inHigh[(sp.ringPos_trailingIdx + sp.ringCap_trailingIdx - sp.ringLag_trailingIdx - 1) % sp.ringCap_trailingIdx]);
+      /* Last operation is to write the outputs. Must be done after the
+       * trailing bar has been fully consumed: the caller is allowed to pass
+       * an output buffer aliasing any input, and the trailing reads above
+       * touch bars trailingIdx-1 == outIdx and trailingIdx == outIdx+1 --
+       * an emit-first order would have clobbered them (ULTOSC's own rule;
+       * ACCBANDS' multi-output form).
+       *
+       * Zero-denominator gate, on the DENOMINATOR itself and exact: the
+       * flat-run reseed above removes the running sums' residue, so
+       * `curTR > 0.0` is a precise test -- ULTOSC gates its divisions the
+       * same way after the same reseed. The flat-bar count alone is only a
+       * proxy for sTR == 0 in exact arithmetic: floating-point absorption
+       * can zero the running sum while the window still holds a live term
+       * (a large spread swallows a 1-ULP one; the later subtract leaves
+       * exactly 0.0 with nullRun far below n), and an ungated division
+       * then emits NaN/Inf, which VORTEX does not declare. An absolute
+       * TA_IS_ZERO band is no better: it zeroes legitimate ratios on any
+       * instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
+       * rejects it (VORTEX is homogeneous of degree 0).
+       */
+      if( curTR > 0.0 ) {
+         sp.cur_outPlusVI = curVMP / curTR;
+         sp.cur_outMinusVI = curVMM / curTR;
+      } else {
+         sp.cur_outPlusVI = 0.0;
+         sp.cur_outMinusVI = 0.0;
+      }
+      sp.lag1_inHigh = inHigh;
+      sp.lag1_inLow = inLow;
+      sp.lag1_inClose = inClose;
+      sp.ringPos_trailingIdx = sp.ringPos_trailingIdx + 1;
+      if( sp.ringPos_trailingIdx >= sp.ringCap_trailingIdx ) {
+         sp.ringPos_trailingIdx = 0;
+      }
+   }
+   private RetCode vortexOpenImpl( VortexStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outPlusVI[], double outMinusVI[], int outStride )
+   {
+      int outIdx = 0;
+      int today = 0;
+      int trailingIdx = 0;
+      int lookbackTotal = 0;
+      int i = 0;
+      int nullRun = 0;
+      double sTR = 0;
+      double sVMP = 0;
+      double sVMM = 0;
+      double curTR = 0;
+      double curVMP = 0;
+      double curVMM = 0;
+      double trueRange = 0;
+      double tempDouble = 0;
+      double tempLT = 0;
+      double tempHT = 0;
+      double tempCY = 0;
+      int historyLen = inHigh.length;
+      int endIdx = historyLen - 1;
+      if( historyLen < 1 ) {
+         return RetCode.OutOfRangeStartIndex;
+      }
+      if( historyLen > MAX_INDEX + 1 ) {
+         return RetCode.OutOfRangeEndIndex;
+      }
+      if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+         return RetCode.BadParam;
+      }
+      if( optInTimePeriod == Integer.MIN_VALUE ) {
+         optInTimePeriod = 14;
+      } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+         return RetCode.BadParam;
+      }
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory;
+      }
+      /* Vortex Indicator (Botes & Siepman, TASC 28:1, Jan 2010): two lines,
+       * each a rolling sum of "vortex movement" normalized by the rolling sum
+       * of true range over the same optInTimePeriod bars.
+       *
+       *   TR[i]  = max( H[i]-L[i], |C[i-1]-H[i]|, |C[i-1]-L[i]| )   == TA_TRANGE
+       *   VMP[i] = |H[i] - L[i-1]|
+       *   VMM[i] = |L[i] - H[i-1]|
+       *   +VI = SUM(VMP, n) / SUM(TR, n),  -VI = SUM(VMM, n) / SUM(TR, n)
+       *
+       * No smoothing, no recursion, nothing to seed. The TR expansion below is
+       * TA_TRANGE's own operation order, bit for bit -- the differential test
+       * composes TA_TRANGE + TA_SUM and asserts equality with memcmp.
+       *
+       * The trailing terms are recomputed from the inputs rather than carried
+       * in a ring; the subtraction re-reads bars trailingIdx and trailingIdx-1,
+       * both of which sit at or ahead of the output slot, which is why the
+       * outputs are written LAST (see the loop comment).
+       */
+      lookbackTotal = VORTEX_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal ) {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx ) {
+         outBegIdx.value = 0;
+         outNBElement.value = 0;
+         return RetCode.InsufficientHistory ;
+      }
+      /* Prime the three window sums over the optInTimePeriod-1 terms before the
+       * first output bar: [startIdx-optInTimePeriod+1, startIdx). Each term at
+       * bar i reads bar i-1, so the earliest read is bar startIdx-optInTimePeriod
+       * >= 0.
+       */
+      sTR = 0.0;
+      sVMP = 0.0;
+      sVMM = 0.0;
+      nullRun = 0;
+      for( i = startIdx - optInTimePeriod + 1; i < startIdx; i += 1 ) {
+         tempLT = inLow[i];
+         tempHT = inHigh[i];
+         tempCY = inClose[i - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs(inHigh[i] - inLow[i - 1]);
+         sVMM += Math.abs(inLow[i] - inHigh[i - 1]);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+      }
+      outIdx = 0;
+      today = startIdx;
+      trailingIdx = startIdx - optInTimePeriod + 1;
+      while( today <= endIdx ) {
+         /* Add on today's terms. */
+         tempLT = inLow[today];
+         tempHT = inHigh[today];
+         tempCY = inClose[today - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR += trueRange;
+         sVMP += Math.abs(inHigh[today] - inLow[today - 1]);
+         sVMM += Math.abs(inLow[today] - inHigh[today - 1]);
+         if( trueRange == 0.0 ) {
+            nullRun += 1;
+         } else {
+            nullRun = 0;
+         }
+         /* Once the whole window is flat, every TRUE-RANGE term in it is
+          * provably zero (nullRun counts exactly that), so sTR's only content
+          * is the running add/subtract's rounding residue -- purge it, and the
+          * exact division gate below recognizes the case with no absolute
+          * band. ONLY sTR: a zero true range (H == L == prevClose) does NOT
+          * zero that bar's vortex terms, which read the PREVIOUS bar's
+          * extremes -- a spread bar followed by a halt leaves |H - prevL| and
+          * |L - prevH| alive inside the window, and zeroing the numerator sums
+          * would poison both lines permanently (an unreachable negative -VI).
+          * ULTOSC can reseed all its totals because its predicate covers both
+          * of its per-bar terms; VORTEX's covers only the denominator's.
+          */
+         if( nullRun >= optInTimePeriod ) {
+            nullRun = optInTimePeriod;
+            sTR = 0.0;
+         }
+         /* Record the current window sums, then retire the trailing bar's
+          * terms so the sums are ready for the next iteration.
+          */
+         curTR = sTR;
+         curVMP = sVMP;
+         curVMM = sVMM;
+         tempLT = inLow[trailingIdx];
+         tempHT = inHigh[trailingIdx];
+         tempCY = inClose[trailingIdx - 1];
+         trueRange = tempHT - tempLT;
+         tempDouble = Math.abs(tempCY - tempHT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         tempDouble = Math.abs(tempCY - tempLT);
+         if( tempDouble > trueRange ) {
+            trueRange = tempDouble;
+         }
+         sTR -= trueRange;
+         sVMP -= Math.abs(inHigh[trailingIdx] - inLow[trailingIdx - 1]);
+         sVMM -= Math.abs(inLow[trailingIdx] - inHigh[trailingIdx - 1]);
+         trailingIdx += 1;
+         /* Last operation is to write the outputs. Must be done after the
+          * trailing bar has been fully consumed: the caller is allowed to pass
+          * an output buffer aliasing any input, and the trailing reads above
+          * touch bars trailingIdx-1 == outIdx and trailingIdx == outIdx+1 --
+          * an emit-first order would have clobbered them (ULTOSC's own rule;
+          * ACCBANDS' multi-output form).
+          *
+          * Zero-denominator gate, on the DENOMINATOR itself and exact: the
+          * flat-run reseed above removes the running sums' residue, so
+          * `curTR > 0.0` is a precise test -- ULTOSC gates its divisions the
+          * same way after the same reseed. The flat-bar count alone is only a
+          * proxy for sTR == 0 in exact arithmetic: floating-point absorption
+          * can zero the running sum while the window still holds a live term
+          * (a large spread swallows a 1-ULP one; the later subtract leaves
+          * exactly 0.0 with nullRun far below n), and an ungated division
+          * then emits NaN/Inf, which VORTEX does not declare. An absolute
+          * TA_IS_ZERO band is no better: it zeroes legitimate ratios on any
+          * instrument quoted below 1e-14, and the QUOTE-UNIT/SCALE gate
+          * rejects it (VORTEX is homogeneous of degree 0).
+          */
+         if( curTR > 0.0 ) {
+            outPlusVI[outIdx * outStride] = curVMP / curTR;
+            outMinusVI[outIdx * outStride] = curVMM / curTR;
+         } else {
+            outPlusVI[outIdx * outStride] = 0.0;
+            outMinusVI[outIdx * outStride] = 0.0;
+         }
+         outIdx += 1;
+         today += 1;
+      }
+      outBegIdx.value = startIdx;
+      outNBElement.value = outIdx;
+      /* Capture the live batch state into the handle. */
+      int capLag_trailingIdx = today - trailingIdx;
+      int cap_trailingIdx = capLag_trailingIdx + 2;
+      if( capLag_trailingIdx < 0 || cap_trailingIdx > historyLen ) {
+         return RetCode.InternalError;
+      }
+      int allocN_trailingIdx = (cap_trailingIdx > 0)? cap_trailingIdx : 1;
+      double[] capRing_trailingIdx_inHigh = new double[allocN_trailingIdx];
+      for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingIdx_inHigh[fillJ % cap_trailingIdx] = inHigh[fillJ];
+      }
+      double[] capRing_trailingIdx_inLow = new double[allocN_trailingIdx];
+      for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingIdx_inLow[fillJ % cap_trailingIdx] = inLow[fillJ];
+      }
+      double[] capRing_trailingIdx_inClose = new double[allocN_trailingIdx];
+      for( int fillJ = historyLen - cap_trailingIdx; fillJ < historyLen; fillJ++ ) {
+         capRing_trailingIdx_inClose[fillJ % cap_trailingIdx] = inClose[fillJ];
+      }
+      sp.optInTimePeriod = optInTimePeriod;
+      sp.nullRun = nullRun;
+      sp.sTR = sTR;
+      sp.sVMP = sVMP;
+      sp.sVMM = sVMM;
+      sp.lag1_inHigh = inHigh[historyLen - 1];
+      sp.lag1_inLow = inLow[historyLen - 1];
+      sp.lag1_inClose = inClose[historyLen - 1];
+      sp.ringPos_trailingIdx = historyLen % cap_trailingIdx;
+      sp.ringCap_trailingIdx = cap_trailingIdx;
+      sp.ringLag_trailingIdx = capLag_trailingIdx;
+      sp.ring_trailingIdx_inHigh = capRing_trailingIdx_inHigh;
+      sp.ring_trailingIdx_inLow = capRing_trailingIdx_inLow;
+      sp.ring_trailingIdx_inClose = capRing_trailingIdx_inClose;
+      sp.cur_outPlusVI = outPlusVI[(outNBElement.value - 1) * outStride];
+      sp.cur_outMinusVI = outMinusVI[(outNBElement.value - 1) * outStride];
+      return RetCode.Success;
+   }
+   /* vortexOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+   VortexStream vortexOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outPlusVI[], double outMinusVI[] )
+   {
+      VortexStream sp = new VortexStream(this);
+      RetCode retCode = vortexOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI, 1);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw new InsufficientHistoryException("VORTEX openAndFill: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new TaLibStateException("VORTEX openAndFill: internal error", retCode);
+      }
+      throw new TaLibArgumentException("VORTEX openAndFill: " + retCode, retCode);
+   }
+   /* Internal startIdx-anchored open behind vortexOpen (composition seam). */
+   VortexStream vortexOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+   {
+      VortexStream sp = new VortexStream(this);
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      double[] sink_outPlusVI = new double[1];
+      double[] sink_outMinusVI = new double[1];
+      RetCode retCode = vortexOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outPlusVI, sink_outMinusVI, 0);
+      sp.outRangeBegIdx = outBegIdx.value;
+      sp.outRangeCount = outNBElement.value;
+      if( retCode == RetCode.Success ) {
+         return sp;
+      }
+      if( retCode == RetCode.InsufficientHistory ) {
+         throw new InsufficientHistoryException("VORTEX open: history shorter than lookback + 1");
+      }
+      if( retCode == RetCode.InternalError ) {
+         throw new TaLibStateException("VORTEX open: internal error", retCode);
+      }
+      throw new TaLibArgumentException("VORTEX open: " + retCode, retCode);
+   }
+   /**
+    * Open a live VORTEX stream over the warm-up history; the handle's
+    * {@code value()} starts at the last history bar's value — bit-identical
+    * to {@link Core#VORTEX} at that bar.
+    * <p>The history must hold at least {@code VORTEX_Lookback(...) + 1} bars
+    * (unstable-period aware), or {@link InsufficientHistoryException} is
+    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+    * default, as in the batch API). An EMPTY history throws
+    * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+    * names no bar — and a null argument {@link IllegalArgumentException},
+    * both ahead of everything above.
+    */
+   public VortexStream vortexOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+   {
+      requireArgument("VORTEX open", "inHigh", inHigh);
+      requireHistory("VORTEX open", inHigh.length);
+      requireArgument("VORTEX open", "inLow", inLow);
+      requireArgument("VORTEX open", "inClose", inClose);
+      requireHistoryLength("VORTEX open", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("VORTEX open", "inClose", inClose.length, inHigh.length);
+      return vortexOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+   }
+   /**
+    * {@link Core#vortexOpen} that also fills the output array(s) bit-identically
+    * to {@link Core#VORTEX} over the whole history in the same single pass
+    * (no separate batch call needed for the warm-up plot). Output arrays must
+    * not alias the inputs or each other, and must hold
+    * {@code historyLen - lookback} values — both checked before anything is
+    * written, so an undersized array is an {@link IllegalArgumentException}
+    * naming it rather than a fault from inside the fill.
+    * <p>The range written is on the returned handle:
+    * {@link VortexStream#outRange()}.
+    */
+   public VortexStream vortexOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outPlusVI[], double outMinusVI[] )
+   {
+      requireArgument("VORTEX openAndFill", "inHigh", inHigh);
+      requireHistory("VORTEX openAndFill", inHigh.length);
+      requireArgument("VORTEX openAndFill", "inLow", inLow);
+      requireArgument("VORTEX openAndFill", "inClose", inClose);
+      int guardOutLen = openFillCount("VORTEX openAndFill", inHigh.length, VORTEX_Lookback(optInTimePeriod));
+      requireHistoryLength("VORTEX openAndFill", "inLow", inLow.length, inHigh.length);
+      requireHistoryLength("VORTEX openAndFill", "inClose", inClose.length, inHigh.length);
+      requireLength("VORTEX openAndFill", "outPlusVI", outPlusVI, guardOutLen);
+      requireLength("VORTEX openAndFill", "outMinusVI", outMinusVI, guardOutLen);
+      if( (Object)outPlusVI == (Object)inHigh || (Object)outPlusVI == (Object)inLow || (Object)outPlusVI == (Object)inClose || (Object)outMinusVI == (Object)inHigh || (Object)outMinusVI == (Object)inLow || (Object)outMinusVI == (Object)inClose || (Object)outPlusVI == (Object)outMinusVI ) {
+         throw new TaLibArgumentException("VORTEX openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+      }
+      MInteger outBegIdx = new MInteger();
+      MInteger outNBElement = new MInteger();
+      return vortexOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outPlusVI, outMinusVI);
    }
 /* List of contributors:
  *

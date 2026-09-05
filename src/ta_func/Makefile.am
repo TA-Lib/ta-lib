@@ -103,6 +103,8 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_DX.c \
 	ta_EFI.c \
 	ta_EMA.c \
+	ta_ER.c \
+	ta_ERI.c \
 	ta_EXP.c \
 	ta_FLOOR.c \
 	ta_FOSC.c \
@@ -194,6 +196,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_ULTOSC.c \
 	ta_VAR.c \
 	ta_VHF.c \
+	ta_VORTEX.c \
 	ta_VWAP.c \
 	ta_VWMA.c \
 	ta_WAD.c \

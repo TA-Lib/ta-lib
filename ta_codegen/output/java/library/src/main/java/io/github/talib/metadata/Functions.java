@@ -220,6 +220,8 @@ public final class Functions {
       put(m, f_DX());
       put(m, f_EFI());
       put(m, f_EMA());
+      put(m, f_ER());
+      put(m, f_ERI());
       put(m, f_EXP());
       put(m, f_FLOOR());
       put(m, f_FOSC());
@@ -311,6 +313,7 @@ public final class Functions {
       put(m, f_ULTOSC());
       put(m, f_VAR());
       put(m, f_VHF());
+      put(m, f_VORTEX());
       put(m, f_VWAP());
       put(m, f_VWMA());
       put(m, f_WAD());
@@ -1797,6 +1800,43 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_ER() {
+      return new FunctionInfo(
+         "ER", "Momentum Indicators", "Kaufman Efficiency Ratio", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of one-bar changes in the path sum", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 100, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_ERI() {
+      return new FunctionInfo(
+         "ERI", "Momentum Indicators", "Elder Ray Index (Bull Power / Bear Power)", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the EMA of close", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outBullPower", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outBearPower", 0x00000001)
          ));
    }
 
@@ -3567,6 +3607,25 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_VORTEX() {
+      return new FunctionInfo(
+         "VORTEX", "Momentum Indicators", "Vortex Indicator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the rolling sums", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outPlusVI", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outMinusVI", 0x00000001)
          ));
    }
 

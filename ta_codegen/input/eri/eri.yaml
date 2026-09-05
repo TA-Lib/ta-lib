@@ -1,0 +1,23 @@
+name: ERI
+group: Momentum Indicators
+hint: Elder Ray Index (Bull Power / Bear Power)
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInTimePeriod
+    type: integer
+    display_name: Time Period
+    hint: Number of bars in the EMA of close
+    range: [1, 100000]
+    default: 13
+    suggested: [1, 200, 1]
+outputs:
+  - name: outBullPower
+    type: real
+    flags: [line]
+  - name: outBearPower
+    type: real
+    flags: [line]

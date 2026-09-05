@@ -4165,6 +4165,84 @@ static TA_RetCode TA_EMA_SFrameClose( void *stream )
    return TA_EMA_Close( (TA_EMA_Stream *)stream );
 }
 
+static TA_RetCode TA_ER_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ER_Open(
+               (TA_ER_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ER_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ER_OpenAndFill(
+               (TA_ER_Stream **)stream,
+               in[0] /* inReal */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_ER_SFrameClose( void *stream )
+{
+   return TA_ER_Close( (TA_ER_Stream *)stream );
+}
+
+static TA_RetCode TA_ERI_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ERI_Open(
+               (TA_ERI_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outBullPower */,
+               outReal[1] /* outBearPower */
+               );
+}
+static TA_RetCode TA_ERI_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ERI_OpenAndFill(
+               (TA_ERI_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outBullPower */,
+               outReal[1] /* outBearPower */
+               );
+}
+static TA_RetCode TA_ERI_SFrameClose( void *stream )
+{
+   return TA_ERI_Close( (TA_ERI_Stream *)stream );
+}
+
 static TA_RetCode TA_EXP_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -7689,6 +7767,48 @@ static TA_RetCode TA_VHF_SFrameClose( void *stream )
    return TA_VHF_Close( (TA_VHF_Stream *)stream );
 }
 
+static TA_RetCode TA_VORTEX_SFrameOpen( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_VORTEX_Open(
+               (TA_VORTEX_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outReal[0] /* outPlusVI */,
+               outReal[1] /* outMinusVI */
+               );
+}
+static TA_RetCode TA_VORTEX_SFrameFill( void **stream,
+                  const double *const in[], int historyLen,
+                  const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_VORTEX_OpenAndFill(
+               (TA_VORTEX_Stream **)stream,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               historyLen,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outPlusVI */,
+               outReal[1] /* outMinusVI */
+               );
+}
+static TA_RetCode TA_VORTEX_SFrameClose( void *stream )
+{
+   return TA_VORTEX_Close( (TA_VORTEX_Stream *)stream );
+}
+
 static TA_RetCode TA_VWAP_SFrameOpen( void **stream,
                   const double *const in[], int historyLen,
                   const double optIn[],
@@ -8162,6 +8282,10 @@ static const TA_StreamEntry TA_StreamTable[] = {
      2, TA_VIn_EFI, 1, TA_VOpt_EFI, 1, TA_VOutIsInt_EFI },
    { "EMA", TA_EMA_SFrameOpen, TA_EMA_SFrameFill, TA_EMA_SFrameClose,
      1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, TA_VOutIsInt_EMA },
+   { "ER", TA_ER_SFrameOpen, TA_ER_SFrameFill, TA_ER_SFrameClose,
+     1, TA_VIn_ER, 1, TA_VOpt_ER, 1, TA_VOutIsInt_ER },
+   { "ERI", TA_ERI_SFrameOpen, TA_ERI_SFrameFill, TA_ERI_SFrameClose,
+     3, TA_VIn_ERI, 1, TA_VOpt_ERI, 2, TA_VOutIsInt_ERI },
    { "EXP", TA_EXP_SFrameOpen, TA_EXP_SFrameFill, TA_EXP_SFrameClose,
      1, TA_VIn_EXP, 0, NULL, 1, TA_VOutIsInt_EXP },
    { "FLOOR", TA_FLOOR_SFrameOpen, TA_FLOOR_SFrameFill, TA_FLOOR_SFrameClose,
@@ -8344,6 +8468,8 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, TA_VOutIsInt_VAR },
    { "VHF", TA_VHF_SFrameOpen, TA_VHF_SFrameFill, TA_VHF_SFrameClose,
      1, TA_VIn_VHF, 1, TA_VOpt_VHF, 1, TA_VOutIsInt_VHF },
+   { "VORTEX", TA_VORTEX_SFrameOpen, TA_VORTEX_SFrameFill, TA_VORTEX_SFrameClose,
+     3, TA_VIn_VORTEX, 1, TA_VOpt_VORTEX, 2, TA_VOutIsInt_VORTEX },
    { "VWAP", TA_VWAP_SFrameOpen, TA_VWAP_SFrameFill, TA_VWAP_SFrameClose,
      4, TA_VIn_VWAP, 0, NULL, 1, TA_VOutIsInt_VWAP },
    { "VWMA", TA_VWMA_SFrameOpen, TA_VWMA_SFrameFill, TA_VWMA_SFrameClose,
@@ -8360,6 +8486,6 @@ static const TA_StreamEntry TA_StreamTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA },
 };
 
-#define TA_STREAM_TABLE_SIZE 198
+#define TA_STREAM_TABLE_SIZE 201
 
 #endif /* TA_STREAM_FRAME_H */

@@ -947,6 +947,24 @@ TA_RetCode TA_EMA_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_EMA_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_ER_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ER_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_ERI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_ERI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_EXP_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1764,6 +1782,15 @@ TA_RetCode TA_VHF_FramePP( const TA_ParamHolderPriv *params,
                            int           *outNBElement )
 ;
 unsigned int TA_VHF_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_VORTEX_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_VORTEX_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 TA_RetCode TA_VWAP_FramePP( const TA_ParamHolderPriv *params,

@@ -1081,7 +1081,7 @@ static TA_RetCode TA_RVI_OpenImpl( struct TA_RVI_Stream **stream, const double i
       sp->windowStart = windowStart;
       sp->today = today;
       sp->xCap = (int)(today - trailingIdx) + 1;
-      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_RVI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(425); }
+      if( sp->xCap < 1 || sp->xCap > historyLen ) { TA_RVI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(428); }
       sp->xPhys = 1;
       while( sp->xPhys < sp->xCap ) sp->xPhys <<= 1;
       sp->xMask = sp->xPhys - 1;

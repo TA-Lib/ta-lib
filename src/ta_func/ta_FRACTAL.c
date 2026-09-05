@@ -505,7 +505,7 @@ static TA_RetCode TA_FRACTAL_OpenImpl( struct TA_FRACTAL_Stream **stream, const 
       sp->optInLeftBars = optInLeftBars;
       sp->optInRightBars = optInRightBars;
       sp->winCap_i = (int)(optInLeftBars + optInRightBars + 1);
-      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_FRACTAL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(424); }
+      if( sp->winCap_i < 1 || sp->winCap_i > historyLen ) { TA_FRACTAL_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(427); }
       sp->win_i_inHigh = (double *)TA_Malloc( sizeof(double) * (size_t)sp->winCap_i );
       if( !sp->win_i_inHigh ) { TA_FRACTAL_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->win_i_inHigh, inHigh + (historyLen - sp->winCap_i), sizeof(double) * (size_t)sp->winCap_i );
