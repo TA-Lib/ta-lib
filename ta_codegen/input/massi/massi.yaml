@@ -1,0 +1,27 @@
+name: MASSI
+group: Volatility Indicators
+hint: Mass Index
+flags: [stream]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInFastPeriod
+    type: integer
+    display_name: Fast Period
+    hint: Period of both exponential averages of the high-low range
+    range: [2, 100000]
+    default: 9
+    suggested: [2, 50, 1]
+  - name: optInSlowPeriod
+    type: integer
+    display_name: Slow Period
+    hint: Number of bars the ratio is summed over
+    range: [2, 100000]
+    default: 25
+    suggested: [10, 50, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

@@ -860,6 +860,8 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_vhf,       "VHF" );
    DO_TEST( test_func_adr,       "ADR" );
    DO_TEST( test_func_fosc,      "FOSC" );
+   DO_TEST( test_func_cvi,       "CVI" );
+   DO_TEST( test_func_massi,     "MASSI" );
    DO_TEST( test_func_rvol,      "RVOL" );
    DO_TEST( test_func_variants,  "TA_S_,VARIANT" );
    DO_TEST( test_candle_precision, "CDLDOJI,CANDLE,VARIANT,PRECISION" );

@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 409
+next: 413
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -158,6 +158,8 @@ sites:
   CMF.circbuf.mfv: 314
   CMOU.ringcap.trailingIdx: 316
   CORREL.extrema: 317
+  CVI.cbsize.emaRing: 410
+  CVI.circbuf.emaRing: 409
   DONCHIAN.extrema: 403
   EFI.dualmode: 318
   FOSC.extrema: 406
@@ -189,6 +191,8 @@ sites:
   MA.dispatch.Update: 343
   MA.dispatch.UpdateAndFill: 345
   MAMA.ringcap.trailingWMAIdx: 346
+  MASSI.cbsize.ratioRing: 412
+  MASSI.circbuf.ratioRing: 411
   MAX.circbuf.preHighest: 348
   MAX.circbuf.sufHighest: 347
   MAX.extrema: 349
