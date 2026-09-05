@@ -157,6 +157,10 @@ sites:
   CMF.cbsize.mfv: 315
   CMF.circbuf.mfv: 314
   CMOU.ringcap.trailingIdx: 316
+  COPPOCK.cbsize.sRing: 419
+  COPPOCK.circbuf.sRing: 416
+  COPPOCK.ringcap.roc1Idx: 417
+  COPPOCK.ringcap.roc2Idx: 418
   CORREL.extrema: 317
   CVI.cbsize.emaRing: 417
   CVI.circbuf.emaRing: 416
