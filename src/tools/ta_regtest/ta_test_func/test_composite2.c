@@ -1307,7 +1307,7 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
    double err;
    const char *mode;
    unsigned int p;
-   int i, nbBars = (int)history->nbBars;
+   int i, nbOver, nbBars = (int)history->nbBars;
 
    rc = TA_ER( 0, nbBars - 1, history->close, 10, &beg, &nb, out );
    if( rc != TA_SUCCESS || beg != 10 || nb != nbBars - 10 )
@@ -1324,7 +1324,9 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
       }
    }
 
-   /* Dead-flat: 0/0 answers exactly 1.0 through `0 <= 0`, never NaN. */
+   /* Dead-flat from bar 0: 0/0 answers exactly 1.0 through `0 <= 0`, never
+    * NaN. The priming sum is already an exact 0.0 here, so this leg says
+    * nothing about the nullRun purge -- the one below is what sees it. */
    for( i = 0; i < 64; i++ )
       buf[i] = 100.0;
    rc = TA_ER( 0, 63, buf, 10, &beg, &nb, out );
@@ -1335,6 +1337,35 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
       if( out[i] != 1.0 )
       {
          printf( "ER flat Fail bar %d: %.17g != exact 1.0\n", (int)beg + i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   /* Flat AFTER live bars, which is the only shape the nullRun purge can
+    * change. Three unit steps and one 1e16 step: past the big one the unit
+    * steps are below an ULP of the price, so the series is flat from bar 3
+    * on while the running sum still carries the priming window's residue.
+    * Once the window is entirely flat the numerator is an exact 0.0 and that
+    * residue is POSITIVE -- which the clamp cannot mask, since `residue <= 0`
+    * is false -- so an unpurged sum reports 0.0 and reads a dead-flat market
+    * as maximally inefficient. The purge starts firing at bar 14; asserting
+    * from bar 20 (the first window lying wholly in the flat tail) keeps the
+    * claim simple. Delete the purge in er.c and every asserted bar goes red
+    * at 0.0; the flat-from-bar-0 leg above stays green. */
+   buf[0] = 100.0;
+   for( i = 1; i <= 10; i++ )
+      buf[i] = buf[i-1] + ( i == 3 ? 1.0e16 : 1.0 );
+   for( i = 11; i < 64; i++ )
+      buf[i] = buf[10];
+   rc = TA_ER( 0, 63, buf, 10, &beg, &nb, out );
+   if( rc != TA_SUCCESS || nb <= 0 )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < (int)nb; i++ )
+   {
+      if( (int)beg + i >= 20 && out[i] != 1.0 )
+      {
+         printf( "ER purge Fail bar %d: %.17g != exact 1.0 -- a flat window "
+                 "carrying the running sum's residue\n", (int)beg + i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
@@ -1373,22 +1404,63 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
    }
 
    /* Monotone DOWN: the clamp compares against the SIGNED numerator, so it
-    * never fires here; the raw fabs ratio may exceed 1.0 by a few ULP.
-    * Assert a tolerance band, NOT equality -- and assert it is NOT clamped
-    * behaviour by requiring at least one bar different from the up-series'
-    * exact 1.0 pattern is too strong (it can be exactly 1.0); the honest
-    * assertion is the band. */
+    * never fires here and the raw fabs ratio is free to exceed 1.0 by a few
+    * ULP. A uniform decrement does not show it -- the sum comes out exactly
+    * equal to the net move on every window, so the band is satisfied under
+    * the fabs clamp `er.c` forbids just as well. These two alternating
+    * decrements put 24 of the 54 outputs strictly above 1.0, which is what
+    * the forbidden edit would pin back to exactly 1.0.
+    *
+    * So: the band, AND a count of bars that are strictly greater than 1.0.
+    * The count is the discriminating half; the band is what keeps it honest
+    * about the magnitude. */
    for( i = 0; i < 64; i++ )
-      buf[i] = 200.0 - (double)i * 0.7;
+      buf[i] = ( i == 0 ) ? 77.04
+                          : buf[i-1] - ( ( i & 1 ) ? 1.8512 : 1.9002 );
    rc = TA_ER( 0, 63, buf, 10, &beg, &nb, out );
    if( rc != TA_SUCCESS )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   nbOver = 0;
    for( i = 0; i < (int)nb; i++ )
    {
       if( !(out[i] > 1.0 - 1e-12 && out[i] < 1.0 + 1e-12) )
       {
          printf( "ER monotone-down Fail bar %d: %.17g outside 1 +- 1e-12\n",
                  (int)beg + i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      if( out[i] > 1.0 )
+         nbOver++;
+   }
+   if( nbOver == 0 )
+   {
+      printf( "ER monotone-down Fail: no output exceeded 1.0 -- the clamp is "
+              "no longer asymmetric, or the series stopped discriminating\n" );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   /* Zero denominator on a window that is NOT flat. A step absorbed on the
+    * way into the running sum is subtracted later at full precision, so the
+    * sum can reach exactly 0.0 while live terms remain in the window. Paired
+    * with a down move the clamp is false (`0.0 <= negative`), and without
+    * er.c's `sumROC1 <= 0.0` guard the division returns +Inf. The nullRun
+    * purge does not cover this: the window is not flat. */
+   buf[0] = 1.0e16;
+   buf[1] = 0.0;
+   buf[2] = -1.0;
+   buf[3] = -2.0;
+   buf[4] = -3.0;
+   for( i = 5; i < 64; i++ )
+      buf[i] = -4.0;
+   rc = TA_ER( 0, 63, buf, 5, &beg, &nb, out );
+   if( rc != TA_SUCCESS || nb <= 0 )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < (int)nb; i++ )
+   {
+      if( !TA_IS_FINITE( out[i] ) || out[i] > 1.0 + 1e-12 )
+      {
+         printf( "ER zero-denominator Fail bar %d: %.17g -- the path sum "
+                 "reached 0.0 on a live window\n", (int)beg + i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }

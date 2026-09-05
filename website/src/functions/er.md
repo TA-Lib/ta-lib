@@ -1,11 +1,11 @@
 ---
 title: "Kaufman Efficiency Ratio (ER)"
-description: "Kaufman Efficiency Ratio (also searched as \"KER\"): Perry J."
+description: "Kaufman Efficiency Ratio (also searched as \"KER\"): Perry Kaufman's noise measure from Smarter Trading (1995) — the net directional movement over the…"
 ---
 
 ## Summary
 
-Kaufman Efficiency Ratio (also searched as "KER"): Perry J. Kaufman's noise measure from *Smarter Trading* (1995) — the net directional movement over the period divided by the total path travelled to get there. 1.0 is a perfectly efficient (straight-line) move; values near 0 are churn.
+Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise measure from *Smarter Trading* (1995) — the net directional movement over the period divided by the total path travelled to get there. 1.0 is a perfectly efficient (straight-line) move; values near 0 are churn.
 
 This is exactly the efficiency ratio [`KAMA`](/functions/kama.md) computes internally to set its adaptive smoothing constant, exposed standalone and kept bit-identical to it.
 
@@ -31,7 +31,7 @@ TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form h
 
 | Parameter | Type | Default | Accepted values | Description |
 | --- | --- | --- | --- | --- |
-| `optInTimePeriod` | integer | 10 | 2–100000 | Number of one-bar changes in the path sum (default 10, the author's own; note `KAMA`'s `optInTimePeriod` — the same window — defaults to 30) |
+| `optInTimePeriod` | integer | 10 | 2–100000 | Number of one-bar changes in the path sum (`KAMA`'s `optInTimePeriod` is the same window, under its own default) |
 
 ## Notes
 
@@ -53,3 +53,27 @@ TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form h
 
 </div>
 
+## Implementation
+
+TA-Lib Definition: [`er.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/er/er.c) · [`er.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/er/er.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_ER.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_ER.c) |
+| Rust | [`er.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/er.rs) |
+| Java | [`Core_ER.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_ER.java) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).
+
+## Aliases
+
+Efficiency Ratio · Kaufman Efficiency Ratio · KER
+
+## See Also
+
+[KAMA](/functions/kama.md) · [MAMA](/functions/mama.md) · [STDDEV](/functions/stddev.md) · [VHF](/functions/vhf.md)
+
+## References
+
+- Perry Kaufman, *Smarter Trading: Improving Performance in Changing Markets* (McGraw-Hill, 1995) — the efficiency ratio and the adaptive moving average built on it
+- Perry Kaufman, *Trading Systems and Methods*, 6th ed. (Wiley, 2019), the "Efficiency Ratio" section

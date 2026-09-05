@@ -34,10 +34,10 @@ TA_RetCode er(int startIdx, int endIdx,
     *
     *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
     *
-    * This is a verbatim lift of TA_KAMA's inner efficiency ratio
-    * (kama.c) so the two stay bit-identical -- the KAMA-reconstruction
-    * differential in test_composite2.c exists to keep it that way. Both
-    * guards are load-bearing and shared with kama.c:
+    * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
+    * two stay bit-identical -- the KAMA-reconstruction differential in
+    * test_composite2.c exists to keep it that way. Two guards are
+    * load-bearing and shared with kama.c:
     *
     *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
     *     would give 1.0000000000000002. The comparison is against the
@@ -51,6 +51,17 @@ TA_RetCode er(int startIdx, int endIdx,
     *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
     *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
     *     price-carrying sum).
+    *
+    * A third guard is this function's own, and the one thing kama.c has
+    * no equivalent of: the division runs only where sumROC1 is exactly
+    * positive. The clamp above cannot serve as the denominator test,
+    * because it compares against the SIGNED numerator and so is false for
+    * every down move -- and a subtract-then-add sum can reach 0.0, or
+    * below it, on a window that is not flat, when a term absorbed on the
+    * way in is subtracted later at full precision. Without the guard those
+    * bars divide by zero. Where it fires, this function answers 1.0 and
+    * kama.c's inner ratio does not; no window the KAMA differential covers
+    * reaches it.
     *
     * The subtract-then-add update order matches TA_SUM's recurrence,
     * which is what makes the composite differential bit-exact. The
@@ -96,8 +107,11 @@ TA_RetCode er(int startIdx, int endIdx,
    periodROC = tempReal - tempReal2;
    trailingValue = tempReal2;
    /* A fully flat priming window sums to an exact 0.0 (no residue yet), so
-    * `0 <= 0` already answers 1.0 here without the nullRun purge. */
-   if( sumROC1 <= periodROC )
+    * `0 <= 0` already answers 1.0 here without the nullRun purge. The
+    * denominator test below is unreachable at this site -- a priming sum only
+    * ever has non-negative terms added to it -- and is written anyway so both
+    * sites read as one rule. */
+   if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       outReal[0] = 1.0;
    else
       outReal[0] = fabs( periodROC / sumROC1 );
@@ -133,7 +147,7 @@ TA_RetCode er(int startIdx, int endIdx,
        */
       trailingValue = tempReal2;
 
-      if( sumROC1 <= periodROC )
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
          outReal[outIdx++] = 1.0;
       else
          outReal[outIdx++] = fabs( periodROC / sumROC1 );

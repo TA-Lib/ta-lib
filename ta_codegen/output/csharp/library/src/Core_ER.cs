@@ -63,10 +63,9 @@ public partial class Core
    /// series is requested. Feed at least <c>lookback + 1</c> bars to get any
    /// output.
    /// </remarks>
-   /// <param name="optInTimePeriod">Number of one-bar changes in the path sum (default 10, the author's own;
-   /// note <c>KAMA</c>'s <c>optInTimePeriod</c> — the same window — defaults to
-   /// 30) (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
+   /// <param name="optInTimePeriod">Number of one-bar changes in the path sum (<c>KAMA</c>'s
+   /// <c>optInTimePeriod</c> is the same window, under its own default) (default
+   /// 10; range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int ER_Lookback( int optInTimePeriod )
    {
@@ -120,10 +119,10 @@ public partial class Core
        *
        *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
        *
-       * This is a verbatim lift of TA_KAMA's inner efficiency ratio
-       * (kama.c) so the two stay bit-identical -- the KAMA-reconstruction
-       * differential in test_composite2.c exists to keep it that way. Both
-       * guards are load-bearing and shared with kama.c:
+       * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
+       * two stay bit-identical -- the KAMA-reconstruction differential in
+       * test_composite2.c exists to keep it that way. Two guards are
+       * load-bearing and shared with kama.c:
        *
        *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
        *     would give 1.0000000000000002. The comparison is against the
@@ -137,6 +136,17 @@ public partial class Core
        *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
        *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
        *     price-carrying sum).
+       *
+       * A third guard is this function's own, and the one thing kama.c has
+       * no equivalent of: the division runs only where sumROC1 is exactly
+       * positive. The clamp above cannot serve as the denominator test,
+       * because it compares against the SIGNED numerator and so is false for
+       * every down move -- and a subtract-then-add sum can reach 0.0, or
+       * below it, on a window that is not flat, when a term absorbed on the
+       * way in is subtracted later at full precision. Without the guard those
+       * bars divide by zero. Where it fires, this function answers 1.0 and
+       * kama.c's inner ratio does not; no window the KAMA differential covers
+       * reaches it.
        *
        * The subtract-then-add update order matches TA_SUM's recurrence,
        * which is what makes the composite differential bit-exact. The
@@ -177,9 +187,12 @@ public partial class Core
       periodROC = tempReal - tempReal2;
       trailingValue = tempReal2;
       /* A fully flat priming window sums to an exact 0.0 (no residue yet), so
-       * `0 <= 0` already answers 1.0 here without the nullRun purge.
+       * `0 <= 0` already answers 1.0 here without the nullRun purge. The
+       * denominator test below is unreachable at this site -- a priming sum only
+       * ever has non-negative terms added to it -- and is written anyway so both
+       * sites read as one rule.
        */
-      if( sumROC1 <= periodROC ) {
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
          outReal[0] = 1.0;
       } else {
          outReal[0] = Math.Abs(periodROC / sumROC1);
@@ -211,7 +224,7 @@ public partial class Core
           * write below may have clobbered.
           */
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC ) {
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             outReal[outIdx++] = 1.0;
          } else {
             outReal[outIdx++] = Math.Abs(periodROC / sumROC1);
@@ -282,7 +295,7 @@ public partial class Core
       tempReal2 = (double)inReal[trailingIdx++];
       periodROC = tempReal - tempReal2;
       trailingValue = tempReal2;
-      if( sumROC1 <= periodROC ) {
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
          outReal[0] = 1.0;
       } else {
          outReal[0] = Math.Abs(periodROC / sumROC1);
@@ -305,7 +318,7 @@ public partial class Core
             sumROC1 = 0.0;
          }
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC ) {
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             outReal[outIdx++] = 1.0;
          } else {
             outReal[outIdx++] = Math.Abs(periodROC / sumROC1);
@@ -317,9 +330,9 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Kaufman Efficiency Ratio (also searched as "KER"): Perry J. Kaufman's
-   /// noise measure from *Smarter Trading* (1995) — the net directional movement
-   /// over the period divided by the total path travelled to get there. 1.0 is a
+   /// Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
+   /// measure from *Smarter Trading* (1995) — the net directional movement over
+   /// the period divided by the total path travelled to get there. 1.0 is a
    /// perfectly efficient (straight-line) move; values near 0 are churn. This is
    /// exactly the efficiency ratio [<c>KAMA</c>](/functions/kama) computes
    /// internally to set its adaptive smoothing constant, exposed standalone and
@@ -347,10 +360,9 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Source price/value series (canonically close)</param>
-   /// <param name="optInTimePeriod">Number of one-bar changes in the path sum (default 10, the author's own;
-   /// note <c>KAMA</c>'s <c>optInTimePeriod</c> — the same window — defaults to
-   /// 30) (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
+   /// <param name="optInTimePeriod">Number of one-bar changes in the path sum (<c>KAMA</c>'s
+   /// <c>optInTimePeriod</c> is the same window, under its own default) (default
+   /// 10; range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Efficiency ratio. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
@@ -388,9 +400,9 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Kaufman Efficiency Ratio (also searched as "KER"): Perry J. Kaufman's
-   /// noise measure from *Smarter Trading* (1995) — the net directional movement
-   /// over the period divided by the total path travelled to get there. 1.0 is a
+   /// Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
+   /// measure from *Smarter Trading* (1995) — the net directional movement over
+   /// the period divided by the total path travelled to get there. 1.0 is a
    /// perfectly efficient (straight-line) move; values near 0 are churn. This is
    /// exactly the efficiency ratio [<c>KAMA</c>](/functions/kama) computes
    /// internally to set its adaptive smoothing constant, exposed standalone and
@@ -424,10 +436,9 @@ public partial class Core
    /// <param name="startIdx">First bar of the requested range (inclusive).</param>
    /// <param name="endIdx">Last bar of the requested range (inclusive).</param>
    /// <param name="inReal">Source price/value series (canonically close)</param>
-   /// <param name="optInTimePeriod">Number of one-bar changes in the path sum (default 10, the author's own;
-   /// note <c>KAMA</c>'s <c>optInTimePeriod</c> — the same window — defaults to
-   /// 30) (default 10; range 2..100000; <c>int.MinValue</c> selects the
-   /// default).</param>
+   /// <param name="optInTimePeriod">Number of one-bar changes in the path sum (<c>KAMA</c>'s
+   /// <c>optInTimePeriod</c> is the same window, under its own default) (default
+   /// 10; range 2..100000; <c>int.MinValue</c> selects the default).</param>
    /// <param name="outReal">Efficiency ratio. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
@@ -609,7 +620,7 @@ public partial class Core
           * write below may have clobbered.
           */
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC ) {
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             cur_outReal = 1.0;
          } else {
             cur_outReal = Math.Abs(periodROC / sumROC1);
@@ -698,7 +709,7 @@ public partial class Core
        * write below may have clobbered.
        */
       sp.trailingValue = tempReal2;
-      if( sp.sumROC1 <= periodROC ) {
+      if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
          sp.cur_outReal = 1.0;
       } else {
          sp.cur_outReal = Math.Abs(periodROC / sp.sumROC1);
@@ -750,10 +761,10 @@ public partial class Core
        *
        *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
        *
-       * This is a verbatim lift of TA_KAMA's inner efficiency ratio
-       * (kama.c) so the two stay bit-identical -- the KAMA-reconstruction
-       * differential in test_composite2.c exists to keep it that way. Both
-       * guards are load-bearing and shared with kama.c:
+       * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
+       * two stay bit-identical -- the KAMA-reconstruction differential in
+       * test_composite2.c exists to keep it that way. Two guards are
+       * load-bearing and shared with kama.c:
        *
        *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
        *     would give 1.0000000000000002. The comparison is against the
@@ -767,6 +778,17 @@ public partial class Core
        *     absolute TA_IS_ZERO band it replaced fails the QUOTE-UNIT/SCALE
        *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
        *     price-carrying sum).
+       *
+       * A third guard is this function's own, and the one thing kama.c has
+       * no equivalent of: the division runs only where sumROC1 is exactly
+       * positive. The clamp above cannot serve as the denominator test,
+       * because it compares against the SIGNED numerator and so is false for
+       * every down move -- and a subtract-then-add sum can reach 0.0, or
+       * below it, on a window that is not flat, when a term absorbed on the
+       * way in is subtracted later at full precision. Without the guard those
+       * bars divide by zero. Where it fires, this function answers 1.0 and
+       * kama.c's inner ratio does not; no window the KAMA differential covers
+       * reaches it.
        *
        * The subtract-then-add update order matches TA_SUM's recurrence,
        * which is what makes the composite differential bit-exact. The
@@ -807,9 +829,12 @@ public partial class Core
       periodROC = tempReal - tempReal2;
       trailingValue = tempReal2;
       /* A fully flat priming window sums to an exact 0.0 (no residue yet), so
-       * `0 <= 0` already answers 1.0 here without the nullRun purge.
+       * `0 <= 0` already answers 1.0 here without the nullRun purge. The
+       * denominator test below is unreachable at this site -- a priming sum only
+       * ever has non-negative terms added to it -- and is written anyway so both
+       * sites read as one rule.
        */
-      if( sumROC1 <= periodROC ) {
+      if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
          outReal[0 * outStride] = 1.0;
       } else {
          outReal[0 * outStride] = Math.Abs(periodROC / sumROC1);
@@ -841,7 +866,7 @@ public partial class Core
           * write below may have clobbered.
           */
          trailingValue = tempReal2;
-         if( sumROC1 <= periodROC ) {
+         if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
             outReal[outIdx++ * outStride] = 1.0;
          } else {
             outReal[outIdx++ * outStride] = Math.Abs(periodROC / sumROC1);
