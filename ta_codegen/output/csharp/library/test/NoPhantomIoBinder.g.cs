@@ -769,6 +769,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
             return new CallOutcome(rc, b, n);
         },
+        ["KDJ"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.KDJ_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), out int b, out int n, c.RealOut(0), c.RealOut(1), c.RealOut(2));
+            return new CallOutcome(rc, b, n);
+        },
         ["LINEARREG"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.LINEARREG_Impl(
@@ -1181,6 +1187,12 @@ internal static class NoPhantomIoBinder
         {
             RetCode rc = core.TSF_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["TSI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.TSI_Impl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["TYPPRICE"] = static (core, c, startIdx, endIdx) =>

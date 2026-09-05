@@ -1649,13 +1649,17 @@ fn composed_sub_call_destination_funcs() {
     // Membership alone would not tell the next author WHICH invariant to keep:
     // no two of these are safe for the same reason. The reason is recorded with
     // each entry and printed on failure. (Reasons proved by kevinlincg, #205.)
-    let expected: [(&str, &str); 9] = [
+    let expected: [(&str, &str); 10] = [
         ("APO", "sub-call uses optInSlowPeriod and the body swaps so slow == max(slow,fast); \
                  the swap is load-bearing -- see apo_family_period_swap_is_a_write_bound_precondition"),
         ("KC", "the moving average is entered at exactly ema_lookback over a typical-price buffer \
                  that begins ema_lookback bars before startIdx, so it clamps nothing: its first \
                  output lands on startIdx and its count is endIdx-startIdx+1, the same expression \
                  KC returns. Equal by construction, not by a lookback identity between two callees"),
+        ("KDJ", "the sub-call is the WHOLE producer: it is handed outBegIdx/outNBElement \
+                 themselves and KDJ returns them unmodified, so the final count IS the \
+                 callee's count rather than a quantity derived from it. kdj_lookback \
+                 delegates to stoch_lookback, so the two anchors agree by construction too"),
         ("MACDEXT", "the body RUNTIME-CHECKS the premise (outNbElement1 == endIdx-startIdx+1+lookbackSignal) \
                  and bails otherwise, so signal count == N_MACDEXT"),
         ("PPO", "as APO -- the slow/fast swap is the precondition"),

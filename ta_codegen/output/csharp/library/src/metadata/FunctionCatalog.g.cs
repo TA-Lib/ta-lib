@@ -224,6 +224,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeImi(),
             MakeKama(),
             MakeKc(),
+            MakeKdj(),
             MakeLinearreg(),
             MakeLinearregAngle(),
             MakeLinearregIntercept(),
@@ -293,6 +294,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeTrima(),
             MakeTrix(),
             MakeTsf(),
+            MakeTsi(),
             MakeTypprice(),
             MakeUltosc(),
             MakeVar(),
@@ -2707,6 +2709,35 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.KC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), c.RealOpt(2), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
 
+    private static FunctionInfo MakeKdj() => new(
+        name: "KDJ",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "KDJ Stochastic",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastK_Period", "Fast-K Period", "Time period for building the Fast-K line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 9, 1, 200, 1)),
+            new OptInputInfo("optInSlowK_Period", "Slow-K Period", "Smoothing for making the Slow-K line. Usually set to 3", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 3, 1, 200, 1)),
+            new OptInputInfo("optInSlowK_MAType", "Slow-K MA", "Type of Moving Average for Slow-K", OptInputFlags.None, new OptInputDomain.IntegerList(MATypeValues, 13)),
+            new OptInputInfo("optInSlowD_Period", "Slow-D Period", "Smoothing for making the Slow-D line", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 3, 1, 200, 1)),
+            new OptInputInfo("optInSlowD_MAType", "Slow-D MA", "Type of Moving Average for Slow-D", OptInputFlags.None, new OptInputDomain.IntegerList(MATypeValues, 13)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outK", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outD", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outJ", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.KDJ_Lookback(c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.KDJ(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.IntOpt(3), (MAType)c.IntOpt(4), c.RealOut(0), c.RealOut(1), c.RealOut(2)));
+
     private static FunctionInfo MakeLinearreg() => new(
         name: "LINEARREG",
         group: FunctionGroup.StatisticFunctions,
@@ -4303,6 +4334,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.TSF(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeTsi() => new(
+        name: "TSI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "True Strength Index",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFirstPeriod", "First Smoothing Period", "Period of the first smoothing, applied to the raw momentum", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 25, 2, 100, 1)),
+            new OptInputInfo("optInSecondPeriod", "Second Smoothing Period", "Period of the second smoothing, applied to the first", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 13, 2, 50, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.TSI_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.TSI(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
     private static FunctionInfo MakeTypprice() => new(
         name: "TYPPRICE",

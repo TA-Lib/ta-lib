@@ -137,6 +137,7 @@
 #include "ta_IMI.c"
 #include "ta_KAMA.c"
 #include "ta_KC.c"
+#include "ta_KDJ.c"
 #include "ta_LINEARREG.c"
 #include "ta_LINEARREG_ANGLE.c"
 #include "ta_LINEARREG_INTERCEPT.c"
@@ -205,6 +206,7 @@
 #include "ta_TRIMA.c"
 #include "ta_TRIX.c"
 #include "ta_TSF.c"
+#include "ta_TSI.c"
 #include "ta_TYPPRICE.c"
 #include "ta_ULTOSC.c"
 #include "ta_VAR.c"
@@ -2104,6 +2106,24 @@ static void bench_all(const char *filter, int iters) {
         printf("KC %lld\n", best / iters);
         fflush(stdout);
     }
+    if( func_matches(filter, "KDJ") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_KDJ(0, g_nPoints - 1, g_high, g_low, g_close, 9, 3, 13, 3, 13, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+            g_sink += (int)g_outBuf1[0];
+            g_sink += (int)g_outBuf2[0];
+        }
+        printf("KDJ %lld\n", best / iters);
+        fflush(stdout);
+    }
     if( func_matches(filter, "LINEARREG") ) {
         long long best = 0;
         for( int pass = 0; pass < 3; pass++ ) {
@@ -3220,6 +3240,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("TSF %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "TSI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_TSI(0, g_nPoints - 1, g_close, 25, 13, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("TSI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "TYPPRICE") ) {

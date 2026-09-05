@@ -858,6 +858,8 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cmou,      "CMOU" );
    DO_TEST( test_func_zlema,     "ZLEMA" );
    DO_TEST( test_func_vhf,       "VHF" );
+   DO_TEST( test_func_tsi,       "TSI" );
+   DO_TEST( test_func_kdj,       "KDJ" );
    DO_TEST( test_func_adr,       "ADR" );
    DO_TEST( test_func_fosc,      "FOSC" );
    DO_TEST( test_func_dpo,       "DPO" );

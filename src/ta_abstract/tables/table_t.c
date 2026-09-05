@@ -257,6 +257,78 @@ DEF_FUNCTION( TSF,
              );
 /* TSF END */
 
+/* TSI BEGIN */
+static const TA_IntegerRange TA_DEF_TSI_FirstPeriod =
+{
+   2,
+   100000,
+   2,
+   100,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_TSI_FirstPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFirstPeriod",
+   0,
+
+   "First Smoothing Period",
+   (const void *)&TA_DEF_TSI_FirstPeriod,
+   25,
+   "Period of the first smoothing, applied to the raw momentum",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_TSI_SecondPeriod =
+{
+   2,
+   100000,
+   2,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_TSI_SecondPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSecondPeriod",
+   0,
+
+   "Second Smoothing Period",
+   (const void *)&TA_DEF_TSI_SecondPeriod,
+   13,
+   "Period of the second smoothing, applied to the first",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_TSI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_TSI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_TSI_OptInputs[] =
+{ &TA_DEF_UI_D_TSI_FirstPeriod,
+  &TA_DEF_UI_D_TSI_SecondPeriod,
+  NULL
+};
+
+DEF_FUNCTION( TSI,
+              TA_GroupId_MomentumIndicators,
+              "True Strength Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* TSI END */
+
 /* TYPPRICE BEGIN */
 static const TA_InputParameterInfo    *TA_TYPPRICE_Inputs[]    =
 {
@@ -294,6 +366,7 @@ const TA_FuncDef *TA_DEF_TableT[] =
    ADD_TO_TABLE(TRIMA),
    ADD_TO_TABLE(TRIX),
    ADD_TO_TABLE(TSF),
+   ADD_TO_TABLE(TSI),
    ADD_TO_TABLE(TYPPRICE),
    NULL
 };

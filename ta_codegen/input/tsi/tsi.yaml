@@ -1,0 +1,26 @@
+name: TSI
+group: Momentum Indicators
+hint: True Strength Index
+flags: [stream]
+inputs:
+  - name: inReal
+    type: real
+optional_inputs:
+  - name: optInFirstPeriod
+    type: integer
+    display_name: First Smoothing Period
+    hint: Period of the first smoothing, applied to the raw momentum
+    range: [2, 100000]
+    default: 25
+    suggested: [2, 100, 1]
+  - name: optInSecondPeriod
+    type: integer
+    display_name: Second Smoothing Period
+    hint: Period of the second smoothing, applied to the first
+    range: [2, 100000]
+    default: 13
+    suggested: [2, 50, 1]
+outputs:
+  - name: outReal
+    type: real
+    flags: [line]

@@ -10484,6 +10484,167 @@ fn legs_KC(r: &mut Report) {
     r.legs_done("KC", 3);
 }
 
+const V_KDJ: &[(&str, i32, i32, MAType, i32, MAType)] = &[
+    ("defaults", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT),
+    ("minimums", 1i32, 1i32, MAType::DEFAULT, 1i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=SMA", i32::MIN, i32::MIN, MAType::SMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=SMA, periods doubled", 18i32, 6i32, MAType::SMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=EMA", i32::MIN, i32::MIN, MAType::EMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=EMA, periods doubled", 18i32, 6i32, MAType::EMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=WMA", i32::MIN, i32::MIN, MAType::WMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=WMA, periods doubled", 18i32, 6i32, MAType::WMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=DEMA", i32::MIN, i32::MIN, MAType::DEMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=DEMA, periods doubled", 18i32, 6i32, MAType::DEMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=TEMA", i32::MIN, i32::MIN, MAType::TEMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=TEMA, periods doubled", 18i32, 6i32, MAType::TEMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=TRIMA", i32::MIN, i32::MIN, MAType::TRIMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=TRIMA, periods doubled", 18i32, 6i32, MAType::TRIMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=KAMA", i32::MIN, i32::MIN, MAType::KAMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=KAMA, periods doubled", 18i32, 6i32, MAType::KAMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=MAMA", i32::MIN, i32::MIN, MAType::MAMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=MAMA, periods doubled", 18i32, 6i32, MAType::MAMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=T3", i32::MIN, i32::MIN, MAType::T3, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=T3, periods doubled", 18i32, 6i32, MAType::T3, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=HMA", i32::MIN, i32::MIN, MAType::HMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=HMA, periods doubled", 18i32, 6i32, MAType::HMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=DISABLED", i32::MIN, i32::MIN, MAType::DISABLED, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=DISABLED, periods doubled", 18i32, 6i32, MAType::DISABLED, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=DEFAULT", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=DEFAULT, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=ZLEMA", i32::MIN, i32::MIN, MAType::ZLEMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=ZLEMA, periods doubled", 18i32, 6i32, MAType::ZLEMA, 6i32, MAType::DEFAULT),
+    ("optInSlowK_MAType=RMA", i32::MIN, i32::MIN, MAType::RMA, i32::MIN, MAType::DEFAULT),
+    ("optInSlowK_MAType=RMA, periods doubled", 18i32, 6i32, MAType::RMA, 6i32, MAType::DEFAULT),
+    ("optInSlowD_MAType=SMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::SMA),
+    ("optInSlowD_MAType=SMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::SMA),
+    ("optInSlowD_MAType=EMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::EMA),
+    ("optInSlowD_MAType=EMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::EMA),
+    ("optInSlowD_MAType=WMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::WMA),
+    ("optInSlowD_MAType=WMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::WMA),
+    ("optInSlowD_MAType=DEMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEMA),
+    ("optInSlowD_MAType=DEMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::DEMA),
+    ("optInSlowD_MAType=TEMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::TEMA),
+    ("optInSlowD_MAType=TEMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::TEMA),
+    ("optInSlowD_MAType=TRIMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::TRIMA),
+    ("optInSlowD_MAType=TRIMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::TRIMA),
+    ("optInSlowD_MAType=KAMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::KAMA),
+    ("optInSlowD_MAType=KAMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::KAMA),
+    ("optInSlowD_MAType=MAMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::MAMA),
+    ("optInSlowD_MAType=MAMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::MAMA),
+    ("optInSlowD_MAType=T3", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::T3),
+    ("optInSlowD_MAType=T3, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::T3),
+    ("optInSlowD_MAType=HMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::HMA),
+    ("optInSlowD_MAType=HMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::HMA),
+    ("optInSlowD_MAType=DISABLED", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DISABLED),
+    ("optInSlowD_MAType=DISABLED, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::DISABLED),
+    ("optInSlowD_MAType=DEFAULT", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::DEFAULT),
+    ("optInSlowD_MAType=DEFAULT, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::DEFAULT),
+    ("optInSlowD_MAType=ZLEMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::ZLEMA),
+    ("optInSlowD_MAType=ZLEMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::ZLEMA),
+    ("optInSlowD_MAType=RMA", i32::MIN, i32::MIN, MAType::DEFAULT, i32::MIN, MAType::RMA),
+    ("optInSlowD_MAType=RMA, periods doubled", 18i32, 6i32, MAType::DEFAULT, 6i32, MAType::RMA),
+];
+
+fn sub_KDJ(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) in V_KDJ {
+        let Ok(lb) = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) else { continue; };
+        r.control("KDJ", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outK: Vec<f64> = Vec::with_capacity(1);
+            let mut outD: Vec<f64> = Vec::with_capacity(1);
+            let mut outJ: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KDJ_Impl(0, lb, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut _b, &mut _n, &mut outK, &mut outD, &mut outJ);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("KDJ", label); continue; }
+        r.quiet("KDJ", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outK: Vec<f64> = Vec::with_capacity(1);
+            let mut outD: Vec<f64> = Vec::with_capacity(1);
+            let mut outJ: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KDJ_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut _b, &mut _n, &mut outK, &mut outD, &mut outJ);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_KDJ(r: &mut Report) {
+    let core = Core::new();
+    let optInFastK_Period = i32::MIN;
+    let optInSlowK_Period = i32::MIN;
+    let optInSlowK_MAType = MAType::DEFAULT;
+    let optInSlowD_Period = i32::MIN;
+    let optInSlowD_MAType = MAType::DEFAULT;
+    let Ok(lb) = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) else { r.no_legs("KDJ"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outK: Vec<f64> = vec![Default::default(); 5];
+        let mut outD: Vec<f64> = vec![Default::default(); 5];
+        let mut outJ: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("KDJ", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KDJ_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut _b, &mut _n, &mut outK, &mut outD, &mut outJ);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outK: Vec<f64> = vec![Default::default(); 5];
+        let mut outD: Vec<f64> = vec![Default::default(); 5];
+        let mut outJ: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KDJ", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KDJ_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut _b, &mut _n, &mut outK, &mut outD, &mut outJ);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outK: Vec<f64> = vec![Default::default(); 5];
+        let mut outD: Vec<f64> = vec![Default::default(); 5];
+        let mut outJ: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KDJ", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KDJ_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut _b, &mut _n, &mut outK, &mut outD, &mut outJ);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outK: Vec<f64> = vec![Default::default(); 5];
+        let mut outD: Vec<f64> = vec![Default::default(); 5];
+        let mut outJ: Vec<f64> = vec![Default::default(); 5];
+        r.leg("KDJ", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.KDJ_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, &mut _b, &mut _n, &mut outK, &mut outD, &mut outJ);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("KDJ", 3);
+}
+
 const V_LINEARREG: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 2i32),
@@ -15361,6 +15522,64 @@ fn legs_TSF(r: &mut Report) {
     r.legs_done("TSF", 1);
 }
 
+const V_TSI: &[(&str, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN),
+    ("minimums", 2i32, 2i32),
+];
+
+fn sub_TSI(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInFirstPeriod, optInSecondPeriod) in V_TSI {
+        let Ok(lb) = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod) else { continue; };
+        r.control("TSI", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.TSI_Impl(0, lb, &inReal, optInFirstPeriod, optInSecondPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("TSI", label); continue; }
+        r.quiet("TSI", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.TSI_Impl(0, lb - 1, &inReal, optInFirstPeriod, optInSecondPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_TSI(r: &mut Report) {
+    let core = Core::new();
+    let optInFirstPeriod = i32::MIN;
+    let optInSecondPeriod = i32::MIN;
+    let Ok(lb) = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod) else { r.no_legs("TSI"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("TSI", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.TSI_Impl(startIdx, endIdx, &inReal, optInFirstPeriod, optInSecondPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("TSI", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.TSI_Impl(startIdx, endIdx, &inReal, optInFirstPeriod, optInSecondPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("TSI", 1);
+}
+
 const V_TYPPRICE: &[&str] = &[
     "defaults",
 ];
@@ -16324,6 +16543,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("IMI", sub_IMI, legs_IMI),
     ("KAMA", sub_KAMA, legs_KAMA),
     ("KC", sub_KC, legs_KC),
+    ("KDJ", sub_KDJ, legs_KDJ),
     ("LINEARREG", sub_LINEARREG, legs_LINEARREG),
     ("LINEARREG_ANGLE", sub_LINEARREG_ANGLE, legs_LINEARREG_ANGLE),
     ("LINEARREG_INTERCEPT", sub_LINEARREG_INTERCEPT, legs_LINEARREG_INTERCEPT),
@@ -16393,6 +16613,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("TRIMA", sub_TRIMA, legs_TRIMA),
     ("TRIX", sub_TRIX, legs_TRIX),
     ("TSF", sub_TSF, legs_TSF),
+    ("TSI", sub_TSI, legs_TSI),
     ("TYPPRICE", sub_TYPPRICE, legs_TYPPRICE),
     ("ULTOSC", sub_ULTOSC, legs_ULTOSC),
     ("VAR", sub_VAR, legs_VAR),
@@ -16442,7 +16663,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 191, "probe count");
+    assert_eq!(PROBES.len(), 193, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

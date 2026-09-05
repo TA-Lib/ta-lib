@@ -1046,6 +1046,15 @@ TA_RetCode TA_KC_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_KC_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_KDJ_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_KDJ_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_LINEARREG_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1665,6 +1674,15 @@ TA_RetCode TA_TSF_FramePP( const TA_ParamHolderPriv *params,
                            int           *outNBElement )
 ;
 unsigned int TA_TSF_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_TSI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_TSI_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 TA_RetCode TA_TYPPRICE_FramePP( const TA_ParamHolderPriv *params,

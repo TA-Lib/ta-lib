@@ -62,6 +62,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [DX](/functions/dx.md) — Directional Movement Index
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [IMI](/functions/imi.md) — Intraday Momentum Index
+- [KDJ](/functions/kdj.md) — KDJ Stochastic
 - [MACD](/functions/macd.md) — Moving Average Convergence/Divergence
 - [MACDEXT](/functions/macdext.md) — MACD with controllable MA type
 - [MACDFIX](/functions/macdfix.md) — Moving Average Convergence/Divergence Fix 12/26
@@ -83,6 +84,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [STOCHF](/functions/stochf.md) — Stochastic Fast
 - [STOCHRSI](/functions/stochrsi.md) — Stochastic Relative Strength Index
 - [TRIX](/functions/trix.md) — 1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
+- [TSI](/functions/tsi.md) — True Strength Index
 - [ULTOSC](/functions/ultosc.md) — Ultimate Oscillator
 - [VHF](/functions/vhf.md) — Vertical Horizontal Filter
 - [WAD](/functions/wad.md) — Williams' Accumulation/Distribution

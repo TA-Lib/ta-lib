@@ -102018,6 +102018,853 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  090426 MF,CC  First version (issue #365).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#KDJ} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInFastK_Period Lookback window for the raw stochastic high-low
+        *        range (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowK_Period Smoothing period turning the raw stochastic into
+        *        K (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param optInSlowD_Period Smoothing period for the D signal line (default
+        *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int KDJ_Lookback( int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+       {
+          if( optInFastK_Period == Integer.MIN_VALUE ) {
+             optInFastK_Period = 9;
+          } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
+             return -1;
+          }
+          if( optInSlowK_Period == Integer.MIN_VALUE ) {
+             optInSlowK_Period = 3;
+          } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
+             return -1;
+          }
+          if( optInSlowK_MAType == MAType.DEFAULT ) {
+             optInSlowK_MAType = MAType.RMA;
+          }
+          if( optInSlowD_Period == Integer.MIN_VALUE ) {
+             optInSlowD_Period = 3;
+          } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
+             return -1;
+          }
+          if( optInSlowD_MAType == MAType.DEFAULT ) {
+             optInSlowD_MAType = MAType.RMA;
+          }
+          return STOCH_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) ;
+
+       }
+       RetCode KDJ_Impl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInFastK_Period,
+                         int optInSlowK_Period,
+                         MAType optInSlowK_MAType,
+                         int optInSlowD_Period,
+                         MAType optInSlowD_MAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outK[],
+                         double outD[],
+                         double outJ[] )
+       {
+          RetCode retCode;
+          int i = 0;
+          int lookbackTotal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInFastK_Period == Integer.MIN_VALUE ) {
+             optInFastK_Period = 9;
+          } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowK_Period == Integer.MIN_VALUE ) {
+             optInSlowK_Period = 3;
+          } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowK_MAType == MAType.DEFAULT ) {
+             optInSlowK_MAType = MAType.RMA;
+          }
+          if( optInSlowD_Period == Integer.MIN_VALUE ) {
+             optInSlowD_Period = 3;
+          } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowD_MAType == MAType.DEFAULT ) {
+             optInSlowD_MAType = MAType.RMA;
+          }
+          if( outK == outD || outK == outJ || outD == outJ ) {
+             return RetCode.BadParam ;
+          }
+          lookbackTotal = KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+          /* Nothing to produce: the range is shorter than the lookback. Answering here
+           * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
+           * its own argument check would reject before any array is touched.
+           */
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          OutRange _xr0 = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD);
+          outBegIdx.value = _xr0.begIdx();
+          outNBElement.value = _xr0.count();
+          retCode = RetCode.Success;
+          if( (int)outNBElement.value == 0 ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return retCode ;
+          }
+          /* Keep this one Sub expression: spelling it as an Add of a negated term
+           * would arm the multiply-add fusion and move the last bits of J.
+           */
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             outJ[i] = 3.0 * outK[i] - 2.0 * outD[i];
+          }
+          return RetCode.Success ;
+       }
+       RetCode KDJ_Impl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInFastK_Period,
+                         int optInSlowK_Period,
+                         MAType optInSlowK_MAType,
+                         int optInSlowD_Period,
+                         MAType optInSlowD_MAType,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outK[],
+                         double outD[],
+                         double outJ[] )
+       {
+          RetCode retCode;
+          int i = 0;
+          int lookbackTotal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInFastK_Period == Integer.MIN_VALUE ) {
+             optInFastK_Period = 9;
+          } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowK_Period == Integer.MIN_VALUE ) {
+             optInSlowK_Period = 3;
+          } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowK_MAType == MAType.DEFAULT ) {
+             optInSlowK_MAType = MAType.RMA;
+          }
+          if( optInSlowD_Period == Integer.MIN_VALUE ) {
+             optInSlowD_Period = 3;
+          } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowD_MAType == MAType.DEFAULT ) {
+             optInSlowD_MAType = MAType.RMA;
+          }
+          if( outK == outD || outK == outJ || outD == outJ ) {
+             return RetCode.BadParam ;
+          }
+          lookbackTotal = KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          OutRange _xr0 = STOCH(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outK, outD);
+          outBegIdx.value = _xr0.begIdx();
+          outNBElement.value = _xr0.count();
+          retCode = RetCode.Success;
+          if( (int)outNBElement.value == 0 ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return retCode ;
+          }
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             outJ[i] = 3.0 * outK[i] - 2.0 * outD[i];
+          }
+          return RetCode.Success ;
+       }
+       /**
+        * The stochastic oscillator as it is drawn on Chinese-market platforms: the
+        * Slow-%K and Slow-%D lines plus a third line J that amplifies the gap
+        * between them. K and D are read like any stochastic — above 80 overbought,
+        * below 20 oversold, a K/D crossing signalling a momentum shift — while J is
+        * a divergence gauge whose excursions outside the 0-100 band mark the
+        * strongest moves. Both smoothing stages default to Wilder's moving average,
+        * which is the smoother the original formula language specifies; selecting a
+        * simple moving average for both reproduces the classic Slow Stochastic with
+        * a J line attached.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
+        * K = MA(RSV, SlowK_Period, SlowK_MAType)
+        * D = MA(K, SlowD_Period, SlowD_MAType)
+        * J = 3*K - 2*D
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
+        * <li>How that recurrence is started is a TA-Lib house convention, not something the originating specification settles: like every other Wilder-smoothed function here, the first value is the simple average of the first N inputs, and callers who want the transient gone set the unstable period. Platforms that seed the recurrence at 50, or at the first raw value, differ for the first several dozen bars.</li>
+        * <li>J is deliberately unbounded. It leaves the 0-100 band routinely and is never clamped.</li>
+        * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#KDJ_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInFastK_Period Lookback window for the raw stochastic high-low
+        *        range (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowK_Period Smoothing period turning the raw stochastic into
+        *        K (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param optInSlowD_Period Smoothing period for the D signal line (default
+        *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outD Signal line: K smoothed by SlowD_Period MA. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outJ Divergence line, three parts K less two parts D. Must hold at
+        *        least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#STOCH
+        * @see Core#STOCHF
+        * @see Core#RMA
+        * @see Core#MA
+        */
+       public OutRange KDJ( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInFastK_Period,
+                            int optInSlowK_Period,
+                            MAType optInSlowK_MAType,
+                            int optInSlowD_Period,
+                            MAType optInSlowD_MAType,
+                            double outK[],
+                            double outD[],
+                            double outJ[] )
+       {
+          requireIndexRange("KDJ", startIdx, endIdx);
+          requireArgument("KDJ", "optInSlowK_MAType", optInSlowK_MAType);
+          requireArgument("KDJ", "optInSlowD_MAType", optInSlowD_MAType);
+          int guardStart = clampedStart("KDJ", startIdx, KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KDJ", "inHigh", inHigh, guardInLen);
+          requireLength("KDJ", "inLow", inLow, guardInLen);
+          requireLength("KDJ", "inClose", inClose, guardInLen);
+          requireLength("KDJ", "outK", outK, guardOutLen);
+          requireLength("KDJ", "outD", outD, guardOutLen);
+          requireLength("KDJ", "outJ", outJ, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = KDJ_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ);
+          if( retCode != RetCode.Success ) {
+             throw failure("KDJ", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * The stochastic oscillator as it is drawn on Chinese-market platforms: the
+        * Slow-%K and Slow-%D lines plus a third line J that amplifies the gap
+        * between them. K and D are read like any stochastic — above 80 overbought,
+        * below 20 oversold, a K/D crossing signalling a momentum shift — while J is
+        * a divergence gauge whose excursions outside the 0-100 band mark the
+        * strongest moves. Both smoothing stages default to Wilder's moving average,
+        * which is the smoother the original formula language specifies; selecting a
+        * simple moving average for both reproduces the classic Slow Stochastic with
+        * a J line attached.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
+        * K = MA(RSV, SlowK_Period, SlowK_MAType)
+        * D = MA(K, SlowD_Period, SlowD_MAType)
+        * J = 3*K - 2*D
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
+        * <li>How that recurrence is started is a TA-Lib house convention, not something the originating specification settles: like every other Wilder-smoothed function here, the first value is the simple average of the first N inputs, and callers who want the transient gone set the unstable period. Platforms that seed the recurrence at 50, or at the first raw value, differ for the first several dozen bars.</li>
+        * <li>J is deliberately unbounded. It leaves the 0-100 band routinely and is never clamped.</li>
+        * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#KDJ_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param optInFastK_Period Lookback window for the raw stochastic high-low
+        *        range (default 9; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowK_Period Smoothing period turning the raw stochastic into
+        *        K (default 3; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInSlowK_MAType MA type used to smooth into K (default 13 = RMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param optInSlowD_Period Smoothing period for the D signal line (default
+        *        3; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param optInSlowD_MAType MA type used for the D line (default 13 = RMA;
+        *        values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
+        *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
+        *        {@code MAType.DEFAULT} selects the default).
+        * @param outK Raw stochastic smoothed by SlowK_Period MA. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outD Signal line: K smoothed by SlowD_Period MA. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outJ Divergence line, three parts K less two parts D. Must hold at
+        *        least {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#STOCH
+        * @see Core#STOCHF
+        * @see Core#RMA
+        * @see Core#MA
+        */
+       public OutRange KDJ( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInFastK_Period,
+                            int optInSlowK_Period,
+                            MAType optInSlowK_MAType,
+                            int optInSlowD_Period,
+                            MAType optInSlowD_MAType,
+                            double outK[],
+                            double outD[],
+                            double outJ[] )
+       {
+          requireIndexRange("KDJ", startIdx, endIdx);
+          requireArgument("KDJ", "optInSlowK_MAType", optInSlowK_MAType);
+          requireArgument("KDJ", "optInSlowD_MAType", optInSlowD_MAType);
+          int guardStart = clampedStart("KDJ", startIdx, KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("KDJ", "inHigh", inHigh, guardInLen);
+          requireLength("KDJ", "inLow", inLow, guardInLen);
+          requireLength("KDJ", "inClose", inClose, guardInLen);
+          requireLength("KDJ", "outK", outK, guardOutLen);
+          requireLength("KDJ", "outD", outD, guardOutLen);
+          requireLength("KDJ", "outJ", outJ, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = KDJ_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ);
+          if( retCode != RetCode.Success ) {
+             throw failure("KDJ", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live KDJ stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#KDJ} over the same series.
+        * Open with {@link Core#kdjOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class KdjStream {
+          Core core;
+          int optInFastK_Period;
+          int optInSlowK_Period;
+          MAType optInSlowK_MAType;
+          int optInSlowD_Period;
+          MAType optInSlowD_MAType;
+          double cur_outK;
+          double cur_outD;
+          double cur_outJ;
+          StochStream sub0;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          KdjStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#KDJ} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          KdjStream( KdjStream other ) {
+             this.core = other.core;
+             this.optInFastK_Period = other.optInFastK_Period;
+             this.optInSlowK_Period = other.optInSlowK_Period;
+             this.optInSlowK_MAType = other.optInSlowK_MAType;
+             this.optInSlowD_Period = other.optInSlowD_Period;
+             this.optInSlowD_MAType = other.optInSlowD_MAType;
+             this.cur_outK = other.cur_outK;
+             this.cur_outD = other.cur_outD;
+             this.cur_outJ = other.cur_outJ;
+             this.sub0 = new StochStream(other.sub0);
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value(KdjOut)} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public void update( double inHigh, double inLow, double inClose, KdjOut out ) {
+             requireArgument("KDJ update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("KDJ update: BadParam", RetCode.BadParam);
+             }
+             core.kdjStepImpl(this, inHigh, inLow, inClose);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             out.k = this.cur_outK;
+             out.d = this.cur_outD;
+             out.j = this.cur_outJ;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inHigh.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outK[], double outD[], double outJ[] ) {
+             requireArgument("KDJ updateAndFill", "inHigh", inHigh);
+             requireArgument("KDJ updateAndFill", "inLow", inLow);
+             requireArgument("KDJ updateAndFill", "inClose", inClose);
+             requireArgument("KDJ updateAndFill", "outK", outK);
+             requireArgument("KDJ updateAndFill", "outD", outD);
+             requireArgument("KDJ updateAndFill", "outJ", outJ);
+             final int barCount = inHigh.length;
+             if( inLow.length != barCount || inClose.length != barCount || outK.length < barCount || outD.length < barCount || outJ.length < barCount || (Object)outK == (Object)inHigh || (Object)outK == (Object)inLow || (Object)outK == (Object)inClose || (Object)outD == (Object)inHigh || (Object)outD == (Object)inLow || (Object)outD == (Object)inClose || (Object)outJ == (Object)inHigh || (Object)outJ == (Object)inLow || (Object)outJ == (Object)inClose || (Object)outK == (Object)outD || (Object)outK == (Object)outJ || (Object)outD == (Object)outJ )
+                throw new TaLibArgumentException("KDJ updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("KDJ updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.kdjStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outK[i] = this.cur_outK;
+                outD[i] = this.cur_outD;
+                outJ[i] = this.cur_outJ;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period. It does allocate a small bounded amount
+           * per call — a size fixed by the indicator, never by the period.
+           */
+          public void peek( double inHigh, double inLow, double inClose, KdjOut out ) {
+             requireArgument("KDJ peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("KDJ peek: BadParam", RetCode.BadParam);
+             KdjStream sp = this;
+             double cur_outK = 0.0;
+             double cur_outD = 0.0;
+             double cur_outJ = 0.0;
+             /* Pipeline the new bar through the sub-streams (batch tail order). */
+             {
+                StochOut subOut0 = new StochOut();
+                sp.sub0.peek(inHigh, inLow, inClose, subOut0);
+                cur_outK = subOut0.slowK;
+                cur_outD = subOut0.slowD;
+             }
+             /* Combine map (batch tail, per bar). */
+             cur_outJ = 3.0 * cur_outK - 2.0 * cur_outD;
+             out.k = cur_outK;
+             out.d = cur_outD;
+             out.j = cur_outJ;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           */
+          public void value( KdjOut out ) {
+             requireArgument("KDJ value", "out", out);
+             out.k = this.cur_outK;
+             out.d = this.cur_outD;
+             out.j = this.cur_outJ;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public KdjStream clone() {
+             return new KdjStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one KDJ bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class KdjOut {
+          /** Raw stochastic smoothed by SlowK_Period MA. */
+          public double k;
+          /** Signal line: K smoothed by SlowD_Period MA. */
+          public double d;
+          /** Divergence line, three parts K less two parts D. */
+          public double j;
+       }
+       void kdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
+       {
+          double cur_outK = 0.0;
+          double cur_outD = 0.0;
+          double cur_outJ = 0.0;
+          /* Pipeline the new bar through the sub-streams (batch tail order). */
+          {
+             StochOut subOut0 = new StochOut();
+             sp.sub0.update(inHigh, inLow, inClose, subOut0);
+             cur_outK = subOut0.slowK;
+             cur_outD = subOut0.slowD;
+          }
+          /* Combine map (batch tail, per bar). */
+          cur_outJ = 3.0 * cur_outK - 2.0 * cur_outD;
+          sp.cur_outK = cur_outK;
+          sp.cur_outD = cur_outD;
+          sp.cur_outJ = cur_outJ;
+       }
+       private RetCode kdjOpenImpl( KdjStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outK[], double outD[], double outJ[], int outStride )
+       {
+          RetCode retCode;
+          int i = 0;
+          int lookbackTotal = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInFastK_Period == Integer.MIN_VALUE ) {
+             optInFastK_Period = 9;
+          } else if( optInFastK_Period < 1 || optInFastK_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowK_Period == Integer.MIN_VALUE ) {
+             optInSlowK_Period = 3;
+          } else if( optInSlowK_Period < 1 || optInSlowK_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowK_MAType == MAType.DEFAULT ) {
+             optInSlowK_MAType = MAType.RMA;
+          }
+          if( optInSlowD_Period == Integer.MIN_VALUE ) {
+             optInSlowD_Period = 3;
+          } else if( optInSlowD_Period < 1 || optInSlowD_Period > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSlowD_MAType == MAType.DEFAULT ) {
+             optInSlowD_MAType = MAType.RMA;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          if( historyLen < KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType) + 1 ) {
+             return RetCode.InsufficientHistory;
+          }
+          double[] sc_outK = outStride == 1 ? outK : new double[historyLen];
+          double[] sc_outD = outStride == 1 ? outD : new double[historyLen];
+          double[] sc_outJ = outStride == 1 ? outJ : new double[historyLen];
+          lookbackTotal = KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+          /* Nothing to produce: the range is shorter than the lookback. Answering here
+           * keeps the sub-call out of the phantom-I/O sweep's zero-length range, where
+           * its own argument check would reject before any array is touched.
+           */
+          if( lookbackTotal > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          /* Sub-stream 0: stoch over `inHigh, inLow, inClose`, warmed from bar 0 up to the
+           * sub-call's own startIdx (the seeding point). */
+          StochStream sub0 = stochOpenAndFillInternal(inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sc_outK, sc_outD);
+          retCode = RetCode.Success;
+          if( (int)outNBElement.value == 0 ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          /* Keep this one Sub expression: spelling it as an Add of a negated term
+           * would arm the multiply-add fusion and move the last bits of J.
+           */
+          for( i = 0; i < (int)outNBElement.value; i += 1 ) {
+             sc_outJ[i] = 3.0 * sc_outK[i] - 2.0 * sc_outD[i];
+          }
+          /* Capture the live producer state + sub handles. */
+          if( outNBElement.value < 1 ) {
+             return RetCode.InsufficientHistory;
+          }
+          sp.optInFastK_Period = optInFastK_Period;
+          sp.optInSlowK_Period = optInSlowK_Period;
+          sp.optInSlowK_MAType = optInSlowK_MAType;
+          sp.optInSlowD_Period = optInSlowD_Period;
+          sp.optInSlowD_MAType = optInSlowD_MAType;
+          sp.sub0 = sub0;
+          sp.cur_outK = sc_outK[outNBElement.value - 1];
+          sp.cur_outD = sc_outD[outNBElement.value - 1];
+          sp.cur_outJ = sc_outJ[outNBElement.value - 1];
+          return RetCode.Success;
+       }
+       /* kdjOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       KdjStream kdjOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, MInteger outBegIdx, MInteger outNBElement, double outK[], double outD[], double outJ[] )
+       {
+          KdjStream sp = new KdjStream(this);
+          RetCode retCode = kdjOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("KDJ openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("KDJ openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("KDJ openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind kdjOpen (composition seam). */
+       KdjStream kdjOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+       {
+          KdjStream sp = new KdjStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outK = new double[1];
+          double[] sink_outD = new double[1];
+          double[] sink_outJ = new double[1];
+          RetCode retCode = kdjOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, sink_outK, sink_outD, sink_outJ, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("KDJ open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("KDJ open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("KDJ open: " + retCode, retCode);
+       }
+       /**
+        * Open a live KDJ stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#KDJ} at that bar.
+        * <p>The history must hold at least {@code KDJ_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public KdjStream kdjOpen( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType )
+       {
+          requireArgument("KDJ open", "inHigh", inHigh);
+          requireHistory("KDJ open", inHigh.length);
+          requireArgument("KDJ open", "optInSlowK_MAType", optInSlowK_MAType);
+          requireArgument("KDJ open", "optInSlowD_MAType", optInSlowD_MAType);
+          requireArgument("KDJ open", "inLow", inLow);
+          requireArgument("KDJ open", "inClose", inClose);
+          requireHistoryLength("KDJ open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("KDJ open", "inClose", inClose.length, inHigh.length);
+          return kdjOpenInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+       }
+       /**
+        * {@link Core#kdjOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#KDJ} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link KdjStream#outRange()}.
+        */
+       public KdjStream kdjOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInFastK_Period, int optInSlowK_Period, MAType optInSlowK_MAType, int optInSlowD_Period, MAType optInSlowD_MAType, double outK[], double outD[], double outJ[] )
+       {
+          requireArgument("KDJ openAndFill", "inHigh", inHigh);
+          requireHistory("KDJ openAndFill", inHigh.length);
+          requireArgument("KDJ openAndFill", "optInSlowK_MAType", optInSlowK_MAType);
+          requireArgument("KDJ openAndFill", "optInSlowD_MAType", optInSlowD_MAType);
+          requireArgument("KDJ openAndFill", "inLow", inLow);
+          requireArgument("KDJ openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("KDJ openAndFill", inHigh.length, KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType));
+          requireHistoryLength("KDJ openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("KDJ openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("KDJ openAndFill", "outK", outK, guardOutLen);
+          requireLength("KDJ openAndFill", "outD", outD, guardOutLen);
+          requireLength("KDJ openAndFill", "outJ", outJ, guardOutLen);
+          if( (Object)outK == (Object)inHigh || (Object)outK == (Object)inLow || (Object)outK == (Object)inClose || (Object)outD == (Object)inHigh || (Object)outD == (Object)inLow || (Object)outD == (Object)inClose || (Object)outJ == (Object)inHigh || (Object)outJ == (Object)inLow || (Object)outJ == (Object)inClose || (Object)outK == (Object)outD || (Object)outK == (Object)outJ || (Object)outD == (Object)outJ ) {
+             throw new TaLibArgumentException("KDJ openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return kdjOpenAndFillInternal(inHigh, inLow, inClose, 0, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outK, outD, outJ);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  JP       John Price <jp_talib@gcfl.net>
      *  CC       Claude Code (AI assistant)
      *
@@ -164052,6 +164899,1002 @@ class Core {
      *  Initial  Name/description
      *  -------------------------------------------------------------------
      *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  090426 MF,CC  First version (#360).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#TSI} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInFirstPeriod Period of the first smoothing, applied to the raw
+        *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 13; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int TSI_Lookback( int optInFirstPeriod, int optInSecondPeriod )
+       {
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 25;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return -1;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 13;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return -1;
+          }
+          /* One bar forms the first close-to-close change, then the two EMA warm-ups
+           * the pipeline stacks on it. Each term is exactly the lookback of the
+           * function it comes from, which is also what makes TSI inherit
+           * TA_FUNC_UNST_EMA from its callee.
+           */
+          return 1 + EMA_Lookback(optInFirstPeriod) + EMA_Lookback(optInSecondPeriod) ;
+
+       }
+       RetCode TSI_Impl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInFirstPeriod,
+                         int optInSecondPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double kFirst = 0;
+          double kSecond = 0;
+          double emaFirstNum = 0;
+          double emaFirstDen = 0;
+          double emaSecondNum = 0;
+          double emaSecondDen = 0;
+          double sumFirstNum = 0;
+          double sumFirstDen = 0;
+          double sumSecondNum = 0;
+          double sumSecondDen = 0;
+          double prevClose = 0;
+          double mom = 0;
+          double absMom = 0;
+          double tsiValue = 0;
+          int lookbackTotal = 0;
+          int lookbackFirst = 0;
+          int today = 0;
+          int outIdx = 0;
+          int nBar = 0;
+          int nSecond = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 25;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 13;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          outBegIdx.value = startIdx;
+          /* Blau's double smoothing in one pass: the signed momentum and its
+           * magnitude are carried through the same two EMA stages, then divided.
+           *
+           * Each stage seeds the way ema.c does -- a simple average of that stage's
+           * first 'period' inputs -- so the result is bit-identical to TA_MOM(1)
+           * followed by two TA_EMA calls on each chain. The stage boundary below is
+           * the callee LOOKBACK, not (period-1), so that a warm
+           * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
+           * seeds from the values the first would have published. The seed sums
+           * accumulate from 0.0 in production order and the recurrence is
+           * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+           * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
+           * bit-exactness contract against the composed reference.
+           *
+           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
+           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
+           * preserved for the functions that already shipped with it and dropped from
+           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
+           *
+           * prevClose is carried in a scalar rather than re-read from inReal[t-1]
+           * because outReal may alias inReal: the slot holding close[t-1] may already
+           * hold an output written a bar earlier.
+           */
+          kFirst = 2.0 / (double)(optInFirstPeriod + 1);
+          kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+          lookbackFirst = EMA_Lookback(optInFirstPeriod);
+          emaFirstNum = 0.0;
+          emaFirstDen = 0.0;
+          emaSecondNum = 0.0;
+          emaSecondDen = 0.0;
+          sumFirstNum = 0.0;
+          sumFirstDen = 0.0;
+          sumSecondNum = 0.0;
+          sumSecondDen = 0.0;
+          /* The first bar carrying a close-to-close change. */
+          today = startIdx - lookbackTotal + 1;
+          prevClose = inReal[today - 1];
+          nBar = 0;
+          /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+           * the second stage's seed, so it produces the first output.
+           */
+          while( today <= startIdx ) {
+             mom = inReal[today] - prevClose;
+             prevClose = inReal[today];
+             absMom = Math.abs(mom);
+             /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+             if( nBar < optInFirstPeriod ) {
+                sumFirstNum = sumFirstNum + mom;
+                sumFirstDen = sumFirstDen + absMom;
+                if( nBar == optInFirstPeriod - 1 ) {
+                   emaFirstNum = sumFirstNum / optInFirstPeriod;
+                   emaFirstDen = sumFirstDen / optInFirstPeriod;
+                }
+             } else {
+                emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
+                emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+             }
+             /* Stage 2: the second EMA, over what stage 1 publishes.
+              *
+              * The stage counter is compared BEFORE it is subtracted, never after.
+              * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+              * is correct in C, where the counters are signed, and broken everywhere
+              * else: the Rust backend renders them as usize, so the subtraction
+              * underflows for the first lookbackFirst bars -- a panic in a debug
+              * build and a wrap in release. It would also be invisible to the
+              * cross-language gate, which runs release servers at unstable period 0,
+              * where the branch the wrap wrongly takes happens to be a no-op because
+              * both accumulators are still 0.0. smi.c states the same rule.
+              */
+             if( nBar >= lookbackFirst ) {
+                nSecond = nBar - lookbackFirst;
+                if( nSecond < optInSecondPeriod ) {
+                   sumSecondNum = sumSecondNum + emaFirstNum;
+                   sumSecondDen = sumSecondDen + emaFirstDen;
+                   if( nSecond == optInSecondPeriod - 1 ) {
+                      emaSecondNum = sumSecondNum / optInSecondPeriod;
+                      emaSecondDen = sumSecondDen / optInSecondPeriod;
+                   }
+                } else {
+                   emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
+                   emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+                }
+             }
+             nBar = nBar + 1;
+             today = today + 1;
+          }
+          /* The denominator is an EMA of an EMA of |momentum|: every term is
+           * non-negative and every weight positive, so it is zero only when every
+           * change that reached it was exactly zero -- 0/0, since the numerator is
+           * zero with it, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+           * convention. Tested exactly rather than against a fixed band: a price
+           * change carries the quote unit, and TA_IS_ZERO zeroes the oscillator for
+           * any instrument quoted below it (issue #253).
+           */
+          if( emaSecondDen > 0.0 ) {
+             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+          } else {
+             tsiValue = 0.0;
+          }
+          outReal[0] = tsiValue;
+          outIdx = 1;
+          /* Stable zone. Both stages are a pure recursion from here on. */
+          while( today <= endIdx ) {
+             mom = inReal[today] - prevClose;
+             prevClose = inReal[today];
+             absMom = Math.abs(mom);
+             emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
+             emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+             emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
+             emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+             if( emaSecondDen > 0.0 ) {
+                tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+             } else {
+                tsiValue = 0.0;
+             }
+             outReal[outIdx] = tsiValue;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode TSI_Impl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInFirstPeriod,
+                         int optInSecondPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double kFirst = 0;
+          double kSecond = 0;
+          double emaFirstNum = 0;
+          double emaFirstDen = 0;
+          double emaSecondNum = 0;
+          double emaSecondDen = 0;
+          double sumFirstNum = 0;
+          double sumFirstDen = 0;
+          double sumSecondNum = 0;
+          double sumSecondDen = 0;
+          double prevClose = 0;
+          double mom = 0;
+          double absMom = 0;
+          double tsiValue = 0;
+          int lookbackTotal = 0;
+          int lookbackFirst = 0;
+          int today = 0;
+          int outIdx = 0;
+          int nBar = 0;
+          int nSecond = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 25;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 13;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          outBegIdx.value = startIdx;
+          kFirst = 2.0 / (double)(optInFirstPeriod + 1);
+          kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+          lookbackFirst = EMA_Lookback(optInFirstPeriod);
+          emaFirstNum = 0.0;
+          emaFirstDen = 0.0;
+          emaSecondNum = 0.0;
+          emaSecondDen = 0.0;
+          sumFirstNum = 0.0;
+          sumFirstDen = 0.0;
+          sumSecondNum = 0.0;
+          sumSecondDen = 0.0;
+          today = startIdx - lookbackTotal + 1;
+          prevClose = (double)inReal[today - 1];
+          nBar = 0;
+          while( today <= startIdx ) {
+             mom = (double)inReal[today] - prevClose;
+             prevClose = (double)inReal[today];
+             absMom = Math.abs(mom);
+             if( nBar < optInFirstPeriod ) {
+                sumFirstNum = sumFirstNum + mom;
+                sumFirstDen = sumFirstDen + absMom;
+                if( nBar == optInFirstPeriod - 1 ) {
+                   emaFirstNum = sumFirstNum / optInFirstPeriod;
+                   emaFirstDen = sumFirstDen / optInFirstPeriod;
+                }
+             } else {
+                emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
+                emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+             }
+             if( nBar >= lookbackFirst ) {
+                nSecond = nBar - lookbackFirst;
+                if( nSecond < optInSecondPeriod ) {
+                   sumSecondNum = sumSecondNum + emaFirstNum;
+                   sumSecondDen = sumSecondDen + emaFirstDen;
+                   if( nSecond == optInSecondPeriod - 1 ) {
+                      emaSecondNum = sumSecondNum / optInSecondPeriod;
+                      emaSecondDen = sumSecondDen / optInSecondPeriod;
+                   }
+                } else {
+                   emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
+                   emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+                }
+             }
+             nBar = nBar + 1;
+             today = today + 1;
+          }
+          if( emaSecondDen > 0.0 ) {
+             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+          } else {
+             tsiValue = 0.0;
+          }
+          outReal[0] = tsiValue;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             mom = (double)inReal[today] - prevClose;
+             prevClose = (double)inReal[today];
+             absMom = Math.abs(mom);
+             emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
+             emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+             emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
+             emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+             if( emaSecondDen > 0.0 ) {
+                tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+             } else {
+                tsiValue = 0.0;
+             }
+             outReal[outIdx] = tsiValue;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * True Strength Index: William Blau's double-smoothed momentum oscillator.
+        * The one-bar price change is smoothed twice with exponential averages, and
+        * the same pair of averages is applied to the magnitude of that change; the
+        * ratio of the two is scaled by 100. Dividing the smoothed signed momentum
+        * by the smoothed absolute momentum normalises the reading, so the result is
+        * bounded by -100 and +100 and comparable across instruments. The double
+        * smoothing is what separates it from a raw momentum plot: the curve is
+        * smooth enough to read while keeping far less lag than a single average of
+        * the same total length. Zero is the reference line — positive means the
+        * smoothed momentum is net upward, negative net downward — and its crossings
+        * are the usual trade trigger. Extreme readings mark overbought and oversold
+        * conditions, and divergence against price is the classic Blau reading. A
+        * signal line is not part of the output; apply {@code EMA} to
+        * {@code outReal} to obtain one, since no source agrees on its period.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * m = close - previous close
+        * TSI = 100 * EMA(EMA(m, firstPeriod), secondPeriod) / EMA(EMA(|m|, firstPeriod), secondPeriod)
+        * The first period is applied first, to the raw change; the second smooths its result. The order matters: the two averages do not commute, because each is seeded from a simple average of its own inputs.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — trading-signals among them — differ over the transient and agree once it decays.</li>
+        * <li>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#TSI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Source price/value series, canonically the close.
+        * @param optInFirstPeriod Period of the first smoothing, applied to the raw
+        *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 13; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal True Strength Index, -100 to +100. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#SMI
+        * @see Core#MACD
+        * @see Core#CMO
+        * @see Core#RSI
+        */
+       public OutRange TSI( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInFirstPeriod,
+                            int optInSecondPeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("TSI", startIdx, endIdx);
+          int guardStart = clampedStart("TSI", startIdx, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TSI", "inReal", inReal, guardInLen);
+          requireLength("TSI", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("TSI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * True Strength Index: William Blau's double-smoothed momentum oscillator.
+        * The one-bar price change is smoothed twice with exponential averages, and
+        * the same pair of averages is applied to the magnitude of that change; the
+        * ratio of the two is scaled by 100. Dividing the smoothed signed momentum
+        * by the smoothed absolute momentum normalises the reading, so the result is
+        * bounded by -100 and +100 and comparable across instruments. The double
+        * smoothing is what separates it from a raw momentum plot: the curve is
+        * smooth enough to read while keeping far less lag than a single average of
+        * the same total length. Zero is the reference line — positive means the
+        * smoothed momentum is net upward, negative net downward — and its crossings
+        * are the usual trade trigger. Extreme readings mark overbought and oversold
+        * conditions, and divergence against price is the classic Blau reading. A
+        * signal line is not part of the output; apply {@code EMA} to
+        * {@code outReal} to obtain one, since no source agrees on its period.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * m = close - previous close
+        * TSI = 100 * EMA(EMA(m, firstPeriod), secondPeriod) / EMA(EMA(|m|, firstPeriod), secondPeriod)
+        * The first period is applied first, to the raw change; the second smooths its result. The order matters: the two averages do not commute, because each is seeded from a simple average of its own inputs.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
+        * <li>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} discards more of that warm-up. Implementations seeding from a single first sample — trading-signals among them — differ over the transient and agree once it decays.</li>
+        * <li>The parameters are named by the order they are applied in, not fast and slow. Blau's published pair applies the longer average first, the inverse of the differenced fast/slow pairs elsewhere in the library, so swapping them silently returns a different indicator with the same lookback.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#TSI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Source price/value series, canonically the close.
+        * @param optInFirstPeriod Period of the first smoothing, applied to the raw
+        *        momentum (default 25; range 2..100000; {@code Integer.MIN_VALUE} selects
+        *        the default).
+        * @param optInSecondPeriod Period of the second smoothing, applied to the
+        *        first (default 13; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal True Strength Index, -100 to +100. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#SMI
+        * @see Core#MACD
+        * @see Core#CMO
+        * @see Core#RSI
+        */
+       public OutRange TSI( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInFirstPeriod,
+                            int optInSecondPeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("TSI", startIdx, endIdx);
+          int guardStart = clampedStart("TSI", startIdx, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("TSI", "inReal", inReal, guardInLen);
+          requireLength("TSI", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("TSI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live TSI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#TSI} over the same series.
+        * Open with {@link Core#tsiOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class TsiStream {
+          Core core;
+          int optInFirstPeriod;
+          int optInSecondPeriod;
+          double kFirst;
+          double kSecond;
+          double emaFirstNum;
+          double emaFirstDen;
+          double emaSecondNum;
+          double emaSecondDen;
+          double prevClose;
+          double cur_outReal;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          TsiStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#TSI} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          TsiStream( TsiStream other ) {
+             this.core = other.core;
+             this.optInFirstPeriod = other.optInFirstPeriod;
+             this.optInSecondPeriod = other.optInSecondPeriod;
+             this.kFirst = other.kFirst;
+             this.kSecond = other.kSecond;
+             this.emaFirstNum = other.emaFirstNum;
+             this.emaFirstDen = other.emaFirstDen;
+             this.emaSecondNum = other.emaSecondNum;
+             this.emaSecondDen = other.emaSecondDen;
+             this.prevClose = other.prevClose;
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value()} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public double update( double inReal ) {
+             if( !Double.isFinite(inReal) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("TSI update: BadParam", RetCode.BadParam);
+             }
+             core.tsiStepImpl(this, inReal);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inReal.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("TSI updateAndFill", "inReal", inReal);
+             requireArgument("TSI updateAndFill", "outReal", outReal);
+             final int barCount = inReal.length;
+             if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+                throw new TaLibArgumentException("TSI updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("TSI updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.tsiStepImpl(this, inReal[i]);
+                outReal[i] = this.cur_outReal;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw new TaLibArgumentException("TSI peek: BadParam", RetCode.BadParam);
+             TsiStream sp = this;
+             double mom = 0.0;
+             double absMom = 0.0;
+             double tsiValue = 0.0;
+             double cur_outReal = 0.0;
+             double emaFirstDen = sp.emaFirstDen;
+             double emaFirstNum = sp.emaFirstNum;
+             double emaSecondDen = sp.emaSecondDen;
+             double emaSecondNum = sp.emaSecondNum;
+             double prevClose = sp.prevClose;
+             mom = inReal - prevClose;
+             prevClose = inReal;
+             absMom = Math.abs(mom);
+             emaFirstNum = Math.fma(mom - emaFirstNum, sp.kFirst, emaFirstNum);
+             emaFirstDen = Math.fma(absMom - emaFirstDen, sp.kFirst, emaFirstDen);
+             emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, sp.kSecond, emaSecondNum);
+             emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, sp.kSecond, emaSecondDen);
+             if( emaSecondDen > 0.0 ) {
+                tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+             } else {
+                tsiValue = 0.0;
+             }
+             cur_outReal = tsiValue;
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public TsiStream clone() {
+             return new TsiStream(this);
+          }
+       }
+       void tsiStepImpl( TsiStream sp, double inReal )
+       {
+          double mom = 0.0;
+          double absMom = 0.0;
+          double tsiValue = 0.0;
+          mom = inReal - sp.prevClose;
+          sp.prevClose = inReal;
+          absMom = Math.abs(mom);
+          sp.emaFirstNum = Math.fma(mom - sp.emaFirstNum, sp.kFirst, sp.emaFirstNum);
+          sp.emaFirstDen = Math.fma(absMom - sp.emaFirstDen, sp.kFirst, sp.emaFirstDen);
+          sp.emaSecondNum = Math.fma(sp.emaFirstNum - sp.emaSecondNum, sp.kSecond, sp.emaSecondNum);
+          sp.emaSecondDen = Math.fma(sp.emaFirstDen - sp.emaSecondDen, sp.kSecond, sp.emaSecondDen);
+          if( sp.emaSecondDen > 0.0 ) {
+             tsiValue = 100.0 * sp.emaSecondNum / sp.emaSecondDen;
+          } else {
+             tsiValue = 0.0;
+          }
+          sp.cur_outReal = tsiValue;
+       }
+       private RetCode tsiOpenImpl( TsiStream sp, double inReal[], int startIdx, int optInFirstPeriod, int optInSecondPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double kFirst = 0;
+          double kSecond = 0;
+          double emaFirstNum = 0;
+          double emaFirstDen = 0;
+          double emaSecondNum = 0;
+          double emaSecondDen = 0;
+          double sumFirstNum = 0;
+          double sumFirstDen = 0;
+          double sumSecondNum = 0;
+          double sumSecondDen = 0;
+          double prevClose = 0;
+          double mom = 0;
+          double absMom = 0;
+          double tsiValue = 0;
+          int lookbackTotal = 0;
+          int lookbackFirst = 0;
+          int today = 0;
+          int outIdx = 0;
+          int nBar = 0;
+          int nSecond = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( optInFirstPeriod == Integer.MIN_VALUE ) {
+             optInFirstPeriod = 25;
+          } else if( optInFirstPeriod < 2 || optInFirstPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInSecondPeriod == Integer.MIN_VALUE ) {
+             optInSecondPeriod = 13;
+          } else if( optInSecondPeriod < 2 || optInSecondPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          lookbackTotal = TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          outBegIdx.value = startIdx;
+          /* Blau's double smoothing in one pass: the signed momentum and its
+           * magnitude are carried through the same two EMA stages, then divided.
+           *
+           * Each stage seeds the way ema.c does -- a simple average of that stage's
+           * first 'period' inputs -- so the result is bit-identical to TA_MOM(1)
+           * followed by two TA_EMA calls on each chain. The stage boundary below is
+           * the callee LOOKBACK, not (period-1), so that a warm
+           * TA_SetUnstablePeriod(TA_FUNC_UNST_EMA) folds in: the second stage then
+           * seeds from the values the first would have published. The seed sums
+           * accumulate from 0.0 in production order and the recurrence is
+           * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
+           * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
+           * bit-exactness contract against the composed reference.
+           *
+           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
+           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
+           * preserved for the functions that already shipped with it and dropped from
+           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
+           *
+           * prevClose is carried in a scalar rather than re-read from inReal[t-1]
+           * because outReal may alias inReal: the slot holding close[t-1] may already
+           * hold an output written a bar earlier.
+           */
+          kFirst = 2.0 / (double)(optInFirstPeriod + 1);
+          kSecond = 2.0 / (double)(optInSecondPeriod + 1);
+          lookbackFirst = EMA_Lookback(optInFirstPeriod);
+          emaFirstNum = 0.0;
+          emaFirstDen = 0.0;
+          emaSecondNum = 0.0;
+          emaSecondDen = 0.0;
+          sumFirstNum = 0.0;
+          sumFirstDen = 0.0;
+          sumSecondNum = 0.0;
+          sumSecondDen = 0.0;
+          /* The first bar carrying a close-to-close change. */
+          today = startIdx - lookbackTotal + 1;
+          prevClose = inReal[today - 1];
+          nBar = 0;
+          /* Warm-up. Runs through startIdx inclusive: the last pass here completes
+           * the second stage's seed, so it produces the first output.
+           */
+          while( today <= startIdx ) {
+             mom = inReal[today] - prevClose;
+             prevClose = inReal[today];
+             absMom = Math.abs(mom);
+             /* Stage 1: the first EMA, over the raw momentum and its magnitude. */
+             if( nBar < optInFirstPeriod ) {
+                sumFirstNum = sumFirstNum + mom;
+                sumFirstDen = sumFirstDen + absMom;
+                if( nBar == optInFirstPeriod - 1 ) {
+                   emaFirstNum = sumFirstNum / optInFirstPeriod;
+                   emaFirstDen = sumFirstDen / optInFirstPeriod;
+                }
+             } else {
+                emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
+                emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+             }
+             /* Stage 2: the second EMA, over what stage 1 publishes.
+              *
+              * The stage counter is compared BEFORE it is subtracted, never after.
+              * Writing this as `nSecond = nBar - lookbackFirst; if( nSecond >= 0 )`
+              * is correct in C, where the counters are signed, and broken everywhere
+              * else: the Rust backend renders them as usize, so the subtraction
+              * underflows for the first lookbackFirst bars -- a panic in a debug
+              * build and a wrap in release. It would also be invisible to the
+              * cross-language gate, which runs release servers at unstable period 0,
+              * where the branch the wrap wrongly takes happens to be a no-op because
+              * both accumulators are still 0.0. smi.c states the same rule.
+              */
+             if( nBar >= lookbackFirst ) {
+                nSecond = nBar - lookbackFirst;
+                if( nSecond < optInSecondPeriod ) {
+                   sumSecondNum = sumSecondNum + emaFirstNum;
+                   sumSecondDen = sumSecondDen + emaFirstDen;
+                   if( nSecond == optInSecondPeriod - 1 ) {
+                      emaSecondNum = sumSecondNum / optInSecondPeriod;
+                      emaSecondDen = sumSecondDen / optInSecondPeriod;
+                   }
+                } else {
+                   emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
+                   emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+                }
+             }
+             nBar = nBar + 1;
+             today = today + 1;
+          }
+          /* The denominator is an EMA of an EMA of |momentum|: every term is
+           * non-negative and every weight positive, so it is zero only when every
+           * change that reached it was exactly zero -- 0/0, since the numerator is
+           * zero with it, reported as the neutral 0.0 by the CCI (#7) and IMI (#112)
+           * convention. Tested exactly rather than against a fixed band: a price
+           * change carries the quote unit, and TA_IS_ZERO zeroes the oscillator for
+           * any instrument quoted below it (issue #253).
+           */
+          if( emaSecondDen > 0.0 ) {
+             tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+          } else {
+             tsiValue = 0.0;
+          }
+          outReal[0 * outStride] = tsiValue;
+          outIdx = 1;
+          /* Stable zone. Both stages are a pure recursion from here on. */
+          while( today <= endIdx ) {
+             mom = inReal[today] - prevClose;
+             prevClose = inReal[today];
+             absMom = Math.abs(mom);
+             emaFirstNum = Math.fma(mom - emaFirstNum, kFirst, emaFirstNum);
+             emaFirstDen = Math.fma(absMom - emaFirstDen, kFirst, emaFirstDen);
+             emaSecondNum = Math.fma(emaFirstNum - emaSecondNum, kSecond, emaSecondNum);
+             emaSecondDen = Math.fma(emaFirstDen - emaSecondDen, kSecond, emaSecondDen);
+             if( emaSecondDen > 0.0 ) {
+                tsiValue = 100.0 * emaSecondNum / emaSecondDen;
+             } else {
+                tsiValue = 0.0;
+             }
+             outReal[outIdx * outStride] = tsiValue;
+             outIdx = outIdx + 1;
+             today = today + 1;
+          }
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInFirstPeriod = optInFirstPeriod;
+          sp.optInSecondPeriod = optInSecondPeriod;
+          sp.kFirst = kFirst;
+          sp.kSecond = kSecond;
+          sp.emaFirstNum = emaFirstNum;
+          sp.emaFirstDen = emaFirstDen;
+          sp.emaSecondNum = emaSecondNum;
+          sp.emaSecondDen = emaSecondDen;
+          sp.prevClose = prevClose;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* tsiOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       TsiStream tsiOpenAndFillInternal( double inReal[], int startIdx, int optInFirstPeriod, int optInSecondPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          TsiStream sp = new TsiStream(this);
+          RetCode retCode = tsiOpenImpl(sp, inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("TSI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("TSI openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("TSI openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind tsiOpen (composition seam). */
+       TsiStream tsiOpenInternal( double inReal[], int startIdx, int optInFirstPeriod, int optInSecondPeriod )
+       {
+          TsiStream sp = new TsiStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = tsiOpenImpl(sp, inReal, startIdx, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("TSI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("TSI open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("TSI open: " + retCode, retCode);
+       }
+       /**
+        * Open a live TSI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#TSI} at that bar.
+        * <p>The history must hold at least {@code TSI_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public TsiStream tsiOpen( double inReal[], int optInFirstPeriod, int optInSecondPeriod )
+       {
+          requireArgument("TSI open", "inReal", inReal);
+          requireHistory("TSI open", inReal.length);
+          return tsiOpenInternal(inReal, 0, optInFirstPeriod, optInSecondPeriod);
+       }
+       /**
+        * {@link Core#tsiOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#TSI} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link TsiStream#outRange()}.
+        */
+       public TsiStream tsiOpenAndFill( double inReal[], int optInFirstPeriod, int optInSecondPeriod, double outReal[] )
+       {
+          requireArgument("TSI openAndFill", "inReal", inReal);
+          requireHistory("TSI openAndFill", inReal.length);
+          int guardOutLen = openFillCount("TSI openAndFill", inReal.length, TSI_Lookback(optInFirstPeriod, optInSecondPeriod));
+          requireLength("TSI openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw new TaLibArgumentException("TSI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return tsiOpenAndFillInternal(inReal, 0, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
      *
      *
      * Change history:
@@ -173967,7 +175810,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "9b413aa1e5cfa021";
+    static final String SPLICED_GENCODE_DIGEST = "c3cf138b95165429";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -174575,6 +176418,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period for the typical price moving average",20.0, 0,0,0,0,0,0, 2,100000,4,200,1, null), new AbsOpt(2,"optInATRPeriod",0,"ATR Period","Time period for the Average True Range",10.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(0,"optInNbDev",0,"Deviations","Multiplier applied to the Average True Range",2.0, -3e37,3e37,2,1.0,3.0,0.5, 0,0,0,0,0, null) },
             new AbsOut[]{ new AbsOut(0,"outRealUpperBand",2048), new AbsOut(0,"outRealMiddleBand",1), new AbsOut(0,"outRealLowerBand",4096) }));
+        ABSTRACT.put("KDJ", new AbsFunc("KDJ", "Momentum Indicators", "KDJ Stochastic", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFastK_Period",0,"Fast-K Period","Time period for building the Fast-K line",9.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(2,"optInSlowK_Period",0,"Slow-K Period","Smoothing for making the Slow-K line. Usually set to 3",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowK_MAType",0,"Slow-K MA","Type of Moving Average for Slow-K",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"), new AbsOpt(2,"optInSlowD_Period",0,"Slow-D Period","Smoothing for making the Slow-D line",3.0, 0,0,0,0,0,0, 1,100000,1,200,1, null), new AbsOpt(3,"optInSlowD_MAType",0,"Slow-D MA","Type of Moving Average for Slow-D",13.0, 0,0,0,0,0,0, 0,0,0,0,0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA") },
+            new AbsOut[]{ new AbsOut(0,"outK",1), new AbsOut(0,"outD",1), new AbsOut(0,"outJ",1) }));
         ABSTRACT.put("LINEARREG", new AbsFunc("LINEARREG", "Statistic Functions", "Linear Regression", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
@@ -174850,6 +176697,10 @@ public class TaCodegenServe {
         ABSTRACT.put("TSF", new AbsFunc("TSF", "Statistic Functions", "Time Series Forecast", 50331648,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("TSI", new AbsFunc("TSI", "Momentum Indicators", "True Strength Index", 33554432,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInFirstPeriod",0,"First Smoothing Period","Period of the first smoothing, applied to the raw momentum",25.0, 0,0,0,0,0,0, 2,100000,2,100,1, null), new AbsOpt(2,"optInSecondPeriod",0,"Second Smoothing Period","Period of the second smoothing, applied to the first",13.0, 0,0,0,0,0,0, 2,100000,2,50,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("TYPPRICE", new AbsFunc("TYPPRICE", "Price Transform", "Typical Price", 50331648,
             new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
@@ -175132,6 +176983,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_IMI\"")) return handle_IMI(json);
         else if (json.contains("\"TA_KAMA\"")) return handle_KAMA(json);
         else if (json.contains("\"TA_KC\"")) return handle_KC(json);
+        else if (json.contains("\"TA_KDJ\"")) return handle_KDJ(json);
         else if (json.contains("\"TA_LINEARREG\"")) return handle_LINEARREG(json);
         else if (json.contains("\"TA_LINEARREG_ANGLE\"")) return handle_LINEARREG_ANGLE(json);
         else if (json.contains("\"TA_LINEARREG_INTERCEPT\"")) return handle_LINEARREG_INTERCEPT(json);
@@ -175201,6 +177053,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_TRIMA\"")) return handle_TRIMA(json);
         else if (json.contains("\"TA_TRIX\"")) return handle_TRIX(json);
         else if (json.contains("\"TA_TSF\"")) return handle_TSF(json);
+        else if (json.contains("\"TA_TSI\"")) return handle_TSI(json);
         else if (json.contains("\"TA_TYPPRICE\"")) return handle_TYPPRICE(json);
         else if (json.contains("\"TA_ULTOSC\"")) return handle_ULTOSC(json);
         else if (json.contains("\"TA_VAR\"")) return handle_VAR(json);
@@ -175441,6 +177294,8 @@ public class TaCodegenServe {
             sb.append(",");
             sb.append("\"TA_KC\"");
             sb.append(",");
+            sb.append("\"TA_KDJ\"");
+            sb.append(",");
             sb.append("\"TA_LINEARREG\"");
             sb.append(",");
             sb.append("\"TA_LINEARREG_ANGLE\"");
@@ -175578,6 +177433,8 @@ public class TaCodegenServe {
             sb.append("\"TA_TRIX\"");
             sb.append(",");
             sb.append("\"TA_TSF\"");
+            sb.append(",");
+            sb.append("\"TA_TSI\"");
             sb.append(",");
             sb.append("\"TA_TYPPRICE\"");
             sb.append(",");
@@ -193015,6 +194872,176 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_KDJ(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+        }
+        boolean _optRejected = false;
+        int optInFastK_Period = jsonInt(json, "optInFastK_Period");
+        int optInSlowK_Period = jsonInt(json, "optInSlowK_Period");
+        int _raw_optInSlowK_MAType = jsonInt(json, "optInSlowK_MAType");
+        if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) _optRejected = true;
+        MAType optInSlowK_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowK_MAType];
+        int optInSlowD_Period = jsonInt(json, "optInSlowD_Period");
+        int _raw_optInSlowD_MAType = jsonInt(json, "optInSlowD_MAType");
+        if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) _optRejected = true;
+        MAType optInSlowD_MAType = MAType.values()[_optRejected ? 0 : _raw_optInSlowD_MAType];
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        double[] outArr2 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.KDJ_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outBegIdx, outNBElement, outArr0, outArr1, outArr2);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.KDJ(startIdx, endIdx, inHigh, inLow, inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.kdjOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+            } else {
+                Core.KdjStream _wh = core.kdjOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.KDJ(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, outArr0, outArr1, outArr2);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_LINEARREG(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -203130,6 +205157,149 @@ public class TaCodegenServe {
             } else {
             try {
                 OutRange _fr = core.TSF(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_TSI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
+            inReal = _tmp_inReal;
+        }
+        boolean _optRejected = false;
+        int optInFirstPeriod = jsonInt(json, "optInFirstPeriod");
+        int optInSecondPeriod = jsonInt(json, "optInSecondPeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.TSI_Impl(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.TSI(startIdx, endIdx, inReal, optInFirstPeriod, optInSecondPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.tsiOpen(_warm_inReal, optInFirstPeriod, optInSecondPeriod);
+            } else {
+                Core.TsiStream _wh = core.tsiOpenAndFill(_warm_inReal, optInFirstPeriod, optInSecondPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.TSI(startIdx, endIdx, f_inReal, optInFirstPeriod, optInSecondPeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
                 outNBElement.value = _fr.count();
                 rc = RetCode.Success;
@@ -224780,6 +226950,247 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_KDJ(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 9;
+        int optInSlowK_Period = json.contains("\"optInSlowK_Period\"") ? jsonInt(json, "optInSlowK_Period") : 3;
+        int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : 13;
+        if (_raw_optInSlowK_MAType < 0 || _raw_optInSlowK_MAType >= MAType.values().length) {
+            /* Out-of-list enum: unrepresentable in the type-safe Java surface —
+             * batch and stream both reject at the type level (reject parity). */
+            return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}";
+        }
+        MAType optInSlowK_MAType = MAType.values()[_raw_optInSlowK_MAType];
+        int optInSlowD_Period = json.contains("\"optInSlowD_Period\"") ? jsonInt(json, "optInSlowD_Period") : 3;
+        int _raw_optInSlowD_MAType = json.contains("\"optInSlowD_MAType\"") ? jsonInt(json, "optInSlowD_MAType") : 13;
+        if (_raw_optInSlowD_MAType < 0 || _raw_optInSlowD_MAType >= MAType.values().length) {
+            /* Out-of-list enum: unrepresentable in the type-safe Java surface —
+             * batch and stream both reject at the type level (reject parity). */
+            return "{\"retCode\":2,\"legs\":0,\"nb\":0,\"openRejects\":1,\"ok\":1,\"peek_ok\":1}";
+        }
+        MAType optInSlowD_MAType = MAType.values()[_raw_optInSlowD_MAType];
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        double[] b2 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[24] = svK;
+            c2.unstablePeriod[5] = svK;
+            c2.unstablePeriod[23] = svK;
+            c2.unstablePeriod[14] = svK;
+            c2.unstablePeriod[13] = svK;
+            RetCode rc;
+            try { rc = c2.KDJ_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, beg, nb, b0, b1, b2); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.kdjOpen(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                Core.KdjStream _fh = c2.kdjOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1, f2);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.kdjOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.kdjOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.KdjStream st;
+                try { st = c2.kdjOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.KdjOut v0 = new Core.KdjOut(); st.value(v0);
+                if (svXtierNe(v0.k, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.d, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.j, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                Core.KdjOut pk = new Core.KdjOut();
+                Core.KdjOut up = new Core.KdjOut();
+                Core.KdjOut vc = new Core.KdjOut();
+                Core.KdjOut rp = new Core.KdjOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.k, pk.k)) peekRepAll = false;
+                            if (svBne(rp.d, pk.d)) peekRepAll = false;
+                            if (svBne(rp.j, pk.j)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.k, up.k)) peekAll = false;
+                    if (pkTook && svBne(pk.d, up.d)) peekAll = false;
+                    if (pkTook && svBne(pk.j, up.j)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.k, up.k)) allOk = false;
+                    if (svBne(vc.d, up.d)) allOk = false;
+                    if (svBne(vc.j, up.j)) allOk = false;
+                    if (svXtierNe(up.k, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.k)) + "\""; }
+                    if (svXtierNe(up.d, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.d)) + "\""; }
+                    if (svXtierNe(up.j, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.j)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.KdjStream stu = c2.kdjOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] u1 = new double[svN];
+                        java.util.Arrays.fill(u1, (double)-1.2345678901234e300);
+                        double[] u2 = new double[svN];
+                        java.util.Arrays.fill(u2, (double)-1.2345678901234e300);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], new double[0], u0, u1, u2);
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, new double[0], u1, u2); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, tail_fz_h, u1, u2); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, u0, u1, u2);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u1[t - p], b1[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u2[t - p], b2[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u2[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.KdjStream sA = c2.kdjOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                        int mid = (p0 + svN) / 2;
+                        Core.KdjOut uA = new Core.KdjOut();
+                        Core.KdjOut uB = new Core.KdjOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        Core.KdjStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.k, uB.k) || svXtierNe(uA.k, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.d, uB.d) || svXtierNe(uA.d, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.j, uB.j) || svXtierNe(uA.j, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.kdjOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.KdjStream sD = c2.kdjOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE, optInSlowK_MAType, Integer.MIN_VALUE, optInSlowD_MAType);
+                Core.KdjStream sE = c2.kdjOpen(fz_h, fz_l, fz_c, 9, 3, optInSlowK_MAType, 3, optInSlowD_MAType);
+                Core.KdjOut vD = new Core.KdjOut(); sD.value(vD);
+                Core.KdjOut vE = new Core.KdjOut(); sE.value(vE);
+                if (svBne(vD.k, vE.k)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.d, vE.d)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.j, vE.j)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.KDJ_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, begS, nbS, b0, b1, b2); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.KdjStream stA = c2.kdjOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_LINEARREG(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -237394,6 +239805,185 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_TSI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInFirstPeriod = json.contains("\"optInFirstPeriod\"") ? jsonInt(json, "optInFirstPeriod") : 25;
+        int optInSecondPeriod = json.contains("\"optInSecondPeriod\"") ? jsonInt(json, "optInSecondPeriod") : 13;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
+            RetCode rc;
+            try { rc = c2.TSI_Impl(0, svN - 1, fz_c, optInFirstPeriod, optInSecondPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.TSI_Lookback(optInFirstPeriod, optInSecondPeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.tsiOpen(fz_c, optInFirstPeriod, optInSecondPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.TsiStream _fh = c2.tsiOpenAndFill(fz_c, optInFirstPeriod, optInSecondPeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.tsiOpenAndFill(fz_c, optInFirstPeriod, optInSecondPeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.TsiStream st;
+                try { st = c2.tsiOpen(java.util.Arrays.copyOf(fz_c, p), optInFirstPeriod, optInSecondPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.TsiStream stu = c2.tsiOpen(java.util.Arrays.copyOf(fz_c, p), optInFirstPeriod, optInSecondPeriod);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], u0);
+                        try { stu.updateAndFill(tail_fz_c, new double[0]); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_c, tail_fz_c); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_c, u0);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.TsiStream sA = c2.tsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInFirstPeriod, optInSecondPeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.TsiStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            double uB = sB.update(fz_c[t]);
+                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.tsiOpen(java.util.Arrays.copyOf(fz_c, lb), optInFirstPeriod, optInSecondPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.TsiStream sD = c2.tsiOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.TsiStream sE = c2.tsiOpen(fz_c, 25, 13);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.TSI_Impl(Sidx, svN - 1, fz_c, optInFirstPeriod, optInSecondPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.TsiStream stA = c2.tsiOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInFirstPeriod, optInSecondPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_TYPPRICE(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -239469,6 +242059,7 @@ public class TaCodegenServe {
         case "TA_IMI": return sv_IMI(json);
         case "TA_KAMA": return sv_KAMA(json);
         case "TA_KC": return sv_KC(json);
+        case "TA_KDJ": return sv_KDJ(json);
         case "TA_LINEARREG": return sv_LINEARREG(json);
         case "TA_LINEARREG_ANGLE": return sv_LINEARREG_ANGLE(json);
         case "TA_LINEARREG_INTERCEPT": return sv_LINEARREG_INTERCEPT(json);
@@ -239538,6 +242129,7 @@ public class TaCodegenServe {
         case "TA_TRIMA": return sv_TRIMA(json);
         case "TA_TRIX": return sv_TRIX(json);
         case "TA_TSF": return sv_TSF(json);
+        case "TA_TSI": return sv_TSI(json);
         case "TA_TYPPRICE": return sv_TYPPRICE(json);
         case "TA_ULTOSC": return sv_ULTOSC(json);
         case "TA_VAR": return sv_VAR(json);

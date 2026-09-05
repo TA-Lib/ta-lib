@@ -151,6 +151,7 @@ extern const TA_FuncDef TA_DEF_HT_TRENDMODE;
 extern const TA_FuncDef TA_DEF_IMI;
 extern const TA_FuncDef TA_DEF_KAMA;
 extern const TA_FuncDef TA_DEF_KC;
+extern const TA_FuncDef TA_DEF_KDJ;
 extern const TA_FuncDef TA_DEF_LINEARREG;
 extern const TA_FuncDef TA_DEF_LINEARREG_ANGLE;
 extern const TA_FuncDef TA_DEF_LINEARREG_INTERCEPT;
@@ -220,6 +221,7 @@ extern const TA_FuncDef TA_DEF_TRANGE;
 extern const TA_FuncDef TA_DEF_TRIMA;
 extern const TA_FuncDef TA_DEF_TRIX;
 extern const TA_FuncDef TA_DEF_TSF;
+extern const TA_FuncDef TA_DEF_TSI;
 extern const TA_FuncDef TA_DEF_TYPPRICE;
 extern const TA_FuncDef TA_DEF_ULTOSC;
 extern const TA_FuncDef TA_DEF_VAR;
@@ -321,6 +323,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_DX,
 &TA_DEF_FOSC,
 &TA_DEF_IMI,
+&TA_DEF_KDJ,
 &TA_DEF_MACD,
 &TA_DEF_MACDEXT,
 &TA_DEF_MACDFIX,
@@ -342,6 +345,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_STOCHF,
 &TA_DEF_STOCHRSI,
 &TA_DEF_TRIX,
+&TA_DEF_TSI,
 &TA_DEF_ULTOSC,
 &TA_DEF_VHF,
 &TA_DEF_WAD,

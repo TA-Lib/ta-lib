@@ -389,6 +389,9 @@ final class Dispatch {
          case "KC":
             return core.KC(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.realOpt(2), h.realOutput(0), h.realOutput(1), h.realOutput(2));
+         case "KDJ":
+            return core.KDJ(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4), h.realOutput(0), h.realOutput(1), h.realOutput(2));
          case "LINEARREG":
             return core.LINEARREG(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -596,6 +599,9 @@ final class Dispatch {
          case "TSF":
             return core.TSF(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "TSI":
+            return core.TSI(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "TYPPRICE":
             return core.TYPPRICE(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.realOutput(0));
@@ -862,6 +868,8 @@ final class Dispatch {
             return core.KAMA_Lookback(h.intOpt(0));
          case "KC":
             return core.KC_Lookback(h.intOpt(0), h.intOpt(1), h.realOpt(2));
+         case "KDJ":
+            return core.KDJ_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.intOpt(3), h.maTypeOpt(4));
          case "LINEARREG":
             return core.LINEARREG_Lookback(h.intOpt(0));
          case "LINEARREG_ANGLE":
@@ -1000,6 +1008,8 @@ final class Dispatch {
             return core.TRIX_Lookback(h.intOpt(0));
          case "TSF":
             return core.TSF_Lookback(h.intOpt(0));
+         case "TSI":
+            return core.TSI_Lookback(h.intOpt(0), h.intOpt(1));
          case "TYPPRICE":
             return core.TYPPRICE_Lookback();
          case "ULTOSC":

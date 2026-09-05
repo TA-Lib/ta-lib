@@ -153,6 +153,116 @@ DEF_FUNCTION( KC,
              );
 /* KC END */
 
+/* KDJ BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KDJ_FastK_Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastK_Period",
+   0,
+
+   "Fast-K Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   9,
+   "Time period for building the Fast-K line",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KDJ_SlowK_Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowK_Period",
+   0,
+
+   "Slow-K Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   3,
+   "Smoothing for making the Slow-K line. Usually set to 3",
+
+   NULL
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_D_KDJ_SlowK_MAType =
+{
+   TA_OptInput_IntegerList,
+   "optInSlowK_MAType",
+   0,
+
+   "Slow-K MA",
+   (const void *)&TA_MA_TypeList,
+   13,
+   "Type of Moving Average for Slow-K",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_KDJ_SlowD_Period =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowD_Period",
+   0,
+
+   "Slow-D Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   3,
+   "Smoothing for making the Slow-D line",
+
+   NULL
+};
+
+const TA_OptInputParameterInfo TA_DEF_UI_D_KDJ_SlowD_MAType =
+{
+   TA_OptInput_IntegerList,
+   "optInSlowD_MAType",
+   0,
+
+   "Slow-D MA",
+   (const void *)&TA_MA_TypeList,
+   13,
+   "Type of Moving Average for Slow-D",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KDJ_outK =
+                               { TA_Output_Real, "outK", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KDJ_outD =
+                               { TA_Output_Real, "outD", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_KDJ_outJ =
+                               { TA_Output_Real, "outJ", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_KDJ_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_KDJ_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_KDJ_outK,
+  &TA_DEF_UI_Output_Real_KDJ_outD,
+  &TA_DEF_UI_Output_Real_KDJ_outJ,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_KDJ_OptInputs[] =
+{ &TA_DEF_UI_D_KDJ_FastK_Period,
+  &TA_DEF_UI_D_KDJ_SlowK_Period,
+  &TA_DEF_UI_D_KDJ_SlowK_MAType,
+  &TA_DEF_UI_D_KDJ_SlowD_Period,
+  &TA_DEF_UI_D_KDJ_SlowD_MAType,
+  NULL
+};
+
+DEF_FUNCTION( KDJ,
+              TA_GroupId_MomentumIndicators,
+              "KDJ Stochastic",
+              TA_FUNC_FLG_STREAM
+             );
+/* KDJ END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -161,6 +271,7 @@ const TA_FuncDef *TA_DEF_TableK[] =
 {
    ADD_TO_TABLE(KAMA),
    ADD_TO_TABLE(KC),
+   ADD_TO_TABLE(KDJ),
    NULL
 };
 

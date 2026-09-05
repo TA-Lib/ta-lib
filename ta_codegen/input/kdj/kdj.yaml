@@ -1,0 +1,50 @@
+name: KDJ
+group: Momentum Indicators
+hint: KDJ Stochastic
+flags: [stream]
+inputs:
+  - name: inPriceHLC
+    type: price
+    price_components: [high, low, close]
+optional_inputs:
+  - name: optInFastK_Period
+    type: integer
+    display_name: Fast-K Period
+    hint: Time period for building the Fast-K line
+    range: [1, 100000]
+    default: 9
+    suggested: [1, 200, 1]
+  - name: optInSlowK_Period
+    type: integer
+    display_name: Slow-K Period
+    hint: Smoothing for making the Slow-K line. Usually set to 3
+    range: [1, 100000]
+    default: 3
+    suggested: [1, 200, 1]
+  - name: optInSlowK_MAType
+    type: enum:MAType
+    display_name: Slow-K MA
+    hint: Type of Moving Average for Slow-K
+    default: 13
+  - name: optInSlowD_Period
+    type: integer
+    display_name: Slow-D Period
+    hint: Smoothing for making the Slow-D line
+    range: [1, 100000]
+    default: 3
+    suggested: [1, 200, 1]
+  - name: optInSlowD_MAType
+    type: enum:MAType
+    display_name: Slow-D MA
+    hint: Type of Moving Average for Slow-D
+    default: 13
+outputs:
+  - name: outK
+    type: real
+    flags: [line]
+  - name: outD
+    type: real
+    flags: [line]
+  - name: outJ
+    type: real
+    flags: [line]

@@ -61,14 +61,18 @@ const INHERITED: &[(&str, &str)] = &[
     ("SUPERTREND", "ATR"),
     ("TEMA", "EMA"),
     ("TRIX", "EMA"),
+    ("TSI", "EMA"),
     ("ZLEMA", "EMA"),
 ];
 
 /// Functions whose stability is the caller's MA-type choice. Measured: BBANDS, MA,
 /// MACDEXT, MAVP, STOCH and STOCHF are stable at their (SMA) defaults and unstable with
-/// EMA; APO, PPO and PVO default to EMA and so move even at defaults.
-const MATYPE_DEPENDENT: &[&str] =
-    &["APO", "BBANDS", "MA", "MACDEXT", "MAVP", "PPO", "PVO", "STOCH", "STOCHF", "STOCHRSI"];
+/// EMA; APO, PPO, PVO and KDJ default to a recursive average and so move even at
+/// defaults.
+const MATYPE_DEPENDENT: &[&str] = &[
+    "APO", "BBANDS", "KDJ", "MA", "MACDEXT", "MAVP", "PPO", "PVO", "STOCH", "STOCHF",
+    "STOCHRSI",
+];
 
 #[test]
 fn classification_matches_the_measured_library() {

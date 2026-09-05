@@ -109,6 +109,7 @@ HT_TRENDMODE        Hilbert Transform - Trend vs Cycle Mode
 IMI                 Intraday Momentum Index
 KAMA                Kaufman Adaptive Moving Average
 KC                  Keltner Channels
+KDJ                 KDJ Stochastic
 LINEARREG           Linear Regression
 LINEARREG_ANGLE     Linear Regression Angle
 LINEARREG_INTERCEPT Linear Regression Intercept
@@ -178,6 +179,7 @@ TRANGE              True Range
 TRIMA               Triangular Moving Average
 TRIX                1-day Rate-Of-Change (ROC) of a Triple Smooth EMA
 TSF                 Time Series Forecast
+TSI                 True Strength Index
 TYPPRICE            Typical Price
 ULTOSC              Ultimate Oscillator
 VAR                 Variance

@@ -773,6 +773,10 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * pipeline shifts with UNST_EMA. Measured: outBegIdx 45 -> 54 at the
      * defaults when the unstable period is set to 3. */
     {"SMI",          TA_FUNC_UNST_EMA},
+    /* TSI carries the raw momentum and its magnitude through two EMA stages
+     * seeded exactly as ema.c seeds, and its lookback sums two ema_lookback()
+     * terms, so both stage anchors and the whole line shift with UNST_EMA. */
+    {"TSI",          TA_FUNC_UNST_EMA},
     /* ADXR/STOCHRSI own knobs were inert and retired (#129); they converge
      * via their internal ADX/RSI, like the EMA-derived set above. */
     {"ADXR",         TA_FUNC_UNST_ADX},
@@ -786,6 +790,13 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * warm-up loop the body carries for exactly that setting is never entered on
      * the streaming path in any of the four. */
     {"SUPERTREND",   TA_FUNC_UNST_ATR},
+    /* KDJ declares no unstable flag of its own -- its instability arrives
+     * through the MA type its two smoothing hops select, and the default is
+     * the recursive RMA. Without a row here stability_class() falls to the
+     * EPSILON default and the range sweep compares a converging function at
+     * ~1e-13; the second consumer is the stream K-leg, whose v == 0 defaults
+     * vector runs only for a function this map calls unstable. */
+    {"KDJ",          TA_FUNC_UNST_RMA},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))
 

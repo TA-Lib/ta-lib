@@ -231,6 +231,7 @@ public final class Functions {
       put(m, f_IMI());
       put(m, f_KAMA());
       put(m, f_KC());
+      put(m, f_KDJ());
       put(m, f_LINEARREG());
       put(m, f_LINEARREG_ANGLE());
       put(m, f_LINEARREG_INTERCEPT());
@@ -300,6 +301,7 @@ public final class Functions {
       put(m, f_TRIMA());
       put(m, f_TRIX());
       put(m, f_TSF());
+      put(m, f_TSI());
       put(m, f_TYPPRICE());
       put(m, f_ULTOSC());
       put(m, f_VAR());
@@ -1953,6 +1955,46 @@ public final class Functions {
          ));
    }
 
+   private static FunctionInfo f_KDJ() {
+      return new FunctionInfo(
+         "KDJ", "Momentum Indicators", "KDJ Stochastic", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastK_Period", 0x00000000,
+               "Fast-K Period", "Time period for building the Fast-K line", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowK_Period", 0x00000000,
+               "Slow-K Period", "Smoothing for making the Slow-K line. Usually set to 3", 3.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInSlowK_MAType", 0x00000000,
+               "Slow-K MA", "Type of Moving Average for Slow-K", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA"),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowD_Period", 0x00000000,
+               "Slow-D Period", "Smoothing for making the Slow-D line", 3.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_LIST, "optInSlowD_MAType", 0x00000000,
+               "Slow-D MA", "Type of Moving Average for Slow-D", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               0, 0, 0, 0, 0, "0=SMA;1=EMA;2=WMA;3=DEMA;4=TEMA;5=TRIMA;6=KAMA;7=MAMA;8=T3;9=HMA;10=DISABLED;11=DEFAULT;12=ZLEMA;13=RMA")
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outK", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outD", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outJ", 0x00000001)
+         ));
+   }
+
    private static FunctionInfo f_LINEARREG() {
       return new FunctionInfo(
          "LINEARREG", "Statistic Functions", "Linear Regression", 0x03000000,
@@ -3311,6 +3353,29 @@ public final class Functions {
                "Time Period", "Time period", 14.0,
                0.0, 0.0, 0, 0.0, 0.0, 0.0,
                2, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_TSI() {
+      return new FunctionInfo(
+         "TSI", "Momentum Indicators", "True Strength Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFirstPeriod", 0x00000000,
+               "First Smoothing Period", "Period of the first smoothing, applied to the raw momentum", 25.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 100, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSecondPeriod", 0x00000000,
+               "Second Smoothing Period", "Period of the second smoothing, applied to the first", 13.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 50, 1, null)
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)

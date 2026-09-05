@@ -49,6 +49,8 @@ ErrorNumber test_func_cmou    ( TA_History *history );
 ErrorNumber test_func_fosc    ( TA_History *history );
 ErrorNumber test_func_zlema   ( TA_History *history );
 ErrorNumber test_func_vhf     ( TA_History *history );
+ErrorNumber test_func_tsi     ( TA_History *history );
+ErrorNumber test_func_kdj     ( TA_History *history );
 ErrorNumber test_func_dpo     ( TA_History *history );
 ErrorNumber test_func_percentrank( TA_History *history );
 ErrorNumber test_func_percentile( TA_History *history );
