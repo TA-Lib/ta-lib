@@ -15987,6 +15987,101 @@ fn legs_VHF(r: &mut Report) {
     r.legs_done("VHF", 1);
 }
 
+const V_VORTEX: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 1i32),
+];
+
+fn sub_VORTEX(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_VORTEX {
+        let Ok(lb) = core.VORTEX_Lookback(optInTimePeriod) else { continue; };
+        r.control("VORTEX", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outPlusVI: Vec<f64> = Vec::with_capacity(1);
+            let mut outMinusVI: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.VORTEX_Impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outPlusVI, &mut outMinusVI);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("VORTEX", label); continue; }
+        r.quiet("VORTEX", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outPlusVI: Vec<f64> = Vec::with_capacity(1);
+            let mut outMinusVI: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.VORTEX_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outPlusVI, &mut outMinusVI);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_VORTEX(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.VORTEX_Lookback(optInTimePeriod) else { r.no_legs("VORTEX"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outPlusVI: Vec<f64> = vec![Default::default(); 5];
+        let mut outMinusVI: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("VORTEX", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.VORTEX_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outPlusVI, &mut outMinusVI);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outPlusVI: Vec<f64> = vec![Default::default(); 5];
+        let mut outMinusVI: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VORTEX", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.VORTEX_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outPlusVI, &mut outMinusVI);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outPlusVI: Vec<f64> = vec![Default::default(); 5];
+        let mut outMinusVI: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VORTEX", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.VORTEX_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outPlusVI, &mut outMinusVI);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outPlusVI: Vec<f64> = vec![Default::default(); 5];
+        let mut outMinusVI: Vec<f64> = vec![Default::default(); 5];
+        r.leg("VORTEX", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.VORTEX_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outPlusVI, &mut outMinusVI);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("VORTEX", 3);
+}
+
 const V_VWAP: &[&str] = &[
     "defaults",
 ];
@@ -16734,6 +16829,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ULTOSC", sub_ULTOSC, legs_ULTOSC),
     ("VAR", sub_VAR, legs_VAR),
     ("VHF", sub_VHF, legs_VHF),
+    ("VORTEX", sub_VORTEX, legs_VORTEX),
     ("VWAP", sub_VWAP, legs_VWAP),
     ("VWMA", sub_VWMA, legs_VWMA),
     ("WAD", sub_WAD, legs_WAD),
@@ -16779,7 +16875,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 195, "probe count");
+    assert_eq!(PROBES.len(), 196, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

@@ -418,6 +418,8 @@ pub enum FuncId {
     VAR,
     /// Vertical Horizontal Filter — [`Core::VHF`](crate::Core::VHF).
     VHF,
+    /// Vortex Indicator — [`Core::VORTEX`](crate::Core::VORTEX).
+    VORTEX,
     /// Volume Weighted Average Price — [`Core::VWAP`](crate::Core::VWAP).
     VWAP,
     /// Volume Weighted Moving Average — [`Core::VWMA`](crate::Core::VWMA).
@@ -436,7 +438,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 195;
+    pub const COUNT: usize = 196;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -761,7 +763,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 195] = [
+static FUNC_TABLE: [FuncInfo; 196] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -2831,6 +2833,17 @@ static FUNC_TABLE: [FuncInfo; 195] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::VORTEX,
+        name: "VORTEX",
+        group: Group::MomentumIndicators,
+        hint: "Vortex Indicator",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Number of bars in the rolling sums", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outPlusVI", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outMinusVI", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::VWAP,
         name: "VWAP",
         group: Group::VolumeIndicators,
@@ -3113,6 +3126,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ULTOSC" => FuncId::ULTOSC,
         "VAR" => FuncId::VAR,
         "VHF" => FuncId::VHF,
+        "VORTEX" => FuncId::VORTEX,
         "VWAP" => FuncId::VWAP,
         "VWMA" => FuncId::VWMA,
         "WAD" => FuncId::WAD,
@@ -3565,6 +3579,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ULTOSC => self.core.ULTOSC_Lookback(self.int_opt[0], self.int_opt[1], self.int_opt[2]),
             FuncId::VAR => self.core.VAR_Lookback(self.int_opt[0], self.real_opt[1]),
             FuncId::VHF => self.core.VHF_Lookback(self.int_opt[0]),
+            FuncId::VORTEX => self.core.VORTEX_Lookback(self.int_opt[0]),
             FuncId::VWAP => self.core.VWAP_Lookback(),
             FuncId::VWMA => self.core.VWMA_Lookback(self.int_opt[0]),
             FuncId::WAD => self.core.WAD_Lookback(),
@@ -5837,6 +5852,21 @@ impl<'a> ParamHolder<'a> {
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.VHF(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::VORTEX => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.VORTEX(start_idx, end_idx, i0_1, i0_2, i0_3, self.int_opt[0], &mut *o0, &mut *o1);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
                     Err(e) => e,

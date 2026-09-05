@@ -7948,6 +7948,51 @@ static const TA_VOptSpec TA_VOpt_VHF[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 28.0 },
 };
 
+static TA_RetCode TA_VORTEX_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_VORTEX(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outPlusVI */,
+               outReal[1] /* outMinusVI */
+               );
+}
+static TA_RetCode TA_VORTEX_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_VORTEX(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outPlusVI */,
+               outReal[1] /* outMinusVI */
+               );
+}
+
+static const TA_VInputKind TA_VIn_VORTEX[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_VORTEX[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_VORTEX[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
+};
+
 static TA_RetCode TA_VWAP_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8609,6 +8654,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_VAR, 2, TA_VOpt_VAR, 1, TA_VOutIsInt_VAR, 0 },
    { "VHF", TA_VHF_VFrameD, TA_VHF_VFrameS,
      1, TA_VIn_VHF, 1, TA_VOpt_VHF, 1, TA_VOutIsInt_VHF, 0 },
+   { "VORTEX", TA_VORTEX_VFrameD, TA_VORTEX_VFrameS,
+     3, TA_VIn_VORTEX, 1, TA_VOpt_VORTEX, 2, TA_VOutIsInt_VORTEX, 0 },
    { "VWAP", TA_VWAP_VFrameD, TA_VWAP_VFrameS,
      4, TA_VIn_VWAP, 0, NULL, 1, TA_VOutIsInt_VWAP, 0 },
    { "VWMA", TA_VWMA_VFrameD, TA_VWMA_VFrameS,
@@ -8625,6 +8672,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 195
+#define TA_VARIANT_TABLE_SIZE 196
 
 #endif /* TA_VARIANT_FRAME_H */

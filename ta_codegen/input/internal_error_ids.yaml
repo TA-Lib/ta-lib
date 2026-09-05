@@ -18,7 +18,7 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 424
+next: 425
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
@@ -254,6 +254,7 @@ sites:
   ULTOSC.circbuf.term: 392
   VAR.extrema: 394
   VHF.wincap.i: 405
+  VORTEX.ringlag.trailingIdx: 424
   VWMA.ringcap.trailingIdx: 395
   WILLR.circbuf.preHighest: 397
   WILLR.circbuf.preLowest: 399
