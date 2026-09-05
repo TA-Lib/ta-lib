@@ -213,6 +213,7 @@ struct TA_TYPPRICE_Stream;
 struct TA_ULTOSC_Stream;
 struct TA_VAR_Stream;
 struct TA_VHF_Stream;
+struct TA_VORTEX_Stream;
 struct TA_VWAP_Stream;
 struct TA_VWMA_Stream;
 struct TA_WAD_Stream;
@@ -409,6 +410,7 @@ TA_RetCode TA_TYPPRICE_OpenInternal( struct TA_TYPPRICE_Stream **stream, const d
 TA_RetCode TA_ULTOSC_OpenInternal( struct TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, double *outReal );
 TA_RetCode TA_VAR_OpenInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, double *outReal );
 TA_RetCode TA_VHF_OpenInternal( struct TA_VHF_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_VORTEX_OpenInternal( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outPlusVI, double *outMinusVI );
 TA_RetCode TA_VWAP_OpenInternal( struct TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_VWMA_OpenInternal( struct TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_WAD_OpenInternal( struct TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, double *outReal );
@@ -606,6 +608,7 @@ TA_RetCode TA_TYPPRICE_OpenAndFillInternal( struct TA_TYPPRICE_Stream **stream, 
 TA_RetCode TA_ULTOSC_OpenAndFillInternal( struct TA_ULTOSC_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod1, int optInTimePeriod2, int optInTimePeriod3, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_VAR_OpenAndFillInternal( struct TA_VAR_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double optInNbDev, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_VHF_OpenAndFillInternal( struct TA_VHF_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_VORTEX_OpenAndFillInternal( struct TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[] );
 TA_RetCode TA_VWAP_OpenAndFillInternal( struct TA_VWAP_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], const double inVolume[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_VWMA_OpenAndFillInternal( struct TA_VWMA_Stream **stream, const double inReal[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_WAD_OpenAndFillInternal( struct TA_WAD_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );

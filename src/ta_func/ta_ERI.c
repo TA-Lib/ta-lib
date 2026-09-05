@@ -571,7 +571,7 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
    }
    }
 
-   return TA_INTERNAL_ERROR(424);
+   return TA_INTERNAL_ERROR(425);
 }
 
 /* Private function, not in public API. */

@@ -856,6 +856,7 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_mfi,       "MFI" );
    DO_TEST( test_func_vwap,      "VWAP" );
    DO_TEST( test_func_cmou,      "CMOU" );
+   DO_TEST( test_func_vortex,    "VORTEX" );
    DO_TEST( test_func_eri,       "ERI" );
    DO_TEST( test_func_cumsum,    "CUMSUM" );
    DO_TEST( test_func_zlema,     "ZLEMA" );

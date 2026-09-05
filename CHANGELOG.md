@@ -44,6 +44,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - SUPERTREND: SuperTrend, an ATR-scaled trailing band with a trend flag (#272)
   - TSI: True Strength Index, a double-smoothed momentum oscillator bounded by +/-100 (#360)
   - VHF: Vertical Horizontal Filter, a trend-versus-range strength filter (#346)
+  - VORTEX: Vortex Indicator (#349)
   - VWAP: Volume Weighted Average Price (#237)
   - VWMA: Volume Weighted Moving Average (#131)
   - WAD: Williams' Accumulation/Distribution (#200)

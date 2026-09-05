@@ -90,6 +90,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [TSI](/functions/tsi.md) — True Strength Index
 - [ULTOSC](/functions/ultosc.md) — Ultimate Oscillator
 - [VHF](/functions/vhf.md) — Vertical Horizontal Filter
+- [VORTEX](/functions/vortex.md) — Vortex Indicator
 - [WAD](/functions/wad.md) — Williams' Accumulation/Distribution
 - [WILLR](/functions/willr.md) — Williams' %R
 
