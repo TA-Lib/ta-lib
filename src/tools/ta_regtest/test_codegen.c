@@ -720,6 +720,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
      * enum entries are retained for ABI but no longer advertise instability.
      */
     {"KAMA",         TA_FUNC_UNST_KAMA},
+    {"ERI",          TA_FUNC_UNST_EMA},
     {"MAMA",         TA_FUNC_UNST_MAMA},
     {"MINUS_DI",     TA_FUNC_UNST_MINUS_DI},
     {"MINUS_DM",     TA_FUNC_UNST_MINUS_DM},

@@ -214,6 +214,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeEfi(),
             MakeEma(),
             MakeEr(),
+            MakeEri(),
             MakeExp(),
             MakeFloor(),
             MakeFosc(),
@@ -2499,6 +2500,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.ER(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeEri() => new(
+        name: "ERI",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Elder Ray Index (Bull Power / Bear Power)",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the EMA of close", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 13, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outBullPower", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outBearPower", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ERI_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.ERI(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
     private static FunctionInfo MakeExp() => new(
         name: "EXP",

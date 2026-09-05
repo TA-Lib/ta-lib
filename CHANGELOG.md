@@ -24,6 +24,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - DONCHIAN: Donchian Channels, the rolling extrema bands (#342)
   - DPO: Detrended Price Oscillator, price displaced back a half cycle less its moving average (#363)
   - ER: Kaufman Efficiency Ratio (#350)
+  - ERI: Elder Ray Index, Bull Power / Bear Power (#361)
   - EFI: Elder's Force Index (#206)
   - FOSC: Forecast Oscillator, the close against the previous bar's time series forecast (#345)
   - HMA: Hull Moving Average (#139)

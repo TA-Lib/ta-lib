@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 197 technical-analysis indicators — moving averages, momentum oscillators,
+//! 198 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -170,7 +170,7 @@
 //! * [`TAN`](Core::TAN) — Vector Trigonometric Tan
 //! * [`TANH`](Core::TANH) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (45)
+//! ## Momentum Indicators (46)
 //!
 //! * [`AC`](Core::AC) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::ADX) — Average Directional Movement Index
@@ -187,6 +187,7 @@
 //! * [`DPO`](Core::DPO) — Detrended Price Oscillator
 //! * [`DX`](Core::DX) — Directional Movement Index
 //! * [`ER`](Core::ER) — Kaufman Efficiency Ratio
+//! * [`ERI`](Core::ERI) — Elder Ray Index (Bull Power / Bear Power)
 //! * [`FOSC`](Core::FOSC) — Forecast Oscillator
 //! * [`IMI`](Core::IMI) — Intraday Momentum Index
 //! * [`KDJ`](Core::KDJ) — KDJ Stochastic

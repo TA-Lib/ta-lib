@@ -4352,6 +4352,51 @@ static const TA_VOptSpec TA_VOpt_ER[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 10.0 },
 };
 
+static TA_RetCode TA_ERI_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_ERI(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outBullPower */,
+               outReal[1] /* outBearPower */
+               );
+}
+static TA_RetCode TA_ERI_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_ERI(
+               startIdx,
+               endIdx,
+               in[0] /* inHigh */,
+               in[1] /* inLow */,
+               in[2] /* inClose */,
+               (int)optIn[0] /* optInTimePeriod */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outBullPower */,
+               outReal[1] /* outBearPower */
+               );
+}
+
+static const TA_VInputKind TA_VIn_ERI[] = { TA_VIN_HIGH, TA_VIN_LOW, TA_VIN_CLOSE };
+static const int TA_VOutIsInt_ERI[] = { 0, 0 };
+static const TA_VOptSpec TA_VOpt_ERI[] = {
+   { "optInTimePeriod", TA_VOPT_INT, 1.0, 100000.0, 13.0 },
+};
+
 static TA_RetCode TA_EXP_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -8519,6 +8564,8 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_EMA, 1, TA_VOpt_EMA, 1, TA_VOutIsInt_EMA, 0 },
    { "ER", TA_ER_VFrameD, TA_ER_VFrameS,
      1, TA_VIn_ER, 1, TA_VOpt_ER, 1, TA_VOutIsInt_ER, 0 },
+   { "ERI", TA_ERI_VFrameD, TA_ERI_VFrameS,
+     3, TA_VIn_ERI, 1, TA_VOpt_ERI, 2, TA_VOutIsInt_ERI, 0 },
    { "EXP", TA_EXP_VFrameD, TA_EXP_VFrameS,
      1, TA_VIn_EXP, 0, NULL, 1, TA_VOutIsInt_EXP, 0 },
    { "FLOOR", TA_FLOOR_VFrameD, TA_FLOOR_VFrameS,
@@ -8713,6 +8760,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 197
+#define TA_VARIANT_TABLE_SIZE 198
 
 #endif /* TA_VARIANT_FRAME_H */

@@ -359,6 +359,9 @@ final class Dispatch {
          case "ER":
             return core.ER(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "ERI":
+            return core.ERI(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0), h.realOutput(1));
          case "EXP":
             return core.EXP(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
@@ -860,6 +863,8 @@ final class Dispatch {
             return core.EMA_Lookback(h.intOpt(0));
          case "ER":
             return core.ER_Lookback(h.intOpt(0));
+         case "ERI":
+            return core.ERI_Lookback(h.intOpt(0));
          case "EXP":
             return core.EXP_Lookback();
          case "FLOOR":

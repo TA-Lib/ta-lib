@@ -125,6 +125,7 @@ struct TA_DX_Stream;
 struct TA_EFI_Stream;
 struct TA_EMA_Stream;
 struct TA_ER_Stream;
+struct TA_ERI_Stream;
 struct TA_EXP_Stream;
 struct TA_FLOOR_Stream;
 struct TA_FOSC_Stream;
@@ -322,6 +323,7 @@ TA_RetCode TA_DX_OpenInternal( struct TA_DX_Stream **stream, const double inHigh
 TA_RetCode TA_EFI_OpenInternal( struct TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_EMA_OpenInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
 TA_RetCode TA_ER_OpenInternal( struct TA_ER_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
+TA_RetCode TA_ERI_OpenInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double *outBullPower, double *outBearPower );
 TA_RetCode TA_EXP_OpenInternal( struct TA_EXP_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_FLOOR_OpenInternal( struct TA_FLOOR_Stream **stream, const double inReal[], int startIdx, int historyLen, double *outReal );
 TA_RetCode TA_FOSC_OpenInternal( struct TA_FOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, double *outReal );
@@ -521,6 +523,7 @@ TA_RetCode TA_DX_OpenAndFillInternal( struct TA_DX_Stream **stream, const double
 TA_RetCode TA_EFI_OpenAndFillInternal( struct TA_EFI_Stream **stream, const double inClose[], const double inVolume[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_EMA_OpenAndFillInternal( struct TA_EMA_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_ER_OpenAndFillInternal( struct TA_ER_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );
+TA_RetCode TA_ERI_OpenAndFillInternal( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[] );
 TA_RetCode TA_EXP_OpenAndFillInternal( struct TA_EXP_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_FLOOR_OpenAndFillInternal( struct TA_FLOOR_Stream **stream, const double inReal[], int startIdx, int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
 TA_RetCode TA_FOSC_OpenAndFillInternal( struct TA_FOSC_Stream **stream, const double inReal[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outReal[] );

@@ -99,6 +99,7 @@ DX                  Directional Movement Index
 EFI                 Elder's Force Index
 EMA                 Exponential Moving Average
 ER                  Kaufman Efficiency Ratio
+ERI                 Elder Ray Index (Bull Power / Bear Power)
 EXP                 Vector Arithmetic Exp
 FLOOR               Vector Floor
 FOSC                Forecast Oscillator

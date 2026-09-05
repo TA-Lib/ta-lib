@@ -52,6 +52,7 @@ const INHERITED: &[(&str, &str)] = &[
     ("ADXR", "ADX"),
     ("CVI", "EMA"),
     ("DEMA", "EMA"),
+    ("ERI", "EMA"),
     ("KC", "ATR"),
     ("MACD", "EMA"),
     ("MACDFIX", "EMA"),
