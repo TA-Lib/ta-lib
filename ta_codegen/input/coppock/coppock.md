@@ -30,6 +30,19 @@ The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale varia
 - `optInROC1Period` — Short rate-of-change period
 - `optInROC2Period` — Long rate-of-change period
 
+## Notes
+
+- The single fused pass is bit-identical to running `ROC + ROC` into [`WMA`](/functions/wma).
+- First output at `max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1`. Not start-dependent: each output depends only on its finite trailing window.
+
 ## Implementation
 
-The WMA stage reproduces [`WMA`](/functions/wma)'s recurrence verbatim — the periodSum/periodSub carry, the double triangle divider and the periodic re-anchor — so the fused single pass is bit-identical to running `ROC + ROC` into `WMA`. First output at `max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1`; with the defaults, 23 bars of lookback. Not start-dependent: each output depends only on the finite trailing window.
+TA-Lib Definition: [`coppock.c`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/coppock/coppock.c) · [`coppock.yaml`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/input/coppock/coppock.yaml)
+
+| Native | File |
+|--------|------|
+| C | [`ta_COPPOCK.c`](https://github.com/TA-Lib/ta-lib/blob/main/src/ta_func/ta_COPPOCK.c) |
+| Rust | [`coppock.rs`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/rust/library/src/ta_func/coppock.rs) |
+| Java | [`Core_COPPOCK.java`](https://github.com/TA-Lib/ta-lib/blob/main/ta_codegen/output/java/fragments/Core_COPPOCK.java) |
+
+TA-Lib is also available for Python, R and more using a [wrapper](/install/#wrappers).

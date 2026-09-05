@@ -294,11 +294,12 @@ public partial class Core
          sRing[sRing_Idx] = tempReal;
          sRing_Idx++;
          if( sRing_Idx > maxIdx_sRing ) { sRing_Idx = 0; }
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( optInWMAPeriod == 1 ) {
             outReal[outIdx] = tempReal;
@@ -477,6 +478,10 @@ public partial class Core
    /// The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period &gt; optInROC2Period` is accepted rather than rejected.
    /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into [<c>WMA</c>](/functions/wma).</description></item>
+   /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
+   /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -548,6 +553,10 @@ public partial class Core
    /// The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period &gt; optInROC2Period` is accepted rather than rejected.
    /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
    /// </code>
+   /// <list type="bullet">
+   /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into [<c>WMA</c>](/functions/wma).</description></item>
+   /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
+   /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
@@ -811,11 +820,12 @@ public partial class Core
          if( sRing_Idx > sp.maxIdx_sRing ) {
             sRing_Idx = 0;
          }
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( sp.optInWMAPeriod == 1 ) {
             cur_outReal = tempReal;
@@ -934,11 +944,12 @@ public partial class Core
       if( sp.sRing_Idx > sp.maxIdx_sRing ) {
          sp.sRing_Idx = 0;
       }
-      /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-       * path. The recurrence is NOT exact there: periodSub's
-       * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-       * from the third output on (measured on TA_SREF: bar 24 at w=1
-       * differs in the last bit), so the identity case answers directly.
+      /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+       * and TA_WMA ships an exact copy fast path, but the recurrence here is
+       * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+       * read-before-write ring hands back the wrong trailing value. Deleting
+       * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+       * to -6.4591709868291103.
        */
       if( sp.optInWMAPeriod == 1 ) {
          sp.cur_outReal = tempReal;
@@ -1149,11 +1160,12 @@ public partial class Core
          sRing[sRing_Idx] = tempReal;
          sRing_Idx++;
          if( sRing_Idx > maxIdx_sRing ) { sRing_Idx = 0; }
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( optInWMAPeriod == 1 ) {
             outReal[outIdx * outStride] = tempReal;

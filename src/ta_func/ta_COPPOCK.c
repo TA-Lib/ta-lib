@@ -196,7 +196,7 @@ TA_LIB_API TA_RetCode TA_COPPOCK( int    startIdx,
    {
       ringSize = 1;
    }
-   if( ringSize < 1 ) return TA_INTERNAL_ERROR(416);
+   if( ringSize < 1 ) return TA_INTERNAL_ERROR(420);
    if( (int)ringSize > (int)(sizeof(local_sRing)/sizeof(double)) )
    {
       sRing = TA_Malloc( sizeof(double)*ringSize );
@@ -296,11 +296,12 @@ TA_LIB_API TA_RetCode TA_COPPOCK( int    startIdx,
       sRing[sRing_Idx] = tempReal;
       sRing_Idx++;
       if( sRing_Idx > maxIdx_sRing ) sRing_Idx = 0;
-      /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-       * path. The recurrence is NOT exact there: periodSub's
-       * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-       * from the third output on (measured on TA_SREF: bar 24 at w=1
-       * differs in the last bit), so the identity case answers directly.
+      /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+       * and TA_WMA ships an exact copy fast path, but the recurrence here is
+       * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+       * read-before-write ring hands back the wrong trailing value. Deleting
+       * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+       * to -6.4591709868291103.
        */
       if( optInWMAPeriod == 1 )
       {
@@ -397,7 +398,7 @@ TA_RetCode TA_S_COPPOCK( int    startIdx,
    {
       ringSize = 1;
    }
-   if( ringSize < 1 ) return TA_INTERNAL_ERROR(416);
+   if( ringSize < 1 ) return TA_INTERNAL_ERROR(420);
    if( (int)ringSize > (int)(sizeof(local_sRing)/sizeof(double)) )
    {
       sRing = TA_Malloc( sizeof(double)*ringSize );
@@ -606,11 +607,12 @@ static void TA_COPPOCK_StepImpl( struct TA_COPPOCK_Stream *sp, double inReal, do
    {
       sp->sRing_Idx = 0;
    }
-   /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-    * path. The recurrence is NOT exact there: periodSub's
-    * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-    * from the third output on (measured on TA_SREF: bar 24 at w=1
-    * differs in the last bit), so the identity case answers directly.
+   /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+    * and TA_WMA ships an exact copy fast path, but the recurrence here is
+    * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+    * read-before-write ring hands back the wrong trailing value. Deleting
+    * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+    * to -6.4591709868291103.
     */
    if( sp->optInWMAPeriod == 1 )
    {
@@ -748,7 +750,7 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       {
          ringSize = 1;
       }
-      if( ringSize < 1 ) return TA_INTERNAL_ERROR(416);
+      if( ringSize < 1 ) return TA_INTERNAL_ERROR(420);
       if( (int)ringSize > (int)(sizeof(local_sRing)/sizeof(double)) )
       {
          sRing = TA_Malloc( sizeof(double)*ringSize );
@@ -848,11 +850,12 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
          sRing[sRing_Idx] = tempReal;
          sRing_Idx++;
          if( sRing_Idx > maxIdx_sRing ) sRing_Idx = 0;
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( optInWMAPeriod == 1 )
          {
@@ -884,7 +887,7 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       sp->sRing_Idx = sRing_Idx;
       sp->maxIdx_sRing = maxIdx_sRing;
       sp->ringCap_roc1Idx = (int)(inIdx - roc1Idx);
-      if( sp->ringCap_roc1Idx < 0 || sp->ringCap_roc1Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(417); }
+      if( sp->ringCap_roc1Idx < 0 || sp->ringCap_roc1Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(421); }
       { size_t allocN = (size_t)(sp->ringCap_roc1Idx > 0 ? sp->ringCap_roc1Idx : 1);
         sp->ring_roc1Idx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_roc1Idx_inReal ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -892,7 +895,7 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       }
       sp->ringPos_roc1Idx = 0;
       sp->ringCap_roc2Idx = (int)(inIdx - roc2Idx);
-      if( sp->ringCap_roc2Idx < 0 || sp->ringCap_roc2Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(418); }
+      if( sp->ringCap_roc2Idx < 0 || sp->ringCap_roc2Idx > historyLen ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(422); }
       { size_t allocN = (size_t)(sp->ringCap_roc2Idx > 0 ? sp->ringCap_roc2Idx : 1);
         sp->ring_roc2Idx_inReal = (double *)TA_Malloc( sizeof(double) * allocN );
         if( !sp->ring_roc2Idx_inReal ) { TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
@@ -900,7 +903,7 @@ static TA_RetCode TA_COPPOCK_OpenImpl( struct TA_COPPOCK_Stream **stream, const 
       }
       sp->ringPos_roc2Idx = 0;
       sp->cbSize_sRing = maxIdx_sRing + 1;
-      if( sp->cbSize_sRing < 1 || sp->cbSize_sRing > historyLen + 1 ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(419); }
+      if( sp->cbSize_sRing < 1 || sp->cbSize_sRing > historyLen + 1 ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(423); }
       sp->cb_sRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_sRing );
       if( !sp->cb_sRing ) { if( sRing != &local_sRing[0] ) { TA_Free( sRing ); } TA_COPPOCK_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_sRing, sRing, sizeof(double) * (size_t)sp->cbSize_sRing );
@@ -1045,11 +1048,12 @@ TA_LIB_API TA_RetCode TA_COPPOCK_Peek( const TA_COPPOCK_Stream *stream, double i
    {
       sRing_Idx = 0;
    }
-   /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-    * path. The recurrence is NOT exact there: periodSub's
-    * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-    * from the third output on (measured on TA_SREF: bar 24 at w=1
-    * differs in the last bit), so the identity case answers directly.
+   /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+    * and TA_WMA ships an exact copy fast path, but the recurrence here is
+    * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+    * read-before-write ring hands back the wrong trailing value. Deleting
+    * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+    * to -6.4591709868291103.
     */
    if( sp->optInWMAPeriod == 1 )
    {

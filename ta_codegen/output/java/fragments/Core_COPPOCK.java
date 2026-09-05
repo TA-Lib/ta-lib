@@ -245,11 +245,12 @@
          sRing[sRing_Idx] = tempReal;
          sRing_Idx++;
          if( sRing_Idx > maxIdx_sRing ) { sRing_Idx = 0; }
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( optInWMAPeriod == 1 ) {
             outReal[outIdx] = tempReal;
@@ -424,6 +425,11 @@
     * The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period > optInROC2Period` is accepted rather than rejected.
     * The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into [{@code WMA}](/functions/wma).</li>
+    * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
+    * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -490,6 +496,11 @@
     * The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period > optInROC2Period` is accepted rather than rejected.
     * The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
     * }</pre>
+    * <p><b>Notes</b>
+    * <ul>
+    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into [{@code WMA}](/functions/wma).</li>
+    * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
+    * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -766,11 +777,12 @@
          if( sRing_Idx > sp.maxIdx_sRing ) {
             sRing_Idx = 0;
          }
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( sp.optInWMAPeriod == 1 ) {
             cur_outReal = tempReal;
@@ -866,11 +878,12 @@
       if( sp.sRing_Idx > sp.maxIdx_sRing ) {
          sp.sRing_Idx = 0;
       }
-      /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-       * path. The recurrence is NOT exact there: periodSub's
-       * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-       * from the third output on (measured on TA_SREF: bar 24 at w=1
-       * differs in the last bit), so the identity case answers directly.
+      /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+       * and TA_WMA ships an exact copy fast path, but the recurrence here is
+       * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+       * read-before-write ring hands back the wrong trailing value. Deleting
+       * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+       * to -6.4591709868291103.
        */
       if( sp.optInWMAPeriod == 1 ) {
          sp.cur_outReal = tempReal;
@@ -1078,11 +1091,12 @@
          sRing[sRing_Idx] = tempReal;
          sRing_Idx++;
          if( sRing_Idx > maxIdx_sRing ) { sRing_Idx = 0; }
-         /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-          * path. The recurrence is NOT exact there: periodSub's
-          * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-          * from the third output on (measured on TA_SREF: bar 24 at w=1
-          * differs in the last bit), so the identity case answers directly.
+         /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+          * and TA_WMA ships an exact copy fast path, but the recurrence here is
+          * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+          * read-before-write ring hands back the wrong trailing value. Deleting
+          * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+          * to -6.4591709868291103.
           */
          if( optInWMAPeriod == 1 ) {
             outReal[outIdx * outStride] = tempReal;

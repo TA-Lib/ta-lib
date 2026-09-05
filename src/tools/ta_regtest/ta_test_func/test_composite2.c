@@ -954,11 +954,14 @@ static ErrorNumber test_coppock_pins( const TA_History *history )
 }
 
 /* (3) FLAT INPUT => exactly 0.0 everywhere (every ROC is 0), and a ZERO in
- * the input => every output still finite, with TA_ROC's guard contributing
- * 0.0 instead of an infinity that would pollute a whole WMA window. The flat
- * half doubles as the guard's non-vacuity: a flat series never divides by
- * zero, so its exact zeros prove the 0.0 arm is what a zero denominator
- * lands on, not an accident of the data. */
+ * the input => every output finite AND equal to the composed reference.
+ *
+ * The flat half proves nothing about the guard: a flat series never divides by
+ * zero, so it takes the non-guard arm and its exact zeros are an accident of
+ * the data. Finiteness alone does not pin the guard either -- any finite
+ * neutral passes it. What pins it is the memcmp below against
+ * TA_ROC + TA_ROC -> TA_WMA, which carries TA_ROC's own guard: change
+ * COPPOCK's neutral away from 0.0 and that comparison is what fails. */
 static ErrorNumber test_coppock_flat_and_zero_guard( void )
 {
    static TA_Real in[64], out[64];
@@ -1005,6 +1008,47 @@ static ErrorNumber test_coppock_flat_and_zero_guard( void )
       if( out[i] != 0.0 )
          sawNonZero = 1;
    }
+   {
+      /* TA_ROC's guard is the arbiter of what a zero denominator contributes. */
+      static TA_Real gr1[64], gr2[64], gsum[64], gwma[64];
+      TA_Integer gb1, gn1, gb2, gn2, gbW, gnW;
+      int gi, gn, gmaxP, glb, gsWma;
+
+      gmaxP = 14;
+      glb   = TA_COPPOCK_Lookback( 10, 11, 14 );
+      if( TA_ROC( 0, 63, in, 11, &gb1, &gn1, gr1 ) != TA_SUCCESS ||
+          TA_ROC( 0, 63, in, 14, &gb2, &gn2, gr2 ) != TA_SUCCESS )
+      {
+         printf( "COPPOCK zero-guard Fail: reference TA_ROC failed\n" );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      gn = 64 - gmaxP;
+      for( gi = 0; gi < gn; gi++ )
+         gsum[gi] = gr1[gmaxP + gi - (int)gb1] + gr2[gmaxP + gi - (int)gb2];
+      gsWma = glb - gmaxP;
+      if( TA_WMA( gsWma, gn - 1, gsum, 10, &gbW, &gnW, gwma ) != TA_SUCCESS )
+      {
+         printf( "COPPOCK zero-guard Fail: reference TA_WMA failed\n" );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      if( (int)nb != (int)gnW )
+      {
+         printf( "COPPOCK zero-guard Fail: nb %d != reference %d\n",
+                 (int)nb, (int)gnW );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+      for( gi = 0; gi < (int)gnW; gi++ )
+      {
+         if( memcmp( &out[gi], &gwma[gi], sizeof(TA_Real) ) != 0 )
+         {
+            printf( "COPPOCK zero-guard Fail bar %d: %.17g != composed %.17g "
+                    "(the ROC zero-guard neutral is not TA_ROC's)\n",
+                    (int)beg + gi, out[gi], gwma[gi] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
    if( !sawNonZero )
    {
       printf( "COPPOCK zero-guard Fail: every output is 0.0 -- the leg is vacuous\n" );

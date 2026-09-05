@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 191 technical-analysis indicators — moving averages, momentum oscillators,
+//! 193 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -137,9 +137,10 @@
 //! * [`HT_SINE`](Core::HT_SINE) — Hilbert Transform - SineWave
 //! * [`HT_TRENDMODE`](Core::HT_TRENDMODE) — Hilbert Transform - Trend vs Cycle Mode
 //!
-//! ## Math Operators (11)
+//! ## Math Operators (12)
 //!
 //! * [`ADD`](Core::ADD) — Vector Arithmetic Add
+//! * [`CUMSUM`](Core::CUMSUM) — Cumulative Sum
 //! * [`DIV`](Core::DIV) — Vector Arithmetic Div
 //! * [`MAX`](Core::MAX) — Highest value over a specified period
 //! * [`MAXINDEX`](Core::MAXINDEX) — Index of highest value over a specified period
@@ -169,7 +170,7 @@
 //! * [`TAN`](Core::TAN) — Vector Trigonometric Tan
 //! * [`TANH`](Core::TANH) — Vector Trigonometric Tanh
 //!
-//! ## Momentum Indicators (40)
+//! ## Momentum Indicators (41)
 //!
 //! * [`AC`](Core::AC) — Accelerator/Decelerator Oscillator
 //! * [`ADX`](Core::ADX) — Average Directional Movement Index
@@ -182,6 +183,7 @@
 //! * [`CCI`](Core::CCI) — Commodity Channel Index
 //! * [`CMO`](Core::CMO) — Chande Momentum Oscillator
 //! * [`CMOU`](Core::CMOU) — Chande Momentum Oscillator (Unsmoothed)
+//! * [`COPPOCK`](Core::COPPOCK) — Coppock Curve
 //! * [`DPO`](Core::DPO) — Detrended Price Oscillator
 //! * [`DX`](Core::DX) — Directional Movement Index
 //! * [`FOSC`](Core::FOSC) — Forecast Oscillator

@@ -182,11 +182,12 @@ TA_RetCode coppock(int startIdx, int endIdx,
       sRing[sRing_Idx] = tempReal;
       CIRCBUF_NEXT(sRing);
 
-      /* WMA(1) is the identity, and TA_WMA ships it as an exact copy fast
-       * path. The recurrence is NOT exact there: periodSub's
-       * (prev + t) - prev round-off seeds periodSum with a 1-ULP residue
-       * from the third output on (measured on TA_SREF: bar 24 at w=1
-       * differs in the last bit), so the identity case answers directly.
+      /* Load-bearing, not a rounding nicety: keep it. WMA(1) is the identity
+       * and TA_WMA ships an exact copy fast path, but the recurrence here is
+       * off by a whole term at w == 1 -- ringSize clamps to 1, so the
+       * read-before-write ring hands back the wrong trailing value. Deleting
+       * this arm moves TA_SREF bar 16 at (1,11,14) from -11.311839169954585
+       * to -6.4591709868291103.
        */
       if( optInWMAPeriod == 1 )
          outReal[outIdx] = tempReal;

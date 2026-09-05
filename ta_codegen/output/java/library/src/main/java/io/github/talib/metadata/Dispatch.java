@@ -329,6 +329,9 @@ final class Dispatch {
          case "COSH":
             return core.COSH(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "CUMSUM":
+            return core.CUMSUM(
+               startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "CVI":
             return core.CVI(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
@@ -825,6 +828,8 @@ final class Dispatch {
             return core.COS_Lookback();
          case "COSH":
             return core.COSH_Lookback();
+         case "CUMSUM":
+            return core.CUMSUM_Lookback();
          case "CVI":
             return core.CVI_Lookback(h.intOpt(0), h.intOpt(1));
          case "DEMA":

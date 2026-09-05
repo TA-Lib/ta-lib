@@ -7146,6 +7146,76 @@ TA_LIB_API TA_RetCode TA_COSH_Value( const TA_COSH_Stream *stream, double *outRe
 TA_LIB_API TA_RetCode TA_COSH_Clone( const TA_COSH_Stream *stream, TA_COSH_Stream **clone );
 
 /*
+ * TA_CUMSUM - Cumulative Sum
+ * 
+ * Input  = double
+ * Output = double
+ * 
+ */
+TA_LIB_API TA_RetCode TA_CUMSUM( int    startIdx,
+                                 int    endIdx,
+                                            const double inReal[],
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outReal[] );
+
+TA_LIB_API TA_RetCode TA_S_CUMSUM( int    startIdx,
+                                   int    endIdx,
+                                              const float  inReal[],
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outReal[] );
+
+TA_LIB_API int TA_CUMSUM_Lookback( void );
+
+
+
+/*
+ * Streaming API for TA_CUMSUM — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_CUMSUM_Stream TA_CUMSUM_Stream;
+
+TA_LIB_API TA_RetCode TA_CUMSUM_Open( TA_CUMSUM_Stream **stream, const double inReal[], int historyLen, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CUMSUM_Update( TA_CUMSUM_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CUMSUM_Peek( const TA_CUMSUM_Stream *stream, double inReal, double *outReal );
+
+TA_LIB_API TA_RetCode TA_CUMSUM_Close( TA_CUMSUM_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_CUMSUM( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_CUMSUM_OpenAndFill( TA_CUMSUM_Stream **stream, const double inReal[], int historyLen, int *outBegIdx, int *outNBElement, double outReal[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_CUMSUM_Update calls, including the
+ * per-bar rejection. A rejected bar k leaves the bars before it committed and
+ * written, itself uncommitted and its output slot untouched; TA_StreamOutRange
+ * then reports k+1, the rejected bar being the last one counted. Outputs must
+ * not alias the inputs or each other.
+ */
+TA_LIB_API TA_RetCode TA_CUMSUM_UpdateAndFill( TA_CUMSUM_Stream *stream, const double inReal[], int barCount, double outReal[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update and UpdateAndFill, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_CUMSUM_Value( const TA_CUMSUM_Stream *stream, double *outReal );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_CUMSUM_Clone( const TA_CUMSUM_Stream *stream, TA_CUMSUM_Stream **clone );
+
+/*
  * TA_CVI - Chaikin's Volatility
  * 
  * Input  = High, Low
