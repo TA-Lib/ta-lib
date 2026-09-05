@@ -209,15 +209,17 @@ static ErrorNumber test_kdj_edges( const TA_History *history );
 static ErrorNumber test_kdj_aliasing( const TA_History *history );
 
 /* A small-magnitude series quoted around 1e-6, built from an exact rule so
- * nothing is transported. It pins that an ordinary low-priced instrument is
- * not zeroed.
+ * nothing is transported. It pins the OUTCOME issue #253 cares about: an
+ * instrument quoted far below 1.0 is not zeroed.
  *
- * It does NOT discriminate a fixed-band substitution, despite the shape of the
- * issue it cites: TA_EPSILON is 1e-14 and this window's high-low range is
- * ~2e-8, eight orders above it, so a TA_IS_ZERO guard cannot fire here either
- * way. Quoting the series small enough to reach the band was tried and the leg
- * stayed green, so the discriminator is somewhere this leg does not reach --
- * do not add the claim back without a mutation that actually turns it red. */
+ * It cannot discriminate a fixed-band substitution, and NO choice of magnitude
+ * would let it. KDJ delegates to TA_STOCH, whose guard (stoch.c) is
+ * TA_IS_ZERO_SCALED(highest-lowest, |highest|+|lowest|) -- a RELATIVE dead-zone
+ * of ~90 ULP, so the threshold shrinks with the quote and the fired/not-fired
+ * ratio is invariant under rescaling. Quoting at 1e-13 was tried; still green,
+ * necessarily. Exposing a scaled-vs-fixed difference requires mutating the
+ * guard itself, which is a mutation test, not test data. Do not "fix" this leg
+ * by shrinking the series. */
 static void kdjBuildSmall( double *h, double *l, double *c, int nb )
 {
    int i;
