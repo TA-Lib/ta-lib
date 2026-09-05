@@ -66,6 +66,32 @@ TA_RetCode eri(int startIdx, int endIdx,
       return TA_SUCCESS;
    }
 
+   /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+    * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+    * which returns x only while consecutive closes stay within a factor of
+    * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+    * what this function returns. The unstable period still delays the first
+    * output, through the shared lookback above.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         tempHT   = inHigh[today];
+         tempLT   = inLow[today];
+         tempReal = inClose[today];
+         outBullPower[outIdx] = tempHT - tempReal;
+         outBearPower[outIdx] = tempLT - tempReal;
+         outIdx++;
+         today++;
+      }
+      *outBegIdx    = startIdx;
+      *outNBElement = outIdx;
+      return TA_SUCCESS;
+   }
+
    k = 2.0 / ( (double)optInTimePeriod + 1.0 );
 
    /* Seed: ema.c's DEFAULT arm, op for op. */

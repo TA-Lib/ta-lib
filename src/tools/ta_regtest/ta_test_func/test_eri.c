@@ -67,11 +67,15 @@
  *
  *   (3) EDGES: all-flat input (both lines exactly 0.0, no NaN); high == low
  *       on every bar (the two lines bitwise identical); n=1 (EMA is the
- *       identity on close, so bull == high - close exactly).
+ *       identity on close, so bull == high - close exactly) on TA_SREF and
+ *       again on a series Sterbenz does not cover -- only the second can see
+ *       a period-1 EMA left as the bare recursion.
  *
  *   (4) IN-PLACE ALIASING: two outputs over three inputs is the widest
  *       aliasing surface of any recent addition. Each output aliased onto
- *       each input, bit-compared against the separate-buffer call. #108
+ *       each input, bit-compared against the separate-buffer call, at n=1 as
+ *       well as n=13: the lookback at n=13 holds every store 12 slots behind
+ *       its load, so the combinations only bite at the minimum period. #108
  *       already rejects outBullPower == outBearPower.
  */
 
@@ -92,6 +96,16 @@ static const int eriStartGrid[] = { 0, 1, 12, 13, 100, 251 };
 #define NB_ERI_START (sizeof(eriStartGrid)/sizeof(eriStartGrid[0]))
 static const int eriUnstGrid[] = { 0, 1, 3, 7 };
 #define NB_ERI_UNST (sizeof(eriUnstGrid)/sizeof(eriUnstGrid[0]))
+/* The aliasing sweep needs the minimum period: at n=13 the lookback puts
+ * every store 12 slots behind its load, so no combination can bite. */
+static const int eriAliasGrid[] = { 1, 13 };
+#define NB_ERI_ALIAS (sizeof(eriAliasGrid)/sizeof(eriAliasGrid[0]))
+
+/* Two closes alternating at a ratio near 8.9, both spending a full mantissa.
+ * Sterbenz does not cover them: 32 of the 63 steps of fl(fl(x-prev)+prev)
+ * land off the close, which is what makes the n=1 leg below able to fail. */
+#define ERI_NS_HI 651.28353856681395
+#define ERI_NS_LO 73.36385038087522
 
 /* Golden pins, n=13, unstable 0, outBegIdx=12, outNBElement=240 on TA_SREF.
  * See the header for provenance and for why the tolerance is ABSOLUTE. */
@@ -261,36 +275,74 @@ ErrorNumber test_func_eri( TA_History *history )
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
-
-   /* (4) In-place aliasing: each output onto each input. */
-   rc = TA_ERI( 0, nbBars - 1, history->high, history->low, history->close,
-                13, &beg, &nb, refBull, refBear );
-   if( rc != TA_SUCCESS )
-      return TA_TESTUTIL_TFRR_BAD_RETCODE;
-   for( o = 0; o < 2; o++ )
+   /* n=1 again, off the Sterbenz-benign corpus. TA_SREF keeps consecutive
+    * closes within a factor of two, where fl(fl(x-prev)+prev) returns x on
+    * every bar -- so the leg above stays green against a period-1 EMA written
+    * as the bare recursion, which is not the identity. This series is what
+    * separates the two. */
+   for( i = 0; i < 64; i++ )
    {
-      for( in = 0; in < 3; in++ )
+      aC[i] = ( i % 2 == 0 ) ? ERI_NS_HI : ERI_NS_LO;
+      aH[i] = aC[i] + 1.5;
+      aL[i] = aC[i] - 1.5;
+   }
+   rc = TA_ERI( 0, 63, aH, aL, aC, 1, &beg, &nb, outBull, outBear );
+   if( rc != TA_SUCCESS || nb != 64 )
+   {
+      printf( "ERI n=1 non-Sterbenz Fail: range (%d,%d), expected (0,64)\n",
+              (int)beg, (int)nb );
+      return TA_TESTUTIL_TFRR_BAD_BEGIDX;
+   }
+   for( i = 0; i < (int)nb; i++ )
+   {
+      double eb = aH[(int)beg + i] - aC[(int)beg + i];
+      double es = aL[(int)beg + i] - aC[(int)beg + i];
+      if( memcmp( &outBull[i], &eb, sizeof(TA_Real) ) != 0 ||
+          memcmp( &outBear[i], &es, sizeof(TA_Real) ) != 0 )
       {
-         TA_Real *outs[2];
-         for( i = 0; i < nbBars; i++ )
+         printf( "ERI n=1 non-Sterbenz Fail bar %d: (%.17g,%.17g) != "
+                 "(high-close, low-close) (%.17g,%.17g)\n",
+                 (int)beg + i, outBull[i], outBear[i], eb, es );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   /* (4) In-place aliasing: each output onto each input, at the minimum
+    * period as well as the default -- n=1 is the only one where a store and
+    * its load index the same bar. */
+   for( p = 0; p < NB_ERI_ALIAS; p++ )
+   {
+      n = eriAliasGrid[p];
+
+      rc = TA_ERI( 0, nbBars - 1, history->high, history->low, history->close,
+                   n, &beg, &nb, refBull, refBear );
+      if( rc != TA_SUCCESS )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      for( o = 0; o < 2; o++ )
+      {
+         for( in = 0; in < 3; in++ )
          {
-            aH[i] = history->high[i];
-            aL[i] = history->low[i];
-            aC[i] = history->close[i];
-         }
-         outs[o] = (in == 0) ? aH : (in == 1) ? aL : aC;
-         outs[1-o] = aOther;
-         /* outs[0] is always the outBullPower POSITION, outs[1] outBearPower;
-          * `o` only chooses which of the two got aliased onto an input. */
-         rc = TA_ERI( 0, nbBars - 1, aH, aL, aC, 13, &beg, &nb,
-                      outs[0], outs[1] );
-         if( rc != TA_SUCCESS ||
-             memcmp( outs[0], refBull, (size_t)nb * sizeof(TA_Real) ) != 0 ||
-             memcmp( outs[1], refBear, (size_t)nb * sizeof(TA_Real) ) != 0 )
-         {
-            printf( "ERI aliasing Fail [out%d over in%d]: aliased call differs "
-                    "from separate-buffer call\n", o, in );
-            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            TA_Real *outs[2];
+            for( i = 0; i < nbBars; i++ )
+            {
+               aH[i] = history->high[i];
+               aL[i] = history->low[i];
+               aC[i] = history->close[i];
+            }
+            outs[o] = (in == 0) ? aH : (in == 1) ? aL : aC;
+            outs[1-o] = aOther;
+            /* outs[0] is always the outBullPower POSITION, outs[1] outBearPower;
+             * `o` only chooses which of the two got aliased onto an input. */
+            rc = TA_ERI( 0, nbBars - 1, aH, aL, aC, n, &beg, &nb,
+                         outs[0], outs[1] );
+            if( rc != TA_SUCCESS ||
+                memcmp( outs[0], refBull, (size_t)nb * sizeof(TA_Real) ) != 0 ||
+                memcmp( outs[1], refBear, (size_t)nb * sizeof(TA_Real) ) != 0 )
+            {
+               printf( "ERI aliasing Fail [n %d out%d over in%d]: aliased call "
+                       "differs from separate-buffer call\n", n, o, in );
+               return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+            }
          }
       }
    }

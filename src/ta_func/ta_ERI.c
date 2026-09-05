@@ -144,6 +144,31 @@ TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+    * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+    * which returns x only while consecutive closes stay within a factor of
+    * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+    * what this function returns. The unstable period still delays the first
+    * output, through the shared lookback above.
+    */
+   if( optInTimePeriod == 1 )
+   {
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         tempHT = inHigh[today];
+         tempLT = inLow[today];
+         tempReal = inClose[today];
+         outBullPower[outIdx] = tempHT - tempReal;
+         outBearPower[outIdx] = tempLT - tempReal;
+         outIdx += 1;
+         today += 1;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    k = 2.0 / ((double)optInTimePeriod + 1.0);
    /* Seed: ema.c's DEFAULT arm, op for op. */
    today = startIdx - lookbackTotal;
@@ -241,6 +266,24 @@ TA_RetCode TA_S_ERI( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
+   if( optInTimePeriod == 1 )
+   {
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         tempHT = (double)inHigh[today];
+         tempLT = (double)inLow[today];
+         tempReal = (double)inClose[today];
+         outBullPower[outIdx] = tempHT - tempReal;
+         outBearPower[outIdx] = tempLT - tempReal;
+         outIdx += 1;
+         today += 1;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+      return TA_SUCCESS;
+   }
    k = 2.0 / ((double)optInTimePeriod + 1.0);
    today = startIdx - lookbackTotal;
    i = optInTimePeriod;
@@ -292,19 +335,36 @@ struct TA_ERI_Stream {
 /* Private function, not in public API. */
 static void TA_ERI_StepImpl( struct TA_ERI_Stream *sp, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower )
 {
-   double tempHT;
-   double tempLT;
-   double prevMA;
+   if( sp->optInTimePeriod == 1 )
+   {
+      double tempReal;
+      double tempHT;
+      double tempLT;
 
-   prevMA = sp->prevMA;
-   prevMA = fma(inClose - prevMA, sp->k, prevMA);
-   tempHT = inHigh;
-   tempLT = inLow;
-   *outBullPower= tempHT - prevMA;
-   *outBearPower= tempLT - prevMA;
-   sp->cur_outBullPower = *outBullPower;
-   sp->cur_outBearPower = *outBearPower;
-   sp->prevMA = prevMA;
+      tempHT = inHigh;
+      tempLT = inLow;
+      tempReal = inClose;
+      *outBullPower= tempHT - tempReal;
+      *outBearPower= tempLT - tempReal;
+      sp->cur_outBullPower = *outBullPower;
+      sp->cur_outBearPower = *outBearPower;
+   }
+   else
+   {
+      double tempHT;
+      double tempLT;
+      double prevMA;
+
+      prevMA = sp->prevMA;
+      prevMA = fma(inClose - prevMA, sp->k, prevMA);
+      tempHT = inHigh;
+      tempLT = inLow;
+      *outBullPower= tempHT - prevMA;
+      *outBearPower= tempLT - prevMA;
+      sp->cur_outBullPower = *outBullPower;
+      sp->cur_outBearPower = *outBearPower;
+      sp->prevMA = prevMA;
+   }
 }
 
 static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[], int outStride )
@@ -329,6 +389,85 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
    }
 
    endIdx = historyLen - 1;
+
+   if( optInTimePeriod == 1 )
+   {
+
+   {
+      int outIdx;
+      int today;
+      int lookbackTotal;
+      double tempReal;
+      double tempHT;
+      double tempLT;
+      /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+       * the bar's extremes sit from one shared EMA of close.
+       *
+       *   Bull Power = High - EMA(Close, n)
+       *   Bear Power = Low  - EMA(Close, n)
+       *
+       * One fused loop, not ema() + a combine map: a composed form cannot
+       * stream (raw bar inputs are outside check_map_step's provenance), which
+       * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+       * op for op -- sequential seed sum from 0.0 then one divide, the
+       * unstable-period warm-up consumed bar by bar -- so the differential
+       * against shipped TA_EMA holds bitwise. No compatibility branch: the
+       * Metastock arm is unreachable from three of the four backends, and a
+       * new function honouring it would make C diverge from them (EFI/SMI
+       * precedent).
+       *
+       * No division in the per-bar map: no 0/0, no NaN path (#112 by
+       * construction). Bull >= Bear on every bar since high >= low.
+       */
+      lookbackTotal = TA_ERI_Lookback(optInTimePeriod);
+      if( startIdx < lookbackTotal )
+      {
+         startIdx = lookbackTotal;
+      }
+      /* Make sure there is still something to evaluate. */
+      if( startIdx > endIdx )
+      {
+         *outBegIdx= 0;
+         *outNBElement= 0;
+         return TA_INSUFFICIENT_HISTORY;
+      }
+      /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+       * which returns x only while consecutive closes stay within a factor of
+       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * what this function returns. The unstable period still delays the first
+       * output, through the shared lookback above.
+       */
+      outIdx = 0;
+      today = startIdx;
+      while( today <= endIdx )
+      {
+         tempHT = inHigh[today];
+         tempLT = inLow[today];
+         tempReal = inClose[today];
+         outBullPower[outIdx * outStride] = tempHT - tempReal;
+         outBearPower[outIdx * outStride] = tempLT - tempReal;
+         outIdx += 1;
+         today += 1;
+      }
+      *outBegIdx= startIdx;
+      *outNBElement= outIdx;
+
+      /* Capture the live batch state into the handle. */
+      sp = (struct TA_ERI_Stream *)TA_Malloc( sizeof(*sp) );
+      if( !sp ) { return TA_ALLOC_ERR; }
+      memset( sp, 0, sizeof(*sp) );
+      sp->optInTimePeriod = optInTimePeriod;
+      sp->outRangeBegIdx = *outBegIdx;
+      sp->outRangeCount = *outNBElement;
+      sp->cur_outBullPower = outBullPower[(*outNBElement - 1) * outStride];
+      sp->cur_outBearPower = outBearPower[(*outNBElement - 1) * outStride];
+      *stream = sp;
+      return TA_SUCCESS;
+   }
+   }
+   else
+   {
 
    {
       int outIdx;
@@ -371,6 +510,13 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
+      /* Period 1: ema.c's explicit copy arm, kept here for the same reason it
+       * exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+       * which returns x only while consecutive closes stay within a factor of
+       * two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+       * what this function returns. The unstable period still delays the first
+       * output, through the shared lookback above.
+       */
       k = 2.0 / ((double)optInTimePeriod + 1.0);
       /* Seed: ema.c's DEFAULT arm, op for op. */
       today = startIdx - lookbackTotal;
@@ -423,6 +569,9 @@ static TA_RetCode TA_ERI_OpenImpl( struct TA_ERI_Stream **stream, const double i
       *stream = sp;
       return TA_SUCCESS;
    }
+   }
+
+   return TA_INTERNAL_ERROR(424);
 }
 
 /* Private function, not in public API. */
@@ -486,18 +635,34 @@ TA_FMA_MULTIVERSION
 TA_LIB_API TA_RetCode TA_ERI_Peek( const TA_ERI_Stream *stream, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower )
 {
    const struct TA_ERI_Stream *sp = stream;
-   double tempHT;
-   double tempLT;
-   double prevMA;
 
    if( !stream || !outBullPower || !outBearPower ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   prevMA = sp->prevMA;
-   prevMA = fma(inClose - prevMA, sp->k, prevMA);
-   tempHT = inHigh;
-   tempLT = inLow;
-   *outBullPower= tempHT - prevMA;
-   *outBearPower= tempLT - prevMA;
+   if( sp->optInTimePeriod == 1 )
+   {
+      double tempReal;
+      double tempHT;
+      double tempLT;
+
+      tempHT = inHigh;
+      tempLT = inLow;
+      tempReal = inClose;
+      *outBullPower= tempHT - tempReal;
+      *outBearPower= tempLT - tempReal;
+   }
+   else
+   {
+      double tempHT;
+      double tempLT;
+      double prevMA;
+
+      prevMA = sp->prevMA;
+      prevMA = fma(inClose - prevMA, sp->k, prevMA);
+      tempHT = inHigh;
+      tempLT = inLow;
+      *outBullPower= tempHT - prevMA;
+      *outBearPower= tempLT - prevMA;
+   }
    return TA_SUCCESS;
 }
 

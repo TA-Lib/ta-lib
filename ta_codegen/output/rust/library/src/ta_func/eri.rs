@@ -197,6 +197,28 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
+        // Period 1: ema.c's explicit copy arm, kept here for the same reason it
+        // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+        // which returns x only while consecutive closes stay within a factor of
+        // two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+        // what this function returns. The unstable period still delays the first
+        // output, through the shared lookback above.
+        if optInTimePeriod == 1 {
+            outIdx = 0;
+            today = startIdx;
+            while today <= endIdx {
+                tempHT = inHigh[today];
+                tempLT = inLow[today];
+                tempReal = inClose[today];
+                outBullPower[outIdx] = tempHT - tempReal;
+                outBearPower[outIdx] = tempLT - tempReal;
+                outIdx += 1;
+                today += 1;
+            }
+            (*outBegIdx) = startIdx;
+            (*outNBElement) = outIdx;
+            return RetCode::Success;
+        }
         k = 2.0 / ((optInTimePeriod as f64) + 1.0);
         // Seed: ema.c's DEFAULT arm, op for op.
         today = startIdx - lookbackTotal;
@@ -233,9 +255,9 @@ impl Core {
         return RetCode::Success;
     }
     /// Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from *Trading for a Living*
-    /// (1993) — how far the bar's high and low sit from a 13-period EMA of the close. Bulls
-    /// strong enough to push the high above the average read as positive Bull Power; bears dragging
-    /// the low below it read as negative Bear Power.
+    /// (1993) — how far the bar's high and low sit from an EMA of the close. Bulls strong enough
+    /// to push the high above the average read as positive Bull Power; bears dragging the low below
+    /// it read as negative Bear Power.
     ///
     /// Formula and more info at [ta-lib.org/functions/eri](https://ta-lib.org/functions/eri).
     ///
@@ -392,15 +414,28 @@ struct EriStreamState {
 #[allow(unused_parens)]
 impl Core {
     fn eri_step_impl(sp: &mut EriStreamState, inHigh: f64, inLow: f64, inClose: f64, outBullPower: &mut f64, outBearPower: &mut f64) {
-        let mut tempHT: f64 = 0.0_f64;
-        let mut tempLT: f64 = 0.0_f64;
-        sp.prevMA = (inClose - sp.prevMA as f64).mul_add(sp.k, sp.prevMA);
-        tempHT = inHigh;
-        tempLT = inLow;
-        (*outBullPower) = tempHT - sp.prevMA;
-        (*outBearPower) = tempLT - sp.prevMA;
-        sp.cur_outBullPower = (*outBullPower);
-        sp.cur_outBearPower = (*outBearPower);
+        if sp.optInTimePeriod == 1 {
+            let mut tempReal: f64 = 0.0_f64;
+            let mut tempHT: f64 = 0.0_f64;
+            let mut tempLT: f64 = 0.0_f64;
+            tempHT = inHigh;
+            tempLT = inLow;
+            tempReal = inClose;
+            (*outBullPower) = tempHT - tempReal;
+            (*outBearPower) = tempLT - tempReal;
+            sp.cur_outBullPower = (*outBullPower);
+            sp.cur_outBearPower = (*outBearPower);
+        } else {
+            let mut tempHT: f64 = 0.0_f64;
+            let mut tempLT: f64 = 0.0_f64;
+            sp.prevMA = (inClose - sp.prevMA as f64).mul_add(sp.k, sp.prevMA);
+            tempHT = inHigh;
+            tempLT = inLow;
+            (*outBullPower) = tempHT - sp.prevMA;
+            (*outBearPower) = tempLT - sp.prevMA;
+            sp.cur_outBullPower = (*outBullPower);
+            sp.cur_outBearPower = (*outBearPower);
+        }
     }
 
     /// The single whole-history transcription behind [`Core::eri_open_internal`]
@@ -432,86 +467,161 @@ impl Core {
         }
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut outIdx: usize = 0_usize;
-        let mut today: usize = 0_usize;
-        let mut lookbackTotal: usize = 0_usize;
-        let mut i: usize = 0_usize;
-        let mut prevMA: f64 = 0.0_f64;
-        let mut tempReal: f64 = 0.0_f64;
-        let mut k: f64 = 0.0_f64;
-        let mut tempHT: f64 = 0.0_f64;
-        let mut tempLT: f64 = 0.0_f64;
-        // Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
-        // the bar's extremes sit from one shared EMA of close.
-        //
-        //   Bull Power = High - EMA(Close, n)
-        //   Bear Power = Low  - EMA(Close, n)
-        //
-        // One fused loop, not ema() + a combine map: a composed form cannot
-        // stream (raw bar inputs are outside check_map_step's provenance), which
-        // is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-        // op for op -- sequential seed sum from 0.0 then one divide, the
-        // unstable-period warm-up consumed bar by bar -- so the differential
-        // against shipped TA_EMA holds bitwise. No compatibility branch: the
-        // Metastock arm is unreachable from three of the four backends, and a
-        // new function honouring it would make C diverge from them (EFI/SMI
-        // precedent).
-        //
-        // No division in the per-bar map: no 0/0, no NaN path (#112 by
-        // construction). Bull >= Bear on every bar since high >= low.
-        lookbackTotal = self.ERI_Lookback(optInTimePeriod)?;
-        if startIdx < lookbackTotal {
-            startIdx = lookbackTotal;
-        }
-        // Make sure there is still something to evaluate.
-        if startIdx > endIdx {
-            (*outBegIdx) = 0;
-            (*outNBElement) = 0;
-            return Err(RetCode::InsufficientHistory);
-        }
-        k = 2.0 / ((optInTimePeriod as f64) + 1.0);
-        // Seed: ema.c's DEFAULT arm, op for op.
-        today = startIdx - lookbackTotal;
-        i = (optInTimePeriod) as usize;
-        tempReal = 0.0;
-        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-            tempReal += inClose[{ let _v = today; today += 1; _v }];
-        }
-        prevMA = tempReal / ((optInTimePeriod) as f64);
-        // The warm-up also consumes the EMA unstable period.
-        while today <= startIdx {
-            prevMA = (inClose[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(k, prevMA);
-        }
-        // prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
-        // extremes into temps BEFORE writing either output: with two outputs
-        // over three inputs the caller may alias any pair, and the second write
-        // must not read a clobbered bar.
-        tempHT = inHigh[startIdx];
-        tempLT = inLow[startIdx];
-        outBullPower[(0 * outStride) as usize] = tempHT - prevMA;
-        outBearPower[(0 * outStride) as usize] = tempLT - prevMA;
-        outIdx = 1;
-        while today <= endIdx {
-            prevMA = (inClose[today] - prevMA as f64).mul_add(k, prevMA);
-            tempHT = inHigh[today];
-            tempLT = inLow[today];
-            outBullPower[(outIdx * outStride) as usize] = tempHT - prevMA;
-            outBearPower[(outIdx * outStride) as usize] = tempLT - prevMA;
-            outIdx += 1;
-            today += 1;
-        }
-        (*outBegIdx) = startIdx;
-        (*outNBElement) = outIdx;
+        if optInTimePeriod == 1 {
+            let mut outIdx: usize = 0_usize;
+            let mut today: usize = 0_usize;
+            let mut lookbackTotal: usize = 0_usize;
+            let mut i: usize = 0_usize;
+            let mut prevMA: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut k: f64 = 0.0_f64;
+            let mut tempHT: f64 = 0.0_f64;
+            let mut tempLT: f64 = 0.0_f64;
+            // Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+            // the bar's extremes sit from one shared EMA of close.
+            //
+            //   Bull Power = High - EMA(Close, n)
+            //   Bear Power = Low  - EMA(Close, n)
+            //
+            // One fused loop, not ema() + a combine map: a composed form cannot
+            // stream (raw bar inputs are outside check_map_step's provenance), which
+            // is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+            // op for op -- sequential seed sum from 0.0 then one divide, the
+            // unstable-period warm-up consumed bar by bar -- so the differential
+            // against shipped TA_EMA holds bitwise. No compatibility branch: the
+            // Metastock arm is unreachable from three of the four backends, and a
+            // new function honouring it would make C diverge from them (EFI/SMI
+            // precedent).
+            //
+            // No division in the per-bar map: no 0/0, no NaN path (#112 by
+            // construction). Bull >= Bear on every bar since high >= low.
+            lookbackTotal = self.ERI_Lookback(optInTimePeriod)?;
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(RetCode::InsufficientHistory);
+            }
+            // Period 1: ema.c's explicit copy arm, kept here for the same reason it
+            // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+            // which returns x only while consecutive closes stay within a factor of
+            // two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+            // what this function returns. The unstable period still delays the first
+            // output, through the shared lookback above.
+            outIdx = 0;
+            today = startIdx;
+            while today <= endIdx {
+                tempHT = inHigh[today];
+                tempLT = inLow[today];
+                tempReal = inClose[today];
+                outBullPower[(outIdx * outStride) as usize] = tempHT - tempReal;
+                outBearPower[(outIdx * outStride) as usize] = tempLT - tempReal;
+                outIdx += 1;
+                today += 1;
+            }
+            (*outBegIdx) = startIdx;
+            (*outNBElement) = outIdx;
 
-        // Capture the live batch state into the handle.
-        let state = EriStreamState {
-            optInTimePeriod,
-            prevMA,
-            k,
-            cur_outBullPower: outBullPower[(*outNBElement - 1) * outStride],
-            cur_outBearPower: outBearPower[(*outNBElement - 1) * outStride],
-        };
-        Ok(EriStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+            // Capture the live batch state into the handle.
+            let state = EriStreamState {
+                optInTimePeriod,
+                prevMA,
+                k,
+                cur_outBullPower: outBullPower[(*outNBElement - 1) * outStride],
+                cur_outBearPower: outBearPower[(*outNBElement - 1) * outStride],
+            };
+            Ok(EriStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        } else {
+            let mut outIdx: usize = 0_usize;
+            let mut today: usize = 0_usize;
+            let mut lookbackTotal: usize = 0_usize;
+            let mut i: usize = 0_usize;
+            let mut prevMA: f64 = 0.0_f64;
+            let mut tempReal: f64 = 0.0_f64;
+            let mut k: f64 = 0.0_f64;
+            let mut tempHT: f64 = 0.0_f64;
+            let mut tempLT: f64 = 0.0_f64;
+            // Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+            // the bar's extremes sit from one shared EMA of close.
+            //
+            //   Bull Power = High - EMA(Close, n)
+            //   Bear Power = Low  - EMA(Close, n)
+            //
+            // One fused loop, not ema() + a combine map: a composed form cannot
+            // stream (raw bar inputs are outside check_map_step's provenance), which
+            // is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+            // op for op -- sequential seed sum from 0.0 then one divide, the
+            // unstable-period warm-up consumed bar by bar -- so the differential
+            // against shipped TA_EMA holds bitwise. No compatibility branch: the
+            // Metastock arm is unreachable from three of the four backends, and a
+            // new function honouring it would make C diverge from them (EFI/SMI
+            // precedent).
+            //
+            // No division in the per-bar map: no 0/0, no NaN path (#112 by
+            // construction). Bull >= Bear on every bar since high >= low.
+            lookbackTotal = self.ERI_Lookback(optInTimePeriod)?;
+            if startIdx < lookbackTotal {
+                startIdx = lookbackTotal;
+            }
+            // Make sure there is still something to evaluate.
+            if startIdx > endIdx {
+                (*outBegIdx) = 0;
+                (*outNBElement) = 0;
+                return Err(RetCode::InsufficientHistory);
+            }
+            // Period 1: ema.c's explicit copy arm, kept here for the same reason it
+            // exists there. At n == 1 the recursion below is fl(fl(x-prev)+prev),
+            // which returns x only while consecutive closes stay within a factor of
+            // two (Sterbenz), so without this arm `High - TA_EMA(Close, 1)` is not
+            // what this function returns. The unstable period still delays the first
+            // output, through the shared lookback above.
+            k = 2.0 / ((optInTimePeriod as f64) + 1.0);
+            // Seed: ema.c's DEFAULT arm, op for op.
+            today = startIdx - lookbackTotal;
+            i = (optInTimePeriod) as usize;
+            tempReal = 0.0;
+            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+                tempReal += inClose[{ let _v = today; today += 1; _v }];
+            }
+            prevMA = tempReal / ((optInTimePeriod) as f64);
+            // The warm-up also consumes the EMA unstable period.
+            while today <= startIdx {
+                prevMA = (inClose[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(k, prevMA);
+            }
+            // prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
+            // extremes into temps BEFORE writing either output: with two outputs
+            // over three inputs the caller may alias any pair, and the second write
+            // must not read a clobbered bar.
+            tempHT = inHigh[startIdx];
+            tempLT = inLow[startIdx];
+            outBullPower[(0 * outStride) as usize] = tempHT - prevMA;
+            outBearPower[(0 * outStride) as usize] = tempLT - prevMA;
+            outIdx = 1;
+            while today <= endIdx {
+                prevMA = (inClose[today] - prevMA as f64).mul_add(k, prevMA);
+                tempHT = inHigh[today];
+                tempLT = inLow[today];
+                outBullPower[(outIdx * outStride) as usize] = tempHT - prevMA;
+                outBearPower[(outIdx * outStride) as usize] = tempLT - prevMA;
+                outIdx += 1;
+                today += 1;
+            }
+            (*outBegIdx) = startIdx;
+            (*outNBElement) = outIdx;
+
+            // Capture the live batch state into the handle.
+            let state = EriStreamState {
+                optInTimePeriod,
+                prevMA,
+                k,
+                cur_outBullPower: outBullPower[(*outNBElement - 1) * outStride],
+                cur_outBearPower: outBearPower[(*outNBElement - 1) * outStride],
+            };
+            Ok(EriStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
+        }
     }
 
     /// Internal startIdx-anchored open behind [`Core::eri_open`] (composition seam).
@@ -738,14 +848,25 @@ impl EriStream {
             let sp = &self.state;
             let outBullPower = &mut outBullPower;
             let outBearPower = &mut outBearPower;
-            let mut tempHT: f64 = 0.0_f64;
-            let mut tempLT: f64 = 0.0_f64;
-            let mut prevMA = sp.prevMA;
-            prevMA = (inClose - prevMA as f64).mul_add(sp.k, prevMA);
-            tempHT = inHigh;
-            tempLT = inLow;
-            (*outBullPower) = tempHT - prevMA;
-            (*outBearPower) = tempLT - prevMA;
+            if sp.optInTimePeriod == 1 {
+                let mut tempReal: f64 = 0.0_f64;
+                let mut tempHT: f64 = 0.0_f64;
+                let mut tempLT: f64 = 0.0_f64;
+                tempHT = inHigh;
+                tempLT = inLow;
+                tempReal = inClose;
+                (*outBullPower) = tempHT - tempReal;
+                (*outBearPower) = tempLT - tempReal;
+            } else {
+                let mut tempHT: f64 = 0.0_f64;
+                let mut tempLT: f64 = 0.0_f64;
+                let mut prevMA = sp.prevMA;
+                prevMA = (inClose - prevMA as f64).mul_add(sp.k, prevMA);
+                tempHT = inHigh;
+                tempLT = inLow;
+                (*outBullPower) = tempHT - prevMA;
+                (*outBearPower) = tempLT - prevMA;
+            }
         }
         Ok((outBullPower, outBearPower))
     }
