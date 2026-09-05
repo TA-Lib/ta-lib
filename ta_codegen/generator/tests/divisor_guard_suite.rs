@@ -87,6 +87,15 @@ const ANNOTATED: &[(&str, &str, &str)] = &[
     // two should converge is a decision about KAMA's output, not a defect to patch
     // under a sweep. Listed so the sweep is green and the question stays visible.
     ("KAMA", "sumROC1", "OPEN: same shape as the ER defect fixed in #350; see #381"),
+
+    // OPEN. VWMA divides the price-volume sum by the volume sum with NO guard at all:
+    // `tempV = sumV;` then `(tempPV/P) / (tempV/P)` (`vwma.c:115,124`). `sumV` is a
+    // rolling add/subtract sum of `inVolume`, so it reaches exactly 0.0 on any window
+    // whose bars all report zero volume -- a halted session, or a feed that pads
+    // non-trading days -- and reaches it through absorption on windows that are not
+    // all-zero. Unlike KAMA this is not a documented deviation; it is simply
+    // unguarded. Left for a decision about VWMA's output rather than patched here.
+    ("VWMA", "tempV", "OPEN: unguarded volume-sum divisor; see #381"),
 ];
 
 /// Every variable name mentioned anywhere in `e`.
@@ -141,18 +150,16 @@ fn names(e: &Expr) -> HashSet<String> {
 fn accumulated_in_loop(body: &[Statement], in_loop: bool, out: &mut HashSet<String>) {
     for st in body {
         match st {
-            Statement::Assign { target, value, .. } if in_loop => {
-                if let Expr::Var(t) = target {
-                    // `x += fabs(t)` parses to `Assign{ value: BinOp(x, Add, ...) }`,
-                    // so the additive test belongs on the value's operator, and the
-                    // self-reference is what distinguishes accumulation from a fresh
-                    // assignment that merely happens to add two other things.
-                    if names(value).contains(t)
-                        && matches!(value, Expr::BinOp(_, BinOp::Add | BinOp::Sub, _))
-                    {
-                        out.insert(t.clone());
-                    }
-                }
+            // `x += fabs(t)` parses to `Assign{ value: BinOp(x, Add, ...) }`, so the
+            // additive test belongs on the value's operator, and the self-reference is
+            // what distinguishes accumulation from a fresh assignment that merely
+            // happens to add two other things.
+            Statement::Assign { target: Expr::Var(t), value, .. }
+                if in_loop
+                    && names(value).contains(t)
+                    && matches!(value, Expr::BinOp(_, BinOp::Add | BinOp::Sub, _)) =>
+            {
+                out.insert(t.clone());
             }
             Statement::While { body, .. }
             | Statement::DoWhile { body, .. }
@@ -193,6 +200,13 @@ fn tests_var_against_zero(cond: &Expr, var: &str) -> bool {
     fn is_zero_literal(e: &Expr) -> bool {
         matches!(e, Expr::Literal(z) if *z == 0.0) || matches!(e, Expr::IntLiteral(0))
     }
+    // A positive lower bound establishes non-zero just as well as a zero test, and the
+    // corpus uses it: MAMA divides by `tempReal` under `if( tempReal > 1.0 )`. Only a
+    // LITERAL bound counts -- `sumROC1 <= periodROC` compares against a variable that
+    // can be negative, which is the ER defect.
+    fn is_positive_literal(e: &Expr) -> bool {
+        matches!(e, Expr::Literal(z) if *z > 0.0) || matches!(e, Expr::IntLiteral(n) if *n > 0)
+    }
     match cond {
         Expr::FuncCall(name, args) if name.contains("IS_ZERO") => {
             args.first().map(|a| names(a).contains(var)).unwrap_or(false)
@@ -201,19 +215,60 @@ fn tests_var_against_zero(cond: &Expr, var: &str) -> bool {
             BinOp::And | BinOp::Or => {
                 tests_var_against_zero(l, var) || tests_var_against_zero(r, var)
             }
-            BinOp::Greater
-            | BinOp::GreaterEq
-            | BinOp::Less
-            | BinOp::LessEq
-            | BinOp::Eq
-            | BinOp::NotEq => {
-                (names(l).contains(var) && is_zero_literal(r))
+            BinOp::Greater | BinOp::GreaterEq => {
+                (names(l).contains(var) && (is_zero_literal(r) || is_positive_literal(r)))
                     || (names(r).contains(var) && is_zero_literal(l))
+            }
+            BinOp::Less | BinOp::LessEq | BinOp::Eq | BinOp::NotEq => {
+                (names(l).contains(var) && is_zero_literal(r))
+                    || (names(r).contains(var) && (is_zero_literal(l) || is_positive_literal(l)))
             }
             _ => false,
         },
         Expr::Not(inner) => tests_var_against_zero(inner, var),
         _ => false,
+    }
+}
+
+/// Extend `accum` through plain copies: `t = v` where `v` is already accumulated.
+///
+/// The divisor is routinely a copy taken once per bar rather than the accumulator
+/// itself — VORTEX reads `curTR = sTR;` and then divides by `curTR`, while `sTR` is
+/// what `+=`/`-=` build up. Without this the sweep is silent on VORTEX's own defect,
+/// which is how it was found: `the_sweep_detects_a_reintroduced_vortex_defect` failed
+/// with an empty finding list.
+///
+/// Iterated to a fixpoint because a copy of a copy is still the same quantity.
+fn propagate_copies(f: &FuncDef, accum: &mut HashSet<String>) {
+    fn walk(body: &[Statement], accum: &HashSet<String>, add: &mut Vec<String>) {
+        for st in body {
+            match st {
+                Statement::Assign { target: Expr::Var(t), value: Expr::Var(v), .. }
+                    if accum.contains(v) && !accum.contains(t) =>
+                {
+                    add.push(t.clone());
+                }
+                Statement::While { body, .. }
+                | Statement::DoWhile { body, .. }
+                | Statement::For { body, .. }
+                | Statement::ForC { body, .. }
+                | Statement::Block { body } => walk(body, accum, add),
+                Statement::If { then_body, else_body, .. } => {
+                    walk(then_body, accum, add);
+                    walk(else_body, accum, add);
+                }
+                _ => {}
+            }
+        }
+    }
+    loop {
+        let mut add = Vec::new();
+        walk(&f.body, accum, &mut add);
+        walk(&f.private_body, accum, &mut add);
+        if add.is_empty() {
+            return;
+        }
+        accum.extend(add);
     }
 }
 
@@ -227,13 +282,11 @@ fn magnitude_aliases(f: &FuncDef) -> Vec<(String, String)> {
     fn walk(body: &[Statement], out: &mut Vec<(String, String)>) {
         for st in body {
             match st {
-                Statement::Assign { target: Expr::Var(t), value, .. } => {
-                    if let Expr::FuncCall(name, args) = value {
-                        if name == "fabs" || name == "std_fabs" {
-                            if let Some(Expr::Var(v)) = args.first() {
-                                out.push((t.clone(), v.clone()));
-                            }
-                        }
+                Statement::Assign { target: Expr::Var(t), value: Expr::FuncCall(name, args), .. }
+                    if name == "fabs" || name == "std_fabs" =>
+                {
+                    if let Some(Expr::Var(v)) = args.first() {
+                        out.push((t.clone(), v.clone()));
                     }
                 }
                 Statement::While { body, .. }
@@ -404,6 +457,7 @@ fn findings_for(f: &FuncDef) -> Vec<Finding> {
     let mut accum = HashSet::new();
     accumulated_in_loop(&f.body, false, &mut accum);
     accumulated_in_loop(&f.private_body, false, &mut accum);
+    propagate_copies(f, &mut accum);
     let reals = real_valued(f);
     accum.retain(|v| reals.contains(v));
     if accum.is_empty() {
@@ -478,7 +532,7 @@ fn the_sweep_detects_a_reintroduced_er_defect() {
 }
 
 /// Remove `sumROC1 <= 0.0 ||` from every guard, leaving the asymmetric clamp.
-fn strip_exact_zero_test(body: &mut Vec<Statement>) {
+fn strip_exact_zero_test(body: &mut [Statement]) {
     fn is_exact_zero_test(e: &Expr) -> bool {
         matches!(e, Expr::BinOp(l, BinOp::LessEq, r)
             if matches!(**l, Expr::Var(ref v) if v == "sumROC1")
@@ -507,6 +561,69 @@ fn strip_exact_zero_test(body: &mut Vec<Statement>) {
             | Statement::For { body, .. }
             | Statement::ForC { body, .. }
             | Statement::Block { body } => strip_exact_zero_test(body),
+            _ => {}
+        }
+    }
+}
+
+/// The same proof against the other defect on the card, and the cleanest of the three.
+///
+/// VORTEX's shipped guard is `if( curTR > 0.0 )` on the division itself. The defect it
+/// replaced gated the divide on the flat-bar counter instead — `nullRun >=
+/// optInTimePeriod` — which is true of a *different* variable and so proves nothing
+/// about the running true-range sum that FP absorption can drive to exactly 0.0.
+///
+/// Asked for on #381 as a condition of landing: a gate that cannot fail is worse than
+/// no gate. This one reintroduces the historical shape rather than deleting the guard,
+/// so it fails if the sweep merely notices "no guard at all".
+#[test]
+fn the_sweep_detects_a_reintroduced_vortex_defect() {
+    let funcs = load();
+    let vortex = funcs.iter().find(|f| f.name == "VORTEX").expect("VORTEX is in the tree");
+
+    assert!(
+        findings_for(vortex).is_empty(),
+        "VORTEX ships with `curTR > 0.0` on the division; the sweep should be silent"
+    );
+
+    // Swap the exact test on the divisor for the counter test the defect used.
+    let mut broken = vortex.clone();
+    counter_gate_the_divide(&mut broken.body);
+    counter_gate_the_divide(&mut broken.private_body);
+    let found = findings_for(&broken);
+    assert!(
+        found.iter().any(|f| f.divisor == "curTR"),
+        "the sweep did not flag VORTEX once its divide was gated on the flat-bar \
+         counter instead of on the divisor — got {found:?}"
+    );
+}
+
+/// Rewrite `curTR > 0.0` into `nullRun < optInTimePeriod`: a guard that is about the
+/// flat-bar counter, not about the quantity being divided by.
+fn counter_gate_the_divide(body: &mut [Statement]) {
+    fn is_curtr_test(e: &Expr) -> bool {
+        matches!(e, Expr::BinOp(l, BinOp::Greater, r)
+            if matches!(**l, Expr::Var(ref v) if v == "curTR")
+                && matches!(**r, Expr::Literal(z) if z == 0.0))
+    }
+    for st in body.iter_mut() {
+        match st {
+            Statement::If { condition, then_body, else_body, .. } => {
+                if is_curtr_test(condition) {
+                    *condition = Expr::BinOp(
+                        Box::new(Expr::Var("nullRun".to_string())),
+                        BinOp::Less,
+                        Box::new(Expr::Var("optInTimePeriod".to_string())),
+                    );
+                }
+                counter_gate_the_divide(then_body);
+                counter_gate_the_divide(else_body);
+            }
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::ForC { body, .. }
+            | Statement::Block { body } => counter_gate_the_divide(body),
             _ => {}
         }
     }

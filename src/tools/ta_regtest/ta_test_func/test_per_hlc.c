@@ -171,6 +171,22 @@ static TA_Test tableTest[] =
    /*   CCI TEST  */
    /****************/
 
+   /* KNOWN AND DELIBERATELY UNCOVERED: none of the CCI rows below can see which
+    * KIND of zero guard cci.c:127 uses. Degrading both TA_IS_ZERO_SCALED calls
+    * there to the fixed-band TA_IS_ZERO leaves `ta_regtest --function=CCI`
+    * entirely green -- measured, and the green was sabotage-proved (perturbing
+    * cci.c's own 0.015 to 0.0151 turns this same invocation red at index 0,
+    * 66.666 -> 66.225166, exit 122, so the group does run CCI).
+    *
+    * No choice of test DATA closes it, for the reason test_kdj.c:211 records
+    * about its small-magnitude leg: TA_IS_ZERO_SCALED is a RELATIVE dead-zone,
+    * so the fired/not-fired ratio is invariant under rescaling and a fixed band
+    * is indistinguishable from it at every magnitude. Separating the two
+    * requires mutating the guard, which is a mutation test rather than a test
+    * case -- costed and declined on issue #381. Do not "fix" this by adding a
+    * differently-scaled series.
+    */
+
    /* The following two should always be identical. */
    { 0, TA_CCI_TEST, 186,187,  2, 0, 0, TA_SUCCESS,   1, 0.0, 186,  2 },
    { 0, TA_CCI_TEST, 187,187,  2, 0, 0, TA_SUCCESS,   0, 0.0, 187,  1 },
