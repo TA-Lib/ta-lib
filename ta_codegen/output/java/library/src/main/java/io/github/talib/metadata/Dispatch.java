@@ -323,6 +323,9 @@ final class Dispatch {
          case "COSH":
             return core.COSH(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "CVI":
+            return core.CVI(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "DEMA":
             return core.DEMA(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
@@ -416,6 +419,9 @@ final class Dispatch {
          case "MARKETFI":
             return core.MARKETFI(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 4), h.realOutput(0));
+         case "MASSI":
+            return core.MASSI(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.intOpt(1), h.realOutput(0));
          case "MAVP":
             return core.MAVP(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
@@ -794,6 +800,8 @@ final class Dispatch {
             return core.COS_Lookback();
          case "COSH":
             return core.COSH_Lookback();
+         case "CVI":
+            return core.CVI_Lookback(h.intOpt(0), h.intOpt(1));
          case "DEMA":
             return core.DEMA_Lookback(h.intOpt(0));
          case "DIV":
@@ -856,6 +864,8 @@ final class Dispatch {
             return core.MAMA_Lookback(h.realOpt(0), h.realOpt(1));
          case "MARKETFI":
             return core.MARKETFI_Lookback();
+         case "MASSI":
+            return core.MASSI_Lookback(h.intOpt(0), h.intOpt(1));
          case "MAVP":
             return core.MAVP_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
          case "MAX":

@@ -500,6 +500,8 @@ typedef enum
   TA_ZLEMA_VACUOUS                   = 1656,
   TA_VHF_VACUOUS                     = 1657,
   TA_FOSC_VACUOUS                    = 1658,
+  TA_CVI_VACUOUS                     = 1659,
+  TA_MASSI_VACUOUS                   = 1660,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

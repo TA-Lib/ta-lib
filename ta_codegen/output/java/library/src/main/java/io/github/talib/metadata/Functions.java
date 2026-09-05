@@ -209,6 +209,7 @@ public final class Functions {
       put(m, f_CORREL());
       put(m, f_COS());
       put(m, f_COSH());
+      put(m, f_CVI());
       put(m, f_DEMA());
       put(m, f_DIV());
       put(m, f_DONCHIAN());
@@ -240,6 +241,7 @@ public final class Functions {
       put(m, f_MACDFIX());
       put(m, f_MAMA());
       put(m, f_MARKETFI());
+      put(m, f_MASSI());
       put(m, f_MAVP());
       put(m, f_MAX());
       put(m, f_MAXINDEX());
@@ -1581,6 +1583,29 @@ public final class Functions {
          ));
    }
 
+   private static FunctionInfo f_CVI() {
+      return new FunctionInfo(
+         "CVI", "Volatility Indicators", "Chaikin's Volatility", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Period of the EMA smoothing the high-low spread", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 4, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROCPeriod", 0x00000000,
+               "ROC Period", "Number of bars the rate of change reaches back", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 4, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
    private static FunctionInfo f_DEMA() {
       return new FunctionInfo(
          "DEMA", "Overlap Studies", "Double Exponential Moving Average", 0x03000001,
@@ -2131,6 +2156,29 @@ public final class Functions {
             new InputInfo(InputType.PRICE, "inPriceHLV", 0x00000016)
          ),
          List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_MASSI() {
+      return new FunctionInfo(
+         "MASSI", "Volatility Indicators", "Mass Index", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHL", 0x00000006)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInFastPeriod", 0x00000000,
+               "Fast Period", "Period of both exponential averages of the high-low range", 9.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 2, 50, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInSlowPeriod", 0x00000000,
+               "Slow Period", "Number of bars the ratio is summed over", 25.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               2, 100000, 10, 50, 1, null)
+         ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
          ));

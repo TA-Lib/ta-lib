@@ -637,6 +637,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["CVI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CVI_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["DEMA"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.DEMA_Impl(
@@ -821,6 +827,12 @@ internal static class NoPhantomIoBinder
         {
             RetCode rc = core.MARKETFI_Impl(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["MASSI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.MASSI_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["MAVP"] = static (core, c, startIdx, endIdx) =>

@@ -848,6 +848,15 @@ TA_RetCode TA_COSH_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_CVI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_CVI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_DEMA_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -1125,6 +1134,15 @@ TA_RetCode TA_MARKETFI_FramePP( const TA_ParamHolderPriv *params,
                            int           *outNBElement )
 ;
 unsigned int TA_MARKETFI_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_MASSI_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_MASSI_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 TA_RetCode TA_MAVP_FramePP( const TA_ParamHolderPriv *params,

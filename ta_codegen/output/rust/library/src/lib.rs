@@ -1,6 +1,6 @@
 //! # TA-Lib: Technical Analysis Library
 //!
-//! 183 technical-analysis indicators — moving averages, momentum oscillators,
+//! 185 technical-analysis indicators — moving averages, momentum oscillators,
 //! volatility bands, volume studies, Hilbert Transform cycle analysis, statistics,
 //! price transforms, and 61 candlestick-pattern recognizers — as a pure-Rust crate.
 //!
@@ -323,9 +323,11 @@
 //! * [`TSF`](Core::TSF) — Time Series Forecast
 //! * [`VAR`](Core::VAR) — Variance
 //!
-//! ## Volatility Indicators (3)
+//! ## Volatility Indicators (5)
 //!
 //! * [`ATR`](Core::ATR) — Average True Range
+//! * [`CVI`](Core::CVI) — Chaikin's Volatility
+//! * [`MASSI`](Core::MASSI) — Mass Index
 //! * [`NATR`](Core::NATR) — Normalized Average True Range
 //! * [`TRANGE`](Core::TRANGE) — True Range
 //!

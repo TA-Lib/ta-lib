@@ -367,6 +367,78 @@ DEF_FUNCTION( MARKETFI,
              );
 /* MARKETFI END */
 
+/* MASSI BEGIN */
+static const TA_IntegerRange TA_DEF_MASSI_FastPeriod =
+{
+   2,
+   100000,
+   2,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MASSI_FastPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInFastPeriod",
+   0,
+
+   "Fast Period",
+   (const void *)&TA_DEF_MASSI_FastPeriod,
+   9,
+   "Period of both exponential averages of the high-low range",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_MASSI_SlowPeriod =
+{
+   2,
+   100000,
+   10,
+   50,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_MASSI_SlowPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInSlowPeriod",
+   0,
+
+   "Slow Period",
+   (const void *)&TA_DEF_MASSI_SlowPeriod,
+   25,
+   "Number of bars the ratio is summed over",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_MASSI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_MASSI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_MASSI_OptInputs[] =
+{ &TA_DEF_UI_D_MASSI_FastPeriod,
+  &TA_DEF_UI_D_MASSI_SlowPeriod,
+  NULL
+};
+
+DEF_FUNCTION( MASSI,
+              TA_GroupId_VolatilityIndicators,
+              "Mass Index",
+              TA_FUNC_FLG_STREAM
+             );
+/* MASSI END */
+
 /* MAVP BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_MAVP_MinPeriod =
 {
@@ -796,6 +868,7 @@ const TA_FuncDef *TA_DEF_TableM[] =
    ADD_TO_TABLE(MACDFIX),
    ADD_TO_TABLE(MAMA),
    ADD_TO_TABLE(MARKETFI),
+   ADD_TO_TABLE(MASSI),
    ADD_TO_TABLE(MAVP),
    ADD_TO_TABLE(MAX),
    ADD_TO_TABLE(MAXINDEX),

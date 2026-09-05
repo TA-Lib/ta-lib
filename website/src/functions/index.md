@@ -202,6 +202,8 @@ All technical-analysis functions, grouped by category. Each page documents the f
 ## Volatility Indicators
 
 - [ATR](/functions/atr.md) — Average True Range
+- [CVI](/functions/cvi.md) — Chaikin's Volatility
+- [MASSI](/functions/massi.md) — Mass Index
 - [NATR](/functions/natr.md) — Normalized Average True Range
 - [TRANGE](/functions/trange.md) — True Range
 
