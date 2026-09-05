@@ -38,6 +38,44 @@
 #include "ta_abstract.h"
 #include "ta_def_ui.h"
 
+/* HA BEGIN */
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HA_outHAOpen =
+                               { TA_Output_Real, "outHAOpen", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HA_outHAHigh =
+                               { TA_Output_Real, "outHAHigh", TA_OUT_LINE | TA_OUT_UPPER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HA_outHALow =
+                               { TA_Output_Real, "outHALow", TA_OUT_LINE | TA_OUT_LOWER_LIMIT };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_HA_outHAClose =
+                               { TA_Output_Real, "outHAClose", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_HA_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_OHLC,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_HA_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real_HA_outHAOpen,
+  &TA_DEF_UI_Output_Real_HA_outHAHigh,
+  &TA_DEF_UI_Output_Real_HA_outHALow,
+  &TA_DEF_UI_Output_Real_HA_outHAClose,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_HA_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( HA,
+              TA_GroupId_PriceTransform,
+              "Heikin-Ashi Candles",
+              TA_FUNC_FLG_OVERLAP | TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* HA END */
+
 /* HMA BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_HMA_TimePeriod =
 {
@@ -235,6 +273,7 @@ DEF_FUNCTION( HT_TRENDMODE,
  ****************************************************************************/
 const TA_FuncDef *TA_DEF_TableH[] =
 {
+   ADD_TO_TABLE(HA),
    ADD_TO_TABLE(HMA),
    ADD_TO_TABLE(HT_DCPERIOD),
    ADD_TO_TABLE(HT_DCPHASE),

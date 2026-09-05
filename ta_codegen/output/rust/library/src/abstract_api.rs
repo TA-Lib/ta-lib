@@ -248,6 +248,10 @@ pub enum FuncId {
     FLOOR,
     /// Forecast Oscillator — [`Core::FOSC`](crate::Core::FOSC).
     FOSC,
+    /// Williams Fractal — [`Core::FRACTAL`](crate::Core::FRACTAL).
+    FRACTAL,
+    /// Heikin-Ashi Candles — [`Core::HA`](crate::Core::HA).
+    HA,
     /// Hull Moving Average — [`Core::HMA`](crate::Core::HMA).
     HMA,
     /// Hilbert Transform - Dominant Cycle Period — [`Core::HT_DCPERIOD`](crate::Core::HT_DCPERIOD).
@@ -362,6 +366,8 @@ pub enum FuncId {
     ROCR100,
     /// Relative Strength Index — [`Core::RSI`](crate::Core::RSI).
     RSI,
+    /// Relative Volatility Index — [`Core::RVI`](crate::Core::RVI).
+    RVI,
     /// Relative Volume — [`Core::RVOL`](crate::Core::RVOL).
     RVOL,
     /// Parabolic SAR — [`Core::SAR`](crate::Core::SAR).
@@ -436,7 +442,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 195;
+    pub const COUNT: usize = 198;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -761,7 +767,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 195] = [
+static FUNC_TABLE: [FuncInfo; 198] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1896,6 +1902,28 @@ static FUNC_TABLE: [FuncInfo; 195] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::FRACTAL,
+        name: "FRACTAL",
+        group: Group::MomentumIndicators,
+        hint: "Williams Fractal",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInLeftBars", display_name: "Left Bars", hint: "Number of bars required to be lower/higher before the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, OptInputInfo { param_name: "optInRightBars", display_name: "Right Bars", hint: "Number of bars required to be lower/higher after the pivot", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 2, suggested: (1, 10, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outSwingHigh", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outSwingLow", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::HA,
+        name: "HA",
+        group: Group::PriceTransform,
+        hint: "Heikin-Ashi Candles",
+        flags: FuncFlags(0x0b000000),
+        inputs: &[InputInfo { param_name: "inPriceOHLC", kind: InputType::Price, flags: InputFlags(0x0000000f) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outHAOpen", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outHAHigh", kind: OutputType::Real, flags: OutputFlags(0x00000801) }, OutputInfo { param_name: "outHALow", kind: OutputType::Real, flags: OutputFlags(0x00001001) }, OutputInfo { param_name: "outHAClose", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::HA),
+    },
+    FuncInfo {
         id: FuncId::HMA,
         name: "HMA",
         group: Group::OverlapStudies,
@@ -2523,6 +2551,17 @@ static FUNC_TABLE: [FuncInfo; 195] = [
         unst_id: Some(FuncUnstId::RSI),
     },
     FuncInfo {
+        id: FuncId::RVI,
+        name: "RVI",
+        group: Group::VolatilityIndicators,
+        hint: "Relative Volatility Index",
+        flags: FuncFlags(0x0a000000),
+        inputs: &[InputInfo { param_name: "inReal", kind: InputType::Real, flags: InputFlags(0x00000000) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period of the Wilder smoothing applied to both legs", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInStdDevPeriod", display_name: "StdDev Period", hint: "Time period of the standard deviation", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: Some(FuncUnstId::RVI),
+    },
+    FuncInfo {
         id: FuncId::RVOL,
         name: "RVOL",
         group: Group::VolumeIndicators,
@@ -3028,6 +3067,8 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "EXP" => FuncId::EXP,
         "FLOOR" => FuncId::FLOOR,
         "FOSC" => FuncId::FOSC,
+        "FRACTAL" => FuncId::FRACTAL,
+        "HA" => FuncId::HA,
         "HMA" => FuncId::HMA,
         "HT_DCPERIOD" => FuncId::HT_DCPERIOD,
         "HT_DCPHASE" => FuncId::HT_DCPHASE,
@@ -3085,6 +3126,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ROCR" => FuncId::ROCR,
         "ROCR100" => FuncId::ROCR100,
         "RSI" => FuncId::RSI,
+        "RVI" => FuncId::RVI,
         "RVOL" => FuncId::RVOL,
         "SAR" => FuncId::SAR,
         "SAREXT" => FuncId::SAREXT,
@@ -3168,7 +3210,7 @@ pub const MAX_INPUTS: usize = 2;
 /// Widest optional-parameter arity in the corpus.
 pub const MAX_OPT_INPUTS: usize = 8;
 /// Widest output arity in the corpus.
-pub const MAX_OUTPUTS: usize = 3;
+pub const MAX_OUTPUTS: usize = 4;
 
 
 use crate::{Core, OutRange, RetCode};
@@ -3480,6 +3522,8 @@ impl<'a> ParamHolder<'a> {
             FuncId::EXP => self.core.EXP_Lookback(),
             FuncId::FLOOR => self.core.FLOOR_Lookback(),
             FuncId::FOSC => self.core.FOSC_Lookback(self.int_opt[0]),
+            FuncId::FRACTAL => self.core.FRACTAL_Lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::HA => self.core.HA_Lookback(),
             FuncId::HMA => self.core.HMA_Lookback(self.int_opt[0]),
             FuncId::HT_DCPERIOD => self.core.HT_DCPERIOD_Lookback(),
             FuncId::HT_DCPHASE => self.core.HT_DCPHASE_Lookback(),
@@ -3537,6 +3581,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCR => self.core.ROCR_Lookback(self.int_opt[0]),
             FuncId::ROCR100 => self.core.ROCR100_Lookback(self.int_opt[0]),
             FuncId::RSI => self.core.RSI_Lookback(self.int_opt[0]),
+            FuncId::RVI => self.core.RVI_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::RVOL => self.core.RVOL_Lookback(self.int_opt[0]),
             FuncId::SAR => self.core.SAR_Lookback(self.real_opt[0], self.real_opt[1]),
             FuncId::SAREXT => self.core.SAREXT_Lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
@@ -4879,6 +4924,40 @@ impl<'a> ParamHolder<'a> {
                     Err(e) => e,
                 }
             }
+            FuncId::FRACTAL => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                if self.int_out[0].is_none() || self.int_out[1].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.int_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.int_out[1].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.FRACTAL(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0, &mut *o1);
+                self.int_out[0] = Some(o0);
+                self.int_out[1] = Some(o1);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::HA => {
+                let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                if self.real_out[0].is_none() || self.real_out[1].is_none() || self.real_out[2].is_none() || self.real_out[3].is_none() { return Err(RetCode::BadParam); }
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let mut o1 = self.real_out[1].take().ok_or(RetCode::BadParam)?;
+                let mut o2 = self.real_out[2].take().ok_or(RetCode::BadParam)?;
+                let mut o3 = self.real_out[3].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.HA(start_idx, end_idx, i0_0, i0_1, i0_2, i0_3, &mut *o0, &mut *o1, &mut *o2, &mut *o3);
+                self.real_out[0] = Some(o0);
+                self.real_out[1] = Some(o1);
+                self.real_out[2] = Some(o2);
+                self.real_out[3] = Some(o3);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
             FuncId::HMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
@@ -5520,6 +5599,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.RSI(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::RVI => {
+                let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.RVI(start_idx, end_idx, i0, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

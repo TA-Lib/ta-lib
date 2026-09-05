@@ -123,6 +123,8 @@
 #include "ta_func/ta_EXP.c"
 #include "ta_func/ta_FLOOR.c"
 #include "ta_func/ta_FOSC.c"
+#include "ta_func/ta_FRACTAL.c"
+#include "ta_func/ta_HA.c"
 #include "ta_func/ta_HMA.c"
 #include "ta_func/ta_HT_DCPERIOD.c"
 #include "ta_func/ta_HT_DCPHASE.c"
@@ -179,6 +181,7 @@
 #include "ta_func/ta_ROCR.c"
 #include "ta_func/ta_ROCR100.c"
 #include "ta_func/ta_RSI.c"
+#include "ta_func/ta_RVI.c"
 #include "ta_func/ta_RVOL.c"
 #include "ta_func/ta_SAR.c"
 #include "ta_func/ta_SAREXT.c"
@@ -444,13 +447,14 @@ static float g_sinBuf5[MAX_ARRAY_SIZE];
 static double g_outBuf0[MAX_ARRAY_SIZE];
 static double g_outBuf1[MAX_ARRAY_SIZE];
 static double g_outBuf2[MAX_ARRAY_SIZE];
+static double g_outBuf3[MAX_ARRAY_SIZE];
 static int g_outIntBuf0[MAX_ARRAY_SIZE];
 static int g_outIntBuf1[MAX_ARRAY_SIZE];
-static double *const g_outBufV[] = { g_outBuf0, g_outBuf1, g_outBuf2 };
+static double *const g_outBufV[] = { g_outBuf0, g_outBuf1, g_outBuf2, g_outBuf3 };
 static int *const g_outIntBufV[] = { g_outIntBuf0, g_outIntBuf1 };
-#define TA_SERVE_MAX_OUT_REAL 3
+#define TA_SERVE_MAX_OUT_REAL 4
 #define TA_SERVE_MAX_OUT_INT 2
-#define TA_SERVE_MAX_OUTPUT 3
+#define TA_SERVE_MAX_OUTPUT 4
 
 /* Pre-loaded OHLCV reference data for perftest.
  * Stored separately from working buffers to protect against mutation. */
@@ -492,8 +496,8 @@ static void preload_to_working(int nInputs, int isPriceInput) {
 #define SV_PEEK_EVERY 7
 static double sv_o[SV_MAXN], sv_h[SV_MAXN], sv_l[SV_MAXN];
 static double sv_c[SV_MAXN], sv_v[SV_MAXN], sv_oi[SV_MAXN];
-static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN];
-static double sv_f0[SV_MAXN], sv_f1[SV_MAXN], sv_f2[SV_MAXN];
+static double sv_b0[SV_MAXN], sv_b1[SV_MAXN], sv_b2[SV_MAXN], sv_b3[SV_MAXN];
+static double sv_f0[SV_MAXN], sv_f1[SV_MAXN], sv_f2[SV_MAXN], sv_f3[SV_MAXN];
 static int sv_ib0[SV_MAXN], sv_ib1[SV_MAXN];
 static int sv_if0[SV_MAXN], sv_if1[SV_MAXN];
 static int sv_bitne(double a, double b) { return memcmp(&a, &b, sizeof(double)) != 0; }
@@ -620,6 +624,8 @@ static int sv_steq_TA_EMA( const struct TA_EMA_Stream *a, const struct TA_EMA_St
 static int sv_steq_TA_EXP( const struct TA_EXP_Stream *a, const struct TA_EXP_Stream *b, const char **w, int *z );
 static int sv_steq_TA_FLOOR( const struct TA_FLOOR_Stream *a, const struct TA_FLOOR_Stream *b, const char **w, int *z );
 static int sv_steq_TA_FOSC( const struct TA_FOSC_Stream *a, const struct TA_FOSC_Stream *b, const char **w, int *z );
+static int sv_steq_TA_FRACTAL( const struct TA_FRACTAL_Stream *a, const struct TA_FRACTAL_Stream *b, const char **w, int *z );
+static int sv_steq_TA_HA( const struct TA_HA_Stream *a, const struct TA_HA_Stream *b, const char **w, int *z );
 static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_Stream *b, const char **w, int *z );
 static int sv_steq_TA_HT_DCPERIOD( const struct TA_HT_DCPERIOD_Stream *a, const struct TA_HT_DCPERIOD_Stream *b, const char **w, int *z );
 static int sv_steq_TA_HT_DCPHASE( const struct TA_HT_DCPHASE_Stream *a, const struct TA_HT_DCPHASE_Stream *b, const char **w, int *z );
@@ -677,6 +683,7 @@ static int sv_steq_TA_ROCP( const struct TA_ROCP_Stream *a, const struct TA_ROCP
 static int sv_steq_TA_ROCR( const struct TA_ROCR_Stream *a, const struct TA_ROCR_Stream *b, const char **w, int *z );
 static int sv_steq_TA_ROCR100( const struct TA_ROCR100_Stream *a, const struct TA_ROCR100_Stream *b, const char **w, int *z );
 static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_Stream *b, const char **w, int *z );
+static int sv_steq_TA_RVI( const struct TA_RVI_Stream *a, const struct TA_RVI_Stream *b, const char **w, int *z );
 static int sv_steq_TA_RVOL( const struct TA_RVOL_Stream *a, const struct TA_RVOL_Stream *b, const char **w, int *z );
 static int sv_steq_TA_SAR( const struct TA_SAR_Stream *a, const struct TA_SAR_Stream *b, const char **w, int *z );
 static int sv_steq_TA_SAREXT( const struct TA_SAREXT_Stream *a, const struct TA_SAREXT_Stream *b, const char **w, int *z );
@@ -3629,6 +3636,49 @@ static int sv_steq_TA_FOSC( const struct TA_FOSC_Stream *a, const struct TA_FOSC
    return 0;
 }
 
+static int sv_steq_TA_FRACTAL( const struct TA_FRACTAL_Stream *a, const struct TA_FRACTAL_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)ix;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( a->cur_outSwingHigh != b->cur_outSwingHigh ) { *w = "cur_outSwingHigh"; return 1; }
+   if( a->cur_outSwingLow != b->cur_outSwingLow ) { *w = "cur_outSwingLow"; return 1; }
+   if( a->optInLeftBars != b->optInLeftBars ) { *w = "optInLeftBars"; return 1; }
+   if( a->optInRightBars != b->optInRightBars ) { *w = "optInRightBars"; return 1; }
+   if( a->winCap_i != b->winCap_i ) { *w = "winCap_i"; return 1; }
+   if( (a->win_i_inHigh == NULL) != (b->win_i_inHigh == NULL) ) { *w = "win_i_inHigh"; return 1; }
+   if( a->win_i_inHigh ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inHigh[ia], b->win_i_inHigh[ib], z) ) { *w = "win_i_inHigh"; return 1; }
+   }
+   if( (a->win_i_inLow == NULL) != (b->win_i_inLow == NULL) ) { *w = "win_i_inLow"; return 1; }
+   if( a->win_i_inLow ) for( k = 0; k < a->winCap_i; k++ )
+   {
+      ia = (a->winPos_i + k) % a->winCap_i;
+      ib = (b->winPos_i + k) % b->winCap_i;
+      if( sv_xtier_ne(a->win_i_inLow[ia], b->win_i_inLow[ib], z) ) { *w = "win_i_inLow"; return 1; }
+   }
+   return 0;
+}
+
+static int sv_steq_TA_HA( const struct TA_HA_Stream *a, const struct TA_HA_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)k; (void)ix; (void)ia; (void)ib;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outHAOpen, b->cur_outHAOpen, z) ) { *w = "cur_outHAOpen"; return 1; }
+   if( sv_xtier_ne(a->cur_outHAHigh, b->cur_outHAHigh, z) ) { *w = "cur_outHAHigh"; return 1; }
+   if( sv_xtier_ne(a->cur_outHALow, b->cur_outHALow, z) ) { *w = "cur_outHALow"; return 1; }
+   if( sv_xtier_ne(a->cur_outHAClose, b->cur_outHAClose, z) ) { *w = "cur_outHAClose"; return 1; }
+   if( sv_xtier_ne(a->haOpen, b->haOpen, z) ) { *w = "haOpen"; return 1; }
+   if( sv_xtier_ne(a->haClose, b->haClose, z) ) { *w = "haClose"; return 1; }
+   return 0;
+}
+
 static int sv_steq_TA_HMA( const struct TA_HMA_Stream *a, const struct TA_HMA_Stream *b, const char **w, int *z )
 {
    int k = 0, ix = 0, ia = 0, ib = 0;
@@ -5179,6 +5229,42 @@ static int sv_steq_TA_RSI( const struct TA_RSI_Stream *a, const struct TA_RSI_St
    if( sv_xtier_ne(a->prevGain, b->prevGain, z) ) { *w = "prevGain"; return 1; }
    if( sv_xtier_ne(a->prevLoss, b->prevLoss, z) ) { *w = "prevLoss"; return 1; }
    if( sv_xtier_ne(a->prevValue, b->prevValue, z) ) { *w = "prevValue"; return 1; }
+   return 0;
+}
+
+static int sv_steq_TA_RVI( const struct TA_RVI_Stream *a, const struct TA_RVI_Stream *b, const char **w, int *z )
+{
+   int k = 0, ix = 0, ia = 0, ib = 0;
+   (void)ia; (void)ib;
+   if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
+   if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
+   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
+   if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
+   if( a->optInStdDevPeriod != b->optInStdDevPeriod ) { *w = "optInStdDevPeriod"; return 1; }
+   if( sv_xtier_ne(a->shift, b->shift, z) ) { *w = "shift"; return 1; }
+   if( sv_xtier_ne(a->periodTotal1, b->periodTotal1, z) ) { *w = "periodTotal1"; return 1; }
+   if( sv_xtier_ne(a->periodTotal2, b->periodTotal2, z) ) { *w = "periodTotal2"; return 1; }
+   if( sv_xtier_ne(a->invPeriod, b->invPeriod, z) ) { *w = "invPeriod"; return 1; }
+   if( sv_xtier_ne(a->prevUp, b->prevUp, z) ) { *w = "prevUp"; return 1; }
+   if( sv_xtier_ne(a->prevDn, b->prevDn, z) ) { *w = "prevDn"; return 1; }
+   if( sv_xtier_ne(a->wAlpha, b->wAlpha, z) ) { *w = "wAlpha"; return 1; }
+   if( sv_xtier_ne(a->wBeta, b->wBeta, z) ) { *w = "wBeta"; return 1; }
+   if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
+   if( a->barsSinceReseed != b->barsSinceReseed ) { *w = "barsSinceReseed"; return 1; }
+   if( a->nbInitialElementNeeded != b->nbInitialElementNeeded ) { *w = "nbInitialElementNeeded"; return 1; }
+   if( a->j != b->j ) { *w = "j"; return 1; }
+   if( a->windowStart != b->windowStart ) { *w = "windowStart"; return 1; }
+   if( a->today != b->today ) { *w = "today"; return 1; }
+   if( sv_xtier_ne(a->lag1_inReal, b->lag1_inReal, z) ) { *w = "lag1_inReal"; return 1; }
+   if( a->xCap != b->xCap ) { *w = "xCap"; return 1; }
+   if( a->xPhys != b->xPhys ) { *w = "xPhys"; return 1; }
+   if( a->xMask != b->xMask ) { *w = "xMask"; return 1; }
+   if( (a->x_inReal == NULL) != (b->x_inReal == NULL) ) { *w = "x_inReal"; return 1; }
+   if( a->x_inReal ) for( k = 0; k < a->xCap; k++ )
+   {
+      ix = (a->trailingIdx - 1 + a->xPhys + k) & a->xMask;
+      if( sv_xtier_ne(a->x_inReal[ix], b->x_inReal[ix], z) ) { *w = "x_inReal"; return 1; }
+   }
    return 0;
 }
 
@@ -35703,6 +35789,667 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
         return;
     }
+    else if( fnLen == 10 && strncmp(fn, "TA_FRACTAL", 10) == 0 ) {
+        int optInLeftBars = json_find_int(json, "optInLeftBars");
+        int optInRightBars = json_find_int(json, "optInRightBars");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
+        int peekRejects = 0;
+        TA_RetCode pkRc = TA_SUCCESS;
+        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+        int valueChecked = 0, valueOk = 1, valueLegs = 0;
+        const char *valueBad = "-";
+        const char *cloneBad = "-";
+        const char *peekBad = "-";
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_FRACTAL_Stream *stEq = NULL;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+        int rB = 0, rN = 0;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        rc = TA_FRACTAL(0, svN - 1, sv_h, sv_l, optInLeftBars, optInRightBars, &svBeg, &svNb, sv_ib0, sv_ib1);
+        lb = TA_FRACTAL_Lookback(optInLeftBars, optInRightBars);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_FRACTAL_Stream *st = NULL; int v0 = 0; int v1 = 0; TA_RetCode orc = TA_FRACTAL_Open(&st, sv_h, sv_l, svN, optInLeftBars, optInRightBars, &v0, &v1);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_FRACTAL_Close(st); }
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_FRACTAL_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_if0[ft] = SV_FILL_CANARY_I;
+               sv_if1[ft] = SV_FILL_CANARY_I;
+            }
+            frc = TA_FRACTAL_OpenAndFill(&stf, sv_h, sv_l, svN, optInLeftBars, optInRightBars, &fBeg, &fNb, sv_if0, sv_if1);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            if( fillOk && stf )
+            {
+               int vq0 = 0; int vq1 = 0;
+               valueChecked = 1; valueLegs++;
+               if( TA_FRACTAL_Value( stf, &vq0, &vq1 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+               if( vq0 != sv_if0[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+               if( vq1 != sv_if1[svNb - 1] ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+            }
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_if0[ft] != sv_ib0[ft] ) fillOk = 0;
+                if( sv_if1[ft] != sv_ib1[ft] ) fillOk = 0;
+                fillBars++;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_if0[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+                  if( sv_if1[ft] != SV_FILL_CANARY_I ) fillOk = 0;
+               }
+            if( frc == TA_SUCCESS && stf )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stf ) TA_FRACTAL_Close(stf);
+        }
+        {
+            int aaB = 0, aaN = 0;
+            TA_FRACTAL_Stream *saa = NULL;
+            TA_RetCode aarc = TA_FRACTAL_OpenAndFill(&saa, sv_h, sv_l, svN, optInLeftBars, optInRightBars, &aaB, &aaN, sv_if0, sv_if0);
+            if( !( aarc == TA_BAD_PARAM && !saa ) ) fillOk = 0;
+            if( saa ) TA_FRACTAL_Close(saa);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        {
+            int e0 = 0; int e1 = 0;
+            if( TA_FRACTAL_Open( &stEq, sv_h, sv_l, svN, optInLeftBars, optInRightBars, &e0, &e1 ) != TA_SUCCESS ) stEq = NULL;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_FRACTAL_Stream *st = NULL;
+            int v0 = 0, pk0 = 0, rp0 = 0;
+            int v1 = 0, pk1 = 0, rp1 = 0;
+            rc = TA_FRACTAL_Open(&st, sv_h, sv_l, P, optInLeftBars, optInRightBars, &v0, &v1);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && v0 != sv_ib0[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 0; bv = (double)sv_ib0[(P - 1) - svBeg]; sv = (double)v0; }
+            if( ok && v1 != sv_ib1[(P - 1) - svBeg] ) { ok = 0; badBar = P - 1; badOut = 1; bv = (double)sv_ib1[(P - 1) - svBeg]; sv = (double)v1; }
+            if( ok && st )
+            {
+               int vq0 = 0; int vq1 = 0;
+               valueChecked = 1; valueLegs++;
+               if( TA_FRACTAL_Value( st, &vq0, &vq1 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+               if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+               if( vq1 != v1 ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+            }
+            for( t = P; ok && t < svN; t++ ) {
+                pkRc = TA_FRACTAL_Peek(st, sv_h[t], sv_l[t], &pk0, &pk1);
+                if( pkRc != TA_SUCCESS ) peekRejects++;
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   if( TA_FRACTAL_Peek(st, sv_h[t - 1], sv_l[t - 1], &rp0, &rp1) != TA_SUCCESS ) peekRejects++;
+                   if( pkRc == TA_SUCCESS && TA_FRACTAL_Peek(st, sv_h[t], sv_l[t], &rp0, &rp1) == TA_SUCCESS )
+                   {
+                      peekReps++;
+                      if( (rp0 != pk0) || (rp1 != pk1) ) peekRepAll = 0;
+                   }
+                   else peekRejects++;
+                }
+                TA_FRACTAL_Update(st, sv_h[t], sv_l[t], &v0, &v1);
+                if( pkRc == TA_SUCCESS && ((pk0 != v0) || (pk1 != v1)) ) pkOk = 0;
+                if(  v0 != sv_ib0[t - svBeg] ) { ok = 0; badBar = t; badOut = 0; bv = (double)sv_ib0[t - svBeg]; sv = (double)v0; }
+                if(  v1 != sv_ib1[t - svBeg] ) { ok = 0; badBar = t; badOut = 1; bv = (double)sv_ib1[t - svBeg]; sv = (double)v1; }
+                if( ok )
+                {
+                   int vq0 = 0; int vq1 = 0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_FRACTAL_Value( st, &vq0, &vq1 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+                   if( vq0 != v0 ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                   if( vq1 != v1 ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                }
+            }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_FRACTAL( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
+            if( ok && st )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( st ) TA_FRACTAL_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        if( npref > 0 )
+        {
+            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
+            int uv0 = 0;
+            int uv1 = 0;
+            TA_FRACTAL_Stream *stu = NULL;
+            TA_RetCode urc;
+            urc = TA_FRACTAL_Open(&stu, sv_h, sv_l, P, optInLeftBars, optInRightBars, &uv0, &uv1);
+            ufillChecked = 1;
+            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
+            if( ufillOk )
+            {
+                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_FRACTAL_UpdateAndFill( stu, sv_h + P, sv_l + P, 0, sv_if0, sv_if1 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_FRACTAL_UpdateAndFill( stu, sv_h + P, sv_l + P, -1, sv_if0, sv_if1 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
+            }
+            if( ufillOk )
+            {
+                for( ut = 0; ut < SV_MAXN; ut++ ) {
+                    sv_if0[ut] = SV_FILL_CANARY_I;
+                    sv_if1[ut] = SV_FILL_CANARY_I;
+                }
+                urc = TA_FRACTAL_UpdateAndFill( stu, sv_h + P, sv_l + P, svN - P, sv_if0, sv_if1 );
+                if( urc != TA_SUCCESS ) ufillOk = 0;
+                if( ufillOk && stu )
+                {
+                   int vq0 = 0; int vq1 = 0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_FRACTAL_Value( stu, &vq0, &vq1 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
+                   if( vq0 != sv_if0[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                   if( vq1 != sv_if1[svN - P - 1] ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                }
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
+                    if( sv_if0[ut - P] != sv_ib0[ut - svBeg] ) ufillOk = 0;
+                    if( sv_if1[ut - P] != sv_ib1[ut - svBeg] ) ufillOk = 0;
+                    ufillBars++;
+                }
+                if( urc == TA_SUCCESS )
+                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
+                        if( sv_if0[ut] != SV_FILL_CANARY_I ) ufillOk = 0;
+                        if( sv_if1[ut] != SV_FILL_CANARY_I ) ufillOk = 0;
+                    }
+            }
+            if( ufillOk && stu )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stu ) TA_FRACTAL_Close(stu);
+        }
+        if( stEq )
+        {
+            TA_FRACTAL_Stream *stPk = NULL; int q0 = 0; int q1 = 0;
+            if( TA_FRACTAL_Open( &stPk, sv_h, sv_l, svN, optInLeftBars, optInRightBars, &q0, &q1 ) == TA_SUCCESS && stPk )
+            {
+                int pi;
+                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+                {
+                    if( TA_FRACTAL_Peek(stPk, sv_h[pi], sv_l[pi], &q0, &q1) == TA_SUCCESS ) peekChecked++;
+                    else peekRejects++;
+                }
+                {
+                    const char *pkWhat = "-";
+                    if( sv_steq_TA_FRACTAL( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+                }
+            }
+            if( stPk ) TA_FRACTAL_Close(stPk);
+        }
+        {
+            TA_FRACTAL_Stream *cA = NULL, *cB = NULL;
+            int ca0 = 0; int ca1 = 0; int cb0 = 0; int cb1 = 0; int cv0 = 0; int cv1 = 0;
+            int cp0 = lb + 1, cmid, t, cOk = 1;
+            if( cp0 <= svN - 1 )
+            {
+                if( TA_FRACTAL_Open(&cA, sv_h, sv_l, cp0, optInLeftBars, optInRightBars, &ca0, &ca1) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+                cmid = (cp0 + svN) / 2;
+                for( t = cp0; cOk && t < cmid; t++ )
+                    TA_FRACTAL_Update(cA, sv_h[t], sv_l[t], &ca0, &ca1);
+                if( cOk )
+                {
+                    if( TA_FRACTAL_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+                }
+                if( cOk )
+                {
+                    if( TA_FRACTAL_Value(cB, &cv0, &cv1) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                    if( cOk && (cv0 != ca0) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                    if( cOk && (cv1 != ca1) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_FRACTAL_Update(cA, sv_h[t], sv_l[t], &ca0, &ca1);
+                    TA_FRACTAL_Update(cB, sv_h[t], sv_l[t], &cb0, &cb1);
+                    if( ca0 != cb0 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( cb0 != sv_ib0[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    if( ca1 != cb1 ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( ca1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( cb1 != sv_ib1[t - svBeg] ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
+                cloneChecked = 1; cloneLegs++;
+                if( !cOk ) cloneOk = 0;
+                if( cOk )
+                {
+                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+                }
+                if( cA ) TA_FRACTAL_Close(cA);
+                if( cB ) TA_FRACTAL_Close(cB);
+            }
+        }
+        if( stEq ) { TA_FRACTAL_Close(stEq); stEq = NULL; }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_FRACTAL(Sidx, svN - 1, sv_h, sv_l, optInLeftBars, optInRightBars, &svBegS, &svNbS, sv_ib0, sv_ib1);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    int v0 = 0;
+                    int v1 = 0;
+                    TA_FRACTAL_Stream *stA = NULL;
+                    TA_RetCode arc = TA_FRACTAL_OpenInternal(&stA, sv_h, sv_l, Sidx, svN, optInLeftBars, optInRightBars, &v0, &v1);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && v0 != sv_ib0[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 0; bv = (double)sv_ib0[(svN - 1) - svBegS]; sv = (double)v0; }
+                    if( ok && v1 != sv_ib1[(svN - 1) - svBegS] ) { ok = 0; badBar = svN - 1; badOut = 1; bv = (double)sv_ib1[(svN - 1) - svBegS]; sv = (double)v1; }
+                    if( ok && stA )
+                    {
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                        rB = -1; rN = -1;
+                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                    }
+                    if( stA ) TA_FRACTAL_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        if( ufillChecked && !ufillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        if( cloneChecked && !cloneOk ) allOk = 0;
+        if( valueChecked && !valueOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+        if( rangeChecked && !rangeOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        return;
+    }
+    else if( fnLen == 5 && strncmp(fn, "TA_HA", 5) == 0 ) {
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
+        int peekRejects = 0;
+        TA_RetCode pkRc = TA_SUCCESS;
+        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+        int valueChecked = 0, valueOk = 1, valueLegs = 0;
+        const char *valueBad = "-";
+        const char *cloneBad = "-";
+        const char *peekBad = "-";
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_HA_Stream *stEq = NULL;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+        int rB = 0, rN = 0;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(25, (unsigned int)svK);
+        rc = TA_HA(0, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBeg, &svNb, sv_b0, sv_b1, sv_b2, sv_b3);
+        lb = TA_HA_Lookback();
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_HA_Stream *st = NULL; double v0 = 0.0; double v1 = 0.0; double v2 = 0.0; double v3 = 0.0; TA_RetCode orc = TA_HA_Open(&st, sv_o, sv_h, sv_l, sv_c, svN, &v0, &v1, &v2, &v3);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_HA_Close(st); }
+            TA_SetUnstablePeriod(25, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_HA_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+               sv_f1[ft] = SV_FILL_CANARY;
+               sv_f2[ft] = SV_FILL_CANARY;
+               sv_f3[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_HA_OpenAndFill(&stf, sv_o, sv_h, sv_l, sv_c, svN, &fBeg, &fNb, sv_f0, sv_f1, sv_f2, sv_f3);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            if( fillOk && stf )
+            {
+               double vq0 = 0.0; double vq1 = 0.0; double vq2 = 0.0; double vq3 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_HA_Value( stf, &vq0, &vq1, &vq2, &vq3 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+               if( sv_bitne(vq1, sv_f1[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+               if( sv_bitne(vq2, sv_f2[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+               if( sv_bitne(vq3, sv_f3[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+            }
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                if( sv_xtier_ne(sv_f1[ft], sv_b1[ft], &svZsign) ) fillOk = 0;
+                if( sv_xtier_ne(sv_f2[ft], sv_b2[ft], &svZsign) ) fillOk = 0;
+                if( sv_xtier_ne(sv_f3[ft], sv_b3[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f1[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f2[ft] != SV_FILL_CANARY ) fillOk = 0;
+                  if( sv_f3[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
+            if( frc == TA_SUCCESS && stf )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stf ) TA_HA_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_HA_Stream *sal = NULL;
+            TA_RetCode alrc = TA_HA_OpenAndFill(&sal, sv_o, sv_h, sv_l, sv_c, svN, &alB, &alN, sv_o, sv_f1, sv_f2, sv_f3);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_HA_Close(sal);
+        }
+        {
+            int aaB = 0, aaN = 0;
+            TA_HA_Stream *saa = NULL;
+            TA_RetCode aarc = TA_HA_OpenAndFill(&saa, sv_o, sv_h, sv_l, sv_c, svN, &aaB, &aaN, sv_f0, sv_f0, sv_f2, sv_f3);
+            if( !( aarc == TA_BAD_PARAM && !saa ) ) fillOk = 0;
+            if( saa ) TA_HA_Close(saa);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        {
+            double e0 = 0.0; double e1 = 0.0; double e2 = 0.0; double e3 = 0.0;
+            if( TA_HA_Open( &stEq, sv_o, sv_h, sv_l, sv_c, svN, &e0, &e1, &e2, &e3 ) != TA_SUCCESS ) stEq = NULL;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_HA_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            double v1 = 0.0, pk1 = 0.0, rp1 = 0.0;
+            double v2 = 0.0, pk2 = 0.0, rp2 = 0.0;
+            double v3 = 0.0, pk3 = 0.0, rp3 = 0.0;
+            rc = TA_HA_Open(&st, sv_o, sv_h, sv_l, sv_c, P, &v0, &v1, &v2, &v3);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && sv_xtier_ne(v1, sv_b1[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 1; bv = sv_b1[(P - 1) - svBeg]; sv = v1; }
+            if( ok && sv_xtier_ne(v2, sv_b2[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 2; bv = sv_b2[(P - 1) - svBeg]; sv = v2; }
+            if( ok && sv_xtier_ne(v3, sv_b3[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 3; bv = sv_b3[(P - 1) - svBeg]; sv = v3; }
+            if( ok && st )
+            {
+               double vq0 = 0.0; double vq1 = 0.0; double vq2 = 0.0; double vq3 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_HA_Value( st, &vq0, &vq1, &vq2, &vq3 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+               if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+               if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+               if( sv_bitne(vq3, v3) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+            }
+            for( t = P; ok && t < svN; t++ ) {
+                pkRc = TA_HA_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &pk0, &pk1, &pk2, &pk3);
+                if( pkRc != TA_SUCCESS ) peekRejects++;
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   if( TA_HA_Peek(st, sv_o[t - 1], sv_h[t - 1], sv_l[t - 1], sv_c[t - 1], &rp0, &rp1, &rp2, &rp3) != TA_SUCCESS ) peekRejects++;
+                   if( pkRc == TA_SUCCESS && TA_HA_Peek(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &rp0, &rp1, &rp2, &rp3) == TA_SUCCESS )
+                   {
+                      peekReps++;
+                      if( sv_bitne(rp0, pk0) || sv_bitne(rp1, pk1) || sv_bitne(rp2, pk2) || sv_bitne(rp3, pk3) ) peekRepAll = 0;
+                   }
+                   else peekRejects++;
+                }
+                TA_HA_Update(st, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &v0, &v1, &v2, &v3);
+                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0) || sv_bitne(pk1, v1) || sv_bitne(pk2, v2) || sv_bitne(pk3, v3)) ) pkOk = 0;
+                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if(  sv_xtier_ne(v1, sv_b1[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 1; bv = sv_b1[t - svBeg]; sv = v1; }
+                if(  sv_xtier_ne(v2, sv_b2[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 2; bv = sv_b2[t - svBeg]; sv = v2; }
+                if(  sv_xtier_ne(v3, sv_b3[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 3; bv = sv_b3[t - svBeg]; sv = v3; }
+                if( ok )
+                {
+                   double vq0 = 0.0; double vq1 = 0.0; double vq2 = 0.0; double vq3 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_HA_Value( st, &vq0, &vq1, &vq2, &vq3 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                   if( sv_bitne(vq1, v1) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                   if( sv_bitne(vq2, v2) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                   if( sv_bitne(vq3, v3) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                }
+            }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_HA( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
+            if( ok && st )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( st ) TA_HA_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        if( npref > 0 )
+        {
+            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
+            double uv0 = 0.0;
+            double uv1 = 0.0;
+            double uv2 = 0.0;
+            double uv3 = 0.0;
+            TA_HA_Stream *stu = NULL;
+            TA_RetCode urc;
+            urc = TA_HA_Open(&stu, sv_o, sv_h, sv_l, sv_c, P, &uv0, &uv1, &uv2, &uv3);
+            ufillChecked = 1;
+            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
+            if( ufillOk )
+            {
+                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_HA_UpdateAndFill( stu, sv_o + P, sv_h + P, sv_l + P, sv_c + P, svN - P, sv_o + P, sv_f1, sv_f2, sv_f3 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_HA_UpdateAndFill( stu, sv_o + P, sv_h + P, sv_l + P, sv_c + P, 0, sv_f0, sv_f1, sv_f2, sv_f3 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_HA_UpdateAndFill( stu, sv_o + P, sv_h + P, sv_l + P, sv_c + P, -1, sv_f0, sv_f1, sv_f2, sv_f3 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
+            }
+            if( ufillOk )
+            {
+                for( ut = 0; ut < SV_MAXN; ut++ ) {
+                    sv_f0[ut] = SV_FILL_CANARY;
+                    sv_f1[ut] = SV_FILL_CANARY;
+                    sv_f2[ut] = SV_FILL_CANARY;
+                    sv_f3[ut] = SV_FILL_CANARY;
+                }
+                urc = TA_HA_UpdateAndFill( stu, sv_o + P, sv_h + P, sv_l + P, sv_c + P, svN - P, sv_f0, sv_f1, sv_f2, sv_f3 );
+                if( urc != TA_SUCCESS ) ufillOk = 0;
+                if( ufillOk && stu )
+                {
+                   double vq0 = 0.0; double vq1 = 0.0; double vq2 = 0.0; double vq3 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_HA_Value( stu, &vq0, &vq1, &vq2, &vq3 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                   if( sv_bitne(vq1, sv_f1[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                   if( sv_bitne(vq2, sv_f2[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                   if( sv_bitne(vq3, sv_f3[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                }
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
+                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    if( sv_xtier_ne(sv_f1[ut - P], sv_b1[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    if( sv_xtier_ne(sv_f2[ut - P], sv_b2[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    if( sv_xtier_ne(sv_f3[ut - P], sv_b3[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
+                }
+                if( urc == TA_SUCCESS )
+                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
+                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                        if( sv_f1[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                        if( sv_f2[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                        if( sv_f3[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                    }
+            }
+            if( ufillOk && stu )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stu ) TA_HA_Close(stu);
+        }
+        if( stEq )
+        {
+            TA_HA_Stream *stPk = NULL; double q0 = 0.0; double q1 = 0.0; double q2 = 0.0; double q3 = 0.0;
+            if( TA_HA_Open( &stPk, sv_o, sv_h, sv_l, sv_c, svN, &q0, &q1, &q2, &q3 ) == TA_SUCCESS && stPk )
+            {
+                int pi;
+                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+                {
+                    if( TA_HA_Peek(stPk, sv_o[pi], sv_h[pi], sv_l[pi], sv_c[pi], &q0, &q1, &q2, &q3) == TA_SUCCESS ) peekChecked++;
+                    else peekRejects++;
+                }
+                {
+                    const char *pkWhat = "-";
+                    if( sv_steq_TA_HA( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+                }
+            }
+            if( stPk ) TA_HA_Close(stPk);
+        }
+        {
+            TA_HA_Stream *cA = NULL, *cB = NULL;
+            double ca0 = 0.0; double ca1 = 0.0; double ca2 = 0.0; double ca3 = 0.0; double cb0 = 0.0; double cb1 = 0.0; double cb2 = 0.0; double cb3 = 0.0; double cv0 = 0.0; double cv1 = 0.0; double cv2 = 0.0; double cv3 = 0.0;
+            int cp0 = lb + 1, cmid, t, cOk = 1;
+            if( cp0 <= svN - 1 )
+            {
+                if( TA_HA_Open(&cA, sv_o, sv_h, sv_l, sv_c, cp0, &ca0, &ca1, &ca2, &ca3) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+                cmid = (cp0 + svN) / 2;
+                for( t = cp0; cOk && t < cmid; t++ )
+                    TA_HA_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1, &ca2, &ca3);
+                if( cOk )
+                {
+                    if( TA_HA_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+                }
+                if( cOk )
+                {
+                    if( TA_HA_Value(cB, &cv0, &cv1, &cv2, &cv3) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                    if( cOk && (sv_bitne(cv1, ca1)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                    if( cOk && (sv_bitne(cv2, ca2)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                    if( cOk && (sv_bitne(cv3, ca3)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_HA_Update(cA, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &ca0, &ca1, &ca2, &ca3);
+                    TA_HA_Update(cB, sv_o[t], sv_h[t], sv_l[t], sv_c[t], &cb0, &cb1, &cb2, &cb3);
+                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    if( sv_bitne(ca1, cb1) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb1, sv_b1[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    if( sv_bitne(ca2, cb2) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb2, sv_b2[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                    if( sv_bitne(ca3, cb3) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca3, sv_b3[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb3, sv_b3[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
+                cloneChecked = 1; cloneLegs++;
+                if( !cOk ) cloneOk = 0;
+                if( cOk )
+                {
+                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+                }
+                if( cA ) TA_HA_Close(cA);
+                if( cB ) TA_HA_Close(cB);
+            }
+        }
+        if( stEq ) { TA_HA_Close(stEq); stEq = NULL; }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_HA(Sidx, svN - 1, sv_o, sv_h, sv_l, sv_c, &svBegS, &svNbS, sv_b0, sv_b1, sv_b2, sv_b3);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    double v1 = 0.0;
+                    double v2 = 0.0;
+                    double v3 = 0.0;
+                    TA_HA_Stream *stA = NULL;
+                    TA_RetCode arc = TA_HA_OpenInternal(&stA, sv_o, sv_h, sv_l, sv_c, Sidx, svN, &v0, &v1, &v2, &v3);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( ok && sv_xtier_ne(v1, sv_b1[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 1; bv = sv_b1[(svN - 1) - svBegS]; sv = v1; }
+                    if( ok && sv_xtier_ne(v2, sv_b2[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 2; bv = sv_b2[(svN - 1) - svBegS]; sv = v2; }
+                    if( ok && sv_xtier_ne(v3, sv_b3[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 3; bv = sv_b3[(svN - 1) - svBegS]; sv = v3; }
+                    if( ok && stA )
+                    {
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                        rB = -1; rN = -1;
+                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                    }
+                    if( stA ) TA_HA_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetUnstablePeriod(25, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        if( ufillChecked && !ufillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        if( cloneChecked && !cloneOk ) allOk = 0;
+        if( valueChecked && !valueOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+        if( rangeChecked && !rangeOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        return;
+    }
     else if( fnLen == 6 && strncmp(fn, "TA_HMA", 6) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         TA_RetCode rc;
@@ -52490,6 +53237,296 @@ static void handle_stream_verify(const char *json, char *resp, int resp_size) {
             }
         }
         TA_SetUnstablePeriod(21, 0);
+        TA_SetCompatibility((TA_Compatibility)savedCompat);
+        if( fillChecked && !fillOk ) allOk = 0;
+        if( ufillChecked && !ufillOk ) allOk = 0;
+        if( stateChecked && !stateOk ) allOk = 0;
+        if( cloneChecked && !cloneOk ) allOk = 0;
+        if( valueChecked && !valueOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"state_checked\":%d,\"state_legs\":%d,\"state_ok\":%d,\"state_bad\":\"%s\"", stateChecked, stateLegs, stateOk, stateWhat);
+        if( rangeChecked && !rangeOk ) allOk = 0;
+        pos = json_appendf(resp, resp_size, pos, ",\"range_checked\":%d,\"range_legs\":%d,\"range_sites\":%d,\"range_sites_all\":31,\"range_ok\":%d", rangeChecked, rangeLegs, rangeSites, rangeOk);
+        pos = json_appendf(resp, resp_size, pos, ",\"fill_checked\":%d,\"fill_ok\":%d,\"fill_bars\":%d,\"ufill_checked\":%d,\"ufill_ok\":%d,\"ufill_bars\":%d,\"ok\":%d,\"peek_checked\":%d,\"peek_ok\":%d,\"peek_reps\":%d,\"peek_rep_ok\":%d,\"peek_rejects\":%d,\"clone_checked\":%d,\"clone_legs\":%d,\"clone_ok\":%d,\"clone_bad\":\"%s\",\"value_checked\":%d,\"value_legs\":%d,\"value_ok\":%d,\"value_bad\":\"%s\",\"benign\":%d}", fillChecked, fillOk, fillBars, ufillChecked, ufillOk, ufillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);
+        return;
+    }
+    else if( fnLen == 6 && strncmp(fn, "TA_RVI", 6) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInStdDevPeriod = json_find_int(json, "optInStdDevPeriod");
+        TA_RetCode rc;
+        int svBeg = 0, svNb = 0, lb, li, npref, pos, allOk = 1, peekAll = 1;
+        int peekChecked = 0;
+        int peekReps = 0, peekRepAll = 1;
+        int peekRejects = 0;
+        TA_RetCode pkRc = TA_SUCCESS;
+        int cloneChecked = 0, cloneOk = 1, cloneLegs = 0;
+        int valueChecked = 0, valueOk = 1, valueLegs = 0;
+        const char *valueBad = "-";
+        const char *cloneBad = "-";
+        const char *peekBad = "-";
+        int fillOk = 1, fillChecked = 0, fillBars = 0;
+        int stateChecked = 0, stateOk = 1, stateLegs = 0;
+        const char *stateWhat = "-";
+        TA_RVI_Stream *stEq = NULL;
+        int rangeChecked = 0, rangeOk = 1, rangeLegs = 0, rangeSites = 0;
+        int rB = 0, rN = 0;
+        int ufillChecked = 0, ufillOk = 1, ufillBars = 0;
+        int svZsign = 0;
+        int pref[4]; int pc[4];
+        TA_SetUnstablePeriod(26, (unsigned int)svK);
+        rc = TA_RVI(0, svN - 1, sv_c, optInTimePeriod, optInStdDevPeriod, &svBeg, &svNb, sv_b0);
+        lb = TA_RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+        if( rc != TA_SUCCESS || svNb <= 0 ) {
+            int openRejects = 0;
+            { TA_RVI_Stream *st = NULL; double v0 = 0.0; TA_RetCode orc = TA_RVI_Open(&st, sv_c, svN, optInTimePeriod, optInStdDevPeriod, &v0);
+              if( orc != TA_SUCCESS && !st ) openRejects = 1; else TA_RVI_Close(st); }
+            TA_SetUnstablePeriod(26, 0);
+            TA_SetCompatibility((TA_Compatibility)savedCompat);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"legs\":0,\"nb\":%d,\"openRejects\":%d,\"ok\":%d,\"peek_ok\":1}", (int)rc, svNb, openRejects, openRejects);
+            return;
+        }
+        {
+            int fBeg = 0, fNb = 0, ft;
+            TA_RVI_Stream *stf = NULL;
+            TA_RetCode frc;
+            for( ft = 0; ft < SV_MAXN; ft++ ) {
+               sv_f0[ft] = SV_FILL_CANARY;
+            }
+            frc = TA_RVI_OpenAndFill(&stf, sv_c, svN, optInTimePeriod, optInStdDevPeriod, &fBeg, &fNb, sv_f0);
+            fillChecked = 1;
+            if( frc != TA_SUCCESS || !stf || fBeg != svBeg || fNb != svNb ) fillOk = 0;
+            if( fillOk && stf )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_RVI_Value( stf, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, sv_f0[svNb - 1]) ) { valueOk = 0; valueBad = "Value after OpenAndFill is not the last filled bar"; }
+            }
+            for( ft = 0; fillOk && ft < svNb; ft++ ) {
+                if( sv_xtier_ne(sv_f0[ft], sv_b0[ft], &svZsign) ) fillOk = 0;
+                fillBars++;
+            }
+            if( frc == TA_SUCCESS )
+               for( ft = fNb; fillOk && ft < SV_MAXN; ft++ ) {
+                  if( sv_f0[ft] != SV_FILL_CANARY ) fillOk = 0;
+               }
+            if( frc == TA_SUCCESS && stf )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stf, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stf ) TA_RVI_Close(stf);
+        }
+        {
+            int alB = 0, alN = 0;
+            TA_RVI_Stream *sal = NULL;
+            TA_RetCode alrc = TA_RVI_OpenAndFill(&sal, sv_c, svN, optInTimePeriod, optInStdDevPeriod, &alB, &alN, sv_c);
+            if( !( alrc == TA_BAD_PARAM && !sal ) ) fillOk = 0;
+            if( sal ) TA_RVI_Close(sal);
+        }
+        npref = 0;
+        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;
+        for( li = 0; li < 4; li++ ) {
+            int P = pc[li]; int seen = 0, k;
+            if( P < lb + 1 ) P = lb + 1;
+            if( P > svN - 1 ) P = svN - 1;
+            if( P < 1 ) continue;
+            for( k = 0; k < npref; k++ ) if( pref[k] == P ) seen = 1;
+            if( !seen ) pref[npref++] = P;
+        }
+        {
+            double e0 = 0.0;
+            if( TA_RVI_Open( &stEq, sv_c, svN, optInTimePeriod, optInStdDevPeriod, &e0 ) != TA_SUCCESS ) stEq = NULL;
+        }
+        pos = json_appendf(resp, resp_size, 0, "{\"retCode\":0,\"beg\":%d,\"nb\":%d,\"legs\":%d", svBeg, svNb, npref);
+        for( li = 0; li < npref; li++ ) {
+            int P = pref[li]; int t, ok = 1, pkOk = 1, badBar = -1, badOut = -1;
+            double bv = 0.0, sv = 0.0;
+            TA_RVI_Stream *st = NULL;
+            double v0 = 0.0, pk0 = 0.0, rp0 = 0.0;
+            rc = TA_RVI_Open(&st, sv_c, P, optInTimePeriod, optInStdDevPeriod, &v0);
+            if( rc != TA_SUCCESS || !st ) { ok = 0; badBar = P - 1; }
+            if( ok && sv_xtier_ne(v0, sv_b0[(P - 1) - svBeg], &svZsign) ) { ok = 0; badBar = P - 1; badOut = 0; bv = sv_b0[(P - 1) - svBeg]; sv = v0; }
+            if( ok && st )
+            {
+               double vq0 = 0.0;
+               valueChecked = 1; valueLegs++;
+               if( TA_RVI_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Open is not the last history bar: Value rejected a live stream"; }
+               if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Open is not the last history bar"; }
+            }
+            for( t = P; ok && t < svN; t++ ) {
+                pkRc = TA_RVI_Peek(st, sv_c[t], &pk0);
+                if( pkRc != TA_SUCCESS ) peekRejects++;
+                if( (t % SV_PEEK_EVERY) == 0 )
+                {
+                   if( TA_RVI_Peek(st, sv_c[t - 1], &rp0) != TA_SUCCESS ) peekRejects++;
+                   if( pkRc == TA_SUCCESS && TA_RVI_Peek(st, sv_c[t], &rp0) == TA_SUCCESS )
+                   {
+                      peekReps++;
+                      if( sv_bitne(rp0, pk0) ) peekRepAll = 0;
+                   }
+                   else peekRejects++;
+                }
+                TA_RVI_Update(st, sv_c[t], &v0);
+                if( pkRc == TA_SUCCESS && (sv_bitne(pk0, v0)) ) pkOk = 0;
+                if(  sv_xtier_ne(v0, sv_b0[t - svBeg], &svZsign) ) { ok = 0; badBar = t; badOut = 0; bv = sv_b0[t - svBeg]; sv = v0; }
+                if( ok )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_RVI_Value( st, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, v0) ) { valueOk = 0; valueBad = "Value after Update is not the bar just committed"; }
+                }
+            }
+            if( ok && st && stEq )
+            {
+                stateChecked = 1; stateLegs++;
+                if( sv_steq_TA_RVI( st, stEq, &stateWhat, &svZsign ) ) stateOk = 0;
+            }
+            if( ok && st )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( st, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( st ) TA_RVI_Close(st);
+            pos = json_appendf(resp, resp_size, pos, ",\"p%d\":%d,\"match%d\":%d,\"peek%d\":%d", li, P, li, ok, li, pkOk);
+            if( !ok ) { allOk = 0; pos = json_appendf(resp, resp_size, pos, ",\"bar%d\":%d,\"out%d\":%d,\"batchv%d\":\"%a\",\"streamv%d\":\"%a\"", li, badBar, li, badOut, li, bv, li, sv); }
+            if( !pkOk ) peekAll = 0;
+        }
+        if( npref > 0 )
+        {
+            int P = pref[0]; int ut, uB0 = -1, uN0 = -1, uB = -1, uN = -1;
+            double uv0 = 0.0;
+            TA_RVI_Stream *stu = NULL;
+            TA_RetCode urc;
+            urc = TA_RVI_Open(&stu, sv_c, P, optInTimePeriod, optInStdDevPeriod, &uv0);
+            ufillChecked = 1;
+            if( urc != TA_SUCCESS || !stu ) ufillOk = 0;
+            if( ufillOk )
+            {
+                if( TA_StreamOutRange( stu, &uB0, &uN0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_RVI_UpdateAndFill( stu, sv_c + P, svN - P, sv_c + P ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_RVI_UpdateAndFill( stu, sv_c + P, 0, sv_f0 ) != TA_SUCCESS ) ufillOk = 0;
+                if( TA_RVI_UpdateAndFill( stu, sv_c + P, -1, sv_f0 ) != TA_BAD_PARAM ) ufillOk = 0;
+                if( TA_StreamOutRange( stu, &uB, &uN ) != TA_SUCCESS || uB != uB0 || uN != uN0 ) ufillOk = 0;
+            }
+            if( ufillOk )
+            {
+                for( ut = 0; ut < SV_MAXN; ut++ ) {
+                    sv_f0[ut] = SV_FILL_CANARY;
+                }
+                urc = TA_RVI_UpdateAndFill( stu, sv_c + P, svN - P, sv_f0 );
+                if( urc != TA_SUCCESS ) ufillOk = 0;
+                if( ufillOk && stu )
+                {
+                   double vq0 = 0.0;
+                   valueChecked = 1; valueLegs++;
+                   if( TA_RVI_Value( stu, &vq0 ) != TA_SUCCESS ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed: Value rejected a live stream"; }
+                   if( sv_bitne(vq0, sv_f0[svN - P - 1]) ) { valueOk = 0; valueBad = "Value after UpdateAndFill is not the last bar it committed"; }
+                }
+                for( ut = P; ufillOk && ut < svN; ut++ ) {
+                    if( sv_xtier_ne(sv_f0[ut - P], sv_b0[ut - svBeg], &svZsign) ) ufillOk = 0;
+                    ufillBars++;
+                }
+                if( urc == TA_SUCCESS )
+                    for( ut = svN - P; ufillOk && ut < SV_MAXN; ut++ ) {
+                        if( sv_f0[ut] != SV_FILL_CANARY ) ufillOk = 0;
+                    }
+            }
+            if( ufillOk && stu )
+            {
+                rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                rB = -1; rN = -1;
+                if( TA_StreamOutRange( stu, &rB, &rN ) != TA_SUCCESS || rB != svBeg || rN != svNb ) rangeOk = 0;
+            }
+            if( stu ) TA_RVI_Close(stu);
+        }
+        if( stEq )
+        {
+            TA_RVI_Stream *stPk = NULL; double q0 = 0.0;
+            if( TA_RVI_Open( &stPk, sv_c, svN, optInTimePeriod, optInStdDevPeriod, &q0 ) == TA_SUCCESS && stPk )
+            {
+                int pi;
+                for( pi = svBeg; pi < svN; pi += SV_PEEK_EVERY )
+                {
+                    if( TA_RVI_Peek(stPk, sv_c[pi], &q0) == TA_SUCCESS ) peekChecked++;
+                    else peekRejects++;
+                }
+                {
+                    const char *pkWhat = "-";
+                    if( sv_steq_TA_RVI( stPk, stEq, &pkWhat, &svZsign ) ) { peekAll = 0; peekBad = pkWhat; }
+                }
+            }
+            if( stPk ) TA_RVI_Close(stPk);
+        }
+        {
+            TA_RVI_Stream *cA = NULL, *cB = NULL;
+            double ca0 = 0.0; double cb0 = 0.0; double cv0 = 0.0;
+            int cp0 = lb + 1, cmid, t, cOk = 1;
+            if( cp0 <= svN - 1 )
+            {
+                if( TA_RVI_Open(&cA, sv_c, cp0, optInTimePeriod, optInStdDevPeriod, &ca0) != TA_SUCCESS || !cA ) { cOk = 0; cloneBad = "open rejected the fork leg's prefix"; }
+                cmid = (cp0 + svN) / 2;
+                for( t = cp0; cOk && t < cmid; t++ )
+                    TA_RVI_Update(cA, sv_c[t], &ca0);
+                if( cOk )
+                {
+                    if( TA_RVI_Clone(cA, &cB) != TA_SUCCESS || !cB ) { cOk = 0; cloneBad = "clone rejected"; }
+                    else if( cB == cA ) { cOk = 0; cloneBad = "clone returned the original"; }
+                }
+                if( cOk )
+                {
+                    if( TA_RVI_Value(cB, &cv0) != TA_SUCCESS ) { cOk = 0; cloneBad = "Value rejected the fork"; }
+                    if( cOk && (sv_bitne(cv0, ca0)) ) { cOk = 0; cloneBad = "the fork's Value is not the bar it forked at"; }
+                }
+                for( t = cmid; cOk && t < svN; t++ )
+                {
+                    TA_RVI_Update(cA, sv_c[t], &ca0);
+                    TA_RVI_Update(cB, sv_c[t], &cb0);
+                    if( sv_bitne(ca0, cb0) ) { cOk = 0; cloneBad = "the fork and the original disagree"; }
+                    if( sv_xtier_ne(ca0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the original left batch after the fork"; }
+                    if( sv_xtier_ne(cb0, sv_b0[t - svBeg], &svZsign) ) { cOk = 0; cloneBad = "the fork left batch"; }
+                }
+                cloneChecked = 1; cloneLegs++;
+                if( !cOk ) cloneOk = 0;
+                if( cOk )
+                {
+                    int rbA = -1, rnA = -1, rbB = -1, rnB = -1;
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = "the original's range moved"; }
+                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = "the fork's range is not the batch range"; }
+                }
+                if( cA ) TA_RVI_Close(cA);
+                if( cB ) TA_RVI_Close(cB);
+            }
+        }
+        if( stEq ) { TA_RVI_Close(stEq); stEq = NULL; }
+        {
+            int Sidx = lb + (svN - lb) / 3;
+            if( Sidx > lb && Sidx < svN - 1 ) {
+                int svBegS = 0, svNbS = 0;
+                rc = TA_RVI(Sidx, svN - 1, sv_c, optInTimePeriod, optInStdDevPeriod, &svBegS, &svNbS, sv_b0);
+                if( rc == TA_SUCCESS && svNbS > 0 ) {
+                    int ok = 1, badBar = -1, badOut = -1; double bv = 0.0, sv = 0.0;
+                    double v0 = 0.0;
+                    TA_RVI_Stream *stA = NULL;
+                    TA_RetCode arc = TA_RVI_OpenInternal(&stA, sv_c, Sidx, svN, optInTimePeriod, optInStdDevPeriod, &v0);
+                    if( arc != TA_SUCCESS || !stA ) ok = 0;
+                    if( ok && sv_xtier_ne(v0, sv_b0[(svN - 1) - svBegS], &svZsign) ) { ok = 0; badBar = svN - 1; badOut = 0; bv = sv_b0[(svN - 1) - svBegS]; sv = v0; }
+                    if( ok && stA )
+                    {
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                        rB = -1; rN = -1;
+                        if( TA_StreamOutRange( stA, &rB, &rN ) != TA_SUCCESS || rB != svBegS || rN != svNbS ) rangeOk = 0;
+                    }
+                    if( stA ) TA_RVI_Close(stA);
+                    if( !ok ) allOk = 0;
+                    (void)badBar; (void)badOut; (void)bv; (void)sv;
+                }
+            }
+        }
+        TA_SetUnstablePeriod(26, 0);
         TA_SetCompatibility((TA_Compatibility)savedCompat);
         if( fillChecked && !fillOk ) allOk = 0;
         if( ufillChecked && !ufillOk ) allOk = 0;
@@ -71546,6 +72583,195 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
     }
+    else if ( methodLen == 10 && strncmp(method, "TA_FRACTAL", 10) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(2, 1);
+        } else {
+            json_find_double_array(json, "inHigh", g_inBuf0, MAX_ARRAY_SIZE);
+            json_find_double_array(json, "inLow", g_inBuf1, MAX_ARRAY_SIZE);
+        }
+        int optInLeftBars = json_find_int(json, "optInLeftBars");
+        int optInRightBars = json_find_int(json, "optInRightBars");
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(2, 1);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_FRACTAL(
+            startIdx, endIdx,
+            g_inBuf0,
+            g_inBuf1,
+            optInLeftBars,
+            optInRightBars,
+            &outBegIdx, &outNBElement, g_outIntBuf0, g_outIntBuf1);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_FRACTAL_Stream *_h = NULL;
+            int _openOut0 = 0;
+            int _openOut1 = 0;
+            rc = TA_FRACTAL_Open( &_h, g_inBuf0, g_inBuf1, endIdx + 1, optInLeftBars, optInRightBars, &_openOut0, &_openOut1 );
+            if( _h ) TA_FRACTAL_Close( _h );
+        }
+        else {
+            TA_FRACTAL_Stream *_h = NULL;
+            rc = TA_FRACTAL_OpenAndFill( &_h, g_inBuf0, g_inBuf1, endIdx + 1, optInLeftBars, optInRightBars, &outBegIdx, &outNBElement, g_outIntBuf0, g_outIntBuf1 );
+            if( _h ) TA_FRACTAL_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf0, (unsigned long)outNBElement * sizeof(int));
+                _oh = fuzz_hash_bytes(_oh, g_outIntBuf1, (unsigned long)outNBElement * sizeof(int));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf1[_fi] = (float)g_inBuf1[_fi];
+            rc = TA_S_FRACTAL(
+                startIdx, endIdx,
+                g_sinBuf0,
+                g_sinBuf1,
+                optInLeftBars,
+                optInRightBars,
+                &outBegIdx, &outNBElement, g_outIntBuf0, g_outIntBuf1);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outInteger1\":");
+        pos = json_write_int_array(resp, resp_size, pos, g_outIntBuf1, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
+    else if ( methodLen == 5 && strncmp(method, "TA_HA", 5) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(4, 1);
+        } else {
+            json_find_double_array(json, "inOpen", g_inBuf0, MAX_ARRAY_SIZE);
+            json_find_double_array(json, "inHigh", g_inBuf1, MAX_ARRAY_SIZE);
+            json_find_double_array(json, "inLow", g_inBuf2, MAX_ARRAY_SIZE);
+            json_find_double_array(json, "inClose", g_inBuf3, MAX_ARRAY_SIZE);
+        }
+        TA_SetUnstablePeriod(25, json_find_int(json, "unstablePeriod"));
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(4, 1);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_HA(
+            startIdx, endIdx,
+            g_inBuf0,
+            g_inBuf1,
+            g_inBuf2,
+            g_inBuf3,
+            &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2, g_outBuf3);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_HA_Stream *_h = NULL;
+            double _openOut0 = 0;
+            double _openOut1 = 0;
+            double _openOut2 = 0;
+            double _openOut3 = 0;
+            rc = TA_HA_Open( &_h, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, endIdx + 1, &_openOut0, &_openOut1, &_openOut2, &_openOut3 );
+            if( _h ) TA_HA_Close( _h );
+        }
+        else {
+            TA_HA_Stream *_h = NULL;
+            rc = TA_HA_OpenAndFill( &_h, g_inBuf0, g_inBuf1, g_inBuf2, g_inBuf3, endIdx + 1, &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2, g_outBuf3 );
+            if( _h ) TA_HA_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf1, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf2, (unsigned long)outNBElement * sizeof(double));
+                _oh = fuzz_hash_bytes(_oh, g_outBuf3, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf1[_fi] = (float)g_inBuf1[_fi];
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf2[_fi] = (float)g_inBuf2[_fi];
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf3[_fi] = (float)g_inBuf3[_fi];
+            rc = TA_S_HA(
+                startIdx, endIdx,
+                g_sinBuf0,
+                g_sinBuf1,
+                g_sinBuf2,
+                g_sinBuf3,
+                &outBegIdx, &outNBElement, g_outBuf0, g_outBuf1, g_outBuf2, g_outBuf3);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal1\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf1, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal2\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf2, outNBElement);
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal3\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf3, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
     else if ( methodLen == 6 && strncmp(method, "TA_HMA", 6) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -76203,6 +77429,88 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         }
         pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
     }
+    else if ( methodLen == 6 && strncmp(method, "TA_RVI", 6) == 0 ) {
+        int startIdx = json_find_int(json, "startIdx");
+        int endIdx = json_find_int(json, "endIdx");
+        int use_preloaded = json_find_int(json, "use_preloaded");
+        if( use_preloaded && g_refN > 0 ) {
+            preload_to_working(1, 0);
+        } else {
+            json_find_double_array(json, "inReal", g_inBuf0, MAX_ARRAY_SIZE);
+        }
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInStdDevPeriod = json_find_int(json, "optInStdDevPeriod");
+        TA_SetUnstablePeriod(26, json_find_int(json, "unstablePeriod"));
+        int outBegIdx = 0, outNBElement = 0;
+        int bench_iters = json_find_int(json, "iters");
+        if( bench_iters < 1 ) bench_iters = 1;
+        int bench_mode = json_find_int(json, "bench_mode");
+#ifdef TA_REF_SERVE
+        if( bench_mode != 0 ) {
+            snprintf(resp, resp_size, "{\"retCode\":0,\"timing_ns\":0,\"unsupported_mode\":1}");
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        TA_RetCode rc = 0;
+        if( use_preloaded ) {
+            preload_to_working(1, 0);
+        }
+        long _t0 = 0;
+        for( int _bi = 0; _bi <= bench_iters; _bi++ ) {
+        if( _bi == 1 ) _t0 = get_nanotime();
+        if( bench_mode == 0 )
+        rc = TA_RVI(
+            startIdx, endIdx,
+            g_inBuf0,
+            optInTimePeriod,
+            optInStdDevPeriod,
+            &outBegIdx, &outNBElement, g_outBuf0);
+#ifndef TA_REF_SERVE
+        else if( bench_mode == 1 ) {
+            TA_RVI_Stream *_h = NULL;
+            double _openOut0 = 0;
+            rc = TA_RVI_Open( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, optInStdDevPeriod, &_openOut0 );
+            if( _h ) TA_RVI_Close( _h );
+        }
+        else {
+            TA_RVI_Stream *_h = NULL;
+            rc = TA_RVI_OpenAndFill( &_h, g_inBuf0, endIdx + 1, optInTimePeriod, optInStdDevPeriod, &outBegIdx, &outNBElement, g_outBuf0 );
+            if( _h ) TA_RVI_Close( _h );
+        }
+#endif /* TA_REF_SERVE */
+        }
+        long elapsed_ns = (get_nanotime() - _t0) / bench_iters;
+#ifndef TA_REF_SERVE
+        if( json_find_int(json, "want_hash") && !json_find_int(json, "full_output") ) {
+            unsigned long long _oh = fuzz_hash_init();
+            if( rc == TA_SUCCESS && outNBElement > 0 ) {
+                _oh = fuzz_hash_bytes(_oh, g_outBuf0, (unsigned long)outNBElement * sizeof(double));
+            }
+            _oh = fuzz_hash_fin(_oh);
+            snprintf(resp, resp_size, "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_hash\":\"%016llx\"}", (int)rc, outBegIdx, outNBElement, _oh);
+            return;
+        }
+#endif /* TA_REF_SERVE */
+        int usedFloat = 0;
+        if( json_find_int(json, "use_float") ) {
+            for( int _fi = 0; _fi <= endIdx; _fi++ ) g_sinBuf0[_fi] = (float)g_inBuf0[_fi];
+            rc = TA_S_RVI(
+                startIdx, endIdx,
+                g_sinBuf0,
+                optInTimePeriod,
+                optInStdDevPeriod,
+                &outBegIdx, &outNBElement, g_outBuf0);
+            usedFloat = 1;
+        }
+        int pos = json_appendf(resp, resp_size, 0,
+            "{\"retCode\":%d,\"outBegIdx\":%d,\"outNBElement\":%d,\"out_len\":%d,\"timing_ns\":%ld",
+            (int)rc, outBegIdx, outNBElement, (int)MAX_ARRAY_SIZE, elapsed_ns);
+        if( !json_find_int(json, "no_output") ) {
+        pos = json_appendf(resp, resp_size, pos, ",\"outReal\":");
+        pos = json_write_double_array(resp, resp_size, pos, g_outBuf0, outNBElement);
+        }
+        pos = json_appendf(resp, resp_size, pos, ",\"used_float\":%d}", usedFloat);
+    }
     else if ( methodLen == 7 && strncmp(method, "TA_RVOL", 7) == 0 ) {
         int startIdx = json_find_int(json, "startIdx");
         int endIdx = json_find_int(json, "endIdx");
@@ -79672,6 +80980,18 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
+    else if ( methodLen == 19 && strncmp(method, "TA_FRACTAL_Lookback", 19) == 0 ) {
+        int optInLeftBars = json_find_int(json, "optInLeftBars");
+        int optInRightBars = json_find_int(json, "optInRightBars");
+        int lookback = TA_FRACTAL_Lookback(optInLeftBars, optInRightBars);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
+    else if ( methodLen == 14 && strncmp(method, "TA_HA_Lookback", 14) == 0 ) {
+        int lookback = TA_HA_Lookback();
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
     else if ( methodLen == 15 && strncmp(method, "TA_HMA_Lookback", 15) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         int lookback = TA_HMA_Lookback(optInTimePeriod);
@@ -80022,6 +81342,13 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         snprintf(resp, resp_size,
             "{\"lookback\":%d}", lookback);
     }
+    else if ( methodLen == 15 && strncmp(method, "TA_RVI_Lookback", 15) == 0 ) {
+        int optInTimePeriod = json_find_int(json, "optInTimePeriod");
+        int optInStdDevPeriod = json_find_int(json, "optInStdDevPeriod");
+        int lookback = TA_RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+        snprintf(resp, resp_size,
+            "{\"lookback\":%d}", lookback);
+    }
     else if ( methodLen == 16 && strncmp(method, "TA_RVOL_Lookback", 16) == 0 ) {
         int optInTimePeriod = json_find_int(json, "optInTimePeriod");
         int lookback = TA_RVOL_Lookback(optInTimePeriod);
@@ -80353,6 +81680,8 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_EXP\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_FLOOR\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_FOSC\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_FRACTAL\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_HA\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_HMA\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_DCPERIOD\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_HT_DCPHASE\"");
@@ -80410,6 +81739,7 @@ static void handle_request(const char *json, char *resp, int resp_size) {
         pos = json_appendf(resp, resp_size, pos, ",\"TA_ROCR\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_ROCR100\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_RSI\"");
+        pos = json_appendf(resp, resp_size, pos, ",\"TA_RVI\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_RVOL\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_SAR\"");
         pos = json_appendf(resp, resp_size, pos, ",\"TA_SAREXT\"");

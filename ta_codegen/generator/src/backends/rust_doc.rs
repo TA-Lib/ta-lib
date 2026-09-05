@@ -689,7 +689,7 @@ fn example_doctest(
 /// The claim a generated example makes about the values of one integer output.
 ///
 /// The domain is a property of the individual function, and the metadata does not
-/// carry it: all 67 integer outputs in the corpus declare the same `line` output
+/// carry it: all 69 integer outputs in the corpus declare the same `line` output
 /// flag, which says how to plot the values and nothing about what they are. So the
 /// four shapes are spelled out here — the same way [`unit_domain`] names the three
 /// functions whose example input has to live in `[-1, 1]`.
@@ -736,6 +736,15 @@ fn integer_domain_claim(
         ("SUPERTREND", _) => vec![
             "// the trend is a two-state latch: +1 riding the lower band, -1 the upper".to_string(),
             format!("assert!({var}[..out_range.count].iter().all(|&v| v == 1 || v == -1));"),
+        ],
+        // Two independent flags, not one signed value: an outside bar is a swing
+        // high and a swing low at once, so both can carry 100 on the same bar.
+        ("FRACTAL", _) => vec![
+            format!(
+                "// the {} flag is 0 or 100; an outside bar carries 100 on both",
+                if output.name.ends_with("High") { "swing-high" } else { "swing-low" }
+            ),
+            format!("assert!({var}[..out_range.count].iter().all(|&v| v == 0 || v == 100));"),
         ],
         // ta_HT_TRENDMODE.c writes its `trend` local, which is only ever 0 or 1.
         ("HT_TRENDMODE", _) => vec![

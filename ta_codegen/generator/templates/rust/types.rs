@@ -164,6 +164,10 @@ pub enum FuncUnstId {
     T3,
     /// Unstable period of [`Core::RMA`].
     RMA,
+    /// Unstable period of [`Core::HA`].
+    HA,
+    /// Unstable period of [`Core::RVI`].
+    RVI,
     /// Wildcard: set the unstable period for all functions at once.
     ///
     /// Pinned rather than sitting one past the last function id, so that adding
@@ -175,7 +179,7 @@ impl FuncUnstId {
     /// Number of [`FuncUnstId`] function ids — the size of the unstable-period
     /// table. Not an id, and not [`FuncUnstId::ALL`]. Mirrors C's
     /// `TA_FUNC_UNST_COUNT` and Java's `FuncUnstId.COUNT`.
-    pub const COUNT: usize = 25;
+    pub const COUNT: usize = 27;
 }
 
 /// What a candlestick setting measures a candle against. Mirrors the C

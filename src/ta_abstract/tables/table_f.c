@@ -109,6 +109,85 @@ DEF_FUNCTION( FOSC,
              );
 /* FOSC END */
 
+/* FRACTAL BEGIN */
+static const TA_IntegerRange TA_DEF_FRACTAL_LeftBars =
+{
+   1,
+   100000,
+   1,
+   10,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_FRACTAL_LeftBars =
+{
+   TA_OptInput_IntegerRange,
+   "optInLeftBars",
+   0,
+
+   "Left Bars",
+   (const void *)&TA_DEF_FRACTAL_LeftBars,
+   2,
+   "Number of bars required to be lower/higher before the pivot",
+
+   NULL
+};
+
+static const TA_IntegerRange TA_DEF_FRACTAL_RightBars =
+{
+   1,
+   100000,
+   1,
+   10,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_FRACTAL_RightBars =
+{
+   TA_OptInput_IntegerRange,
+   "optInRightBars",
+   0,
+
+   "Right Bars",
+   (const void *)&TA_DEF_FRACTAL_RightBars,
+   2,
+   "Number of bars required to be lower/higher after the pivot",
+
+   NULL
+};
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_FRACTAL_outSwingHigh =
+                               { TA_Output_Integer, "outSwingHigh", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_FRACTAL_outSwingLow =
+                               { TA_Output_Integer, "outSwingLow", TA_OUT_LINE };
+
+static const TA_InputParameterInfo    *TA_FRACTAL_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_FRACTAL_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Integer_FRACTAL_outSwingHigh,
+  &TA_DEF_UI_Output_Integer_FRACTAL_outSwingLow,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_FRACTAL_OptInputs[] =
+{ &TA_DEF_UI_D_FRACTAL_LeftBars,
+  &TA_DEF_UI_D_FRACTAL_RightBars,
+  NULL
+};
+
+DEF_FUNCTION( FRACTAL,
+              TA_GroupId_MomentumIndicators,
+              "Williams Fractal",
+              TA_FUNC_FLG_STREAM
+             );
+/* FRACTAL END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -117,6 +196,7 @@ const TA_FuncDef *TA_DEF_TableF[] =
 {
    ADD_TO_TABLE(FLOOR),
    ADD_TO_TABLE(FOSC),
+   ADD_TO_TABLE(FRACTAL),
    NULL
 };
 

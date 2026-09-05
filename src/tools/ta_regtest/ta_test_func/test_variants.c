@@ -94,7 +94,7 @@
 
 #define V_MAX_BARS   300   /* history is 252 bars; assert, never clamp */
 #define V_MAX_INPUT    6   /* widest is OHLCV + one spare */
-#define V_MAX_OUTPUT   3   /* BBANDS/MACD/MINMAXINDEX are the widest */
+#define V_MAX_OUTPUT   4   /* HA is the widest */
 #define V_MAX_OPT      8   /* SAREXT */
 /* Candidate values probed per optional parameter. An enum contributes one per
  * member, so the bound is a fact about enums.yaml and comes from the generated

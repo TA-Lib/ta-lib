@@ -9971,6 +9971,211 @@ fn legs_FOSC(r: &mut Report) {
     r.legs_done("FOSC", 1);
 }
 
+const V_FRACTAL: &[(&str, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN),
+    ("minimums", 1i32, 1i32),
+];
+
+fn sub_FRACTAL(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInLeftBars, optInRightBars) in V_FRACTAL {
+        let Ok(lb) = core.FRACTAL_Lookback(optInLeftBars, optInRightBars) else { continue; };
+        r.control("FRACTAL", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outSwingHigh: Vec<i32> = Vec::with_capacity(1);
+            let mut outSwingLow: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.FRACTAL_Impl(0, lb, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut _b, &mut _n, &mut outSwingHigh, &mut outSwingLow);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("FRACTAL", label); continue; }
+        r.quiet("FRACTAL", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let mut outSwingHigh: Vec<i32> = Vec::with_capacity(1);
+            let mut outSwingLow: Vec<i32> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.FRACTAL_Impl(0, lb - 1, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut _b, &mut _n, &mut outSwingHigh, &mut outSwingLow);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_FRACTAL(r: &mut Report) {
+    let core = Core::new();
+    let optInLeftBars = i32::MIN;
+    let optInRightBars = i32::MIN;
+    let Ok(lb) = core.FRACTAL_Lookback(optInLeftBars, optInRightBars) else { r.no_legs("FRACTAL"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outSwingHigh: Vec<i32> = vec![Default::default(); 5];
+        let mut outSwingLow: Vec<i32> = vec![Default::default(); 5];
+        r.legs_control("FRACTAL", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.FRACTAL_Impl(startIdx, endIdx, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut _b, &mut _n, &mut outSwingHigh, &mut outSwingLow);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let mut outSwingHigh: Vec<i32> = vec![Default::default(); 5];
+        let mut outSwingLow: Vec<i32> = vec![Default::default(); 5];
+        r.leg("FRACTAL", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.FRACTAL_Impl(startIdx, endIdx, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut _b, &mut _n, &mut outSwingHigh, &mut outSwingLow);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let mut outSwingHigh: Vec<i32> = vec![Default::default(); 5];
+        let mut outSwingLow: Vec<i32> = vec![Default::default(); 5];
+        r.leg("FRACTAL", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.FRACTAL_Impl(startIdx, endIdx, &inHigh, &inLow, optInLeftBars, optInRightBars, &mut _b, &mut _n, &mut outSwingHigh, &mut outSwingLow);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("FRACTAL", 2);
+}
+
+const V_HA: &[&str] = &[
+    "defaults",
+];
+
+fn sub_HA(r: &mut Report) {
+    let core = Core::new();
+    for &label in V_HA {
+        let Ok(lb) = core.HA_Lookback() else { continue; };
+        r.control("HA", label, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outHAOpen: Vec<f64> = Vec::with_capacity(1);
+            let mut outHAHigh: Vec<f64> = Vec::with_capacity(1);
+            let mut outHALow: Vec<f64> = Vec::with_capacity(1);
+            let mut outHAClose: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(0, lb, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("HA", label); continue; }
+        r.quiet("HA", label, lb, run(|| {
+            let inOpen: Vec<f64> = Vec::with_capacity(1);
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outHAOpen: Vec<f64> = Vec::with_capacity(1);
+            let mut outHAHigh: Vec<f64> = Vec::with_capacity(1);
+            let mut outHALow: Vec<f64> = Vec::with_capacity(1);
+            let mut outHAClose: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(0, lb - 1, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_HA(r: &mut Report) {
+    let core = Core::new();
+    let Ok(lb) = core.HA_Lookback() else { r.no_legs("HA"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHAOpen: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAHigh: Vec<f64> = vec![Default::default(); 5];
+        let mut outHALow: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAClose: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("HA", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = Vec::with_capacity(1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHAOpen: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAHigh: Vec<f64> = vec![Default::default(); 5];
+        let mut outHALow: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAClose: Vec<f64> = vec![Default::default(); 5];
+        r.leg("HA", "inOpen", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHAOpen: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAHigh: Vec<f64> = vec![Default::default(); 5];
+        let mut outHALow: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAClose: Vec<f64> = vec![Default::default(); 5];
+        r.leg("HA", "inHigh", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outHAOpen: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAHigh: Vec<f64> = vec![Default::default(); 5];
+        let mut outHALow: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAClose: Vec<f64> = vec![Default::default(); 5];
+        r.leg("HA", "inLow", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+    }
+    {
+        let inOpen: Vec<f64> = series("open", endIdx + 1);
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outHAOpen: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAHigh: Vec<f64> = vec![Default::default(); 5];
+        let mut outHALow: Vec<f64> = vec![Default::default(); 5];
+        let mut outHAClose: Vec<f64> = vec![Default::default(); 5];
+        r.leg("HA", "inClose", 3, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.HA_Impl(startIdx, endIdx, &inOpen, &inHigh, &inLow, &inClose, &mut _b, &mut _n, &mut outHAOpen, &mut outHAHigh, &mut outHALow, &mut outHAClose);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("HA", 4);
+}
+
 const V_HMA: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -13971,6 +14176,64 @@ fn legs_RSI(r: &mut Report) {
     r.legs_done("RSI", 1);
 }
 
+const V_RVI: &[(&str, i32, i32)] = &[
+    ("defaults", i32::MIN, i32::MIN),
+    ("minimums", 1i32, 2i32),
+];
+
+fn sub_RVI(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod, optInStdDevPeriod) in V_RVI {
+        let Ok(lb) = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod) else { continue; };
+        r.control("RVI", label, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVI_Impl(0, lb, &inReal, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("RVI", label); continue; }
+        r.quiet("RVI", label, lb, run(|| {
+            let inReal: Vec<f64> = Vec::with_capacity(1);
+            let mut outReal: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVI_Impl(0, lb - 1, &inReal, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_RVI(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let optInStdDevPeriod = i32::MIN;
+    let Ok(lb) = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod) else { r.no_legs("RVI"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inReal: Vec<f64> = series("real", endIdx + 1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("RVI", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVI_Impl(startIdx, endIdx, &inReal, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    {
+        let inReal: Vec<f64> = Vec::with_capacity(1);
+        let mut outReal: Vec<f64> = vec![Default::default(); 5];
+        r.leg("RVI", "inReal", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.RVI_Impl(startIdx, endIdx, &inReal, optInTimePeriod, optInStdDevPeriod, &mut _b, &mut _n, &mut outReal);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("RVI", 1);
+}
+
 const V_RVOL: &[(&str, i32)] = &[
     ("defaults", i32::MIN),
     ("minimums", 1i32),
@@ -16649,6 +16912,8 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("EXP", sub_EXP, legs_EXP),
     ("FLOOR", sub_FLOOR, legs_FLOOR),
     ("FOSC", sub_FOSC, legs_FOSC),
+    ("FRACTAL", sub_FRACTAL, legs_FRACTAL),
+    ("HA", sub_HA, legs_HA),
     ("HMA", sub_HMA, legs_HMA),
     ("HT_DCPERIOD", sub_HT_DCPERIOD, legs_HT_DCPERIOD),
     ("HT_DCPHASE", sub_HT_DCPHASE, legs_HT_DCPHASE),
@@ -16706,6 +16971,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("ROCR", sub_ROCR, legs_ROCR),
     ("ROCR100", sub_ROCR100, legs_ROCR100),
     ("RSI", sub_RSI, legs_RSI),
+    ("RVI", sub_RVI, legs_RVI),
     ("RVOL", sub_RVOL, legs_RVOL),
     ("SAR", sub_SAR, legs_SAR),
     ("SAREXT", sub_SAREXT, legs_SAREXT),
@@ -16779,7 +17045,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 195, "probe count");
+    assert_eq!(PROBES.len(), 198, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),

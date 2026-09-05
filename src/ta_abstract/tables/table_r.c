@@ -188,6 +188,69 @@ DEF_FUNCTION( RSI,
              );
 /* RSI END */
 
+/* RVI BEGIN */
+static const TA_IntegerRange TA_DEF_RVI_TimePeriod =
+{
+   1,
+   100000,
+   4,
+   200,
+   1
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_RVI_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_RVI_TimePeriod,
+   14,
+   "Time period of the Wilder smoothing applied to both legs",
+
+   NULL
+};
+
+static const TA_OptInputParameterInfo TA_DEF_UI_D_RVI_StdDevPeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInStdDevPeriod",
+   0,
+
+   "StdDev Period",
+   (const void *)&TA_DEF_TimePeriod_Positive_Minimum2,
+   10,
+   "Time period of the standard deviation",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_RVI_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Real,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_RVI_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_RVI_OptInputs[] =
+{ &TA_DEF_UI_D_RVI_TimePeriod,
+  &TA_DEF_UI_D_RVI_StdDevPeriod,
+  NULL
+};
+
+DEF_FUNCTION( RVI,
+              TA_GroupId_VolatilityIndicators,
+              "Relative Volatility Index",
+              TA_FUNC_FLG_UNST_PER | TA_FUNC_FLG_STREAM
+             );
+/* RVI END */
+
 /* RVOL BEGIN */
 static const TA_OptInputParameterInfo TA_DEF_UI_D_RVOL_TimePeriod =
 {
@@ -239,6 +302,7 @@ const TA_FuncDef *TA_DEF_TableR[] =
    ADD_TO_TABLE(ROCR),
    ADD_TO_TABLE(ROCR100),
    ADD_TO_TABLE(RSI),
+   ADD_TO_TABLE(RVI),
    ADD_TO_TABLE(RVOL),
    NULL
 };

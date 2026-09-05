@@ -150,7 +150,7 @@ and spells each id the same way; C alone prefixes it with `TA_FUNC_UNST_`. Each
 language also has a wildcard that targets all of them at once.
 
 <!-- ta_codegen:begin unstable-func-list -->
-`ADX`, `ATR`, `CMO`, `DX`, `EMA`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE`, `KAMA`, `MAMA`, `MINUS_DI`, `MINUS_DM`, `NATR`, `PLUS_DI`, `PLUS_DM`, `RSI`, `T3`, `RMA`.
+`ADX`, `ATR`, `CMO`, `DX`, `EMA`, `HT_DCPERIOD`, `HT_DCPHASE`, `HT_PHASOR`, `HT_SINE`, `HT_TRENDLINE`, `HT_TRENDMODE`, `KAMA`, `MAMA`, `MINUS_DI`, `MINUS_DM`, `NATR`, `PLUS_DI`, `PLUS_DM`, `RSI`, `T3`, `RMA`, `HA`, `RVI`.
 <!-- ta_codegen:end unstable-func-list -->
 
 The C enumeration is in [ta_defs.h](https://github.com/TA-Lib/ta-lib/blob/main/include/ta_defs.h).

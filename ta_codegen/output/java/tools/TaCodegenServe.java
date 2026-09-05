@@ -24,9 +24,9 @@ enum FuncUnstId {
     HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDLINE, HT_TRENDMODE,
     UNUSED_12, KAMA, MAMA, UNUSED_15, MINUS_DI, MINUS_DM,
     NATR, PLUS_DI, PLUS_DM, RSI, UNUSED_22, T3,
-    RMA,
+    RMA, HA, RVI,
     ALL;
-    static final int COUNT = 25;
+    static final int COUNT = 27;
     int value() { return this == ALL ? 65535 : ordinal(); }
 }
 
@@ -86375,6 +86375,1883 @@ class Core {
      *  MF       Mario Fortier
      *  CC       Claude Code (AI assistant)
      *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  090526 MF,CC  Initial version (#371).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#FRACTAL} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInLeftBars Bars before the pivot that it must strictly dominate
+        *        (default 2; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRightBars Bars after the pivot that it must strictly dominate,
+        *        and the delay before the verdict is reported (default 2; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int FRACTAL_Lookback( int optInLeftBars, int optInRightBars )
+       {
+          if( optInLeftBars == Integer.MIN_VALUE ) {
+             optInLeftBars = 2;
+          } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
+             return -1;
+          }
+          if( optInRightBars == Integer.MIN_VALUE ) {
+             optInRightBars = 2;
+          } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
+             return -1;
+          }
+          return optInLeftBars + optInRightBars ;
+
+       }
+       RetCode FRACTAL_Impl( int startIdx,
+                             int endIdx,
+                             double inHigh[],
+                             double inLow[],
+                             int optInLeftBars,
+                             int optInRightBars,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outSwingHigh[],
+                             int outSwingLow[] )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double pivotHigh = 0;
+          double pivotLow = 0;
+          double otherHigh = 0;
+          double otherLow = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInLeftBars == Integer.MIN_VALUE ) {
+             optInLeftBars = 2;
+          } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInRightBars == Integer.MIN_VALUE ) {
+             optInRightBars = 2;
+          } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( outSwingHigh == outSwingLow ) {
+             return RetCode.BadParam ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             pivotHigh = 0.0;
+             pivotLow = 0.0;
+             otherHigh = 0.0;
+             otherLow = 0.0;
+             for( i = optInLeftBars + optInRightBars; i >= 0; i -= 1 ) {
+                tempHigh = inHigh[today - i];
+                tempLow = inLow[today - i];
+                if( i == optInRightBars ) {
+                   pivotHigh = tempHigh;
+                   pivotLow = tempLow;
+                } else if( i == optInLeftBars + optInRightBars ) {
+                   /* optInLeftBars is at least 1, so the oldest bar of the window is
+                    * never the pivot and always seeds the rest-of-window extrema.
+                    */
+                   otherHigh = tempHigh;
+                   otherLow = tempLow;
+                } else {
+                   if( tempHigh > otherHigh ) {
+                      otherHigh = tempHigh;
+                   }
+                   if( tempLow < otherLow ) {
+                      otherLow = tempLow;
+                   }
+                }
+             }
+             if( pivotHigh > otherHigh ) {
+                outSwingHigh[outIdx] = 100;
+             } else {
+                outSwingHigh[outIdx] = 0;
+             }
+             if( pivotLow < otherLow ) {
+                outSwingLow[outIdx] = 100;
+             } else {
+                outSwingLow[outIdx] = 0;
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode FRACTAL_Impl( int startIdx,
+                             int endIdx,
+                             float inHigh[],
+                             float inLow[],
+                             int optInLeftBars,
+                             int optInRightBars,
+                             MInteger outBegIdx,
+                             MInteger outNBElement,
+                             int outSwingHigh[],
+                             int outSwingLow[] )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double pivotHigh = 0;
+          double pivotLow = 0;
+          double otherHigh = 0;
+          double otherLow = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInLeftBars == Integer.MIN_VALUE ) {
+             optInLeftBars = 2;
+          } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInRightBars == Integer.MIN_VALUE ) {
+             optInRightBars = 2;
+          } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( outSwingHigh == outSwingLow ) {
+             return RetCode.BadParam ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             pivotHigh = 0.0;
+             pivotLow = 0.0;
+             otherHigh = 0.0;
+             otherLow = 0.0;
+             for( i = optInLeftBars + optInRightBars; i >= 0; i -= 1 ) {
+                tempHigh = (double)inHigh[today - i];
+                tempLow = (double)inLow[today - i];
+                if( i == optInRightBars ) {
+                   pivotHigh = tempHigh;
+                   pivotLow = tempLow;
+                } else if( i == optInLeftBars + optInRightBars ) {
+                   otherHigh = tempHigh;
+                   otherLow = tempLow;
+                } else {
+                   if( tempHigh > otherHigh ) {
+                      otherHigh = tempHigh;
+                   }
+                   if( tempLow < otherLow ) {
+                      otherLow = tempLow;
+                   }
+                }
+             }
+             if( pivotHigh > otherHigh ) {
+                outSwingHigh[outIdx] = 100;
+             } else {
+                outSwingHigh[outIdx] = 0;
+             }
+             if( pivotLow < otherLow ) {
+                outSwingLow[outIdx] = 100;
+             } else {
+                outSwingLow[outIdx] = 0;
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Williams Fractal: a causal swing-pivot detector. A bar is a swing high
+        * when its high strictly exceeds the highs of the {@code optInLeftBars} bars
+        * before it and the {@code optInRightBars} bars after it; a swing low is the
+        * mirror on the lows. Bill Williams' original is the symmetric five-candle
+        * case; independent left and right arms generalise it. The right arm cannot
+        * be known until it has closed, so the verdict is reported on the
+        * confirmation bar, {@code optInRightBars} bars after the pivot itself. Each
+        * output value therefore describes the bar {@code optInRightBars} back, not
+        * the bar it is written at: a flag at output index {@code k} names input bar
+        * {@code outBegIdx + k - optInRightBars}, whose price is {@code inHigh[...]}
+        * / {@code inLow[...]} at that index. The two outputs are independent flags
+        * rather than one signed value, because an outside bar can be a swing high
+        * and a swing low at once.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
+        * swingHigh(i) = 100 if High[c] > High[j] for every j in [c-L, c+R] other than c, else 0.
+        * swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, else 0.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its {@code ta.pivothigh} / {@code ta.pivotlow} let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</li>
+        * <li>Each output is decided on its own side: a high tied with any other high in the window forces {@code outSwingHigh} to 0 while leaving {@code outSwingLow} free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#FRACTAL_Lookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param optInLeftBars Bars before the pivot that it must strictly dominate
+        *        (default 2; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRightBars Bars after the pivot that it must strictly dominate,
+        *        and the delay before the verdict is reported (default 2; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outSwingHigh 100 when the bar {@code optInRightBars} back is a
+        *        strict swing high, 0 otherwise. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outSwingLow 100 when the bar {@code optInRightBars} back is a
+        *        strict swing low, 0 otherwise. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#AROON
+        * @see Core#MAXINDEX
+        * @see Core#MININDEX
+        * @see Core#MINMAXINDEX
+        */
+       public OutRange FRACTAL( int startIdx,
+                                int endIdx,
+                                double inHigh[],
+                                double inLow[],
+                                int optInLeftBars,
+                                int optInRightBars,
+                                int outSwingHigh[],
+                                int outSwingLow[] )
+       {
+          requireIndexRange("FRACTAL", startIdx, endIdx);
+          int guardStart = clampedStart("FRACTAL", startIdx, FRACTAL_Lookback(optInLeftBars, optInRightBars));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FRACTAL", "inHigh", inHigh, guardInLen);
+          requireLength("FRACTAL", "inLow", inLow, guardInLen);
+          requireLength("FRACTAL", "outSwingHigh", outSwingHigh, guardOutLen);
+          requireLength("FRACTAL", "outSwingLow", outSwingLow, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
+          if( retCode != RetCode.Success ) {
+             throw failure("FRACTAL", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Williams Fractal: a causal swing-pivot detector. A bar is a swing high
+        * when its high strictly exceeds the highs of the {@code optInLeftBars} bars
+        * before it and the {@code optInRightBars} bars after it; a swing low is the
+        * mirror on the lows. Bill Williams' original is the symmetric five-candle
+        * case; independent left and right arms generalise it. The right arm cannot
+        * be known until it has closed, so the verdict is reported on the
+        * confirmation bar, {@code optInRightBars} bars after the pivot itself. Each
+        * output value therefore describes the bar {@code optInRightBars} back, not
+        * the bar it is written at: a flag at output index {@code k} names input bar
+        * {@code outBegIdx + k - optInRightBars}, whose price is {@code inHigh[...]}
+        * / {@code inLow[...]} at that index. The two outputs are independent flags
+        * rather than one signed value, because an outside bar can be a swing high
+        * and a swing low at once.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
+        * swingHigh(i) = 100 if High[c] > High[j] for every j in [c-L, c+R] other than c, else 0.
+        * swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, else 0.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its {@code ta.pivothigh} / {@code ta.pivotlow} let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</li>
+        * <li>Each output is decided on its own side: a high tied with any other high in the window forces {@code outSwingHigh} to 0 while leaving {@code outSwingLow} free to fire 100, and the mirror holds. Only a window flat in both series emits 0 on both.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#FRACTAL_Lookback} is a <b>success
+        * with no values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param optInLeftBars Bars before the pivot that it must strictly dominate
+        *        (default 2; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInRightBars Bars after the pivot that it must strictly dominate,
+        *        and the delay before the verdict is reported (default 2; range 1..100000;
+        *        {@code Integer.MIN_VALUE} selects the default).
+        * @param outSwingHigh 100 when the bar {@code optInRightBars} back is a
+        *        strict swing high, 0 otherwise. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outSwingLow 100 when the bar {@code optInRightBars} back is a
+        *        strict swing low, 0 otherwise. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#AROON
+        * @see Core#MAXINDEX
+        * @see Core#MININDEX
+        * @see Core#MINMAXINDEX
+        */
+       public OutRange FRACTAL( int startIdx,
+                                int endIdx,
+                                float inHigh[],
+                                float inLow[],
+                                int optInLeftBars,
+                                int optInRightBars,
+                                int outSwingHigh[],
+                                int outSwingLow[] )
+       {
+          requireIndexRange("FRACTAL", startIdx, endIdx);
+          int guardStart = clampedStart("FRACTAL", startIdx, FRACTAL_Lookback(optInLeftBars, optInRightBars));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("FRACTAL", "inHigh", inHigh, guardInLen);
+          requireLength("FRACTAL", "inLow", inLow, guardInLen);
+          requireLength("FRACTAL", "outSwingHigh", outSwingHigh, guardOutLen);
+          requireLength("FRACTAL", "outSwingLow", outSwingLow, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
+          if( retCode != RetCode.Success ) {
+             throw failure("FRACTAL", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live FRACTAL stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#FRACTAL} over the same series.
+        * Open with {@link Core#fractalOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class FractalStream {
+          Core core;
+          int optInLeftBars;
+          int optInRightBars;
+          int winPos_i;
+          int winCap_i;
+          double[] win_i_inHigh;
+          double[] win_i_inLow;
+          int cur_outSwingHigh;
+          int cur_outSwingLow;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          FractalStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#FRACTAL} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          FractalStream( FractalStream other ) {
+             this.core = other.core;
+             this.optInLeftBars = other.optInLeftBars;
+             this.optInRightBars = other.optInRightBars;
+             this.winPos_i = other.winPos_i;
+             this.winCap_i = other.winCap_i;
+             this.win_i_inHigh = other.win_i_inHigh.clone();
+             this.win_i_inLow = other.win_i_inLow.clone();
+             this.cur_outSwingHigh = other.cur_outSwingHigh;
+             this.cur_outSwingLow = other.cur_outSwingLow;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value(FractalOut)} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public void update( double inHigh, double inLow, FractalOut out ) {
+             requireArgument("FRACTAL update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
+             }
+             core.fractalStepImpl(this, inHigh, inLow);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             out.swingHigh = this.cur_outSwingHigh;
+             out.swingLow = this.cur_outSwingLow;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inHigh.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inHigh[], double inLow[], int outSwingHigh[], int outSwingLow[] ) {
+             requireArgument("FRACTAL updateAndFill", "inHigh", inHigh);
+             requireArgument("FRACTAL updateAndFill", "inLow", inLow);
+             requireArgument("FRACTAL updateAndFill", "outSwingHigh", outSwingHigh);
+             requireArgument("FRACTAL updateAndFill", "outSwingLow", outSwingLow);
+             final int barCount = inHigh.length;
+             if( inLow.length != barCount || outSwingHigh.length < barCount || outSwingLow.length < barCount || (Object)outSwingHigh == (Object)inHigh || (Object)outSwingHigh == (Object)inLow || (Object)outSwingLow == (Object)inHigh || (Object)outSwingLow == (Object)inLow || (Object)outSwingHigh == (Object)outSwingLow )
+                throw new TaLibArgumentException("FRACTAL updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("FRACTAL updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.fractalStepImpl(this, inHigh[i], inLow[i]);
+                outSwingHigh[i] = this.cur_outSwingHigh;
+                outSwingLow[i] = this.cur_outSwingLow;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public void peek( double inHigh, double inLow, FractalOut out ) {
+             requireArgument("FRACTAL peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
+                throw new TaLibArgumentException("FRACTAL peek: BadParam", RetCode.BadParam);
+             FractalStream sp = this;
+             int i = 0;
+             double pivotHigh = 0.0;
+             double pivotLow = 0.0;
+             double otherHigh = 0.0;
+             double otherLow = 0.0;
+             double tempHigh = 0.0;
+             double tempLow = 0.0;
+             int cur_outSwingHigh = 0;
+             int cur_outSwingLow = 0;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             int pkSlot1 = -1;
+             double pkVal1 = 0.0;
+             pkSlot0 = sp.winPos_i;
+             pkVal0 = inHigh;
+             pkSlot1 = sp.winPos_i;
+             pkVal1 = inLow;
+             pivotHigh = 0.0;
+             pivotLow = 0.0;
+             otherHigh = 0.0;
+             otherLow = 0.0;
+             for( i = sp.optInLeftBars + sp.optInRightBars; i >= 0; i -= 1 ) {
+                tempHigh = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot0) ? sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal0;
+                tempLow = (((sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i) != pkSlot1) ? sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i] : pkVal1;
+                if( i == sp.optInRightBars ) {
+                   pivotHigh = tempHigh;
+                   pivotLow = tempLow;
+                } else if( i == sp.optInLeftBars + sp.optInRightBars ) {
+                   /* optInLeftBars is at least 1, so the oldest bar of the window is
+                    * never the pivot and always seeds the rest-of-window extrema.
+                    */
+                   otherHigh = tempHigh;
+                   otherLow = tempLow;
+                } else {
+                   if( tempHigh > otherHigh ) {
+                      otherHigh = tempHigh;
+                   }
+                   if( tempLow < otherLow ) {
+                      otherLow = tempLow;
+                   }
+                }
+             }
+             if( pivotHigh > otherHigh ) {
+                cur_outSwingHigh = 100;
+             } else {
+                cur_outSwingHigh = 0;
+             }
+             if( pivotLow < otherLow ) {
+                cur_outSwingLow = 100;
+             } else {
+                cur_outSwingLow = 0;
+             }
+             out.swingHigh = cur_outSwingHigh;
+             out.swingLow = cur_outSwingLow;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           */
+          public void value( FractalOut out ) {
+             requireArgument("FRACTAL value", "out", out);
+             out.swingHigh = this.cur_outSwingHigh;
+             out.swingLow = this.cur_outSwingLow;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public FractalStream clone() {
+             return new FractalStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one FRACTAL bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class FractalOut {
+          /** 100 when the bar {@code optInRightBars} back is a strict swing high, 0 otherwise. */
+          public int swingHigh;
+          /** 100 when the bar {@code optInRightBars} back is a strict swing low, 0 otherwise. */
+          public int swingLow;
+       }
+       void fractalStepImpl( FractalStream sp, double inHigh, double inLow )
+       {
+          int i = 0;
+          double pivotHigh = 0.0;
+          double pivotLow = 0.0;
+          double otherHigh = 0.0;
+          double otherLow = 0.0;
+          double tempHigh = 0.0;
+          double tempLow = 0.0;
+          sp.win_i_inHigh[sp.winPos_i] = inHigh;
+          sp.win_i_inLow[sp.winPos_i] = inLow;
+          pivotHigh = 0.0;
+          pivotLow = 0.0;
+          otherHigh = 0.0;
+          otherLow = 0.0;
+          for( i = sp.optInLeftBars + sp.optInRightBars; i >= 0; i -= 1 ) {
+             tempHigh = sp.win_i_inHigh[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+             tempLow = sp.win_i_inLow[(sp.winPos_i + sp.winCap_i - i >= sp.winCap_i) ? sp.winPos_i + sp.winCap_i - i - sp.winCap_i : sp.winPos_i + sp.winCap_i - i];
+             if( i == sp.optInRightBars ) {
+                pivotHigh = tempHigh;
+                pivotLow = tempLow;
+             } else if( i == sp.optInLeftBars + sp.optInRightBars ) {
+                /* optInLeftBars is at least 1, so the oldest bar of the window is
+                 * never the pivot and always seeds the rest-of-window extrema.
+                 */
+                otherHigh = tempHigh;
+                otherLow = tempLow;
+             } else {
+                if( tempHigh > otherHigh ) {
+                   otherHigh = tempHigh;
+                }
+                if( tempLow < otherLow ) {
+                   otherLow = tempLow;
+                }
+             }
+          }
+          if( pivotHigh > otherHigh ) {
+             sp.cur_outSwingHigh = 100;
+          } else {
+             sp.cur_outSwingHigh = 0;
+          }
+          if( pivotLow < otherLow ) {
+             sp.cur_outSwingLow = 100;
+          } else {
+             sp.cur_outSwingLow = 0;
+          }
+          sp.winPos_i = sp.winPos_i + 1;
+          if( sp.winPos_i >= sp.winCap_i ) {
+             sp.winPos_i = 0;
+          }
+       }
+       private RetCode fractalOpenImpl( FractalStream sp, double inHigh[], double inLow[], int startIdx, int optInLeftBars, int optInRightBars, MInteger outBegIdx, MInteger outNBElement, int outSwingHigh[], int outSwingLow[], int outStride )
+       {
+          int today = 0;
+          int outIdx = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double pivotHigh = 0;
+          double pivotLow = 0;
+          double otherHigh = 0;
+          double otherLow = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inLow.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInLeftBars == Integer.MIN_VALUE ) {
+             optInLeftBars = 2;
+          } else if( optInLeftBars < 1 || optInLeftBars > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInRightBars == Integer.MIN_VALUE ) {
+             optInRightBars = 2;
+          } else if( optInRightBars < 1 || optInRightBars > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.InsufficientHistory ;
+          }
+          outIdx = 0;
+          today = startIdx;
+          while( today <= endIdx ) {
+             pivotHigh = 0.0;
+             pivotLow = 0.0;
+             otherHigh = 0.0;
+             otherLow = 0.0;
+             for( i = optInLeftBars + optInRightBars; i >= 0; i -= 1 ) {
+                tempHigh = inHigh[today - i];
+                tempLow = inLow[today - i];
+                if( i == optInRightBars ) {
+                   pivotHigh = tempHigh;
+                   pivotLow = tempLow;
+                } else if( i == optInLeftBars + optInRightBars ) {
+                   /* optInLeftBars is at least 1, so the oldest bar of the window is
+                    * never the pivot and always seeds the rest-of-window extrema.
+                    */
+                   otherHigh = tempHigh;
+                   otherLow = tempLow;
+                } else {
+                   if( tempHigh > otherHigh ) {
+                      otherHigh = tempHigh;
+                   }
+                   if( tempLow < otherLow ) {
+                      otherLow = tempLow;
+                   }
+                }
+             }
+             if( pivotHigh > otherHigh ) {
+                outSwingHigh[outIdx * outStride] = 100;
+             } else {
+                outSwingHigh[outIdx * outStride] = 0;
+             }
+             if( pivotLow < otherLow ) {
+                outSwingLow[outIdx * outStride] = 100;
+             } else {
+                outSwingLow[outIdx * outStride] = 0;
+             }
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int cap_i = (int)(optInLeftBars + optInRightBars + 1);
+          if( cap_i < 1 || cap_i > historyLen ) {
+             return RetCode.InternalError;
+          }
+          double[] capWin_i_inHigh = new double[cap_i];
+          System.arraycopy(inHigh, historyLen - cap_i, capWin_i_inHigh, 0, cap_i);
+          double[] capWin_i_inLow = new double[cap_i];
+          System.arraycopy(inLow, historyLen - cap_i, capWin_i_inLow, 0, cap_i);
+          sp.optInLeftBars = optInLeftBars;
+          sp.optInRightBars = optInRightBars;
+          sp.winPos_i = 0;
+          sp.winCap_i = cap_i;
+          sp.win_i_inHigh = capWin_i_inHigh;
+          sp.win_i_inLow = capWin_i_inLow;
+          sp.cur_outSwingHigh = outSwingHigh[(outNBElement.value - 1) * outStride];
+          sp.cur_outSwingLow = outSwingLow[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* fractalOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       FractalStream fractalOpenAndFillInternal( double inHigh[], double inLow[], int startIdx, int optInLeftBars, int optInRightBars, MInteger outBegIdx, MInteger outNBElement, int outSwingHigh[], int outSwingLow[] )
+       {
+          FractalStream sp = new FractalStream(this);
+          RetCode retCode = fractalOpenImpl(sp, inHigh, inLow, startIdx, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("FRACTAL openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("FRACTAL openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("FRACTAL openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind fractalOpen (composition seam). */
+       FractalStream fractalOpenInternal( double inHigh[], double inLow[], int startIdx, int optInLeftBars, int optInRightBars )
+       {
+          FractalStream sp = new FractalStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          int[] sink_outSwingHigh = new int[1];
+          int[] sink_outSwingLow = new int[1];
+          RetCode retCode = fractalOpenImpl(sp, inHigh, inLow, startIdx, optInLeftBars, optInRightBars, outBegIdx, outNBElement, sink_outSwingHigh, sink_outSwingLow, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("FRACTAL open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("FRACTAL open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("FRACTAL open: " + retCode, retCode);
+       }
+       /**
+        * Open a live FRACTAL stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#FRACTAL} at that bar.
+        * <p>The history must hold at least {@code FRACTAL_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public FractalStream fractalOpen( double inHigh[], double inLow[], int optInLeftBars, int optInRightBars )
+       {
+          requireArgument("FRACTAL open", "inHigh", inHigh);
+          requireHistory("FRACTAL open", inHigh.length);
+          requireArgument("FRACTAL open", "inLow", inLow);
+          requireHistoryLength("FRACTAL open", "inLow", inLow.length, inHigh.length);
+          return fractalOpenInternal(inHigh, inLow, 0, optInLeftBars, optInRightBars);
+       }
+       /**
+        * {@link Core#fractalOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#FRACTAL} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link FractalStream#outRange()}.
+        */
+       public FractalStream fractalOpenAndFill( double inHigh[], double inLow[], int optInLeftBars, int optInRightBars, int outSwingHigh[], int outSwingLow[] )
+       {
+          requireArgument("FRACTAL openAndFill", "inHigh", inHigh);
+          requireHistory("FRACTAL openAndFill", inHigh.length);
+          requireArgument("FRACTAL openAndFill", "inLow", inLow);
+          int guardOutLen = openFillCount("FRACTAL openAndFill", inHigh.length, FRACTAL_Lookback(optInLeftBars, optInRightBars));
+          requireHistoryLength("FRACTAL openAndFill", "inLow", inLow.length, inHigh.length);
+          requireLength("FRACTAL openAndFill", "outSwingHigh", outSwingHigh, guardOutLen);
+          requireLength("FRACTAL openAndFill", "outSwingLow", outSwingLow, guardOutLen);
+          if( (Object)outSwingHigh == (Object)inHigh || (Object)outSwingHigh == (Object)inLow || (Object)outSwingLow == (Object)inHigh || (Object)outSwingLow == (Object)inLow || (Object)outSwingHigh == (Object)outSwingLow ) {
+             throw new TaLibArgumentException("FRACTAL openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return fractalOpenAndFillInternal(inHigh, inLow, 0, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outSwingHigh, outSwingLow);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  090526 MF,CC  First version (issue #373).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#HA} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int HA_Lookback( )
+       {
+          return this.unstablePeriod[FuncUnstId.HA.ordinal()] ;
+
+       }
+       RetCode HA_Impl( int startIdx,
+                        int endIdx,
+                        double inOpen[],
+                        double inHigh[],
+                        double inLow[],
+                        double inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outHAOpen[],
+                        double outHAHigh[],
+                        double outHALow[],
+                        double outHAClose[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double haOpen = 0;
+          double haClose = 0;
+          double haHigh = 0;
+          double haLow = 0;
+          double tempOpen = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          double tempClose = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( outHAOpen == outHAHigh || outHAOpen == outHALow || outHAOpen == outHAClose || outHAHigh == outHALow || outHAHigh == outHAClose || outHALow == outHAClose ) {
+             return RetCode.BadParam ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = HA_Lookback();
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          /* The summation order ((O+H)+L)+C is the bit-exactness contract with every
+           * external implementation of this indicator. TA_AVGPRICE is documented as
+           * the same quantity but sums ((H+L)+C)+O, which is a different double on
+           * some bars; the two are deliberately not unified.
+           */
+          today = startIdx - lookbackTotal;
+          haOpen = (inOpen[today] + inClose[today]) / 2.0;
+          haClose = (inOpen[today] + inHigh[today] + inLow[today] + inClose[today]) / 4.0;
+          today += 1;
+          /* Skip the unstable period. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             /* haOpen consumes the PREVIOUS candle on both sides of the midpoint, so
+              * it must advance before haClose is overwritten. Swapping these two
+              * still yields a plausible smoothed series.
+              */
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = (inOpen[today] + inHigh[today] + inLow[today] + inClose[today]) / 4.0;
+             today += 1;
+             i -= 1;
+          }
+          tempHigh = inHigh[startIdx];
+          tempLow = inLow[startIdx];
+          /* The three-way extremum is spelled with plain comparisons, never the
+           * max/min builtins: C's macros return their SECOND operand on a tie where
+           * Rust, Java and .NET return the negative zero, so a bar of signed zeros
+           * emits different bytes per backend and the cross-language gate compares
+           * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
+           */
+          haHigh = tempHigh;
+          if( haOpen > haHigh ) {
+             haHigh = haOpen;
+          }
+          if( haClose > haHigh ) {
+             haHigh = haClose;
+          }
+          haLow = tempLow;
+          if( haOpen < haLow ) {
+             haLow = haOpen;
+          }
+          if( haClose < haLow ) {
+             haLow = haClose;
+          }
+          outHAOpen[0] = haOpen;
+          outHAHigh[0] = haHigh;
+          outHALow[0] = haLow;
+          outHAClose[0] = haClose;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             /* Every price of the bar is read into a local before any output is
+              * written, which is what lets an output alias any input: at startIdx 0
+              * the store lands on the very slot the high and low were just read from.
+              */
+             tempOpen = inOpen[today];
+             tempHigh = inHigh[today];
+             tempLow = inLow[today];
+             tempClose = inClose[today];
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+             haHigh = tempHigh;
+             if( haOpen > haHigh ) {
+                haHigh = haOpen;
+             }
+             if( haClose > haHigh ) {
+                haHigh = haClose;
+             }
+             haLow = tempLow;
+             if( haOpen < haLow ) {
+                haLow = haOpen;
+             }
+             if( haClose < haLow ) {
+                haLow = haClose;
+             }
+             outHAOpen[outIdx] = haOpen;
+             outHAHigh[outIdx] = haHigh;
+             outHALow[outIdx] = haLow;
+             outHAClose[outIdx] = haClose;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode HA_Impl( int startIdx,
+                        int endIdx,
+                        float inOpen[],
+                        float inHigh[],
+                        float inLow[],
+                        float inClose[],
+                        MInteger outBegIdx,
+                        MInteger outNBElement,
+                        double outHAOpen[],
+                        double outHAHigh[],
+                        double outHALow[],
+                        double outHAClose[] )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double haOpen = 0;
+          double haClose = 0;
+          double haHigh = 0;
+          double haLow = 0;
+          double tempOpen = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          double tempClose = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( outHAOpen == outHAHigh || outHAOpen == outHALow || outHAOpen == outHAClose || outHAHigh == outHALow || outHAHigh == outHAClose || outHALow == outHAClose ) {
+             return RetCode.BadParam ;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = HA_Lookback();
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          today = startIdx - lookbackTotal;
+          haOpen = ((double)inOpen[today] + (double)inClose[today]) / 2.0;
+          haClose = ((double)inOpen[today] + (double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 4.0;
+          today += 1;
+          i = lookbackTotal;
+          while( i != 0 ) {
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = ((double)inOpen[today] + (double)inHigh[today] + (double)inLow[today] + (double)inClose[today]) / 4.0;
+             today += 1;
+             i -= 1;
+          }
+          tempHigh = (double)inHigh[startIdx];
+          tempLow = (double)inLow[startIdx];
+          haHigh = tempHigh;
+          if( haOpen > haHigh ) {
+             haHigh = haOpen;
+          }
+          if( haClose > haHigh ) {
+             haHigh = haClose;
+          }
+          haLow = tempLow;
+          if( haOpen < haLow ) {
+             haLow = haOpen;
+          }
+          if( haClose < haLow ) {
+             haLow = haClose;
+          }
+          outHAOpen[0] = haOpen;
+          outHAHigh[0] = haHigh;
+          outHALow[0] = haLow;
+          outHAClose[0] = haClose;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempOpen = (double)inOpen[today];
+             tempHigh = (double)inHigh[today];
+             tempLow = (double)inLow[today];
+             tempClose = (double)inClose[today];
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+             haHigh = tempHigh;
+             if( haOpen > haHigh ) {
+                haHigh = haOpen;
+             }
+             if( haClose > haHigh ) {
+                haHigh = haClose;
+             }
+             haLow = tempLow;
+             if( haOpen < haLow ) {
+                haLow = haOpen;
+             }
+             if( haClose < haLow ) {
+                haLow = haClose;
+             }
+             outHAOpen[outIdx] = haOpen;
+             outHAHigh[outIdx] = haHigh;
+             outHALow[outIdx] = haLow;
+             outHAClose[outIdx] = haClose;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with
+        * a smoothed synthetic candle. The synthetic close is the bar's four-price
+        * average, the synthetic open is the midpoint of the previous synthetic
+        * candle's own open and close, and the synthetic high and low extend the raw
+        * extremes far enough to contain that pair. Read the result as a trend
+        * filter rather than as price: consecutive candles of one colour run longer
+        * than on the raw chart, small counter-trend bars are absorbed, and a candle
+        * with no shadow on the trend side is the usual continuation cue. The cost
+        * is that the synthetic open and close are not tradeable prices and gaps
+        * disappear entirely, so orders must still be placed against the raw series.
+        * {@code HA} is recursive: every candle carries the previous one, so the
+        * first candle of a request is seeded from its own bar and its influence
+        * halves on each bar that follows.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
+        * HA_open[0]  = ( O[0] + C[0] ) / 2
+        * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
+        * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
+        * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
+        * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
+        * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
+        * <li>Averaging four prices of one bar is also what [{@code AVGPRICE}](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#HA_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inOpen Open price of each bar.
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param outHAOpen Heikin-Ashi open. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outHAHigh Heikin-Ashi high. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outHALow Heikin-Ashi low. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outHAClose Heikin-Ashi close. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#AVGPRICE
+        * @see Core#MEDPRICE
+        * @see Core#TYPPRICE
+        * @see Core#WCLPRICE
+        */
+       public OutRange HA( int startIdx,
+                           int endIdx,
+                           double inOpen[],
+                           double inHigh[],
+                           double inLow[],
+                           double inClose[],
+                           double outHAOpen[],
+                           double outHAHigh[],
+                           double outHALow[],
+                           double outHAClose[] )
+       {
+          requireIndexRange("HA", startIdx, endIdx);
+          int guardStart = clampedStart("HA", startIdx, HA_Lookback());
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HA", "inOpen", inOpen, guardInLen);
+          requireLength("HA", "inHigh", inHigh, guardInLen);
+          requireLength("HA", "inLow", inLow, guardInLen);
+          requireLength("HA", "inClose", inClose, guardInLen);
+          requireLength("HA", "outHAOpen", outHAOpen, guardOutLen);
+          requireLength("HA", "outHAHigh", outHAHigh, guardOutLen);
+          requireLength("HA", "outHALow", outHALow, guardOutLen);
+          requireLength("HA", "outHAClose", outHAClose, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
+          if( retCode != RetCode.Success ) {
+             throw failure("HA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Heikin-Ashi candles: an OHLC-to-OHLC transform that replaces each bar with
+        * a smoothed synthetic candle. The synthetic close is the bar's four-price
+        * average, the synthetic open is the midpoint of the previous synthetic
+        * candle's own open and close, and the synthetic high and low extend the raw
+        * extremes far enough to contain that pair. Read the result as a trend
+        * filter rather than as price: consecutive candles of one colour run longer
+        * than on the raw chart, small counter-trend bars are absorbed, and a candle
+        * with no shadow on the trend side is the usual continuation cue. The cost
+        * is that the synthetic open and close are not tradeable prices and gaps
+        * disappear entirely, so orders must still be placed against the raw series.
+        * {@code HA} is recursive: every candle carries the previous one, so the
+        * first candle of a request is seeded from its own bar and its influence
+        * halves on each bar that follows.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
+        * HA_open[0]  = ( O[0] + C[0] ) / 2
+        * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
+        * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
+        * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
+        * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
+        * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
+        * <li>Averaging four prices of one bar is also what [{@code AVGPRICE}](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#HA_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inOpen Open price of each bar.
+        * @param inHigh High price of each bar.
+        * @param inLow Low price of each bar.
+        * @param inClose Close price of each bar.
+        * @param outHAOpen Heikin-Ashi open. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outHAHigh Heikin-Ashi high. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outHALow Heikin-Ashi low. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outHAClose Heikin-Ashi close. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#AVGPRICE
+        * @see Core#MEDPRICE
+        * @see Core#TYPPRICE
+        * @see Core#WCLPRICE
+        */
+       public OutRange HA( int startIdx,
+                           int endIdx,
+                           float inOpen[],
+                           float inHigh[],
+                           float inLow[],
+                           float inClose[],
+                           double outHAOpen[],
+                           double outHAHigh[],
+                           double outHALow[],
+                           double outHAClose[] )
+       {
+          requireIndexRange("HA", startIdx, endIdx);
+          int guardStart = clampedStart("HA", startIdx, HA_Lookback());
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("HA", "inOpen", inOpen, guardInLen);
+          requireLength("HA", "inHigh", inHigh, guardInLen);
+          requireLength("HA", "inLow", inLow, guardInLen);
+          requireLength("HA", "inClose", inClose, guardInLen);
+          requireLength("HA", "outHAOpen", outHAOpen, guardOutLen);
+          requireLength("HA", "outHAHigh", outHAHigh, guardOutLen);
+          requireLength("HA", "outHALow", outHALow, guardOutLen);
+          requireLength("HA", "outHAClose", outHAClose, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
+          if( retCode != RetCode.Success ) {
+             throw failure("HA", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live HA stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#HA} over the same series.
+        * Open with {@link Core#haOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class HaStream {
+          Core core;
+          double haOpen;
+          double haClose;
+          double cur_outHAOpen;
+          double cur_outHAHigh;
+          double cur_outHALow;
+          double cur_outHAClose;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          HaStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#HA} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          HaStream( HaStream other ) {
+             this.core = other.core;
+             this.haOpen = other.haOpen;
+             this.haClose = other.haClose;
+             this.cur_outHAOpen = other.cur_outHAOpen;
+             this.cur_outHAHigh = other.cur_outHAHigh;
+             this.cur_outHALow = other.cur_outHALow;
+             this.cur_outHAClose = other.cur_outHAClose;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value(HaOut)} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public void update( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
+             requireArgument("HA update", "out", out);
+             if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("HA update: BadParam", RetCode.BadParam);
+             }
+             core.haStepImpl(this, inOpen, inHigh, inLow, inClose);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             out.haOpen = this.cur_outHAOpen;
+             out.haHigh = this.cur_outHAHigh;
+             out.haLow = this.cur_outHALow;
+             out.haClose = this.cur_outHAClose;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inOpen.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] ) {
+             requireArgument("HA updateAndFill", "inOpen", inOpen);
+             requireArgument("HA updateAndFill", "inHigh", inHigh);
+             requireArgument("HA updateAndFill", "inLow", inLow);
+             requireArgument("HA updateAndFill", "inClose", inClose);
+             requireArgument("HA updateAndFill", "outHAOpen", outHAOpen);
+             requireArgument("HA updateAndFill", "outHAHigh", outHAHigh);
+             requireArgument("HA updateAndFill", "outHALow", outHALow);
+             requireArgument("HA updateAndFill", "outHAClose", outHAClose);
+             final int barCount = inOpen.length;
+             if( inHigh.length != barCount || inLow.length != barCount || inClose.length != barCount || outHAOpen.length < barCount || outHAHigh.length < barCount || outHALow.length < barCount || outHAClose.length < barCount || (Object)outHAOpen == (Object)inOpen || (Object)outHAOpen == (Object)inHigh || (Object)outHAOpen == (Object)inLow || (Object)outHAOpen == (Object)inClose || (Object)outHAHigh == (Object)inOpen || (Object)outHAHigh == (Object)inHigh || (Object)outHAHigh == (Object)inLow || (Object)outHAHigh == (Object)inClose || (Object)outHALow == (Object)inOpen || (Object)outHALow == (Object)inHigh || (Object)outHALow == (Object)inLow || (Object)outHALow == (Object)inClose || (Object)outHAClose == (Object)inOpen || (Object)outHAClose == (Object)inHigh || (Object)outHAClose == (Object)inLow || (Object)outHAClose == (Object)inClose || (Object)outHAOpen == (Object)outHAHigh || (Object)outHAOpen == (Object)outHALow || (Object)outHAOpen == (Object)outHAClose || (Object)outHAHigh == (Object)outHALow || (Object)outHAHigh == (Object)outHAClose || (Object)outHALow == (Object)outHAClose )
+                throw new TaLibArgumentException("HA updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inOpen[i]) || !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("HA updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.haStepImpl(this, inOpen[i], inHigh[i], inLow[i], inClose[i]);
+                outHAOpen[i] = this.cur_outHAOpen;
+                outHAHigh[i] = this.cur_outHAHigh;
+                outHALow[i] = this.cur_outHALow;
+                outHAClose[i] = this.cur_outHAClose;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public void peek( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
+             requireArgument("HA peek", "out", out);
+             if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("HA peek: BadParam", RetCode.BadParam);
+             HaStream sp = this;
+             double haHigh = 0.0;
+             double haLow = 0.0;
+             double tempOpen = 0.0;
+             double tempHigh = 0.0;
+             double tempLow = 0.0;
+             double tempClose = 0.0;
+             double cur_outHAClose = 0.0;
+             double cur_outHAHigh = 0.0;
+             double cur_outHALow = 0.0;
+             double cur_outHAOpen = 0.0;
+             double haClose = sp.haClose;
+             double haOpen = sp.haOpen;
+             /* Every price of the bar is read into a local before any output is
+              * written, which is what lets an output alias any input: at startIdx 0
+              * the store lands on the very slot the high and low were just read from.
+              */
+             tempOpen = inOpen;
+             tempHigh = inHigh;
+             tempLow = inLow;
+             tempClose = inClose;
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+             haHigh = tempHigh;
+             if( haOpen > haHigh ) {
+                haHigh = haOpen;
+             }
+             if( haClose > haHigh ) {
+                haHigh = haClose;
+             }
+             haLow = tempLow;
+             if( haOpen < haLow ) {
+                haLow = haOpen;
+             }
+             if( haClose < haLow ) {
+                haLow = haClose;
+             }
+             cur_outHAOpen = haOpen;
+             cur_outHAHigh = haHigh;
+             cur_outHALow = haLow;
+             cur_outHAClose = haClose;
+             out.haOpen = cur_outHAOpen;
+             out.haHigh = cur_outHAHigh;
+             out.haLow = cur_outHALow;
+             out.haClose = cur_outHAClose;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           */
+          public void value( HaOut out ) {
+             requireArgument("HA value", "out", out);
+             out.haOpen = this.cur_outHAOpen;
+             out.haHigh = this.cur_outHAHigh;
+             out.haLow = this.cur_outHALow;
+             out.haClose = this.cur_outHAClose;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public HaStream clone() {
+             return new HaStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one HA bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class HaOut {
+          /** Heikin-Ashi open. */
+          public double haOpen;
+          /** Heikin-Ashi high. */
+          public double haHigh;
+          /** Heikin-Ashi low. */
+          public double haLow;
+          /** Heikin-Ashi close. */
+          public double haClose;
+       }
+       void haStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
+       {
+          double haHigh = 0.0;
+          double haLow = 0.0;
+          double tempOpen = 0.0;
+          double tempHigh = 0.0;
+          double tempLow = 0.0;
+          double tempClose = 0.0;
+          /* Every price of the bar is read into a local before any output is
+           * written, which is what lets an output alias any input: at startIdx 0
+           * the store lands on the very slot the high and low were just read from.
+           */
+          tempOpen = inOpen;
+          tempHigh = inHigh;
+          tempLow = inLow;
+          tempClose = inClose;
+          sp.haOpen = (sp.haOpen + sp.haClose) / 2.0;
+          sp.haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+          haHigh = tempHigh;
+          if( sp.haOpen > haHigh ) {
+             haHigh = sp.haOpen;
+          }
+          if( sp.haClose > haHigh ) {
+             haHigh = sp.haClose;
+          }
+          haLow = tempLow;
+          if( sp.haOpen < haLow ) {
+             haLow = sp.haOpen;
+          }
+          if( sp.haClose < haLow ) {
+             haLow = sp.haClose;
+          }
+          sp.cur_outHAOpen = sp.haOpen;
+          sp.cur_outHAHigh = haHigh;
+          sp.cur_outHALow = haLow;
+          sp.cur_outHAClose = sp.haClose;
+       }
+       private RetCode haOpenImpl( HaStream sp, double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[], int outStride )
+       {
+          int i = 0;
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          double haOpen = 0;
+          double haClose = 0;
+          double haHigh = 0;
+          double haLow = 0;
+          double tempOpen = 0;
+          double tempHigh = 0;
+          double tempLow = 0;
+          double tempClose = 0;
+          int historyLen = inOpen.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inHigh.length != inOpen.length || inLow.length != inOpen.length || inClose.length != inOpen.length ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = HA_Lookback();
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.InsufficientHistory ;
+          }
+          /* The summation order ((O+H)+L)+C is the bit-exactness contract with every
+           * external implementation of this indicator. TA_AVGPRICE is documented as
+           * the same quantity but sums ((H+L)+C)+O, which is a different double on
+           * some bars; the two are deliberately not unified.
+           */
+          today = startIdx - lookbackTotal;
+          haOpen = (inOpen[today] + inClose[today]) / 2.0;
+          haClose = (inOpen[today] + inHigh[today] + inLow[today] + inClose[today]) / 4.0;
+          today += 1;
+          /* Skip the unstable period. */
+          i = lookbackTotal;
+          while( i != 0 ) {
+             /* haOpen consumes the PREVIOUS candle on both sides of the midpoint, so
+              * it must advance before haClose is overwritten. Swapping these two
+              * still yields a plausible smoothed series.
+              */
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = (inOpen[today] + inHigh[today] + inLow[today] + inClose[today]) / 4.0;
+             today += 1;
+             i -= 1;
+          }
+          tempHigh = inHigh[startIdx];
+          tempLow = inLow[startIdx];
+          /* The three-way extremum is spelled with plain comparisons, never the
+           * max/min builtins: C's macros return their SECOND operand on a tie where
+           * Rust, Java and .NET return the negative zero, so a bar of signed zeros
+           * emits different bytes per backend and the cross-language gate compares
+           * bytes. Measured on (O,H,L,C) = (-0.0, +0.0, -0.0, -0.0).
+           */
+          haHigh = tempHigh;
+          if( haOpen > haHigh ) {
+             haHigh = haOpen;
+          }
+          if( haClose > haHigh ) {
+             haHigh = haClose;
+          }
+          haLow = tempLow;
+          if( haOpen < haLow ) {
+             haLow = haOpen;
+          }
+          if( haClose < haLow ) {
+             haLow = haClose;
+          }
+          outHAOpen[0 * outStride] = haOpen;
+          outHAHigh[0 * outStride] = haHigh;
+          outHALow[0 * outStride] = haLow;
+          outHAClose[0 * outStride] = haClose;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             /* Every price of the bar is read into a local before any output is
+              * written, which is what lets an output alias any input: at startIdx 0
+              * the store lands on the very slot the high and low were just read from.
+              */
+             tempOpen = inOpen[today];
+             tempHigh = inHigh[today];
+             tempLow = inLow[today];
+             tempClose = inClose[today];
+             haOpen = (haOpen + haClose) / 2.0;
+             haClose = (tempOpen + tempHigh + tempLow + tempClose) / 4.0;
+             haHigh = tempHigh;
+             if( haOpen > haHigh ) {
+                haHigh = haOpen;
+             }
+             if( haClose > haHigh ) {
+                haHigh = haClose;
+             }
+             haLow = tempLow;
+             if( haOpen < haLow ) {
+                haLow = haOpen;
+             }
+             if( haClose < haLow ) {
+                haLow = haClose;
+             }
+             outHAOpen[outIdx * outStride] = haOpen;
+             outHAHigh[outIdx * outStride] = haHigh;
+             outHALow[outIdx * outStride] = haLow;
+             outHAClose[outIdx * outStride] = haClose;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.haOpen = haOpen;
+          sp.haClose = haClose;
+          sp.cur_outHAOpen = outHAOpen[(outNBElement.value - 1) * outStride];
+          sp.cur_outHAHigh = outHAHigh[(outNBElement.value - 1) * outStride];
+          sp.cur_outHALow = outHALow[(outNBElement.value - 1) * outStride];
+          sp.cur_outHAClose = outHAClose[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* haOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       HaStream haOpenAndFillInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx, MInteger outBegIdx, MInteger outNBElement, double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
+       {
+          HaStream sp = new HaStream(this);
+          RetCode retCode = haOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("HA openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("HA openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("HA openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind haOpen (composition seam). */
+       HaStream haOpenInternal( double inOpen[], double inHigh[], double inLow[], double inClose[], int startIdx )
+       {
+          HaStream sp = new HaStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outHAOpen = new double[1];
+          double[] sink_outHAHigh = new double[1];
+          double[] sink_outHALow = new double[1];
+          double[] sink_outHAClose = new double[1];
+          RetCode retCode = haOpenImpl(sp, inOpen, inHigh, inLow, inClose, startIdx, outBegIdx, outNBElement, sink_outHAOpen, sink_outHAHigh, sink_outHALow, sink_outHAClose, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("HA open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("HA open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("HA open: " + retCode, retCode);
+       }
+       /**
+        * Open a live HA stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#HA} at that bar.
+        * <p>The history must hold at least {@code HA_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public HaStream haOpen( double inOpen[], double inHigh[], double inLow[], double inClose[] )
+       {
+          requireArgument("HA open", "inOpen", inOpen);
+          requireHistory("HA open", inOpen.length);
+          requireArgument("HA open", "inHigh", inHigh);
+          requireArgument("HA open", "inLow", inLow);
+          requireArgument("HA open", "inClose", inClose);
+          requireHistoryLength("HA open", "inHigh", inHigh.length, inOpen.length);
+          requireHistoryLength("HA open", "inLow", inLow.length, inOpen.length);
+          requireHistoryLength("HA open", "inClose", inClose.length, inOpen.length);
+          return haOpenInternal(inOpen, inHigh, inLow, inClose, 0);
+       }
+       /**
+        * {@link Core#haOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#HA} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link HaStream#outRange()}.
+        */
+       public HaStream haOpenAndFill( double inOpen[], double inHigh[], double inLow[], double inClose[], double outHAOpen[], double outHAHigh[], double outHALow[], double outHAClose[] )
+       {
+          requireArgument("HA openAndFill", "inOpen", inOpen);
+          requireHistory("HA openAndFill", inOpen.length);
+          requireArgument("HA openAndFill", "inHigh", inHigh);
+          requireArgument("HA openAndFill", "inLow", inLow);
+          requireArgument("HA openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("HA openAndFill", inOpen.length, HA_Lookback());
+          requireHistoryLength("HA openAndFill", "inHigh", inHigh.length, inOpen.length);
+          requireHistoryLength("HA openAndFill", "inLow", inLow.length, inOpen.length);
+          requireHistoryLength("HA openAndFill", "inClose", inClose.length, inOpen.length);
+          requireLength("HA openAndFill", "outHAOpen", outHAOpen, guardOutLen);
+          requireLength("HA openAndFill", "outHAHigh", outHAHigh, guardOutLen);
+          requireLength("HA openAndFill", "outHALow", outHALow, guardOutLen);
+          requireLength("HA openAndFill", "outHAClose", outHAClose, guardOutLen);
+          if( (Object)outHAOpen == (Object)inOpen || (Object)outHAOpen == (Object)inHigh || (Object)outHAOpen == (Object)inLow || (Object)outHAOpen == (Object)inClose || (Object)outHAHigh == (Object)inOpen || (Object)outHAHigh == (Object)inHigh || (Object)outHAHigh == (Object)inLow || (Object)outHAHigh == (Object)inClose || (Object)outHALow == (Object)inOpen || (Object)outHALow == (Object)inHigh || (Object)outHALow == (Object)inLow || (Object)outHALow == (Object)inClose || (Object)outHAClose == (Object)inOpen || (Object)outHAClose == (Object)inHigh || (Object)outHAClose == (Object)inLow || (Object)outHAClose == (Object)inClose || (Object)outHAOpen == (Object)outHAHigh || (Object)outHAOpen == (Object)outHALow || (Object)outHAOpen == (Object)outHAClose || (Object)outHAHigh == (Object)outHALow || (Object)outHAHigh == (Object)outHAClose || (Object)outHALow == (Object)outHAClose ) {
+             throw new TaLibArgumentException("HA openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return haOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, outBegIdx, outNBElement, outHAOpen, outHAHigh, outHALow, outHAClose);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
      *
      * Change history:
      *
@@ -146005,6 +147882,1452 @@ class Core {
      *
      *  MMDDYY BY     Description
      *  -------------------------------------------------------------------
+     *  090526 MF,CC  First version (issue #366).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#RVI} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        * <p>This function is recursive, so the result also includes this
+        * {@code Core}'s unstable-period setting — which is why it is an instance
+        * method.
+        *
+        * @param optInTimePeriod Wilder smoothing period applied to both legs
+        *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInStdDevPeriod Number of trailing values the standard deviation
+        *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int RVI_Lookback( int optInTimePeriod, int optInStdDevPeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          if( optInStdDevPeriod == Integer.MIN_VALUE ) {
+             optInStdDevPeriod = 10;
+          } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
+             return -1;
+          }
+          return optInStdDevPeriod - 1 + (optInTimePeriod - 1) + this.unstablePeriod[FuncUnstId.RVI.ordinal()] ;
+
+       }
+       RetCode RVI_Impl( int startIdx,
+                         int endIdx,
+                         double inReal[],
+                         int optInTimePeriod,
+                         int optInStdDevPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double tempReal = 0;
+          double shift = 0;
+          double periodTotal1 = 0;
+          double periodTotal2 = 0;
+          double meanValue1 = 0;
+          double variance = 0;
+          double invPeriod = 0;
+          double sigma = 0;
+          double delta = 0;
+          double upValue = 0;
+          double dnValue = 0;
+          double upTotal = 0;
+          double dnTotal = 0;
+          double prevUp = 0;
+          double prevDn = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double total = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int today = 0;
+          int anchorIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int barsSinceReseed = 0;
+          int nbInitialElementNeeded = 0;
+          int lookbackTotal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInStdDevPeriod == Integer.MIN_VALUE ) {
+             optInStdDevPeriod = 10;
+          } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          /* wAlpha is derived FROM wBeta, never the reverse (rma.c): only that order
+           * makes the pair sum to exactly 1, and TA_RMA over this function's two legs
+           * has to be bit for bit what the fused step below computes.
+           */
+          wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+          wAlpha = 1.0 - wBeta;
+          /* The per-bar sigma is var.c's step transcribed unchanged -- shifted running
+           * sums against a near-window anchor, the reseed trigger, its floor, and the
+           * re-remove under the new shift. Any algebraically equal spelling is a
+           * different double, and the reference this is differenced against is
+           * TA_STDDEV anchored at this call's own start.
+           */
+          nbInitialElementNeeded = optInStdDevPeriod - 1;
+          invPeriod = 1.0 / (double)optInStdDevPeriod;
+          anchorIdx = startIdx - lookbackTotal;
+          trailingIdx = anchorIdx;
+          shift = inReal[anchorIdx];
+          periodTotal1 = 0.0;
+          periodTotal2 = 0.0;
+          today = anchorIdx + nbInitialElementNeeded;
+          for( j = anchorIdx; j < today; j += 1 ) {
+             tempReal = inReal[j] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+          }
+          barsSinceReseed = 32 * optInStdDevPeriod;
+          /* Seed both legs with the simple average of the first 'optInTimePeriod'
+           * volatilities, as rma.c seeds. optInStdDevPeriod >= 2 is what keeps the
+           * inReal[today-1] below in bounds on the very first bar.
+           */
+          upTotal = 0.0;
+          dnTotal = 0.0;
+          for( i = optInTimePeriod; i > 0; i -= 1 ) {
+             tempReal = inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = inReal[today] - inReal[today - 1];
+             if( delta > 0.0 ) {
+                upTotal += sigma;
+             } else if( delta < 0.0 ) {
+                dnTotal += sigma;
+             }
+             today += 1;
+          }
+          prevUp = upTotal / optInTimePeriod;
+          prevDn = dnTotal / optInTimePeriod;
+          /* Skip the unstable period. Same step, smoothed but not stored. */
+          i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+          while( i != 0 ) {
+             tempReal = inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = inReal[today] - inReal[today - 1];
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(wBeta, prevUp, wAlpha * upValue);
+             prevDn = Math.fma(wBeta, prevDn, wAlpha * dnValue);
+             today += 1;
+             i -= 1;
+          }
+          /* A tie feeds neither leg, so both can be exactly zero at the same bar --
+           * reachable on real data whenever the smoothing has no memory. Test the
+           * total exactly: a band would carry the quote unit and zero the oscillator
+           * for any instrument priced under it.
+           */
+          total = prevUp + prevDn;
+          outReal[0] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = inReal[today] - inReal[today - 1];
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(wBeta, prevUp, wAlpha * upValue);
+             prevDn = Math.fma(wBeta, prevDn, wAlpha * dnValue);
+             total = prevUp + prevDn;
+             outReal[outIdx++] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode RVI_Impl( int startIdx,
+                         int endIdx,
+                         float inReal[],
+                         int optInTimePeriod,
+                         int optInStdDevPeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outReal[] )
+       {
+          double tempReal = 0;
+          double shift = 0;
+          double periodTotal1 = 0;
+          double periodTotal2 = 0;
+          double meanValue1 = 0;
+          double variance = 0;
+          double invPeriod = 0;
+          double sigma = 0;
+          double delta = 0;
+          double upValue = 0;
+          double dnValue = 0;
+          double upTotal = 0;
+          double dnTotal = 0;
+          double prevUp = 0;
+          double prevDn = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double total = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int today = 0;
+          int anchorIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int barsSinceReseed = 0;
+          int nbInitialElementNeeded = 0;
+          int lookbackTotal = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInStdDevPeriod == Integer.MIN_VALUE ) {
+             optInStdDevPeriod = 10;
+          } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             return RetCode.Success ;
+          }
+          wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+          wAlpha = 1.0 - wBeta;
+          nbInitialElementNeeded = optInStdDevPeriod - 1;
+          invPeriod = 1.0 / (double)optInStdDevPeriod;
+          anchorIdx = startIdx - lookbackTotal;
+          trailingIdx = anchorIdx;
+          shift = (double)inReal[anchorIdx];
+          periodTotal1 = 0.0;
+          periodTotal2 = 0.0;
+          today = anchorIdx + nbInitialElementNeeded;
+          for( j = anchorIdx; j < today; j += 1 ) {
+             tempReal = (double)inReal[j] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+          }
+          barsSinceReseed = 32 * optInStdDevPeriod;
+          upTotal = 0.0;
+          dnTotal = 0.0;
+          for( i = optInTimePeriod; i > 0; i -= 1 ) {
+             tempReal = (double)inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = (double)inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += (double)inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = (double)inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = (double)inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = (double)inReal[today] - (double)inReal[today - 1];
+             if( delta > 0.0 ) {
+                upTotal += sigma;
+             } else if( delta < 0.0 ) {
+                dnTotal += sigma;
+             }
+             today += 1;
+          }
+          prevUp = upTotal / optInTimePeriod;
+          prevDn = dnTotal / optInTimePeriod;
+          i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+          while( i != 0 ) {
+             tempReal = (double)inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = (double)inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += (double)inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = (double)inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = (double)inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = (double)inReal[today] - (double)inReal[today - 1];
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(wBeta, prevUp, wAlpha * upValue);
+             prevDn = Math.fma(wBeta, prevDn, wAlpha * dnValue);
+             today += 1;
+             i -= 1;
+          }
+          total = prevUp + prevDn;
+          outReal[0] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = (double)inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = (double)inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += (double)inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = (double)inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = (double)inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = (double)inReal[today] - (double)inReal[today - 1];
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(wBeta, prevUp, wAlpha * upValue);
+             prevDn = Math.fma(wBeta, prevDn, wAlpha * dnValue);
+             total = prevUp + prevDn;
+             outReal[outIdx++] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Relative Volatility Index: Donald Dorsey's volatility oscillator, built
+        * exactly like RSI except that the quantity routed to the up and down
+        * buckets is the rolling standard deviation of price rather than the size of
+        * the move. The direction of the close-to-close change still decides which
+        * bucket a bar feeds. Bounded in 0..100. High values mean the recent
+        * volatility arrived mostly on up bars, low values that it arrived mostly on
+        * down bars. Dorsey proposed it as a confirming filter rather than a
+        * stand-alone signal: take a long entry only while RVI is above 50, a short
+        * only while it is below.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
+        * U[i] = S[i] if C[i] > C[i-1], else 0
+        * D[i] = S[i] if C[i] < C[i-1], else 0
+        * RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
+        * `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
+        * <li>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed {@code S} instead of {@code U + D} are counting ties as down bars, which is a different indicator.</li>
+        * <li>Both smoothed legs can be exactly zero at the same bar, which happens whenever the smoothing carries no memory and the bar is a tie. RVI reports its neutral centre, 50, there rather than a non-finite value.</li>
+        * <li>The standard deviation is the population form. The sample form differs by a constant factor that cancels in the ratio, so it is not a variant.</li>
+        * <li>Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 11.6 index points; one shared period for both the deviation and the smoothing, up to 15.6; an RSI taken over the standard-deviation series, up to 35.2; a linear-regression residual, up to 36.0. These are different indicators, not errors.</li>
+        * <li>Unrelated to the Relative Vigor Index, which several platforms also abbreviate RVI.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#RVI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Source price/value series, canonically the close.
+        * @param optInTimePeriod Wilder smoothing period applied to both legs
+        *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInStdDevPeriod Number of trailing values the standard deviation
+        *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal Relative Volatility Index value. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#RSI
+        * @see Core#RMA
+        * @see Core#STDDEV
+        * @see Core#CMO
+        */
+       public OutRange RVI( int startIdx,
+                            int endIdx,
+                            double inReal[],
+                            int optInTimePeriod,
+                            int optInStdDevPeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("RVI", startIdx, endIdx);
+          int guardStart = clampedStart("RVI", startIdx, RVI_Lookback(optInTimePeriod, optInStdDevPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("RVI", "inReal", inReal, guardInLen);
+          requireLength("RVI", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = RVI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("RVI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Relative Volatility Index: Donald Dorsey's volatility oscillator, built
+        * exactly like RSI except that the quantity routed to the up and down
+        * buckets is the rolling standard deviation of price rather than the size of
+        * the move. The direction of the close-to-close change still decides which
+        * bucket a bar feeds. Bounded in 0..100. High values mean the recent
+        * volatility arrived mostly on up bars, low values that it arrived mostly on
+        * down bars. Dorsey proposed it as a confirming filter rather than a
+        * stand-alone signal: take a long entry only while RVI is above 50, a short
+        * only while it is below.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
+        * U[i] = S[i] if C[i] > C[i-1], else 0
+        * D[i] = S[i] if C[i] < C[i-1], else 0
+        * RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
+        * `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
+        * <li>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed {@code S} instead of {@code U + D} are counting ties as down bars, which is a different indicator.</li>
+        * <li>Both smoothed legs can be exactly zero at the same bar, which happens whenever the smoothing carries no memory and the bar is a tie. RVI reports its neutral centre, 50, there rather than a non-finite value.</li>
+        * <li>The standard deviation is the population form. The sample form differs by a constant factor that cancels in the ratio, so it is not a variant.</li>
+        * <li>Sources publishing something else under this name, and how far from this function they land on a 252-bar equity series: a plain exponential smoother instead of Wilder's, up to 11.6 index points; one shared period for both the deviation and the smoothing, up to 15.6; an RSI taken over the standard-deviation series, up to 35.2; a linear-regression residual, up to 36.0. These are different indicators, not errors.</li>
+        * <li>Unrelated to the Relative Vigor Index, which several platforms also abbreviate RVI.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#RVI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inReal Source price/value series, canonically the close.
+        * @param optInTimePeriod Wilder smoothing period applied to both legs
+        *        (default 14; range 1..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param optInStdDevPeriod Number of trailing values the standard deviation
+        *        spans (default 10; range 2..100000; {@code Integer.MIN_VALUE} selects the
+        *        default).
+        * @param outReal Relative Volatility Index value. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#RSI
+        * @see Core#RMA
+        * @see Core#STDDEV
+        * @see Core#CMO
+        */
+       public OutRange RVI( int startIdx,
+                            int endIdx,
+                            float inReal[],
+                            int optInTimePeriod,
+                            int optInStdDevPeriod,
+                            double outReal[] )
+       {
+          requireIndexRange("RVI", startIdx, endIdx);
+          int guardStart = clampedStart("RVI", startIdx, RVI_Lookback(optInTimePeriod, optInStdDevPeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("RVI", "inReal", inReal, guardInLen);
+          requireLength("RVI", "outReal", outReal, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = RVI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
+          if( retCode != RetCode.Success ) {
+             throw failure("RVI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live RVI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#RVI} over the same series.
+        * Open with {@link Core#rviOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class RviStream {
+          Core core;
+          int optInTimePeriod;
+          int optInStdDevPeriod;
+          double shift;
+          double periodTotal1;
+          double periodTotal2;
+          double invPeriod;
+          double prevUp;
+          double prevDn;
+          double wAlpha;
+          double wBeta;
+          int trailingIdx;
+          int barsSinceReseed;
+          int nbInitialElementNeeded;
+          int j;
+          int windowStart;
+          int today;
+          double lag1_inReal;
+          int xMask;
+          double[] x_inReal;
+          double cur_outReal;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          RviStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#RVI} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          RviStream( RviStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.optInStdDevPeriod = other.optInStdDevPeriod;
+             this.shift = other.shift;
+             this.periodTotal1 = other.periodTotal1;
+             this.periodTotal2 = other.periodTotal2;
+             this.invPeriod = other.invPeriod;
+             this.prevUp = other.prevUp;
+             this.prevDn = other.prevDn;
+             this.wAlpha = other.wAlpha;
+             this.wBeta = other.wBeta;
+             this.trailingIdx = other.trailingIdx;
+             this.barsSinceReseed = other.barsSinceReseed;
+             this.nbInitialElementNeeded = other.nbInitialElementNeeded;
+             this.j = other.j;
+             this.windowStart = other.windowStart;
+             this.today = other.today;
+             this.lag1_inReal = other.lag1_inReal;
+             this.xMask = other.xMask;
+             this.x_inReal = other.x_inReal.clone();
+             this.cur_outReal = other.cur_outReal;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, returning the new current value.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value()} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public double update( double inReal ) {
+             if( !Double.isFinite(inReal) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("RVI update: BadParam", RetCode.BadParam);
+             }
+             core.rviStepImpl(this, inReal);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             return this.cur_outReal;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inReal.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inReal[], double outReal[] ) {
+             requireArgument("RVI updateAndFill", "inReal", inReal);
+             requireArgument("RVI updateAndFill", "outReal", outReal);
+             final int barCount = inReal.length;
+             if( outReal.length < barCount || (Object)outReal == (Object)inReal )
+                throw new TaLibArgumentException("RVI updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inReal[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("RVI updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.rviStepImpl(this, inReal[i]);
+                outReal[i] = this.cur_outReal;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would return — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public double peek( double inReal ) {
+             if( !Double.isFinite(inReal) )
+                throw new TaLibArgumentException("RVI peek: BadParam", RetCode.BadParam);
+             RviStream sp = this;
+             double tempReal = 0.0;
+             double meanValue1 = 0.0;
+             double variance = 0.0;
+             double sigma = 0.0;
+             double delta = 0.0;
+             double upValue = 0.0;
+             double dnValue = 0.0;
+             double total = 0.0;
+             int barsSinceReseed = sp.barsSinceReseed;
+             double cur_outReal = 0.0;
+             int j = sp.j;
+             double periodTotal1 = sp.periodTotal1;
+             double periodTotal2 = sp.periodTotal2;
+             double prevDn = sp.prevDn;
+             double prevUp = sp.prevUp;
+             double shift = sp.shift;
+             int today = sp.today;
+             int trailingIdx = sp.trailingIdx;
+             int windowStart = sp.windowStart;
+             int pkSlot0 = -1;
+             double pkVal0 = 0.0;
+             if( today >= 1073741824 ) {
+                int rebaseShift = trailingIdx & ~sp.xMask;
+                today -= rebaseShift;
+                trailingIdx -= rebaseShift;
+                j -= rebaseShift;
+                windowStart -= rebaseShift;
+             }
+             pkSlot0 = today & sp.xMask;
+             pkVal0 = inReal;
+             tempReal = (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0) - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * sp.invPeriod;
+             variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+             tempReal = (((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0) - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * sp.optInStdDevPeriod;
+                windowStart = today - sp.nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
+                }
+                shift = tempReal * sp.invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * sp.invPeriod;
+                variance = periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * sp.invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = (((windowStart & sp.xMask) != pkSlot0) ? sp.x_inReal[windowStart & sp.xMask] : pkVal0) - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0) - ((((today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(today - 1) & sp.xMask] : pkVal0);
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(sp.wBeta, prevUp, sp.wAlpha * upValue);
+             prevDn = Math.fma(sp.wBeta, prevDn, sp.wAlpha * dnValue);
+             total = prevUp + prevDn;
+             cur_outReal = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+             return cur_outReal;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} returned.
+           * A pure field read; {@code peek} does not change it.
+           */
+          public double value() {
+             return this.cur_outReal;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public RviStream clone() {
+             return new RviStream(this);
+          }
+       }
+       void rviStepImpl( RviStream sp, double inReal )
+       {
+          double tempReal = 0.0;
+          double meanValue1 = 0.0;
+          double variance = 0.0;
+          double sigma = 0.0;
+          double delta = 0.0;
+          double upValue = 0.0;
+          double dnValue = 0.0;
+          double total = 0.0;
+          if( sp.today >= 1073741824 ) {
+             int rebaseShift = sp.trailingIdx & ~sp.xMask;
+             sp.today -= rebaseShift;
+             sp.trailingIdx -= rebaseShift;
+             sp.j -= rebaseShift;
+             sp.windowStart -= rebaseShift;
+          }
+          sp.x_inReal[sp.today & sp.xMask] = inReal;
+          tempReal = sp.x_inReal[sp.today & sp.xMask] - sp.shift;
+          sp.periodTotal1 += tempReal;
+          tempReal *= tempReal;
+          sp.periodTotal2 += tempReal;
+          meanValue1 = sp.periodTotal1 * sp.invPeriod;
+          variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+          tempReal = sp.x_inReal[sp.trailingIdx & sp.xMask] - sp.shift;
+          sp.periodTotal1 -= tempReal;
+          tempReal *= tempReal;
+          sp.periodTotal2 -= tempReal;
+          sp.trailingIdx += 1;
+          sp.barsSinceReseed -= 1;
+          if( variance < 0.000001 * (sp.periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * sp.periodTotal2 || sp.barsSinceReseed <= 0 ) {
+             sp.barsSinceReseed = 32 * sp.optInStdDevPeriod;
+             sp.windowStart = sp.today - sp.nbInitialElementNeeded;
+             tempReal = 0.0;
+             for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+                tempReal += sp.x_inReal[sp.j & sp.xMask];
+             }
+             sp.shift = tempReal * sp.invPeriod;
+             sp.periodTotal1 = 0.0;
+             sp.periodTotal2 = 0.0;
+             for( sp.j = sp.windowStart; sp.j <= sp.today; sp.j += 1 ) {
+                tempReal = sp.x_inReal[sp.j & sp.xMask] - sp.shift;
+                sp.periodTotal1 += tempReal;
+                tempReal *= tempReal;
+                sp.periodTotal2 += tempReal;
+             }
+             meanValue1 = sp.periodTotal1 * sp.invPeriod;
+             variance = sp.periodTotal2 * sp.invPeriod - meanValue1 * meanValue1;
+             if( variance < 0.000000000001 * (sp.periodTotal2 * sp.invPeriod) ) {
+                variance = 0.0;
+             }
+             tempReal = sp.x_inReal[sp.windowStart & sp.xMask] - sp.shift;
+             sp.periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             sp.periodTotal2 -= tempReal;
+          }
+          sigma = Math.sqrt(variance);
+          delta = sp.x_inReal[sp.today & sp.xMask] - sp.x_inReal[(sp.today - 1) & sp.xMask];
+          upValue = 0.0;
+          dnValue = 0.0;
+          if( delta > 0.0 ) {
+             upValue = sigma;
+          } else if( delta < 0.0 ) {
+             dnValue = sigma;
+          }
+          sp.prevUp = Math.fma(sp.wBeta, sp.prevUp, sp.wAlpha * upValue);
+          sp.prevDn = Math.fma(sp.wBeta, sp.prevDn, sp.wAlpha * dnValue);
+          total = sp.prevUp + sp.prevDn;
+          sp.cur_outReal = (total == 0.0) ? 50.0 : 100.0 * (sp.prevUp / total);
+          sp.today += 1;
+          sp.lag1_inReal = inReal;
+       }
+       private RetCode rviOpenImpl( RviStream sp, double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outStride )
+       {
+          double tempReal = 0;
+          double shift = 0;
+          double periodTotal1 = 0;
+          double periodTotal2 = 0;
+          double meanValue1 = 0;
+          double variance = 0;
+          double invPeriod = 0;
+          double sigma = 0;
+          double delta = 0;
+          double upValue = 0;
+          double dnValue = 0;
+          double upTotal = 0;
+          double dnTotal = 0;
+          double prevUp = 0;
+          double prevDn = 0;
+          double wAlpha = 0;
+          double wBeta = 0;
+          double total = 0;
+          int i = 0;
+          int j = 0;
+          int outIdx = 0;
+          int today = 0;
+          int anchorIdx = 0;
+          int trailingIdx = 0;
+          int windowStart = 0;
+          int barsSinceReseed = 0;
+          int nbInitialElementNeeded = 0;
+          int lookbackTotal = 0;
+          int historyLen = inReal.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 14;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( optInStdDevPeriod == Integer.MIN_VALUE ) {
+             optInStdDevPeriod = 10;
+          } else if( optInStdDevPeriod < 2 || optInStdDevPeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          outBegIdx.value = 0;
+          outNBElement.value = 0;
+          lookbackTotal = RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             return RetCode.InsufficientHistory ;
+          }
+          /* wAlpha is derived FROM wBeta, never the reverse (rma.c): only that order
+           * makes the pair sum to exactly 1, and TA_RMA over this function's two legs
+           * has to be bit for bit what the fused step below computes.
+           */
+          wBeta = (double)(optInTimePeriod - 1) / (double)optInTimePeriod;
+          wAlpha = 1.0 - wBeta;
+          /* The per-bar sigma is var.c's step transcribed unchanged -- shifted running
+           * sums against a near-window anchor, the reseed trigger, its floor, and the
+           * re-remove under the new shift. Any algebraically equal spelling is a
+           * different double, and the reference this is differenced against is
+           * TA_STDDEV anchored at this call's own start.
+           */
+          nbInitialElementNeeded = optInStdDevPeriod - 1;
+          invPeriod = 1.0 / (double)optInStdDevPeriod;
+          anchorIdx = startIdx - lookbackTotal;
+          trailingIdx = anchorIdx;
+          shift = inReal[anchorIdx];
+          periodTotal1 = 0.0;
+          periodTotal2 = 0.0;
+          today = anchorIdx + nbInitialElementNeeded;
+          for( j = anchorIdx; j < today; j += 1 ) {
+             tempReal = inReal[j] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+          }
+          barsSinceReseed = 32 * optInStdDevPeriod;
+          /* Seed both legs with the simple average of the first 'optInTimePeriod'
+           * volatilities, as rma.c seeds. optInStdDevPeriod >= 2 is what keeps the
+           * inReal[today-1] below in bounds on the very first bar.
+           */
+          upTotal = 0.0;
+          dnTotal = 0.0;
+          for( i = optInTimePeriod; i > 0; i -= 1 ) {
+             tempReal = inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = inReal[today] - inReal[today - 1];
+             if( delta > 0.0 ) {
+                upTotal += sigma;
+             } else if( delta < 0.0 ) {
+                dnTotal += sigma;
+             }
+             today += 1;
+          }
+          prevUp = upTotal / optInTimePeriod;
+          prevDn = dnTotal / optInTimePeriod;
+          /* Skip the unstable period. Same step, smoothed but not stored. */
+          i = this.unstablePeriod[FuncUnstId.RVI.ordinal()];
+          while( i != 0 ) {
+             tempReal = inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = inReal[today] - inReal[today - 1];
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(wBeta, prevUp, wAlpha * upValue);
+             prevDn = Math.fma(wBeta, prevDn, wAlpha * dnValue);
+             today += 1;
+             i -= 1;
+          }
+          /* A tie feeds neither leg, so both can be exactly zero at the same bar --
+           * reachable on real data whenever the smoothing has no memory. Test the
+           * total exactly: a band would carry the quote unit and zero the oscillator
+           * for any instrument priced under it.
+           */
+          total = prevUp + prevDn;
+          outReal[0 * outStride] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+          outIdx = 1;
+          while( today <= endIdx ) {
+             tempReal = inReal[today] - shift;
+             periodTotal1 += tempReal;
+             tempReal *= tempReal;
+             periodTotal2 += tempReal;
+             meanValue1 = periodTotal1 * invPeriod;
+             variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+             tempReal = inReal[trailingIdx] - shift;
+             periodTotal1 -= tempReal;
+             tempReal *= tempReal;
+             periodTotal2 -= tempReal;
+             trailingIdx += 1;
+             barsSinceReseed -= 1;
+             if( variance < 0.000001 * (periodTotal2 * invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
+                barsSinceReseed = 32 * optInStdDevPeriod;
+                windowStart = today - nbInitialElementNeeded;
+                tempReal = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal += inReal[j];
+                }
+                shift = tempReal * invPeriod;
+                periodTotal1 = 0.0;
+                periodTotal2 = 0.0;
+                for( j = windowStart; j <= today; j += 1 ) {
+                   tempReal = inReal[j] - shift;
+                   periodTotal1 += tempReal;
+                   tempReal *= tempReal;
+                   periodTotal2 += tempReal;
+                }
+                meanValue1 = periodTotal1 * invPeriod;
+                variance = periodTotal2 * invPeriod - meanValue1 * meanValue1;
+                if( variance < 0.000000000001 * (periodTotal2 * invPeriod) ) {
+                   variance = 0.0;
+                }
+                tempReal = inReal[windowStart] - shift;
+                periodTotal1 -= tempReal;
+                tempReal *= tempReal;
+                periodTotal2 -= tempReal;
+             }
+             sigma = Math.sqrt(variance);
+             delta = inReal[today] - inReal[today - 1];
+             upValue = 0.0;
+             dnValue = 0.0;
+             if( delta > 0.0 ) {
+                upValue = sigma;
+             } else if( delta < 0.0 ) {
+                dnValue = sigma;
+             }
+             prevUp = Math.fma(wBeta, prevUp, wAlpha * upValue);
+             prevDn = Math.fma(wBeta, prevDn, wAlpha * dnValue);
+             total = prevUp + prevDn;
+             outReal[outIdx++ * outStride] = (total == 0.0) ? 50.0 : 100.0 * (prevUp / total);
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          int capX = today - trailingIdx + 1;
+          if( capX < 1 || capX > historyLen ) {
+             return RetCode.InternalError;
+          }
+          int physX = 1;
+          while( physX < capX ) {
+             physX <<= 1;
+          }
+          double[] capX_inReal = new double[physX];
+          for( int fillJ = historyLen - capX; fillJ < historyLen; fillJ++ ) {
+             capX_inReal[fillJ & (physX - 1)] = inReal[fillJ];
+          }
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.optInStdDevPeriod = optInStdDevPeriod;
+          sp.shift = shift;
+          sp.periodTotal1 = periodTotal1;
+          sp.periodTotal2 = periodTotal2;
+          sp.invPeriod = invPeriod;
+          sp.prevUp = prevUp;
+          sp.prevDn = prevDn;
+          sp.wAlpha = wAlpha;
+          sp.wBeta = wBeta;
+          sp.trailingIdx = trailingIdx;
+          sp.barsSinceReseed = barsSinceReseed;
+          sp.nbInitialElementNeeded = nbInitialElementNeeded;
+          sp.j = j;
+          sp.windowStart = windowStart;
+          sp.today = today;
+          sp.lag1_inReal = inReal[historyLen - 1];
+          sp.xMask = physX - 1;
+          sp.x_inReal = capX_inReal;
+          sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* rviOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       RviStream rviOpenAndFillInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod, MInteger outBegIdx, MInteger outNBElement, double outReal[] )
+       {
+          RviStream sp = new RviStream(this);
+          RetCode retCode = rviOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("RVI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("RVI openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("RVI openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind rviOpen (composition seam). */
+       RviStream rviOpenInternal( double inReal[], int startIdx, int optInTimePeriod, int optInStdDevPeriod )
+       {
+          RviStream sp = new RviStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outReal = new double[1];
+          RetCode retCode = rviOpenImpl(sp, inReal, startIdx, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, sink_outReal, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("RVI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("RVI open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("RVI open: " + retCode, retCode);
+       }
+       /**
+        * Open a live RVI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#RVI} at that bar.
+        * <p>The history must hold at least {@code RVI_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public RviStream rviOpen( double inReal[], int optInTimePeriod, int optInStdDevPeriod )
+       {
+          requireArgument("RVI open", "inReal", inReal);
+          requireHistory("RVI open", inReal.length);
+          return rviOpenInternal(inReal, 0, optInTimePeriod, optInStdDevPeriod);
+       }
+       /**
+        * {@link Core#rviOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#RVI} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link RviStream#outRange()}.
+        */
+       public RviStream rviOpenAndFill( double inReal[], int optInTimePeriod, int optInStdDevPeriod, double outReal[] )
+       {
+          requireArgument("RVI openAndFill", "inReal", inReal);
+          requireHistory("RVI openAndFill", inReal.length);
+          int guardOutLen = openFillCount("RVI openAndFill", inReal.length, RVI_Lookback(optInTimePeriod, optInStdDevPeriod));
+          requireLength("RVI openAndFill", "outReal", outReal, guardOutLen);
+          if( (Object)outReal == (Object)inReal ) {
+             throw new TaLibArgumentException("RVI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return rviOpenAndFillInternal(inReal, 0, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outReal);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
+     *  MF       Mario Fortier
+     *  CC       Claude Code (AI assistant)
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
      *  090426 MF,CC  Initial version (#370).
      */
 
@@ -177551,7 +180874,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4c02dd34e71fc7c9";
+    static final String SPLICED_GENCODE_DIGEST = "3ffdcd76b44c04f1";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -178127,6 +181450,14 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",5.0, 0,0,0,0,0,0, 2,100000,2,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("FRACTAL", new AbsFunc("FRACTAL", "Momentum Indicators", "Williams Fractal", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHL",6) },
+            new AbsOpt[]{ new AbsOpt(2,"optInLeftBars",0,"Left Bars","Number of bars required to be lower/higher before the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null), new AbsOpt(2,"optInRightBars",0,"Right Bars","Number of bars required to be lower/higher after the pivot",2.0, 0,0,0,0,0,0, 1,100000,1,10,1, null) },
+            new AbsOut[]{ new AbsOut(1,"outSwingHigh",1), new AbsOut(1,"outSwingLow",1) }));
+        ABSTRACT.put("HA", new AbsFunc("HA", "Price Transform", "Heikin-Ashi Candles", 184549376,
+            new AbsIn[]{ new AbsIn(0,"inPriceOHLC",15) },
+            new AbsOpt[]{  },
+            new AbsOut[]{ new AbsOut(0,"outHAOpen",1), new AbsOut(0,"outHAHigh",2049), new AbsOut(0,"outHALow",4097), new AbsOut(0,"outHAClose",1) }));
         ABSTRACT.put("HMA", new AbsFunc("HMA", "Overlap Studies", "Hull Moving Average", 50331649,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",20.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
@@ -178354,6 +181685,10 @@ public class TaCodegenServe {
         ABSTRACT.put("RSI", new AbsFunc("RSI", "Momentum Indicators", "Relative Strength Index", 167772160,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",14.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("RVI", new AbsFunc("RVI", "Volatility Indicators", "Relative Volatility Index", 167772160,
+            new AbsIn[]{ new AbsIn(1,"inReal",0) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period of the Wilder smoothing applied to both legs",14.0, 0,0,0,0,0,0, 1,100000,4,200,1, null), new AbsOpt(2,"optInStdDevPeriod",0,"StdDev Period","Time period of the standard deviation",10.0, 0,0,0,0,0,0, 2,100000,4,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
         ABSTRACT.put("RVOL", new AbsFunc("RVOL", "Volume Indicators", "Relative Volume", 1107296256,
             new AbsIn[]{ new AbsIn(0,"inPriceV",16) },
@@ -178724,6 +182059,8 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_EXP\"")) return handle_EXP(json);
         else if (json.contains("\"TA_FLOOR\"")) return handle_FLOOR(json);
         else if (json.contains("\"TA_FOSC\"")) return handle_FOSC(json);
+        else if (json.contains("\"TA_FRACTAL\"")) return handle_FRACTAL(json);
+        else if (json.contains("\"TA_HA\"")) return handle_HA(json);
         else if (json.contains("\"TA_HMA\"")) return handle_HMA(json);
         else if (json.contains("\"TA_HT_DCPERIOD\"")) return handle_HT_DCPERIOD(json);
         else if (json.contains("\"TA_HT_DCPHASE\"")) return handle_HT_DCPHASE(json);
@@ -178781,6 +182118,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_ROCR\"")) return handle_ROCR(json);
         else if (json.contains("\"TA_ROCR100\"")) return handle_ROCR100(json);
         else if (json.contains("\"TA_RSI\"")) return handle_RSI(json);
+        else if (json.contains("\"TA_RVI\"")) return handle_RVI(json);
         else if (json.contains("\"TA_RVOL\"")) return handle_RVOL(json);
         else if (json.contains("\"TA_SAR\"")) return handle_SAR(json);
         else if (json.contains("\"TA_SAREXT\"")) return handle_SAREXT(json);
@@ -179029,6 +182367,10 @@ public class TaCodegenServe {
             sb.append(",");
             sb.append("\"TA_FOSC\"");
             sb.append(",");
+            sb.append("\"TA_FRACTAL\"");
+            sb.append(",");
+            sb.append("\"TA_HA\"");
+            sb.append(",");
             sb.append("\"TA_HMA\"");
             sb.append(",");
             sb.append("\"TA_HT_DCPERIOD\"");
@@ -179142,6 +182484,8 @@ public class TaCodegenServe {
             sb.append("\"TA_ROCR100\"");
             sb.append(",");
             sb.append("\"TA_RSI\"");
+            sb.append(",");
+            sb.append("\"TA_RVI\"");
             sb.append(",");
             sb.append("\"TA_RVOL\"");
             sb.append(",");
@@ -195456,6 +198800,331 @@ public class TaCodegenServe {
         return sb.toString();
     }
 
+    static String handle_FRACTAL(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+        }
+        boolean _optRejected = false;
+        int optInLeftBars = jsonInt(json, "optInLeftBars");
+        int optInRightBars = jsonInt(json, "optInRightBars");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.FRACTAL_Lookback(optInLeftBars, optInRightBars);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        int[] outArr0 = new int[_outLen];
+        int[] outArr1 = new int[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.FRACTAL_Impl(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.FRACTAL(startIdx, endIdx, inHigh, inLow, optInLeftBars, optInRightBars, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.fractalOpen(_warm_inHigh, _warm_inLow, optInLeftBars, optInRightBars);
+            } else {
+                Core.FractalStream _wh = core.fractalOpenAndFill(_warm_inHigh, _warm_inLow, optInLeftBars, optInRightBars, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.FRACTAL(startIdx, endIdx, f_inHigh, f_inLow, optInLeftBars, optInRightBars, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashI32(_h, outArr0, outNBElement.value);
+                _h = svHashI32(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outInteger\":").append(intArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outInteger1\":").append(intArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_HA(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inOpen = new double[MAX_ARRAY_SIZE];
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refOpen, 0, inOpen, 0, refN);
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            double[] _tmp_inOpen = jsonDoubleArray(json, "inOpen");
+            inOpen = _tmp_inOpen;
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+        }
+        boolean _optRejected = false;
+        core.unstablePeriod[25] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.HA_Lookback();
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        double[] outArr2 = new double[_outLen];
+        double[] outArr3 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inOpen = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inOpen, 0, endIdx + 1);
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.HA_Impl(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outBegIdx, outNBElement, outArr0, outArr1, outArr2, outArr3);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.HA(startIdx, endIdx, inOpen, inHigh, inLow, inClose, outArr0, outArr1, outArr2, outArr3);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.haOpen(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose);
+            } else {
+                Core.HaStream _wh = core.haOpenAndFill(_warm_inOpen, _warm_inHigh, _warm_inLow, _warm_inClose, outArr0, outArr1, outArr2, outArr3);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inOpen = new float[inOpen.length];
+            for (int _fi = 0; _fi < inOpen.length; _fi++) f_inOpen[_fi] = (float)inOpen[_fi];
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.HA(startIdx, endIdx, f_inOpen, f_inHigh, f_inLow, f_inClose, outArr0, outArr1, outArr2, outArr3);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+                _h = svHashF64(_h, outArr2, outNBElement.value);
+                _h = svHashF64(_h, outArr3, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
+        sb.append(",\"outReal2\":").append(doubleArrayToJson(outArr2, outNBElement.value));
+        sb.append(",\"outReal3\":").append(doubleArrayToJson(outArr3, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
     static String handle_HMA(String json) {
         int startIdx = jsonInt(json, "startIdx");
         int endIdx = jsonInt(json, "endIdx");
@@ -203800,6 +207469,150 @@ public class TaCodegenServe {
             } else {
             try {
                 OutRange _fr = core.RSI(startIdx, endIdx, f_inReal, optInTimePeriod, outArr0);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_RVI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inReal = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refClose, 0, inReal, 0, refN);
+        } else {
+            double[] _tmp_inReal = jsonDoubleArray(json, "inReal");
+            inReal = _tmp_inReal;
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        int optInStdDevPeriod = jsonInt(json, "optInStdDevPeriod");
+        core.unstablePeriod[26] = jsonInt(json, "unstablePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inReal = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inReal, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.RVI_Impl(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outBegIdx, outNBElement, outArr0);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.RVI(startIdx, endIdx, inReal, optInTimePeriod, optInStdDevPeriod, outArr0);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.rviOpen(_warm_inReal, optInTimePeriod, optInStdDevPeriod);
+            } else {
+                Core.RviStream _wh = core.rviOpenAndFill(_warm_inReal, optInTimePeriod, optInStdDevPeriod, outArr0);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inReal = new float[inReal.length];
+            for (int _fi = 0; _fi < inReal.length; _fi++) f_inReal[_fi] = (float)inReal[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.RVI(startIdx, endIdx, f_inReal, optInTimePeriod, optInStdDevPeriod, outArr0);
                 outBegIdx.value = _fr.begIdx();
                 outNBElement.value = _fr.count();
                 rc = RetCode.Success;
@@ -227509,6 +231322,434 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_FRACTAL(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInLeftBars = json.contains("\"optInLeftBars\"") ? jsonInt(json, "optInLeftBars") : 2;
+        int optInRightBars = json.contains("\"optInRightBars\"") ? jsonInt(json, "optInRightBars") : 2;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        int[] b0 = new int[svN];
+        int[] b1 = new int[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            RetCode rc;
+            try { rc = c2.FRACTAL_Impl(0, svN - 1, fz_h, fz_l, optInLeftBars, optInRightBars, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.FRACTAL_Lookback(optInLeftBars, optInRightBars);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.fractalOpen(fz_h, fz_l, optInLeftBars, optInRightBars); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                int[] f0 = new int[svN];
+                java.util.Arrays.fill(f0, (int)-987654321);
+                int[] f1 = new int[svN];
+                java.util.Arrays.fill(f1, (int)-987654321);
+                Core.FractalStream _fh = c2.fractalOpenAndFill(fz_h, fz_l, optInLeftBars, optInRightBars, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (f0[i] != b0[i]) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (f1[i] != b1[i]) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
+                }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.FractalStream st;
+                try { st = c2.fractalOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInLeftBars, optInRightBars); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.FractalOut v0 = new Core.FractalOut(); st.value(v0);
+                if (v0.swingHigh != b0[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (v0.swingLow != b1[p - 1 - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.FractalOut pk = new Core.FractalOut();
+                Core.FractalOut up = new Core.FractalOut();
+                Core.FractalOut vc = new Core.FractalOut();
+                Core.FractalOut rp = new Core.FractalOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (rp.swingHigh != pk.swingHigh) peekRepAll = false;
+                            if (rp.swingLow != pk.swingLow) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], up);
+                    if (pkTook && pk.swingHigh != up.swingHigh) peekAll = false;
+                    if (pkTook && pk.swingLow != up.swingLow) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (vc.swingHigh != up.swingHigh) allOk = false;
+                    if (vc.swingLow != up.swingLow) allOk = false;
+                    if (up.swingHigh != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + b0[t - beg.value] + "\",\"streamv\":\"" + up.swingHigh + "\""; }
+                    if (up.swingLow != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg.value] + "\",\"streamv\":\"" + up.swingLow + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.FractalStream stu = c2.fractalOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInLeftBars, optInRightBars);
+                        OutRange ur0 = stu.outRange();
+                        int[] u0 = new int[svN];
+                        java.util.Arrays.fill(u0, (int)-987654321);
+                        int[] u1 = new int[svN];
+                        java.util.Arrays.fill(u1, (int)-987654321);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], u0, u1);
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, new int[0], u1); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_h, tail_fz_l, u0, u1);
+                        for (int t = p; t < svN; t++) if (u0[t - p] != b0[t - beg.value]) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (u1[t - p] != b1[t - beg.value]) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (int)-987654321) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (int)-987654321) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.FractalStream sA = c2.fractalOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInLeftBars, optInRightBars);
+                        int mid = (p0 + svN) / 2;
+                        Core.FractalOut uA = new Core.FractalOut();
+                        Core.FractalOut uB = new Core.FractalOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], uA);
+                        Core.FractalStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], uA);
+                            sB.update(fz_h[t], fz_l[t], uB);
+                            if (uA.swingHigh != uB.swingHigh || uA.swingHigh != b0[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.swingLow != uB.swingLow || uA.swingLow != b1[t - beg.value]) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.fractalOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), optInLeftBars, optInRightBars); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.FractalStream sD = c2.fractalOpen(fz_h, fz_l, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.FractalStream sE = c2.fractalOpen(fz_h, fz_l, 2, 2);
+                Core.FractalOut vD = new Core.FractalOut(); sD.value(vD);
+                Core.FractalOut vE = new Core.FractalOut(); sE.value(vE);
+                if (vD.swingHigh != vE.swingHigh) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (vD.swingLow != vE.swingLow) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.FRACTAL_Impl(Sidx, svN - 1, fz_h, fz_l, optInLeftBars, optInRightBars, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.FractalStream stA = c2.fractalOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), Sidx, optInLeftBars, optInRightBars);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
+    static String sv_HA(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        double[] b2 = new double[svN];
+        double[] b3 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[25] = svK;
+            RetCode rc;
+            try { rc = c2.HA_Impl(0, svN - 1, fz_o, fz_h, fz_l, fz_c, beg, nb, b0, b1, b2, b3); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.HA_Lookback();
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.haOpen(fz_o, fz_h, fz_l, fz_c); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                double[] f2 = new double[svN];
+                java.util.Arrays.fill(f2, (double)-1.2345678901234e300);
+                double[] f3 = new double[svN];
+                java.util.Arrays.fill(f3, (double)-1.2345678901234e300);
+                Core.HaStream _fh = c2.haOpenAndFill(fz_o, fz_h, fz_l, fz_c, f0, f1, f2, f3);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f2[i], b2[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f3[i], b3[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f2[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f3[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.haOpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o, f1, f2, f3); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.haOpenAndFill(fz_o, fz_h, fz_l, fz_c, f0, f0, f2, f3); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.HaStream st;
+                try { st = c2.haOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.HaOut v0 = new Core.HaOut(); st.value(v0);
+                if (svXtierNe(v0.haOpen, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.haHigh, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (svXtierNe(v0.haLow, b2[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":2,\"where\":\"open\""; }
+                if (svXtierNe(v0.haClose, b3[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":3,\"where\":\"open\""; }
+                Core.HaOut pk = new Core.HaOut();
+                Core.HaOut up = new Core.HaOut();
+                Core.HaOut vc = new Core.HaOut();
+                Core.HaOut rp = new Core.HaOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_o[t], fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.haOpen, pk.haOpen)) peekRepAll = false;
+                            if (svBne(rp.haHigh, pk.haHigh)) peekRepAll = false;
+                            if (svBne(rp.haLow, pk.haLow)) peekRepAll = false;
+                            if (svBne(rp.haClose, pk.haClose)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.haOpen, up.haOpen)) peekAll = false;
+                    if (pkTook && svBne(pk.haHigh, up.haHigh)) peekAll = false;
+                    if (pkTook && svBne(pk.haLow, up.haLow)) peekAll = false;
+                    if (pkTook && svBne(pk.haClose, up.haClose)) peekAll = false;
+                    try { st.peek(fz_o[t - 1], fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.haOpen, up.haOpen)) allOk = false;
+                    if (svBne(vc.haHigh, up.haHigh)) allOk = false;
+                    if (svBne(vc.haLow, up.haLow)) allOk = false;
+                    if (svBne(vc.haClose, up.haClose)) allOk = false;
+                    if (svXtierNe(up.haOpen, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.haOpen)) + "\""; }
+                    if (svXtierNe(up.haHigh, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.haHigh)) + "\""; }
+                    if (svXtierNe(up.haLow, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":2,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b2[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.haLow)) + "\""; }
+                    if (svXtierNe(up.haClose, b3[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":3,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b3[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.haClose)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.HaStream stu = c2.haOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p));
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] u1 = new double[svN];
+                        java.util.Arrays.fill(u1, (double)-1.2345678901234e300);
+                        double[] u2 = new double[svN];
+                        java.util.Arrays.fill(u2, (double)-1.2345678901234e300);
+                        double[] u3 = new double[svN];
+                        java.util.Arrays.fill(u3, (double)-1.2345678901234e300);
+                        double[] tail_fz_o = java.util.Arrays.copyOfRange(fz_o, p, svN);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], new double[0], new double[0], u0, u1, u2, u3);
+                        try { stu.updateAndFill(tail_fz_o, tail_fz_h, tail_fz_l, tail_fz_c, new double[0], u1, u2, u3); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_o, tail_fz_h, tail_fz_l, tail_fz_c, tail_fz_o, u1, u2, u3); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_o, tail_fz_h, tail_fz_l, tail_fz_c, u0, u1, u2, u3);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u1[t - p], b1[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u2[t - p], b2[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u3[t - p], b3[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u2[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u3[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.HaStream sA = c2.haOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
+                        int mid = (p0 + svN) / 2;
+                        Core.HaOut uA = new Core.HaOut();
+                        Core.HaOut uB = new Core.HaOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uA);
+                        Core.HaStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_o[t], fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.haOpen, uB.haOpen) || svXtierNe(uA.haOpen, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haHigh, uB.haHigh) || svXtierNe(uA.haHigh, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haLow, uB.haLow) || svXtierNe(uA.haLow, b2[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.haClose, uB.haClose) || svXtierNe(uA.haClose, b3[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.haOpen(java.util.Arrays.copyOf(fz_o, lb), java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb)); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.HA_Impl(Sidx, svN - 1, fz_o, fz_h, fz_l, fz_c, begS, nbS, b0, b1, b2, b3); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.HaStream stA = c2.haOpenInternal(java.util.Arrays.copyOf(fz_o, svN), java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_HMA(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -237971,6 +242212,185 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_RVI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
+        int optInStdDevPeriod = json.contains("\"optInStdDevPeriod\"") ? jsonInt(json, "optInStdDevPeriod") : 10;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[26] = svK;
+            RetCode rc;
+            try { rc = c2.RVI_Impl(0, svN - 1, fz_c, optInTimePeriod, optInStdDevPeriod, beg, nb, b0); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.RVI_Lookback(optInTimePeriod, optInStdDevPeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.rviOpen(fz_c, optInTimePeriod, optInStdDevPeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                Core.RviStream _fh = c2.rviOpenAndFill(fz_c, optInTimePeriod, optInStdDevPeriod, f0);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.rviOpenAndFill(fz_c, optInTimePeriod, optInStdDevPeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.RviStream st;
+                try { st = c2.rviOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInStdDevPeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                if (svXtierNe(st.value(), b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    double pk = 0;
+                    try { pk = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        double rp = 0;
+                        try { rp = st.peek(fz_c[t]); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp, pk)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    double up = st.update(fz_c[t]);
+                    if (pkTook && svBne(pk, up)) peekAll = false;
+                    try { st.peek(fz_c[t - 1]); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    if (svBne(st.value(), up)) allOk = false;
+                    if (svXtierNe(up, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.RviStream stu = c2.rviOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInStdDevPeriod);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], u0);
+                        try { stu.updateAndFill(tail_fz_c, new double[0]); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_c, tail_fz_c); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_c, u0);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.RviStream sA = c2.rviOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInStdDevPeriod);
+                        int mid = (p0 + svN) / 2;
+                        for (int t = p0; t < mid; t++) sA.update(fz_c[t]);
+                        Core.RviStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            double uA = sA.update(fz_c[t]);
+                            double uB = sB.update(fz_c[t]);
+                            if (svBne(uA, uB) || svXtierNe(uA, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.rviOpen(java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod, optInStdDevPeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.RviStream sD = c2.rviOpen(fz_c, Integer.MIN_VALUE, Integer.MIN_VALUE);
+                Core.RviStream sE = c2.rviOpen(fz_c, 14, 10);
+                if (svBne(sD.value(), sE.value())) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.RVI_Impl(Sidx, svN - 1, fz_c, optInTimePeriod, optInStdDevPeriod, begS, nbS, b0); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.RviStream stA = c2.rviOpenInternal(java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod, optInStdDevPeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_RVOL(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -244441,6 +248861,8 @@ public class TaCodegenServe {
         case "TA_EXP": return sv_EXP(json);
         case "TA_FLOOR": return sv_FLOOR(json);
         case "TA_FOSC": return sv_FOSC(json);
+        case "TA_FRACTAL": return sv_FRACTAL(json);
+        case "TA_HA": return sv_HA(json);
         case "TA_HMA": return sv_HMA(json);
         case "TA_HT_DCPERIOD": return sv_HT_DCPERIOD(json);
         case "TA_HT_DCPHASE": return sv_HT_DCPHASE(json);
@@ -244498,6 +248920,7 @@ public class TaCodegenServe {
         case "TA_ROCR": return sv_ROCR(json);
         case "TA_ROCR100": return sv_ROCR100(json);
         case "TA_RSI": return sv_RSI(json);
+        case "TA_RVI": return sv_RVI(json);
         case "TA_RVOL": return sv_RVOL(json);
         case "TA_SAR": return sv_SAR(json);
         case "TA_SAREXT": return sv_SAREXT(json);

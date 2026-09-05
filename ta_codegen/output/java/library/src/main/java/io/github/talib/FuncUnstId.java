@@ -73,6 +73,8 @@ public enum FuncUnstId {
 	  /* 022 */  UNUSED_22(22),
 	  /* 023 */  T3(23),
 	  /* 024 */  RMA(24),
+	  /* 025 */  HA(25),
+	  /* 026 */  RVI(26),
 
 	  /** Wildcard: sets the unstable period for every function at once.
 	   *  Pinned, so adding an indicator can never move it. */
@@ -80,7 +82,7 @@ public enum FuncUnstId {
 
 	/** Number of function ids — the size of the unstable-period table.
 	 *  Not an id, and not {@link #ALL}. Mirrors C's TA_FUNC_UNST_COUNT. */
-	public static final int COUNT = 25;
+	public static final int COUNT = 27;
 
 	private final int value;
 

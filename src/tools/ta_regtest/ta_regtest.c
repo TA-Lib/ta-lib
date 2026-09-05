@@ -859,6 +859,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST( test_func_cumsum,    "CUMSUM" );
    DO_TEST( test_func_zlema,     "ZLEMA" );
    DO_TEST( test_func_vhf,       "VHF" );
+   DO_TEST( test_func_rvi,       "RVI" );
+   DO_TEST( test_func_fractal,   "FRACTAL" );
+   DO_TEST( test_func_ha,        "HA" );
    DO_TEST( test_func_tsi,       "TSI" );
    DO_TEST( test_func_kdj,       "KDJ" );
    DO_TEST( test_func_adr,       "ADR" );

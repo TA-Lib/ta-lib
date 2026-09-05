@@ -57,6 +57,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"CMO",          TA_FUNC_UNST_CMO},
     {"DX",           TA_FUNC_UNST_DX},
     {"EMA",          TA_FUNC_UNST_EMA},
+    {"HA",           TA_FUNC_UNST_HA},
     {"HT_DCPERIOD",  TA_FUNC_UNST_HT_DCPERIOD},
     {"HT_DCPHASE",   TA_FUNC_UNST_HT_DCPHASE},
     {"HT_PHASOR",    TA_FUNC_UNST_HT_PHASOR},
@@ -78,6 +79,7 @@ static const UnstableLookup UNSTABLE_MAP[] = {
     {"PLUS_DM",      TA_FUNC_UNST_PLUS_DM},
     {"RMA",          TA_FUNC_UNST_RMA},
     {"RSI",          TA_FUNC_UNST_RSI},
+    {"RVI",          TA_FUNC_UNST_RVI},
     {"T3",           TA_FUNC_UNST_T3},
 };
 #define NUM_UNSTABLE_MAP (sizeof(UNSTABLE_MAP) / sizeof(UNSTABLE_MAP[0]))

@@ -4372,6 +4372,134 @@
 	</FinancialFunction>
 
 
+	<!-- FRACTAL -->
+	<FinancialFunction>
+		<Abbreviation>FRACTAL</Abbreviation>
+		<ShortDescription>Williams Fractal</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Left Bars</Name>
+				<ShortDescription>Number of bars required to be lower/higher before the pivot</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>10</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Right Bars</Name>
+				<ShortDescription>Number of bars required to be lower/higher after the pivot</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>10</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>2</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Integer Array</Type>
+				<Name>outSwingHigh</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Integer Array</Type>
+				<Name>outSwingLow</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- HA -->
+	<FinancialFunction>
+		<Abbreviation>HA</Abbreviation>
+		<ShortDescription>Heikin-Ashi Candles</ShortDescription>
+		<GroupId>Price Transform</GroupId>
+		<Flags>
+			<Flag>Overlap</Flag>
+			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Open</Type>
+				<Name>Open</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Close</Type>
+				<Name>Close</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outHAOpen</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outHAHigh</Name>
+				<Flags>
+					<Flag>Line</Flag>
+					<Flag>Upper Limit</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outHALow</Name>
+				<Flags>
+					<Flag>Line</Flag>
+					<Flag>Lower Limit</Flag>
+				</Flags>
+			</OutputArgument>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outHAClose</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- HMA -->
 	<FinancialFunction>
 		<Abbreviation>HMA</Abbreviation>
@@ -6973,6 +7101,61 @@
 					<SuggestedIncrement>1</SuggestedIncrement>
 				</Range>
 				<DefaultValue>14</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- RVI -->
+	<FinancialFunction>
+		<Abbreviation>RVI</Abbreviation>
+		<ShortDescription>Relative Volatility Index</ShortDescription>
+		<GroupId>Volatility Indicators</GroupId>
+		<Flags>
+			<Flag>Unstable Period</Flag>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Time period of the Wilder smoothing applied to both legs</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>14</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>StdDev Period</Name>
+				<ShortDescription>Time period of the standard deviation</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
 			</OptionalInputArgument>
 		</OptionalInputArguments>
 		<OutputArguments>

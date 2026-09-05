@@ -143,6 +143,8 @@ extern const TA_FuncDef TA_DEF_EMA;
 extern const TA_FuncDef TA_DEF_EXP;
 extern const TA_FuncDef TA_DEF_FLOOR;
 extern const TA_FuncDef TA_DEF_FOSC;
+extern const TA_FuncDef TA_DEF_FRACTAL;
+extern const TA_FuncDef TA_DEF_HA;
 extern const TA_FuncDef TA_DEF_HMA;
 extern const TA_FuncDef TA_DEF_HT_DCPERIOD;
 extern const TA_FuncDef TA_DEF_HT_DCPHASE;
@@ -200,6 +202,7 @@ extern const TA_FuncDef TA_DEF_ROCP;
 extern const TA_FuncDef TA_DEF_ROCR;
 extern const TA_FuncDef TA_DEF_ROCR100;
 extern const TA_FuncDef TA_DEF_RSI;
+extern const TA_FuncDef TA_DEF_RVI;
 extern const TA_FuncDef TA_DEF_RVOL;
 extern const TA_FuncDef TA_DEF_SAR;
 extern const TA_FuncDef TA_DEF_SAREXT;
@@ -306,6 +309,7 @@ const TA_FuncDef *TA_PerGroupFunc_3[] = {
 &TA_DEF_CVI,
 &TA_DEF_MASSI,
 &TA_DEF_NATR,
+&TA_DEF_RVI,
 &TA_DEF_TRANGE,
 NULL };
 #define SIZE_GROUP_3 ((sizeof(TA_PerGroupFunc_3)/sizeof(const TA_FuncDef *))-1)
@@ -326,6 +330,7 @@ const TA_FuncDef *TA_PerGroupFunc_4[] = {
 &TA_DEF_DPO,
 &TA_DEF_DX,
 &TA_DEF_FOSC,
+&TA_DEF_FRACTAL,
 &TA_DEF_IMI,
 &TA_DEF_KDJ,
 &TA_DEF_MACD,
@@ -465,6 +470,7 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_9[] = {
 &TA_DEF_AVGDEV,
 &TA_DEF_AVGPRICE,
+&TA_DEF_HA,
 &TA_DEF_MEDPRICE,
 &TA_DEF_TYPPRICE,
 &TA_DEF_WCLPRICE,

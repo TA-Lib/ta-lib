@@ -13,7 +13,7 @@
  * clamp at this cap (a wider function would silently pass with its extra
  * outputs unverified) and the range-test param struct sizes its buffer arrays
  * with it (issue #352). */
-#define CODEGEN_MAX_OUTPUTS  3
+#define CODEGEN_MAX_OUTPUTS  4
 
 /* Run codegen verification tests against one or more languages.
  * languageFilter: comma-separated list of languages to test (NULL = test all).

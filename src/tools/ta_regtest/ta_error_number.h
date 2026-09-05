@@ -510,6 +510,9 @@ typedef enum
   TA_RVOL_VACUOUS                    = 1661,
   TA_TSI_VACUOUS                     = 1670,
   TA_KDJ_VACUOUS                     = 1671,
+  TA_FRACTAL_VACUOUS                 = 1675,
+  TA_HA_VACUOUS                      = 1678,
+  TA_RVI_VACUOUS                     = 1676,
 
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */

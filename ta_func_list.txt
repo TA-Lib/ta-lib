@@ -101,6 +101,8 @@ EMA                 Exponential Moving Average
 EXP                 Vector Arithmetic Exp
 FLOOR               Vector Floor
 FOSC                Forecast Oscillator
+FRACTAL             Williams Fractal
+HA                  Heikin-Ashi Candles
 HMA                 Hull Moving Average
 HT_DCPERIOD         Hilbert Transform - Dominant Cycle Period
 HT_DCPHASE          Hilbert Transform - Dominant Cycle Phase
@@ -158,6 +160,7 @@ ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
 ROCR                Rate of change ratio: (price/prevPrice)
 ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
 RSI                 Relative Strength Index
+RVI                 Relative Volatility Index
 RVOL                Relative Volume
 SAR                 Parabolic SAR
 SAREXT              Parabolic SAR - Extended

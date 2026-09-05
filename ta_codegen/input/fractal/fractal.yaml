@@ -1,0 +1,30 @@
+name: FRACTAL
+group: Momentum Indicators
+hint: Williams Fractal
+flags: [stream]
+inputs:
+  - name: inPriceHL
+    type: price
+    price_components: [high, low]
+optional_inputs:
+  - name: optInLeftBars
+    type: integer
+    display_name: Left Bars
+    hint: Number of bars required to be lower/higher before the pivot
+    range: [1, 100000]
+    default: 2
+    suggested: [1, 10, 1]
+  - name: optInRightBars
+    type: integer
+    display_name: Right Bars
+    hint: Number of bars required to be lower/higher after the pivot
+    range: [1, 100000]
+    default: 2
+    suggested: [1, 10, 1]
+outputs:
+  - name: outSwingHigh
+    type: integer
+    flags: [line]
+  - name: outSwingLow
+    type: integer
+    flags: [line]

@@ -1074,7 +1074,7 @@ fn every_integer_output_carries_an_example_claim() {
     // and the three index functions -- asserted nothing about their values at all
     // (#179 E8, deferred from #136). The domain is per-function data and lives in
     // `rust_doc::integer_domain_claim`; nothing in the metadata carries it, since
-    // all 67 integer outputs declare the same `line` flag. This is the gate that a
+    // all 69 integer outputs declare the same `line` flag. This is the gate that a
     // function arriving with an integer output states its domain instead of
     // silently rejoining that set.
     let registry = make_registry();
@@ -1133,8 +1133,8 @@ fn every_integer_output_carries_an_example_claim() {
         checked += 1;
     }
     assert_eq!(
-        checked, 66,
-        "expected the 66 integer-output functions, swept {checked}"
+        checked, 67,
+        "expected the 67 integer-output functions, swept {checked}"
     );
 }
 
