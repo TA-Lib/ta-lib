@@ -703,6 +703,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ERI"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ERI_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), out int b, out int n, c.RealOut(0), c.RealOut(1));
+            return new CallOutcome(rc, b, n);
+        },
         ["EXP"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.EXP_Impl(

@@ -62,6 +62,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [COPPOCK](/functions/coppock.md) — Coppock Curve
 - [DPO](/functions/dpo.md) — Detrended Price Oscillator
 - [DX](/functions/dx.md) — Directional Movement Index
+- [ERI](/functions/eri.md) — Elder Ray Index (Bull Power / Bear Power)
 - [FOSC](/functions/fosc.md) — Forecast Oscillator
 - [IMI](/functions/imi.md) — Intraday Momentum Index
 - [KDJ](/functions/kdj.md) — KDJ Stochastic

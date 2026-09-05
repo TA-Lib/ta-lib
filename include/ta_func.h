@@ -7854,6 +7854,90 @@ TA_LIB_API TA_RetCode TA_EMA_Value( const TA_EMA_Stream *stream, double *outReal
 TA_LIB_API TA_RetCode TA_EMA_Clone( const TA_EMA_Stream *stream, TA_EMA_Stream **clone );
 
 /*
+ * TA_ERI - Elder Ray Index (Bull Power / Bear Power)
+ * 
+ * Input  = High, Low, Close
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of bars in the EMA of close
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_ERI( int    startIdx,
+                              int    endIdx,
+                                         const double inHigh[],
+                                         const double inLow[],
+                                         const double inClose[],
+                                         int           optInTimePeriod, /* From 1 to 100000 */
+                                         int          *outBegIdx,
+                                         int          *outNBElement,
+                                         double        outBullPower[],
+                                         double        outBearPower[] );
+
+TA_LIB_API TA_RetCode TA_S_ERI( int    startIdx,
+                                int    endIdx,
+                                           const float  inHigh[],
+                                           const float  inLow[],
+                                           const float  inClose[],
+                                           int           optInTimePeriod, /* From 1 to 100000 */
+                                           int          *outBegIdx,
+                                           int          *outNBElement,
+                                           double        outBullPower[],
+                                           double        outBearPower[] );
+
+TA_LIB_API int TA_ERI_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_ERI — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_ERI_Stream TA_ERI_Stream;
+
+TA_LIB_API TA_RetCode TA_ERI_Open( TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outBullPower, double *outBearPower );
+
+TA_LIB_API TA_RetCode TA_ERI_Update( TA_ERI_Stream *stream, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower );
+
+TA_LIB_API TA_RetCode TA_ERI_Peek( const TA_ERI_Stream *stream, double inHigh, double inLow, double inClose, double *outBullPower, double *outBearPower );
+
+TA_LIB_API TA_RetCode TA_ERI_Close( TA_ERI_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_ERI( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_ERI_OpenAndFill( TA_ERI_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outBullPower[], double outBearPower[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_ERI_Update calls, including the
+ * per-bar rejection. A rejected bar k leaves the bars before it committed and
+ * written, itself uncommitted and its output slot untouched; TA_StreamOutRange
+ * then reports k+1, the rejected bar being the last one counted. Outputs must
+ * not alias the inputs or each other.
+ */
+TA_LIB_API TA_RetCode TA_ERI_UpdateAndFill( TA_ERI_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outBullPower[], double outBearPower[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update and UpdateAndFill, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_ERI_Value( const TA_ERI_Stream *stream, double *outBullPower, double *outBearPower );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_ERI_Clone( const TA_ERI_Stream *stream, TA_ERI_Stream **clone );
+
+/*
  * TA_EXP - Vector Arithmetic Exp
  * 
  * Input  = double

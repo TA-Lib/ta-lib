@@ -84568,6 +84568,768 @@ class Core {
      *
      *  Initial  Name/description
      *  -------------------------------------------------------------------
+     *  KL       Kevin Lin
+     *
+     * Change history:
+     *
+     *  MMDDYY BY     Description
+     *  -------------------------------------------------------------------
+     *  090626 KL     First version (issue #361).
+     */
+
+       /**
+        * Number of leading input bars {@link Core#ERI} consumes before it can
+        * produce its first value.
+        * <p>Equivalently, the index of the first bar with a value when the whole
+        * series is requested. Feed at least {@code lookback + 1} bars to get any
+        * output.
+        *
+        * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @return The lookback, or {@code -1} if a parameter is out of range.
+        */
+       public int ERI_Lookback( int optInTimePeriod )
+       {
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return -1;
+          }
+          /* Exactly the EMA of close underneath: its lookback, unstable period
+           * included, is this function's lookback.
+           */
+          return EMA_Lookback(optInTimePeriod) ;
+
+       }
+       RetCode ERI_Impl( int startIdx,
+                         int endIdx,
+                         double inHigh[],
+                         double inLow[],
+                         double inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outBullPower[],
+                         double outBearPower[] )
+       {
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double prevMA = 0;
+          double tempReal = 0;
+          double k = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( outBullPower == outBearPower ) {
+             return RetCode.BadParam ;
+          }
+          /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+           * the bar's extremes sit from one shared EMA of close.
+           *
+           *   Bull Power = High - EMA(Close, n)
+           *   Bear Power = Low  - EMA(Close, n)
+           *
+           * One fused loop, not ema() + a combine map: a composed form cannot
+           * stream (raw bar inputs are outside check_map_step's provenance), which
+           * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+           * op for op -- sequential seed sum from 0.0 then one divide, the
+           * unstable-period warm-up consumed bar by bar -- so the differential
+           * against shipped TA_EMA holds bitwise. No compatibility branch: the
+           * Metastock arm is unreachable from three of the four backends, and a
+           * new function honouring it would make C diverge from them (EFI/SMI
+           * precedent).
+           *
+           * No division in the per-bar map: no 0/0, no NaN path (#112 by
+           * construction). Bull >= Bear on every bar since high >= low.
+           */
+          lookbackTotal = ERI_Lookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          k = 2.0 / ((double)optInTimePeriod + 1.0);
+          /* Seed: ema.c's DEFAULT arm, op for op. */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inClose[today++];
+          }
+          prevMA = tempReal / optInTimePeriod;
+          /* The warm-up also consumes the EMA unstable period. */
+          while( today <= startIdx ) {
+             prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+          }
+          /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
+           * extremes into temps BEFORE writing either output: with two outputs
+           * over three inputs the caller may alias any pair, and the second write
+           * must not read a clobbered bar.
+           */
+          tempHT = inHigh[startIdx];
+          tempLT = inLow[startIdx];
+          outBullPower[0] = tempHT - prevMA;
+          outBearPower[0] = tempLT - prevMA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+             tempHT = inHigh[today];
+             tempLT = inLow[today];
+             outBullPower[outIdx] = tempHT - prevMA;
+             outBearPower[outIdx] = tempLT - prevMA;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       RetCode ERI_Impl( int startIdx,
+                         int endIdx,
+                         float inHigh[],
+                         float inLow[],
+                         float inClose[],
+                         int optInTimePeriod,
+                         MInteger outBegIdx,
+                         MInteger outNBElement,
+                         double outBullPower[],
+                         double outBearPower[] )
+       {
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double prevMA = 0;
+          double tempReal = 0;
+          double k = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
+             return RetCode.OutOfRangeStartIndex ;
+          }
+          if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
+             return RetCode.OutOfRangeEndIndex ;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( outBullPower == outBearPower ) {
+             return RetCode.BadParam ;
+          }
+          lookbackTotal = ERI_Lookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.Success ;
+          }
+          k = 2.0 / ((double)optInTimePeriod + 1.0);
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += (double)inClose[today++];
+          }
+          prevMA = tempReal / optInTimePeriod;
+          while( today <= startIdx ) {
+             prevMA = Math.fma((double)inClose[today++] - prevMA, k, prevMA);
+          }
+          tempHT = (double)inHigh[startIdx];
+          tempLT = (double)inLow[startIdx];
+          outBullPower[0] = tempHT - prevMA;
+          outBearPower[0] = tempLT - prevMA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             prevMA = Math.fma((double)inClose[today] - prevMA, k, prevMA);
+             tempHT = (double)inHigh[today];
+             tempLT = (double)inLow[today];
+             outBullPower[outIdx] = tempHT - prevMA;
+             outBearPower[outIdx] = tempLT - prevMA;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          return RetCode.Success ;
+       }
+       /**
+        * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
+        * *Trading for a Living* (1993) — how far the bar's high and low sit from a
+        * 13-period EMA of the close. Bulls strong enough to push the high above the
+        * average read as positive Bull Power; bears dragging the low below it read
+        * as negative Bear Power.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView additionally plots the sum of the two as a third line; that is not part of Elder-Ray proper (StockCharts, TC2000 and pandas-ta all ship two lines).
+        * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
+        * <li>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</li>
+        * </ul>
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#ERI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param inClose Close price series.
+        * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outBullPower High minus the EMA of close. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outBearPower Low minus the EMA of close. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#EMA
+        * @see Core#EFI
+        * @see Core#MACD
+        */
+       public OutRange ERI( int startIdx,
+                            int endIdx,
+                            double inHigh[],
+                            double inLow[],
+                            double inClose[],
+                            int optInTimePeriod,
+                            double outBullPower[],
+                            double outBearPower[] )
+       {
+          requireIndexRange("ERI", startIdx, endIdx);
+          int guardStart = clampedStart("ERI", startIdx, ERI_Lookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ERI", "inHigh", inHigh, guardInLen);
+          requireLength("ERI", "inLow", inLow, guardInLen);
+          requireLength("ERI", "inClose", inClose, guardInLen);
+          requireLength("ERI", "outBullPower", outBullPower, guardOutLen);
+          requireLength("ERI", "outBearPower", outBearPower, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+          if( retCode != RetCode.Success ) {
+             throw failure("ERI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+       /**
+        * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
+        * *Trading for a Living* (1993) — how far the bar's high and low sit from a
+        * 13-period EMA of the close. Bulls strong enough to push the high above the
+        * average read as positive Bull Power; bears dragging the low below it read
+        * as negative Bear Power.
+        * <p><b>Formula</b>
+        * <pre>{@code
+        * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView additionally plots the sum of the two as a third line; that is not part of Elder-Ray proper (StockCharts, TC2000 and pandas-ta all ship two lines).
+        * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
+        * }</pre>
+        * <p><b>Notes</b>
+        * <ul>
+        * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
+        * <li>No MAType parameter: every canonical source fixes the EMA, and a selectable average would invent a variant nobody ships.</li>
+        * </ul>
+        * <p>This is the {@code float[]} overload. The arithmetic is performed in
+        * {@code double} before being written to the {@code double[]} output, so a
+        * result beyond {@code float} range is still representable.
+        * <p>Values are written only where the indicator is defined. The returned
+        * {@link OutRange} says where they start and how many there are; nothing
+        * outside that range is touched, and the library never pads with NaN. A
+        * valid range shorter than {@link Core#ERI_Lookback} is a <b>success with no
+        * values</b> ({@code count() == 0}), not an error.
+        *
+        * @param startIdx First bar of the requested range (inclusive).
+        * @param endIdx Last bar of the requested range (inclusive).
+        * @param inHigh High price series.
+        * @param inLow Low price series.
+        * @param inClose Close price series.
+        * @param optInTimePeriod Number of bars in the EMA of close (default 13;
+        *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
+        * @param outBullPower High minus the EMA of close. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @param outBearPower Low minus the EMA of close. Must hold at least
+        *        {@code endIdx - startIdx + 1} values.
+        * @return The range written: {@code begIdx} is the first bar with a value,
+        *        {@code count} how many were written.
+        * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
+        *        negative or above {@link Core#MAX_INDEX}, or {@code endIdx < startIdx}.
+        * @throws IllegalArgumentException if an optional parameter is outside its
+        *        documented range, two outputs share one array, or an array is absent or
+        *        too short for the range requested — any input this function
+        *        <i>declares</i> that does not reach {@code endIdx}, or an output that
+        *        cannot hold the values produced. Declared, not read: a few candlestick
+        *        patterns take an OHLC series they never index, and it is required all the
+        *        same. An output this function documents as declinable is the one
+        *        exception: {@code null} is how you decline it. Checked before anything is
+        *        written, so a rejected call leaves every buffer untouched.
+        *
+        * @see Core#EMA
+        * @see Core#EFI
+        * @see Core#MACD
+        */
+       public OutRange ERI( int startIdx,
+                            int endIdx,
+                            float inHigh[],
+                            float inLow[],
+                            float inClose[],
+                            int optInTimePeriod,
+                            double outBullPower[],
+                            double outBearPower[] )
+       {
+          requireIndexRange("ERI", startIdx, endIdx);
+          int guardStart = clampedStart("ERI", startIdx, ERI_Lookback(optInTimePeriod));
+          int guardInLen = endIdx + 1;
+          int guardOutLen = guardStart > endIdx ? 0 : endIdx - guardStart + 1;
+          requireLength("ERI", "inHigh", inHigh, guardInLen);
+          requireLength("ERI", "inLow", inLow, guardInLen);
+          requireLength("ERI", "inClose", inClose, guardInLen);
+          requireLength("ERI", "outBullPower", outBullPower, guardOutLen);
+          requireLength("ERI", "outBearPower", outBearPower, guardOutLen);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          RetCode retCode = ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+          if( retCode != RetCode.Success ) {
+             throw failure("ERI", retCode);
+          }
+          return new OutRange(outBegIdx.value, outNBElement.value);
+       }
+    /**** Streaming API *****/
+
+       /**
+        * A live ERI stream (unrelated to {@code java.util.stream}): one value per
+        * closed bar, bit-identical to {@link Core#ERI} over the same series.
+        * Open with {@link Core#eriOpen}; there is no close — the handle is
+        * ordinary heap state, unreferenced handles are simply garbage-collected.
+        * <p>Concurrency: a handle is single-writer — {@code update}, {@code peek},
+        * {@code value} and {@code clone} must not race with an {@code update} on
+        * the same handle. With no concurrent {@code update}, {@code peek}/
+        * {@code value}/{@code clone} never write the stream and may be called
+        * concurrently after safe publication. Independent streams (a
+        * {@code clone()} result included) are fully independent.
+        * <p>Not serializable by design: to checkpoint, retain the history and
+        * re-open — the result is bit-identical by contract.
+        */
+       public static final class EriStream {
+          Core core;
+          int optInTimePeriod;
+          double prevMA;
+          double k;
+          double cur_outBullPower;
+          double cur_outBearPower;
+          int outRangeBegIdx;
+          int outRangeCount;
+
+          EriStream( Core core ) { this.core = core; }
+
+          /**
+           * The bars this stream has an output for, in the input series'
+           * coordinates: {@code [begIdx, begIdx + count)}.
+           * <p>It is what {@link Core#ERI} reports over the same bars: the
+           * opener sets it to {@code (lookback, historyLen - lookback)}, every
+           * {@code update} adds one to the count — a bar rejected for being
+           * non-finite included, because it still happened — {@code peek} leaves
+           * it alone, and {@code clone()} carries it verbatim. A plain
+           * {@code open} hands back only the last value, a subset of this range,
+           * because the caller chose not to take the fill.
+           */
+          public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
+
+          EriStream( EriStream other ) {
+             this.core = other.core;
+             this.optInTimePeriod = other.optInTimePeriod;
+             this.prevMA = other.prevMA;
+             this.k = other.k;
+             this.cur_outBullPower = other.cur_outBullPower;
+             this.cur_outBearPower = other.cur_outBearPower;
+             this.outRangeBegIdx = other.outRangeBegIdx;
+             this.outRangeCount = other.outRangeCount;
+          }
+
+          /**
+           * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
+           * Never allocates handle state.
+           * <p>Throws {@link IllegalArgumentException} if any bar value is not
+           * finite (NaN or an infinity). That check runs before anything is
+           * written, so the state is left exactly as it was: the rejected bar's
+           * output is the previous value, held, and {@link #value(EriOut)} answers it.
+           * The stream stays usable, so skip the bar or re-open on a clean
+           * history. {@link #outRange()} does advance: the bar happened and
+           * occupies a position in the series, so the handle counts it, which is
+           * what keeps two handles on one feed aligned when only one rejects.
+           * This is the one place the streaming tier is stricter than
+           * the batch API, which computes on whatever it is given: a handle
+           * retains its state, so a single non-finite bar would poison every
+           * later value it produces.
+           */
+          public void update( double inHigh, double inLow, double inClose, EriOut out ) {
+             requireArgument("ERI update", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) ) {
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                throw new TaLibArgumentException("ERI update: BadParam", RetCode.BadParam);
+             }
+             core.eriStepImpl(this, inHigh, inLow, inClose);
+             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             out.bullPower = this.cur_outBullPower;
+             out.bearPower = this.cur_outBearPower;
+          }
+
+          /**
+           * Commit {@code n} closed bars and write their {@code n} values, in one
+           * call — exactly {@code n} back-to-back {@code update} calls, with one
+           * set of argument checks instead of {@code n}. {@code n} is
+           * {@code inHigh.length}; the outputs must hold at least that many, and must
+           * not be the same array as an input or as each other.
+           * <p>{@link #outRange()} counts what this call took in, which is what makes a
+           * rejection readable: a non-finite bar {@code k} throws
+           * {@link IllegalArgumentException} exactly as {@code update} would, with
+           * the bars before {@code k} committed and written, bar {@code k} and
+           * everything after it not, and the count advanced by {@code k + 1} —
+           * the committed bars plus the rejected one.
+           */
+          public void updateAndFill( double inHigh[], double inLow[], double inClose[], double outBullPower[], double outBearPower[] ) {
+             requireArgument("ERI updateAndFill", "inHigh", inHigh);
+             requireArgument("ERI updateAndFill", "inLow", inLow);
+             requireArgument("ERI updateAndFill", "inClose", inClose);
+             requireArgument("ERI updateAndFill", "outBullPower", outBullPower);
+             requireArgument("ERI updateAndFill", "outBearPower", outBearPower);
+             final int barCount = inHigh.length;
+             if( inLow.length != barCount || inClose.length != barCount || outBullPower.length < barCount || outBearPower.length < barCount || (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower )
+                throw new TaLibArgumentException("ERI updateAndFill: BadParam", RetCode.BadParam);
+             for( int i = 0; i < barCount; i++ ) {
+                if( !Double.isFinite(inHigh[i]) || !Double.isFinite(inLow[i]) || !Double.isFinite(inClose[i]) ) {
+                   if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+                   throw new TaLibArgumentException("ERI updateAndFill: BadParam", RetCode.BadParam);
+                }
+                core.eriStepImpl(this, inHigh[i], inLow[i], inClose[i]);
+                outBullPower[i] = this.cur_outBullPower;
+                outBearPower[i] = this.cur_outBearPower;
+                if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             }
+          }
+
+          /**
+           * Evaluate a forming bar without committing — bit-identical to what the
+           * next {@code update} with the same bar would write — the same
+           * transition, with every store it would make carried in a local instead.
+           * Never writes this handle, so peeks may
+           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
+           * buffers and storing what the step would commit into locals, so the cost
+           * does not grow with the period and {@code peek} never allocates.
+           */
+          public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
+             requireArgument("ERI peek", "out", out);
+             if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
+                throw new TaLibArgumentException("ERI peek: BadParam", RetCode.BadParam);
+             EriStream sp = this;
+             double tempHT = 0.0;
+             double tempLT = 0.0;
+             double cur_outBearPower = 0.0;
+             double cur_outBullPower = 0.0;
+             double prevMA = sp.prevMA;
+             prevMA = Math.fma(inClose - prevMA, sp.k, prevMA);
+             tempHT = inHigh;
+             tempLT = inLow;
+             cur_outBullPower = tempHT - prevMA;
+             cur_outBearPower = tempLT - prevMA;
+             out.bullPower = cur_outBullPower;
+             out.bearPower = cur_outBearPower;
+          }
+
+          /**
+           * The value at the last bar this stream counted — the bar
+           * {@link #outRange()} ends on. The last history bar right after open,
+           * then whatever the latest accepted {@code update} wrote.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           */
+          public void value( EriOut out ) {
+             requireArgument("ERI value", "out", out);
+             out.bullPower = this.cur_outBullPower;
+             out.bearPower = this.cur_outBearPower;
+          }
+
+          /**
+           * An independent fork of this stream: both evolve separately from here
+           * on. Buffers are copied and sub-streams cloned recursively; the
+           * {@link Core} reference is shared, since a {@code Core} is immutable
+           * for a stream's lifetime.
+           *
+           * <p>Not the {@code Cloneable} protocol: this calls a copy constructor,
+           * never {@code super.clone()}, so it throws nothing.
+           *
+           * @return an independent stream at the same bar
+           */
+          @Override
+          public EriStream clone() {
+             return new EriStream(this);
+          }
+       }
+
+       /**
+        * The outputs of one ERI bar, written by the stream into an object the
+        * CALLER owns. Allocate one and reuse it: {@code update}, {@code peek}
+        * and {@code value} overwrite its fields, so the sink itself costs
+        * nothing per bar.
+        *
+        * <p><b>Its contents are only valid until the next call that writes it.</b>
+        * It is a mutable buffer, not a reading: a reference kept past that call,
+        * or one put in a collection, sees the value change underneath it. Copy the
+        * fields out if the reading has to outlive the call.
+        *
+        * <p>Deliberately no {@code equals} or {@code hashCode}: a mutable type
+        * with value equality breaks the {@code HashMap}/{@code HashSet}
+        * invariant the moment a reused instance becomes a key. Compare the fields.
+        */
+       public static final class EriOut {
+          /** High minus the EMA of close. */
+          public double bullPower;
+          /** Low minus the EMA of close. */
+          public double bearPower;
+       }
+       void eriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
+       {
+          double tempHT = 0.0;
+          double tempLT = 0.0;
+          sp.prevMA = Math.fma(inClose - sp.prevMA, sp.k, sp.prevMA);
+          tempHT = inHigh;
+          tempLT = inLow;
+          sp.cur_outBullPower = tempHT - sp.prevMA;
+          sp.cur_outBearPower = tempLT - sp.prevMA;
+       }
+       private RetCode eriOpenImpl( EriStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outBullPower[], double outBearPower[], int outStride )
+       {
+          int outIdx = 0;
+          int today = 0;
+          int lookbackTotal = 0;
+          int i = 0;
+          double prevMA = 0;
+          double tempReal = 0;
+          double k = 0;
+          double tempHT = 0;
+          double tempLT = 0;
+          int historyLen = inHigh.length;
+          int endIdx = historyLen - 1;
+          if( historyLen < 1 ) {
+             return RetCode.OutOfRangeStartIndex;
+          }
+          if( historyLen > MAX_INDEX + 1 ) {
+             return RetCode.OutOfRangeEndIndex;
+          }
+          if( inLow.length != inHigh.length || inClose.length != inHigh.length ) {
+             return RetCode.BadParam;
+          }
+          if( optInTimePeriod == Integer.MIN_VALUE ) {
+             optInTimePeriod = 13;
+          } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
+             return RetCode.BadParam;
+          }
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory;
+          }
+          /* Elder Ray Index (Alexander Elder, Trading for a Living, 1993): how far
+           * the bar's extremes sit from one shared EMA of close.
+           *
+           *   Bull Power = High - EMA(Close, n)
+           *   Bear Power = Low  - EMA(Close, n)
+           *
+           * One fused loop, not ema() + a combine map: a composed form cannot
+           * stream (raw bar inputs are outside check_map_step's provenance), which
+           * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
+           * op for op -- sequential seed sum from 0.0 then one divide, the
+           * unstable-period warm-up consumed bar by bar -- so the differential
+           * against shipped TA_EMA holds bitwise. No compatibility branch: the
+           * Metastock arm is unreachable from three of the four backends, and a
+           * new function honouring it would make C diverge from them (EFI/SMI
+           * precedent).
+           *
+           * No division in the per-bar map: no 0/0, no NaN path (#112 by
+           * construction). Bull >= Bear on every bar since high >= low.
+           */
+          lookbackTotal = ERI_Lookback(optInTimePeriod);
+          if( startIdx < lookbackTotal ) {
+             startIdx = lookbackTotal;
+          }
+          /* Make sure there is still something to evaluate. */
+          if( startIdx > endIdx ) {
+             outBegIdx.value = 0;
+             outNBElement.value = 0;
+             return RetCode.InsufficientHistory ;
+          }
+          k = 2.0 / ((double)optInTimePeriod + 1.0);
+          /* Seed: ema.c's DEFAULT arm, op for op. */
+          today = startIdx - lookbackTotal;
+          i = optInTimePeriod;
+          tempReal = 0.0;
+          while( i-- > 0 ) {
+             tempReal += inClose[today++];
+          }
+          prevMA = tempReal / optInTimePeriod;
+          /* The warm-up also consumes the EMA unstable period. */
+          while( today <= startIdx ) {
+             prevMA = Math.fma(inClose[today++] - prevMA, k, prevMA);
+          }
+          /* prevMA is the EMA at bar startIdx; today == startIdx + 1. Load the
+           * extremes into temps BEFORE writing either output: with two outputs
+           * over three inputs the caller may alias any pair, and the second write
+           * must not read a clobbered bar.
+           */
+          tempHT = inHigh[startIdx];
+          tempLT = inLow[startIdx];
+          outBullPower[0 * outStride] = tempHT - prevMA;
+          outBearPower[0 * outStride] = tempLT - prevMA;
+          outIdx = 1;
+          while( today <= endIdx ) {
+             prevMA = Math.fma(inClose[today] - prevMA, k, prevMA);
+             tempHT = inHigh[today];
+             tempLT = inLow[today];
+             outBullPower[outIdx * outStride] = tempHT - prevMA;
+             outBearPower[outIdx * outStride] = tempLT - prevMA;
+             outIdx += 1;
+             today += 1;
+          }
+          outBegIdx.value = startIdx;
+          outNBElement.value = outIdx;
+          /* Capture the live batch state into the handle. */
+          sp.optInTimePeriod = optInTimePeriod;
+          sp.prevMA = prevMA;
+          sp.k = k;
+          sp.cur_outBullPower = outBullPower[(outNBElement.value - 1) * outStride];
+          sp.cur_outBearPower = outBearPower[(outNBElement.value - 1) * outStride];
+          return RetCode.Success;
+       }
+       /* eriOpenAndFill anchored at startIdx — the composed-open fusion seam. */
+       EriStream eriOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, MInteger outBegIdx, MInteger outNBElement, double outBullPower[], double outBearPower[] )
+       {
+          EriStream sp = new EriStream(this);
+          RetCode retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower, 1);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("ERI openAndFill: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("ERI openAndFill: internal error", retCode);
+          }
+          throw new TaLibArgumentException("ERI openAndFill: " + retCode, retCode);
+       }
+       /* Internal startIdx-anchored open behind eriOpen (composition seam). */
+       EriStream eriOpenInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod )
+       {
+          EriStream sp = new EriStream(this);
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          double[] sink_outBullPower = new double[1];
+          double[] sink_outBearPower = new double[1];
+          RetCode retCode = eriOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, outBegIdx, outNBElement, sink_outBullPower, sink_outBearPower, 0);
+          sp.outRangeBegIdx = outBegIdx.value;
+          sp.outRangeCount = outNBElement.value;
+          if( retCode == RetCode.Success ) {
+             return sp;
+          }
+          if( retCode == RetCode.InsufficientHistory ) {
+             throw new InsufficientHistoryException("ERI open: history shorter than lookback + 1");
+          }
+          if( retCode == RetCode.InternalError ) {
+             throw new TaLibStateException("ERI open: internal error", retCode);
+          }
+          throw new TaLibArgumentException("ERI open: " + retCode, retCode);
+       }
+       /**
+        * Open a live ERI stream over the warm-up history; the handle's
+        * {@code value()} starts at the last history bar's value — bit-identical
+        * to {@link Core#ERI} at that bar.
+        * <p>The history must hold at least {@code ERI_Lookback(...) + 1} bars
+        * (unstable-period aware), or {@link InsufficientHistoryException} is
+        * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
+        * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
+        * default, as in the batch API). An EMPTY history throws
+        * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
+        * names no bar — and a null argument {@link IllegalArgumentException},
+        * both ahead of everything above.
+        */
+       public EriStream eriOpen( double inHigh[], double inLow[], double inClose[], int optInTimePeriod )
+       {
+          requireArgument("ERI open", "inHigh", inHigh);
+          requireHistory("ERI open", inHigh.length);
+          requireArgument("ERI open", "inLow", inLow);
+          requireArgument("ERI open", "inClose", inClose);
+          requireHistoryLength("ERI open", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("ERI open", "inClose", inClose.length, inHigh.length);
+          return eriOpenInternal(inHigh, inLow, inClose, 0, optInTimePeriod);
+       }
+       /**
+        * {@link Core#eriOpen} that also fills the output array(s) bit-identically
+        * to {@link Core#ERI} over the whole history in the same single pass
+        * (no separate batch call needed for the warm-up plot). Output arrays must
+        * not alias the inputs or each other, and must hold
+        * {@code historyLen - lookback} values — both checked before anything is
+        * written, so an undersized array is an {@link IllegalArgumentException}
+        * naming it rather than a fault from inside the fill.
+        * <p>The range written is on the returned handle:
+        * {@link EriStream#outRange()}.
+        */
+       public EriStream eriOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double outBullPower[], double outBearPower[] )
+       {
+          requireArgument("ERI openAndFill", "inHigh", inHigh);
+          requireHistory("ERI openAndFill", inHigh.length);
+          requireArgument("ERI openAndFill", "inLow", inLow);
+          requireArgument("ERI openAndFill", "inClose", inClose);
+          int guardOutLen = openFillCount("ERI openAndFill", inHigh.length, ERI_Lookback(optInTimePeriod));
+          requireHistoryLength("ERI openAndFill", "inLow", inLow.length, inHigh.length);
+          requireHistoryLength("ERI openAndFill", "inClose", inClose.length, inHigh.length);
+          requireLength("ERI openAndFill", "outBullPower", outBullPower, guardOutLen);
+          requireLength("ERI openAndFill", "outBearPower", outBearPower, guardOutLen);
+          if( (Object)outBullPower == (Object)inHigh || (Object)outBullPower == (Object)inLow || (Object)outBullPower == (Object)inClose || (Object)outBearPower == (Object)inHigh || (Object)outBearPower == (Object)inLow || (Object)outBearPower == (Object)inClose || (Object)outBullPower == (Object)outBearPower ) {
+             throw new TaLibArgumentException("ERI openAndFill: " + RetCode.BadParam, RetCode.BadParam);
+          }
+          MInteger outBegIdx = new MInteger();
+          MInteger outNBElement = new MInteger();
+          return eriOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, outBegIdx, outNBElement, outBullPower, outBearPower);
+       }
+    /* List of contributors:
+     *
+     *  Initial  Name/description
+     *  -------------------------------------------------------------------
      *  MF       Mario Fortier
      *
      * Change history:
@@ -177551,7 +178313,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "4c02dd34e71fc7c9";
+    static final String SPLICED_GENCODE_DIGEST = "8c74e6245f88d0f5";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -178115,6 +178877,10 @@ public class TaCodegenServe {
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Time period",30.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
             new AbsOut[]{ new AbsOut(0,"outReal",1) }));
+        ABSTRACT.put("ERI", new AbsFunc("ERI", "Momentum Indicators", "Elder Ray Index (Bull Power / Bear Power)", 33554432,
+            new AbsIn[]{ new AbsIn(0,"inPriceHLC",14) },
+            new AbsOpt[]{ new AbsOpt(2,"optInTimePeriod",0,"Time Period","Number of bars in the EMA of close",13.0, 0,0,0,0,0,0, 1,100000,1,200,1, null) },
+            new AbsOut[]{ new AbsOut(0,"outBullPower",1), new AbsOut(0,"outBearPower",1) }));
         ABSTRACT.put("EXP", new AbsFunc("EXP", "Math Transform", "Vector Arithmetic Exp", 33554432,
             new AbsIn[]{ new AbsIn(1,"inReal",0) },
             new AbsOpt[]{  },
@@ -178721,6 +179487,7 @@ public class TaCodegenServe {
         else if (json.contains("\"TA_DX\"")) return handle_DX(json);
         else if (json.contains("\"TA_EFI\"")) return handle_EFI(json);
         else if (json.contains("\"TA_EMA\"")) return handle_EMA(json);
+        else if (json.contains("\"TA_ERI\"")) return handle_ERI(json);
         else if (json.contains("\"TA_EXP\"")) return handle_EXP(json);
         else if (json.contains("\"TA_FLOOR\"")) return handle_FLOOR(json);
         else if (json.contains("\"TA_FOSC\"")) return handle_FOSC(json);
@@ -179022,6 +179789,8 @@ public class TaCodegenServe {
             sb.append("\"TA_EFI\"");
             sb.append(",");
             sb.append("\"TA_EMA\"");
+            sb.append(",");
+            sb.append("\"TA_ERI\"");
             sb.append(",");
             sb.append("\"TA_EXP\"");
             sb.append(",");
@@ -195026,6 +195795,165 @@ public class TaCodegenServe {
         sb.append(",\"outNBElement\":").append(outNBElement.value);
         sb.append(",\"out_len\":").append(_outLen);
         sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"used_float\":").append(usedFloat);
+        sb.append(",\"timing_ns\":").append(elapsedNs);
+        sb.append("}");
+        return sb.toString();
+    }
+
+    static String handle_ERI(String json) {
+        int startIdx = jsonInt(json, "startIdx");
+        int endIdx = jsonInt(json, "endIdx");
+        int use_preloaded = jsonInt(json, "use_preloaded");
+        int bench_iters = jsonInt(json, "iters");
+        if (bench_iters < 1) bench_iters = 1;
+        double[] inHigh = new double[MAX_ARRAY_SIZE];
+        double[] inLow = new double[MAX_ARRAY_SIZE];
+        double[] inClose = new double[MAX_ARRAY_SIZE];
+        if (use_preloaded != 0 && refN > 0) {
+            System.arraycopy(refHigh, 0, inHigh, 0, refN);
+            System.arraycopy(refLow, 0, inLow, 0, refN);
+            System.arraycopy(refClose, 0, inClose, 0, refN);
+        } else {
+            double[] _tmp_inHigh = jsonDoubleArray(json, "inHigh");
+            inHigh = _tmp_inHigh;
+            double[] _tmp_inLow = jsonDoubleArray(json, "inLow");
+            inLow = _tmp_inLow;
+            double[] _tmp_inClose = jsonDoubleArray(json, "inClose");
+            inClose = _tmp_inClose;
+        }
+        boolean _optRejected = false;
+        int optInTimePeriod = jsonInt(json, "optInTimePeriod");
+        // The output buffers are sized to the count the call actually PRODUCES --
+        // endIdx - max(startIdx, lookback) + 1 -- plus `out_pad` from the request, and
+        // never below one. Not to the width of the requested range: that is the bound the
+        // managed backends check and the Rust asserts state, and at the range width it was
+        // slack by exactly the lookback, so no call could ever approach it.
+        // The pad is there because a bound is a MINIMUM, never an equality. A caller
+        // re-using a pre-allocated buffer passes a larger one, and that is not an error --
+        // the reported OutRange is what says which part was written. So the harness sends
+        // both: the startIdx axis sends no pad (the bound is reachable) while the
+        // full-range value comparison sends one (slack is legal). Sizing every call one way
+        // would silently drop the other property.
+        // FLOORED AT ONE, deliberately. Zero is what the formula gives for a rejected call
+        // (the lookback is -1, or usize::MAX in Rust, for an out-of-range parameter) and
+        // for a range shorter than the lookback, where the output bound switches off and
+        // the spec says any length will do, including none. It does not: two EMPTY output
+        // buffers are rejected as aliased by C# (an explicit IsEmpty clause) and by Rust
+        // (the empty Vec the server hands each output shares one dangling as_ptr()), and
+        // accepted by C and Java -- a four-way divergence on a call the specification says
+        // all four accept. Sizing to zero here would reach it on every multi-output
+        // function, which is a semantic question, not a harness one. Recorded as
+        // error-handling-spec, open item 11.
+        // The C server keeps its MAX_ARRAY_SIZE statics: C is handed bare pointers, has no
+        // sizes and cannot make the check, so an exact buffer would test nothing there.
+        int _lb = core.ERI_Lookback(optInTimePeriod);
+        int _cs = startIdx > _lb ? startIdx : _lb;
+        int _outLen = ((_lb < 0 || _cs > endIdx) ? 1 : endIdx - _cs + 1) + jsonInt(json, "out_pad");
+        double[] outArr0 = new double[_outLen];
+        double[] outArr1 = new double[_outLen];
+        MInteger outBegIdx = new MInteger();
+        MInteger outNBElement = new MInteger();
+        RetCode rc = RetCode.Success;
+        int bench_mode = jsonInt(json, "bench_mode");
+        double[] _warm_inHigh = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inHigh, 0, endIdx + 1);
+        double[] _warm_inLow = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inLow, 0, endIdx + 1);
+        double[] _warm_inClose = bench_mode == 0 ? null : java.util.Arrays.copyOfRange(inClose, 0, endIdx + 1);
+        long startNs = 0;
+        for (int _bi = 0; _bi <= bench_iters; _bi++) {
+        if (_bi == 1) startNs = System.nanoTime();
+        if (bench_mode == 0) {
+        if (jsonInt(json, "timed") != 0) {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                rc = core.ERI_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outBegIdx, outNBElement, outArr0, outArr1);
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        } else {
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _pr = core.ERI(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _pr.begIdx();
+                outNBElement.value = _pr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+        }
+        }
+        else if (_optRejected) { rc = RetCode.BadParam; }
+        else { try {
+            if (bench_mode == 1) {
+                core.eriOpen(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod);
+            } else {
+                Core.EriStream _wh = core.eriOpenAndFill(_warm_inHigh, _warm_inLow, _warm_inClose, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _wh.outRange().begIdx();
+                outNBElement.value = _wh.outRange().count();
+            }
+            rc = RetCode.Success;
+        } catch (RuntimeException _e) { rc = _e instanceof TaLibFailure ? ((TaLibFailure)_e).retCode() : RetCode.BadParam; } }
+        }
+        long elapsedNs = (System.nanoTime() - startNs) / bench_iters;
+        int usedFloat = 0;
+        if (jsonInt(json, "use_float") != 0) {
+            float[] f_inHigh = new float[inHigh.length];
+            for (int _fi = 0; _fi < inHigh.length; _fi++) f_inHigh[_fi] = (float)inHigh[_fi];
+            float[] f_inLow = new float[inLow.length];
+            for (int _fi = 0; _fi < inLow.length; _fi++) f_inLow[_fi] = (float)inLow[_fi];
+            float[] f_inClose = new float[inClose.length];
+            for (int _fi = 0; _fi < inClose.length; _fi++) f_inClose[_fi] = (float)inClose[_fi];
+            if (_optRejected) {
+                rc = RetCode.BadParam;
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            } else {
+            try {
+                OutRange _fr = core.ERI(startIdx, endIdx, f_inHigh, f_inLow, f_inClose, optInTimePeriod, outArr0, outArr1);
+                outBegIdx.value = _fr.begIdx();
+                outNBElement.value = _fr.count();
+                rc = RetCode.Success;
+            } catch (RuntimeException _e) {
+                if (!(_e instanceof TaLibFailure)) throw _e;
+                rc = ((TaLibFailure) _e).retCode();
+                outBegIdx.value = 0;
+                outNBElement.value = 0;
+            }
+            }
+            usedFloat = 1;
+        }
+        if (jsonInt(json, "want_hash") != 0 && jsonInt(json, "full_output") == 0) {
+            long _h = svHashInit();
+            if (rc == RetCode.Success && outNBElement.value > 0) {
+                _h = svHashF64(_h, outArr0, outNBElement.value);
+                _h = svHashF64(_h, outArr1, outNBElement.value);
+            }
+            _h = svHashFin(_h);
+            return "{\"retCode\":" + rc.toInt() + ",\"outBegIdx\":" + outBegIdx.value + ",\"outNBElement\":" + outNBElement.value + ",\"out_hash\":\"" + String.format("%016x", _h) + "\"}";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"retCode\":").append(rc.toInt());
+        sb.append(",\"outBegIdx\":").append(outBegIdx.value);
+        sb.append(",\"outNBElement\":").append(outNBElement.value);
+        sb.append(",\"out_len\":").append(_outLen);
+        sb.append(",\"outReal\":").append(doubleArrayToJson(outArr0, outNBElement.value));
+        sb.append(",\"outReal1\":").append(doubleArrayToJson(outArr1, outNBElement.value));
         sb.append(",\"used_float\":").append(usedFloat);
         sb.append(",\"timing_ns\":").append(elapsedNs);
         sb.append("}");
@@ -226990,6 +227918,211 @@ public class TaCodegenServe {
         return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
     }
 
+    static String sv_ERI(String json) {
+        int svShape = jsonInt(json, "gen_shape");
+        int svSeed = jsonInt(json, "gen_seed");
+        int svN = jsonInt(json, "gen_n");
+        if (svN < 2) svN = 2;
+        if (svN > 256) svN = 256;
+        int svK = jsonInt(json, "unstablePeriod");
+        int svCompat = jsonInt(json, "compatibility");
+        if (svCompat != 0) {
+            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
+        }
+        int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 13;
+        double[] fz_o = new double[svN];
+        double[] fz_h = new double[svN];
+        double[] fz_l = new double[svN];
+        double[] fz_c = new double[svN];
+        double[] fz_v = new double[svN];
+        double[] fz_oi = new double[svN];
+        FuzzData.fuzzGen(svShape, svSeed, svN, fz_o, fz_h, fz_l, fz_c, fz_v, fz_oi);
+        double[] b0 = new double[svN];
+        double[] b1 = new double[svN];
+        long legs = 0;
+        boolean allOk = true;
+        boolean peekAll = true;
+        long peekReps = 0;
+        long peekRejects = 0;
+        boolean peekRepAll = true;
+        int fillChecked = 0;
+        boolean fillOk = true;
+        MInteger beg = new MInteger();
+        MInteger nb = new MInteger();
+        String diag = "";
+        int rangeChecked = 0;
+        boolean rangeOk = true;
+        long rangeLegs = 0;
+        int rangeSites = 0;
+        int ufillChecked = 0;
+        boolean ufillOk = true;
+        long[] zsign = { 0 };
+        int rounds = 1;
+        for (int rd = 0; rd < rounds; rd++) {
+            Core c2 = new Core();
+            c2.unstablePeriod[5] = svK;
+            RetCode rc;
+            try { rc = c2.ERI_Impl(0, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, beg, nb, b0, b1); }
+            catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rc = ((TaLibFailure) _sve).retCode(); beg.value = 0; nb.value = 0; }
+            int lb = c2.ERI_Lookback(optInTimePeriod);
+            if (rc != RetCode.Success || nb.value == 0) {
+                boolean openRejects;
+                try { c2.eriOpen(fz_h, fz_l, fz_c, optInTimePeriod); openRejects = false; } catch (IllegalArgumentException _e) { openRejects = true; }
+                return "{\"retCode\":" + rc.toInt() + ",\"legs\":0,\"nb\":" + nb.value + ",\"openRejects\":" + (openRejects ? 1 : 0) + ",\"ok\":" + (openRejects ? 1 : 0) + ",\"peek_ok\":1}";
+            }
+            fillChecked = 1;
+            try {
+                double[] f0 = new double[svN];
+                java.util.Arrays.fill(f0, (double)-1.2345678901234e300);
+                double[] f1 = new double[svN];
+                java.util.Arrays.fill(f1, (double)-1.2345678901234e300);
+                Core.EriStream _fh = c2.eriOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f1);
+                OutRange _fr = _fh.outRange();
+                rangeChecked = 1; rangeLegs++; rangeSites |= 1;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) rangeOk = false;
+                if (_fr.begIdx() != beg.value || _fr.count() != nb.value) fillOk = false;
+                else {
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f0[i], b0[i], zsign)) fillOk = false;
+                    for (int i = 0; i < nb.value; i++) if (svXtierNe(f1[i], b1[i], zsign)) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f0[i] != (double)-1.2345678901234e300) fillOk = false;
+                    for (int i = nb.value; i < svN; i++) if (f1[i] != (double)-1.2345678901234e300) fillOk = false;
+                }
+                try { c2.eriOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                try { c2.eriOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
+            } catch (IllegalArgumentException _e) { fillOk = false; }
+            int seedShift = 0;
+            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            java.util.Arrays.sort(pcs);
+            int prevP = -1;
+            for (int pi = 0; pi < pcs.length; pi++) {
+                int p = pcs[pi];
+                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                prevP = p;
+                Core.EriStream st;
+                try { st = c2.eriOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"openRejectP\":" + p; continue; }
+                legs++;
+                Core.EriOut v0 = new Core.EriOut(); st.value(v0);
+                if (svXtierNe(v0.bullPower, b0[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (svXtierNe(v0.bearPower, b1[p - 1 - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                Core.EriOut pk = new Core.EriOut();
+                Core.EriOut up = new Core.EriOut();
+                Core.EriOut vc = new Core.EriOut();
+                Core.EriOut rp = new Core.EriOut();
+                for (int t = p; t < svN; t++) {
+                    boolean pkTook = true;
+                    try { st.peek(fz_h[t], fz_l[t], fz_c[t], pk); } catch (IllegalArgumentException _e) { pkTook = false; peekRejects++; }
+                    if (t % 7 == 0) {
+                        boolean rpTook = pkTook;
+                        try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], rp); } catch (IllegalArgumentException _e) { peekRejects++; }
+                        try { st.peek(fz_h[t], fz_l[t], fz_c[t], rp); } catch (IllegalArgumentException _e) { rpTook = false; }
+                        if (rpTook) {
+                            peekReps++;
+                            if (svBne(rp.bullPower, pk.bullPower)) peekRepAll = false;
+                            if (svBne(rp.bearPower, pk.bearPower)) peekRepAll = false;
+                        } else { peekRejects++; }
+                    }
+                    st.update(fz_h[t], fz_l[t], fz_c[t], up);
+                    if (pkTook && svBne(pk.bullPower, up.bullPower)) peekAll = false;
+                    if (pkTook && svBne(pk.bearPower, up.bearPower)) peekAll = false;
+                    try { st.peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1], pk); } catch (IllegalArgumentException _e) { peekRejects++; }
+                    st.value(vc);
+                    if (svBne(vc.bullPower, up.bullPower)) allOk = false;
+                    if (svBne(vc.bearPower, up.bearPower)) allOk = false;
+                    if (svXtierNe(up.bullPower, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b0[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.bullPower)) + "\""; }
+                    if (svXtierNe(up.bearPower, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + String.format("%016x", Double.doubleToRawLongBits(b1[t - beg.value])) + "\",\"streamv\":\"" + String.format("%016x", Double.doubleToRawLongBits(up.bearPower)) + "\""; }
+                }
+                if (allOk) {
+                    rangeChecked = 1; rangeLegs++; rangeSites |= 2;
+                    if (st.outRange().begIdx() != beg.value || st.outRange().count() != nb.value) rangeOk = false;
+                }
+            }
+            {
+                int p = lb + 1 + seedShift;
+                if (p <= svN - 1) {
+                    ufillChecked = 1;
+                    try {
+                        Core.EriStream stu = c2.eriOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod);
+                        OutRange ur0 = stu.outRange();
+                        double[] u0 = new double[svN];
+                        java.util.Arrays.fill(u0, (double)-1.2345678901234e300);
+                        double[] u1 = new double[svN];
+                        java.util.Arrays.fill(u1, (double)-1.2345678901234e300);
+                        double[] tail_fz_h = java.util.Arrays.copyOfRange(fz_h, p, svN);
+                        double[] tail_fz_l = java.util.Arrays.copyOfRange(fz_l, p, svN);
+                        double[] tail_fz_c = java.util.Arrays.copyOfRange(fz_c, p, svN);
+                        stu.updateAndFill(new double[0], new double[0], new double[0], u0, u1);
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, new double[0], u1); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output shorter than the run */ }
+                        try { stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, tail_fz_h, u1); ufillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
+                        if (stu.outRange().begIdx() != ur0.begIdx() || stu.outRange().count() != ur0.count()) ufillOk = false;
+                        stu.updateAndFill(tail_fz_h, tail_fz_l, tail_fz_c, u0, u1);
+                        for (int t = p; t < svN; t++) if (svXtierNe(u0[t - p], b0[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = p; t < svN; t++) if (svXtierNe(u1[t - p], b1[t - beg.value], zsign)) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u0[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        for (int t = svN - p; t < svN; t++) if (u1[t] != (double)-1.2345678901234e300) ufillOk = false;
+                        rangeChecked = 1; rangeLegs++; rangeSites |= 4;
+                        if (stu.outRange().begIdx() != beg.value || stu.outRange().count() != nb.value) { ufillOk = false; rangeOk = false; }
+                    } catch (IllegalArgumentException _e) { ufillOk = false; }
+                }
+            }
+            {
+                int p0 = lb + 1 + seedShift;
+                if (p0 <= svN - 1) {
+                    try {
+                        Core.EriStream sA = c2.eriOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
+                        int mid = (p0 + svN) / 2;
+                        Core.EriOut uA = new Core.EriOut();
+                        Core.EriOut uB = new Core.EriOut();
+                        for (int t = p0; t < mid; t++) sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                        Core.EriStream sB = sA.clone();
+                        for (int t = mid; t < svN; t++) {
+                            sA.update(fz_h[t], fz_l[t], fz_c[t], uA);
+                            sB.update(fz_h[t], fz_l[t], fz_c[t], uB);
+                            if (svBne(uA.bullPower, uB.bullPower) || svXtierNe(uA.bullPower, b0[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                            if (svBne(uA.bearPower, uB.bearPower) || svXtierNe(uA.bearPower, b1[t - beg.value], zsign)) { allOk = false; if (diag.isEmpty()) diag = ",\"copyDiverged\":" + t; }
+                        }
+                        if (allOk) {
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 16;
+                            if (sA.outRange().begIdx() != beg.value || sA.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRangeSrc\":1"; }
+                            if (sB.outRange().begIdx() != beg.value || sB.outRange().count() != nb.value) { rangeOk = false; if (diag.isEmpty()) diag = ",\"copyRange\":1"; }
+                        }
+                    } catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"copyOpenReject\":1"; }
+                }
+            }
+            if (lb >= 1 && lb < svN) {
+                try { c2.eriOpen(java.util.Arrays.copyOf(fz_h, lb), java.util.Arrays.copyOf(fz_l, lb), java.util.Arrays.copyOf(fz_c, lb), optInTimePeriod); allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryAccepted\":1"; }
+                catch (InsufficientHistoryException _e) { /* expected, typed */ }
+                catch (IllegalArgumentException _e) { allOk = false; if (diag.isEmpty()) diag = ",\"shortHistoryWrongType\":1"; }
+            }
+            try {
+                Core.EriStream sD = c2.eriOpen(fz_h, fz_l, fz_c, Integer.MIN_VALUE);
+                Core.EriStream sE = c2.eriOpen(fz_h, fz_l, fz_c, 13);
+                Core.EriOut vD = new Core.EriOut(); sD.value(vD);
+                Core.EriOut vE = new Core.EriOut(); sE.value(vE);
+                if (svBne(vD.bullPower, vE.bullPower)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+                if (svBne(vD.bearPower, vE.bearPower)) { allOk = false; if (diag.isEmpty()) diag = ",\"minValueDefault\":1"; }
+            } catch (IllegalArgumentException _e) { /* defaults need more history than svN — skip */ }
+            {
+                int Sidx = lb + (svN - lb) / 3;
+                if (Sidx > lb && Sidx < svN - 1) {
+                    MInteger begS = new MInteger();
+                    MInteger nbS = new MInteger();
+                    RetCode rcS;
+                    try { rcS = c2.ERI_Impl(Sidx, svN - 1, fz_h, fz_l, fz_c, optInTimePeriod, begS, nbS, b0, b1); }
+                    catch (RuntimeException _sve) { if (!(_sve instanceof TaLibFailure)) throw _sve; rcS = ((TaLibFailure) _sve).retCode(); }
+                    if (rcS == RetCode.Success && nbS.value > 0) {
+                        try {
+                            Core.EriStream stA = c2.eriOpenInternal(java.util.Arrays.copyOf(fz_h, svN), java.util.Arrays.copyOf(fz_l, svN), java.util.Arrays.copyOf(fz_c, svN), Sidx, optInTimePeriod);
+                            rangeChecked = 1; rangeLegs++; rangeSites |= 8;
+                            if (stA.outRange().begIdx() != begS.value || stA.outRange().count() != nbS.value) rangeOk = false;
+                        } catch (IllegalArgumentException _e) { rangeOk = false; if (diag.isEmpty()) diag = ",\"anchoredOpenRejected\":1"; }
+                    }
+                }
+            }
+        }
+        return "{\"retCode\":0,\"beg\":" + beg.value + ",\"nb\":" + nb.value + ",\"legs\":" + legs + ",\"fill_checked\":" + fillChecked + ",\"fill_ok\":" + (fillOk ? 1 : 0) + ",\"ufill_checked\":" + ufillChecked + ",\"ufill_ok\":" + (ufillOk ? 1 : 0) + ",\"range_checked\":" + rangeChecked + ",\"range_legs\":" + rangeLegs + ",\"range_sites\":" + rangeSites + ",\"range_sites_all\":31,\"range_ok\":" + (rangeOk ? 1 : 0) + ",\"step_ok\":" + (allOk ? 1 : 0) + ",\"ok\":" + ((allOk && fillOk && ufillOk && rangeOk) ? 1 : 0) + ",\"peek_ok\":" + (peekAll ? 1 : 0) + ",\"peek_reps\":" + peekReps + ",\"peek_rep_ok\":" + (peekRepAll ? 1 : 0) + ",\"peek_rejects\":" + peekRejects + ",\"benign\":" + zsign[0] + diag + "}";
+    }
+
     static String sv_EXP(String json) {
         int svShape = jsonInt(json, "gen_shape");
         int svSeed = jsonInt(json, "gen_seed");
@@ -244438,6 +245571,7 @@ public class TaCodegenServe {
         case "TA_DX": return sv_DX(json);
         case "TA_EFI": return sv_EFI(json);
         case "TA_EMA": return sv_EMA(json);
+        case "TA_ERI": return sv_ERI(json);
         case "TA_EXP": return sv_EXP(json);
         case "TA_FLOOR": return sv_FLOOR(json);
         case "TA_FOSC": return sv_FOSC(json);

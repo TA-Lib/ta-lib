@@ -103,6 +103,7 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_DX.c \
 	ta_EFI.c \
 	ta_EMA.c \
+	ta_ERI.c \
 	ta_EXP.c \
 	ta_FLOOR.c \
 	ta_FOSC.c \

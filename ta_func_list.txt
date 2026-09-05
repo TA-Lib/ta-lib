@@ -98,6 +98,7 @@ DPO                 Detrended Price Oscillator
 DX                  Directional Movement Index
 EFI                 Elder's Force Index
 EMA                 Exponential Moving Average
+ERI                 Elder Ray Index (Bull Power / Bear Power)
 EXP                 Vector Arithmetic Exp
 FLOOR               Vector Floor
 FOSC                Forecast Oscillator

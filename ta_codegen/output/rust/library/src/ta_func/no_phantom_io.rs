@@ -9804,6 +9804,101 @@ fn legs_EMA(r: &mut Report) {
     r.legs_done("EMA", 1);
 }
 
+const V_ERI: &[(&str, i32)] = &[
+    ("defaults", i32::MIN),
+    ("minimums", 1i32),
+];
+
+fn sub_ERI(r: &mut Report) {
+    let core = Core::new();
+    for &(label, optInTimePeriod) in V_ERI {
+        let Ok(lb) = core.ERI_Lookback(optInTimePeriod) else { continue; };
+        r.control("ERI", label, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outBullPower: Vec<f64> = Vec::with_capacity(1);
+            let mut outBearPower: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ERI_Impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outBullPower, &mut outBearPower);
+            (rc, _n)
+        }));
+        if lb < 1 { r.no_quiet_range("ERI", label); continue; }
+        r.quiet("ERI", label, lb, run(|| {
+            let inHigh: Vec<f64> = Vec::with_capacity(1);
+            let inLow: Vec<f64> = Vec::with_capacity(1);
+            let inClose: Vec<f64> = Vec::with_capacity(1);
+            let mut outBullPower: Vec<f64> = Vec::with_capacity(1);
+            let mut outBearPower: Vec<f64> = Vec::with_capacity(1);
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ERI_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outBullPower, &mut outBearPower);
+            (rc, _n)
+        }));
+    }
+}
+
+fn legs_ERI(r: &mut Report) {
+    let core = Core::new();
+    let optInTimePeriod = i32::MIN;
+    let Ok(lb) = core.ERI_Lookback(optInTimePeriod) else { r.no_legs("ERI"); return; };
+    let (startIdx, endIdx) = (lb, lb + 4);
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outBullPower: Vec<f64> = vec![Default::default(); 5];
+        let mut outBearPower: Vec<f64> = vec![Default::default(); 5];
+        r.legs_control("ERI", run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ERI_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outBullPower, &mut outBearPower);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = Vec::with_capacity(1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outBullPower: Vec<f64> = vec![Default::default(); 5];
+        let mut outBearPower: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ERI", "inHigh", 0, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ERI_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outBullPower, &mut outBearPower);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = Vec::with_capacity(1);
+        let inClose: Vec<f64> = series("close", endIdx + 1);
+        let mut outBullPower: Vec<f64> = vec![Default::default(); 5];
+        let mut outBearPower: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ERI", "inLow", 1, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ERI_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outBullPower, &mut outBearPower);
+            (rc, _n)
+        }));
+    }
+    {
+        let inHigh: Vec<f64> = series("high", endIdx + 1);
+        let inLow: Vec<f64> = series("low", endIdx + 1);
+        let inClose: Vec<f64> = Vec::with_capacity(1);
+        let mut outBullPower: Vec<f64> = vec![Default::default(); 5];
+        let mut outBearPower: Vec<f64> = vec![Default::default(); 5];
+        r.leg("ERI", "inClose", 2, run(|| {
+            let mut _b: usize = 0;
+            let mut _n: usize = 0;
+            let rc = core.ERI_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, &mut _b, &mut _n, &mut outBullPower, &mut outBearPower);
+            (rc, _n)
+        }));
+    }
+    r.legs_done("ERI", 3);
+}
+
 const V_EXP: &[&str] = &[
     "defaults",
 ];
@@ -16646,6 +16741,7 @@ const PROBES: &[(&str, Probe, Probe)] = &[
     ("DX", sub_DX, legs_DX),
     ("EFI", sub_EFI, legs_EFI),
     ("EMA", sub_EMA, legs_EMA),
+    ("ERI", sub_ERI, legs_ERI),
     ("EXP", sub_EXP, legs_EXP),
     ("FLOOR", sub_FLOOR, legs_FLOOR),
     ("FOSC", sub_FOSC, legs_FOSC),
@@ -16779,7 +16875,7 @@ fn no_phantom_io() {
     // The corpus is the generator's, not a list kept by hand: a probe that
     // stopped being emitted is a shrinking sweep, which is the one way this
     // file can fail open.
-    assert_eq!(PROBES.len(), 195, "probe count");
+    assert_eq!(PROBES.len(), 196, "probe count");
     assert_eq!(
         PROBES.len(),
         crate::abstract_api::funcs().count(),
