@@ -18,13 +18,14 @@
 # Written by `ta_codegen generate`. Do not renumber by hand -- the number is
 # the only thing a bug report carries, and it has to mean the same guard in the
 # next release as it did in the last.
-next: 411
+next: 413
 sites:
   AC.cbsize.oscBuffer: 184
   AC.circbuf.oscBuffer: 181
   AC.ringcap.trailingFastIdx: 182
   AC.ringcap.trailingSlowIdx: 183
   ACCBANDS.ringcap.trailingIdx: 185
+  ADR.ringcap.trailingIdx: 407
   AO.ringcap.trailingFastIdx: 186
   AO.ringcap.trailingSlowIdx: 187
   AROON.extrema: 188
@@ -157,8 +158,8 @@ sites:
   CMF.circbuf.mfv: 314
   CMOU.ringcap.trailingIdx: 316
   CORREL.extrema: 317
-  CVI.cbsize.emaRing: 408
-  CVI.circbuf.emaRing: 407
+  CVI.cbsize.emaRing: 410
+  CVI.circbuf.emaRing: 409
   DONCHIAN.extrema: 403
   EFI.dualmode: 318
   FOSC.extrema: 406
@@ -190,8 +191,8 @@ sites:
   MA.dispatch.Update: 343
   MA.dispatch.UpdateAndFill: 345
   MAMA.ringcap.trailingWMAIdx: 346
-  MASSI.cbsize.ratioRing: 410
-  MASSI.circbuf.ratioRing: 409
+  MASSI.cbsize.ratioRing: 412
+  MASSI.circbuf.ratioRing: 411
   MAX.circbuf.preHighest: 348
   MAX.circbuf.sufHighest: 347
   MAX.extrema: 349
@@ -228,6 +229,7 @@ sites:
   ROCP.ringcap.trailingIdx: 380
   ROCR.ringcap.trailingIdx: 381
   ROCR100.ringcap.trailingIdx: 382
+  RVOL.ringcap.trailingIdx: 408
   SMA.ringcap.trailingIdx: 383
   SMI.extrema: 384
   STOCH.extrema: 385

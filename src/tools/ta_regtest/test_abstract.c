@@ -2487,11 +2487,12 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
    }
 
    /* A successful call writes finite values -- unless the function declares
-    * TA_FUNC_FLG_NAN_INF_OUT, the seven whose own domain has holes (ACOS/ASIN
+    * TA_FUNC_FLG_NAN_INF_OUT, the eight whose own domain has holes (ACOS/ASIN
     * outside [-1,1], LN/LOG10/SQRT on a negative, DIV on 0/0 or x/0, VWMA on a
-    * volume-less window). Those are exempt; every other function is held to
-    * finite output on all five datasets, which is what makes the flag a
-    * contract rather than a docs annotation (issue #191).
+    * volume-less window, RVOL on a dead trailing window). Those are exempt;
+    * every other function is held to finite output on all five datasets, which
+    * is what makes the flag a contract rather than a docs annotation
+    * (issue #191).
     *
     * Placed HERE, against the call above, and not further down: the server
     * verification and d2_param_vectors both re-issue TA_CallFunc into these

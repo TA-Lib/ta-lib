@@ -140,7 +140,7 @@ TA_LIB_API TA_RetCode TA_CVI( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInROCPeriod < 1 ) return TA_INTERNAL_ERROR(407);
+   if( optInROCPeriod < 1 ) return TA_INTERNAL_ERROR(409);
    if( (int)optInROCPeriod > (int)(sizeof(local_emaRing)/sizeof(double)) )
    {
       emaRing = TA_Malloc( sizeof(double)*optInROCPeriod );
@@ -265,7 +265,7 @@ TA_RetCode TA_S_CVI( int    startIdx,
    {
       return TA_SUCCESS;
    }
-   if( optInROCPeriod < 1 ) return TA_INTERNAL_ERROR(407);
+   if( optInROCPeriod < 1 ) return TA_INTERNAL_ERROR(409);
    if( (int)optInROCPeriod > (int)(sizeof(local_emaRing)/sizeof(double)) )
    {
       emaRing = TA_Malloc( sizeof(double)*optInROCPeriod );
@@ -446,7 +446,7 @@ static TA_RetCode TA_CVI_OpenImpl( struct TA_CVI_Stream **stream, const double i
       {
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInROCPeriod < 1 ) return TA_INTERNAL_ERROR(407);
+      if( optInROCPeriod < 1 ) return TA_INTERNAL_ERROR(409);
       if( (int)optInROCPeriod > (int)(sizeof(local_emaRing)/sizeof(double)) )
       {
          emaRing = TA_Malloc( sizeof(double)*optInROCPeriod );
@@ -522,7 +522,7 @@ static TA_RetCode TA_CVI_OpenImpl( struct TA_CVI_Stream **stream, const double i
       sp->emaRing_Idx = emaRing_Idx;
       sp->maxIdx_emaRing = maxIdx_emaRing;
       sp->cbSize_emaRing = maxIdx_emaRing + 1;
-      if( sp->cbSize_emaRing < 1 || sp->cbSize_emaRing > historyLen + 1 ) { if( emaRing != &local_emaRing[0] ) { TA_Free( emaRing ); } TA_CVI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(408); }
+      if( sp->cbSize_emaRing < 1 || sp->cbSize_emaRing > historyLen + 1 ) { if( emaRing != &local_emaRing[0] ) { TA_Free( emaRing ); } TA_CVI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(410); }
       sp->cb_emaRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_emaRing );
       if( !sp->cb_emaRing ) { if( emaRing != &local_emaRing[0] ) { TA_Free( emaRing ); } TA_CVI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_emaRing, emaRing, sizeof(double) * (size_t)sp->cbSize_emaRing );

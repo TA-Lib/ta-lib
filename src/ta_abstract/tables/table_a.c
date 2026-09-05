@@ -270,6 +270,31 @@ DEF_FUNCTION( ADOSC,
              );
 /* ADOSC END */
 
+/* ADR BEGIN */
+static const TA_InputParameterInfo    *TA_ADR_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_HL,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_ADR_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_ADR_OptInputs[] =
+{ &TA_DEF_UI_TimePeriod_14,
+  NULL
+};
+
+DEF_FUNCTION( ADR,
+              TA_GroupId_VolatilityIndicators,
+              "Average Day Range",
+              TA_FUNC_FLG_STREAM
+             );
+/* ADR END */
+
 /* ADX BEGIN */
 static const TA_InputParameterInfo    *TA_ADX_Inputs[]    =
 {
@@ -606,6 +631,7 @@ const TA_FuncDef *TA_DEF_TableA[] =
    ADD_TO_TABLE(AD),
    ADD_TO_TABLE(ADD),
    ADD_TO_TABLE(ADOSC),
+   ADD_TO_TABLE(ADR),
    ADD_TO_TABLE(ADX),
    ADD_TO_TABLE(ADXR),
    ADD_TO_TABLE(AO),

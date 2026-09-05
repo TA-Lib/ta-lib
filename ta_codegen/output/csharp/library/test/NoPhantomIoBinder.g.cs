@@ -139,6 +139,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["ADR"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.ADR_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["ADX"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.ADX_Impl(
@@ -973,6 +979,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["PVT"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.PVT_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["QSTICK"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.QSTICK_Impl(
@@ -1013,6 +1025,12 @@ internal static class NoPhantomIoBinder
         {
             RetCode rc = core.RSI_Impl(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["RVOL"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.RVOL_Impl(
+                startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
         ["SAR"] = static (core, c, startIdx, endIdx) =>

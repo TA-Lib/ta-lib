@@ -4,6 +4,7 @@ ACOS                Vector Trigonometric ACos
 AD                  Chaikin A/D Line
 ADD                 Vector Arithmetic Add
 ADOSC               Chaikin A/D Oscillator
+ADR                 Average Day Range
 ADX                 Average Directional Movement Index
 ADXR                Average Directional Movement Index Rating
 AO                  Awesome Oscillator
@@ -143,6 +144,7 @@ PLUS_DM             Plus Directional Movement
 PPO                 Percentage Price Oscillator
 PVI                 Positive Volume Index
 PVO                 Percentage Volume Oscillator
+PVT                 Price Volume Trend
 QSTICK              Qstick
 RMA                 Wilder's Smoothed Moving Average
 ROC                 Rate of change : ((price/prevPrice)-1)*100
@@ -150,6 +152,7 @@ ROCP                Rate of change Percentage: (price-prevPrice)/prevPrice
 ROCR                Rate of change ratio: (price/prevPrice)
 ROCR100             Rate of change ratio 100 scale: (price/prevPrice)*100
 RSI                 Relative Strength Index
+RVOL                Relative Volume
 SAR                 Parabolic SAR
 SAREXT              Parabolic SAR - Extended
 SIN                 Vector Trigonometric Sin

@@ -188,6 +188,45 @@ DEF_FUNCTION( RSI,
              );
 /* RSI END */
 
+/* RVOL BEGIN */
+static const TA_OptInputParameterInfo TA_DEF_UI_D_RVOL_TimePeriod =
+{
+   TA_OptInput_IntegerRange,
+   "optInTimePeriod",
+   0,
+
+   "Time Period",
+   (const void *)&TA_DEF_TimePeriod_Positive,
+   20,
+   "Time period",
+
+   NULL
+};
+
+static const TA_InputParameterInfo    *TA_RVOL_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_V,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_RVOL_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_RVOL_OptInputs[] =
+{ &TA_DEF_UI_D_RVOL_TimePeriod,
+  NULL
+};
+
+DEF_FUNCTION( RVOL,
+              TA_GroupId_VolumeIndicators,
+              "Relative Volume",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_NAN_INF_OUT
+             );
+/* RVOL END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -200,6 +239,7 @@ const TA_FuncDef *TA_DEF_TableR[] =
    ADD_TO_TABLE(ROCR),
    ADD_TO_TABLE(ROCR100),
    ADD_TO_TABLE(RSI),
+   ADD_TO_TABLE(RVOL),
    NULL
 };
 

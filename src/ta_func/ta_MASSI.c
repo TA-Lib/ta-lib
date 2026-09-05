@@ -140,7 +140,7 @@ TA_LIB_API TA_RetCode TA_MASSI( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSlowPeriod < 1 ) return TA_INTERNAL_ERROR(409);
+   if( optInSlowPeriod < 1 ) return TA_INTERNAL_ERROR(411);
    if( (int)optInSlowPeriod > (int)(sizeof(local_ratioRing)/sizeof(double)) )
    {
       ratioRing = TA_Malloc( sizeof(double)*optInSlowPeriod );
@@ -350,7 +350,7 @@ TA_RetCode TA_S_MASSI( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   if( optInSlowPeriod < 1 ) return TA_INTERNAL_ERROR(409);
+   if( optInSlowPeriod < 1 ) return TA_INTERNAL_ERROR(411);
    if( (int)optInSlowPeriod > (int)(sizeof(local_ratioRing)/sizeof(double)) )
    {
       ratioRing = TA_Malloc( sizeof(double)*optInSlowPeriod );
@@ -575,7 +575,7 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      if( optInSlowPeriod < 1 ) return TA_INTERNAL_ERROR(409);
+      if( optInSlowPeriod < 1 ) return TA_INTERNAL_ERROR(411);
       if( (int)optInSlowPeriod > (int)(sizeof(local_ratioRing)/sizeof(double)) )
       {
          ratioRing = TA_Malloc( sizeof(double)*optInSlowPeriod );
@@ -728,7 +728,7 @@ static TA_RetCode TA_MASSI_OpenImpl( struct TA_MASSI_Stream **stream, const doub
       sp->ratioRing_Idx = ratioRing_Idx;
       sp->maxIdx_ratioRing = maxIdx_ratioRing;
       sp->cbSize_ratioRing = maxIdx_ratioRing + 1;
-      if( sp->cbSize_ratioRing < 1 || sp->cbSize_ratioRing > historyLen + 1 ) { if( ratioRing != &local_ratioRing[0] ) { TA_Free( ratioRing ); } TA_MASSI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(410); }
+      if( sp->cbSize_ratioRing < 1 || sp->cbSize_ratioRing > historyLen + 1 ) { if( ratioRing != &local_ratioRing[0] ) { TA_Free( ratioRing ); } TA_MASSI_ReleaseImpl( sp ); return TA_INTERNAL_ERROR(412); }
       sp->cb_ratioRing = (double *)TA_Malloc( sizeof(double) * (size_t)sp->cbSize_ratioRing );
       if( !sp->cb_ratioRing ) { if( ratioRing != &local_ratioRing[0] ) { TA_Free( ratioRing ); } TA_MASSI_ReleaseImpl( sp ); return TA_ALLOC_ERR; }
       memcpy( sp->cb_ratioRing, ratioRing, sizeof(double) * (size_t)sp->cbSize_ratioRing );

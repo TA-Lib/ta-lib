@@ -14,6 +14,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#75) More docs for DEMA, TEMA, T3, MFI, ULTOSC, KAMA and TRIX. Thanks @nehemiah888 !
 - New TA Functions:
   - AC: Accelerator/Decelerator Oscillator (#228)
+  - ADR: Average Day Range, the mean of the last n bar ranges (#367)
   - AO: Awesome Oscillator (#227)
   - CMF: Chaikin Money Flow (#134)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
@@ -28,8 +29,10 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - NVI: Negative Volume Index (#126)
   - PVI: Positive Volume Index (#126)
   - PVO: Percentage Volume Oscillator (#119)
+  - PVT: Price Volume Trend, volume weighted by the bar's fractional price change (#364)
   - QSTICK: Qstick (#226)
   - RMA: Wilder's Smoothed Moving Average (#348)
+  - RVOL: Relative Volume, the current bar's volume against the preceding window's average (#370)
   - SMI: Stochastic Momentum Index (#238)
   - SUPERTREND: SuperTrend, an ATR-scaled trailing band with a trend flag (#272)
   - VHF: Vertical Horizontal Filter, a trend-versus-range strength filter (#346)

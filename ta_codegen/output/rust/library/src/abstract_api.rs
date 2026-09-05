@@ -54,6 +54,8 @@ pub enum FuncId {
     ADD,
     /// Chaikin A/D Oscillator — [`Core::ADOSC`](crate::Core::ADOSC).
     ADOSC,
+    /// Average Day Range — [`Core::ADR`](crate::Core::ADR).
+    ADR,
     /// Average Directional Movement Index — [`Core::ADX`](crate::Core::ADX).
     ADX,
     /// Average Directional Movement Index Rating — [`Core::ADXR`](crate::Core::ADXR).
@@ -332,6 +334,8 @@ pub enum FuncId {
     PVI,
     /// Percentage Volume Oscillator — [`Core::PVO`](crate::Core::PVO).
     PVO,
+    /// Price Volume Trend — [`Core::PVT`](crate::Core::PVT).
+    PVT,
     /// Qstick — [`Core::QSTICK`](crate::Core::QSTICK).
     QSTICK,
     /// Wilder's Smoothed Moving Average — [`Core::RMA`](crate::Core::RMA).
@@ -346,6 +350,8 @@ pub enum FuncId {
     ROCR100,
     /// Relative Strength Index — [`Core::RSI`](crate::Core::RSI).
     RSI,
+    /// Relative Volume — [`Core::RVOL`](crate::Core::RVOL).
+    RVOL,
     /// Parabolic SAR — [`Core::SAR`](crate::Core::SAR).
     SAR,
     /// Parabolic SAR - Extended — [`Core::SAREXT`](crate::Core::SAREXT).
@@ -416,7 +422,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 185;
+    pub const COUNT: usize = 188;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -741,7 +747,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 185] = [
+static FUNC_TABLE: [FuncInfo; 188] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -805,6 +811,17 @@ static FUNC_TABLE: [FuncInfo; 185] = [
         flags: FuncFlags(0x22000000),
         inputs: &[InputInfo { param_name: "inPriceHLCV", kind: InputType::Price, flags: InputFlags(0x0000001e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of the fast MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 3, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Period of the slow MA", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::ADR,
+        name: "ADR",
+        group: Group::VolatilityIndicators,
+        hint: "Average Day Range",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 14, suggested: (1, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2338,6 +2355,17 @@ static FUNC_TABLE: [FuncInfo; 185] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::PVT,
+        name: "PVT",
+        group: Group::VolumeIndicators,
+        hint: "Price Volume Trend",
+        flags: FuncFlags(0x22000000),
+        inputs: &[InputInfo { param_name: "inPriceCV", kind: InputType::Price, flags: InputFlags(0x00000018) }, ],
+        opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::QSTICK,
         name: "QSTICK",
         group: Group::MomentumIndicators,
@@ -2413,6 +2441,17 @@ static FUNC_TABLE: [FuncInfo; 185] = [
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 14, suggested: (4, 200, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: Some(FuncUnstId::RSI),
+    },
+    FuncInfo {
+        id: FuncId::RVOL,
+        name: "RVOL",
+        group: Group::VolumeIndicators,
+        hint: "Relative Volume",
+        flags: FuncFlags(0x42000000),
+        inputs: &[InputInfo { param_name: "inPriceV", kind: InputType::Price, flags: InputFlags(0x00000010) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 20, suggested: (1, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
     },
     FuncInfo {
         id: FuncId::SAR,
@@ -2801,6 +2840,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "AD" => FuncId::AD,
         "ADD" => FuncId::ADD,
         "ADOSC" => FuncId::ADOSC,
+        "ADR" => FuncId::ADR,
         "ADX" => FuncId::ADX,
         "ADXR" => FuncId::ADXR,
         "AO" => FuncId::AO,
@@ -2940,6 +2980,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "PPO" => FuncId::PPO,
         "PVI" => FuncId::PVI,
         "PVO" => FuncId::PVO,
+        "PVT" => FuncId::PVT,
         "QSTICK" => FuncId::QSTICK,
         "RMA" => FuncId::RMA,
         "ROC" => FuncId::ROC,
@@ -2947,6 +2988,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "ROCR" => FuncId::ROCR,
         "ROCR100" => FuncId::ROCR100,
         "RSI" => FuncId::RSI,
+        "RVOL" => FuncId::RVOL,
         "SAR" => FuncId::SAR,
         "SAREXT" => FuncId::SAREXT,
         "SIN" => FuncId::SIN,
@@ -3243,6 +3285,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::AD => self.core.AD_Lookback(),
             FuncId::ADD => self.core.ADD_Lookback(),
             FuncId::ADOSC => self.core.ADOSC_Lookback(self.int_opt[0], self.int_opt[1]),
+            FuncId::ADR => self.core.ADR_Lookback(self.int_opt[0]),
             FuncId::ADX => self.core.ADX_Lookback(self.int_opt[0]),
             FuncId::ADXR => self.core.ADXR_Lookback(self.int_opt[0]),
             FuncId::AO => self.core.AO_Lookback(self.int_opt[0], self.int_opt[1]),
@@ -3382,6 +3425,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::PPO => self.core.PPO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::PVI => self.core.PVI_Lookback(),
             FuncId::PVO => self.core.PVO_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
+            FuncId::PVT => self.core.PVT_Lookback(),
             FuncId::QSTICK => self.core.QSTICK_Lookback(self.int_opt[0]),
             FuncId::RMA => self.core.RMA_Lookback(self.int_opt[0]),
             FuncId::ROC => self.core.ROC_Lookback(self.int_opt[0]),
@@ -3389,6 +3433,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::ROCR => self.core.ROCR_Lookback(self.int_opt[0]),
             FuncId::ROCR100 => self.core.ROCR100_Lookback(self.int_opt[0]),
             FuncId::RSI => self.core.RSI_Lookback(self.int_opt[0]),
+            FuncId::RVOL => self.core.RVOL_Lookback(self.int_opt[0]),
             FuncId::SAR => self.core.SAR_Lookback(self.real_opt[0], self.real_opt[1]),
             FuncId::SAREXT => self.core.SAREXT_Lookback(self.real_opt[0], self.real_opt[1], self.real_opt[2], self.real_opt[3], self.real_opt[4], self.real_opt[5], self.real_opt[6], self.real_opt[7]),
             FuncId::SIN => self.core.SIN_Lookback(),
@@ -3526,6 +3571,17 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.ADOSC(start_idx, end_idx, i0_1, i0_2, i0_3, i0_4, self.int_opt[0], self.int_opt[1], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::ADR => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.ADR(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
@@ -5214,6 +5270,17 @@ impl<'a> ParamHolder<'a> {
                     Err(e) => e,
                 }
             }
+            FuncId::PVT => {
+                let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.PVT(start_idx, end_idx, i0_3, i0_4, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
             FuncId::QSTICK => {
                 let i0_0 = self.price[0][0].ok_or(RetCode::BadParam)?;
                 let i0_3 = self.price[0][3].ok_or(RetCode::BadParam)?;
@@ -5279,6 +5346,16 @@ impl<'a> ParamHolder<'a> {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.RSI(start_idx, end_idx, i0, self.int_opt[0], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::RVOL => {
+                let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.RVOL(start_idx, end_idx, i0_4, self.int_opt[0], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

@@ -193,6 +193,29 @@ DEF_FUNCTION( PVO,
              );
 /* PVO END */
 
+/* PVT BEGIN */
+static const TA_InputParameterInfo    *TA_PVT_Inputs[]    =
+{
+  &TA_DEF_UI_Input_Price_CV,
+  NULL
+};
+
+static const TA_OutputParameterInfo   *TA_PVT_Outputs[]   =
+{
+  &TA_DEF_UI_Output_Real,
+  NULL
+};
+
+static const TA_OptInputParameterInfo *TA_PVT_OptInputs[] =
+{ NULL };
+
+DEF_FUNCTION( PVT,
+              TA_GroupId_VolumeIndicators,
+              "Price Volume Trend",
+              TA_FUNC_FLG_STREAM | TA_FUNC_FLG_PATH_DEP
+             );
+/* PVT END */
+
 /****************************************************************************
  * Step 2 - Add your TA function to the table.
  *          Keep in alphabetical order. Must be NULL terminated.
@@ -204,6 +227,7 @@ const TA_FuncDef *TA_DEF_TableP[] =
    ADD_TO_TABLE(PPO),
    ADD_TO_TABLE(PVI),
    ADD_TO_TABLE(PVO),
+   ADD_TO_TABLE(PVT),
    NULL
 };
 

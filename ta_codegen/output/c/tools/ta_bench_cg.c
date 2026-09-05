@@ -32,6 +32,7 @@
 #include "ta_AD.c"
 #include "ta_ADD.c"
 #include "ta_ADOSC.c"
+#include "ta_ADR.c"
 #include "ta_ADX.c"
 #include "ta_ADXR.c"
 #include "ta_AO.c"
@@ -170,6 +171,7 @@
 #include "ta_PPO.c"
 #include "ta_PVI.c"
 #include "ta_PVO.c"
+#include "ta_PVT.c"
 #include "ta_QSTICK.c"
 #include "ta_RMA.c"
 #include "ta_ROC.c"
@@ -177,6 +179,7 @@
 #include "ta_ROCR.c"
 #include "ta_ROCR100.c"
 #include "ta_RSI.c"
+#include "ta_RVOL.c"
 #include "ta_SAR.c"
 #include "ta_SAREXT.c"
 #include "ta_SIN.c"
@@ -407,6 +410,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("ADOSC %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "ADR") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_ADR(0, g_nPoints - 1, g_high, g_low, 14, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("ADR %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "ADX") ) {
@@ -2651,6 +2670,22 @@ static void bench_all(const char *filter, int iters) {
         printf("PVO %lld\n", best / iters);
         fflush(stdout);
     }
+    if( func_matches(filter, "PVT") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_PVT(0, g_nPoints - 1, g_close, g_volume, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("PVT %lld\n", best / iters);
+        fflush(stdout);
+    }
     if( func_matches(filter, "QSTICK") ) {
         long long best = 0;
         for( int pass = 0; pass < 3; pass++ ) {
@@ -2761,6 +2796,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("RSI %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "RVOL") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_RVOL(0, g_nPoints - 1, g_volume, 20, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("RVOL %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "SAR") ) {

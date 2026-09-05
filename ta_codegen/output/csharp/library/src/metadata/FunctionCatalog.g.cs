@@ -119,6 +119,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeAd(),
             MakeAdd(),
             MakeAdosc(),
+            MakeAdr(),
             MakeAdx(),
             MakeAdxr(),
             MakeAo(),
@@ -258,6 +259,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakePpo(),
             MakePvi(),
             MakePvo(),
+            MakePvt(),
             MakeQstick(),
             MakeRma(),
             MakeRoc(),
@@ -265,6 +267,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeRocr(),
             MakeRocr100(),
             MakeRsi(),
+            MakeRvol(),
             MakeSar(),
             MakeSarext(),
             MakeSin(),
@@ -474,6 +477,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.ADOSC(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
+
+    private static FunctionInfo MakeAdr() => new(
+        name: "ADR",
+        group: FunctionGroup.VolatilityIndicators,
+        hint: "Average Day Range",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.ADR_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.ADR(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeAdx() => new(
         name: "ADX",
@@ -3487,6 +3513,26 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.PVO(
                 startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.IntOpt(1), (MAType)c.IntOpt(2), c.RealOut(0)));
 
+    private static FunctionInfo MakePvt() => new(
+        name: "PVT",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Price Volume Trend",
+        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceCV", PriceComponents.Close | PriceComponents.Volume, [PriceComponents.Close, PriceComponents.Volume]),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.PVT_Lookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.PVT(
+                startIdx, endIdx, c.Price(0, PriceComponents.Close), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
+
     private static FunctionInfo MakeQstick() => new(
         name: "QSTICK",
         group: FunctionGroup.MomentumIndicators,
@@ -3647,6 +3693,29 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.RSI(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeRvol() => new(
+        name: "RVOL",
+        group: FunctionGroup.VolumeIndicators,
+        hint: "Relative Volume",
+        flags: FunctionFlags.Stream | FunctionFlags.NanInfOutput,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceV", PriceComponents.Volume, [PriceComponents.Volume]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Time period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 20, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.RVOL_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.RVOL(
+                startIdx, endIdx, c.Price(0, PriceComponents.Volume), c.IntOpt(0), c.RealOut(0)));
 
     private static FunctionInfo MakeSar() => new(
         name: "SAR",

@@ -134,8 +134,9 @@ typedef struct { int fast; int slow; int bar; double want; const char *src; } Ma
  *      ((x-prev)*k)+prev, so it is close rather than bit-identical.
  *   2. Tulip Indicators 0.9.2, pinned be18abb -- C, `ti_mass`.
  *   3. trading-signals 8.3.0 -- TypeScript, `ts.MassIndex`. It is the arm that
- *      corroborates the flat-market answer: `double === 0 ? 1 : single/double`,
- *      where Tulip and pandas divide unguarded and emit NaN.
+ *      corroborates the flat-market answer: `double === 0 ? 1 : single/double`.
+ *      Tulip divides unguarded and emits NaN; pandas guards differently, via
+ *      the non_zero_range() nudge described below.
  *
  * DO NOT move a tulip or trading-signals row below bar 175. Both hard-code the
  * EMA period at 9 (which is why they appear only on the fast == 9 pairs) and

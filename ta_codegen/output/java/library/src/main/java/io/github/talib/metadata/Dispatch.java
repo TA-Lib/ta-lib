@@ -74,6 +74,9 @@ final class Dispatch {
          case "ADOSC":
             return core.ADOSC(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.price(0, 4), h.intOpt(0), h.intOpt(1), h.realOutput(0));
+         case "ADR":
+            return core.ADR(
+               startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.intOpt(0), h.realOutput(0));
          case "ADX":
             return core.ADX(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -491,6 +494,9 @@ final class Dispatch {
          case "PVO":
             return core.PVO(
                startIdx, endIdx, h.price(0, 4), h.intOpt(0), h.intOpt(1), h.maTypeOpt(2), h.realOutput(0));
+         case "PVT":
+            return core.PVT(
+               startIdx, endIdx, h.price(0, 3), h.price(0, 4), h.realOutput(0));
          case "QSTICK":
             return core.QSTICK(
                startIdx, endIdx, h.price(0, 0), h.price(0, 3), h.intOpt(0), h.realOutput(0));
@@ -512,6 +518,9 @@ final class Dispatch {
          case "RSI":
             return core.RSI(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "RVOL":
+            return core.RVOL(
+               startIdx, endIdx, h.price(0, 4), h.intOpt(0), h.realOutput(0));
          case "SAR":
             return core.SAR(
                startIdx, endIdx, h.price(0, 1), h.price(0, 2), h.realOpt(0), h.realOpt(1), h.realOutput(0));
@@ -634,6 +643,8 @@ final class Dispatch {
             return core.ADD_Lookback();
          case "ADOSC":
             return core.ADOSC_Lookback(h.intOpt(0), h.intOpt(1));
+         case "ADR":
+            return core.ADR_Lookback(h.intOpt(0));
          case "ADX":
             return core.ADX_Lookback(h.intOpt(0));
          case "ADXR":
@@ -912,6 +923,8 @@ final class Dispatch {
             return core.PVI_Lookback();
          case "PVO":
             return core.PVO_Lookback(h.intOpt(0), h.intOpt(1), h.maTypeOpt(2));
+         case "PVT":
+            return core.PVT_Lookback();
          case "QSTICK":
             return core.QSTICK_Lookback(h.intOpt(0));
          case "RMA":
@@ -926,6 +939,8 @@ final class Dispatch {
             return core.ROCR100_Lookback(h.intOpt(0));
          case "RSI":
             return core.RSI_Lookback(h.intOpt(0));
+         case "RVOL":
+            return core.RVOL_Lookback(h.intOpt(0));
          case "SAR":
             return core.SAR_Lookback(h.realOpt(0), h.realOpt(1));
          case "SAREXT":
