@@ -46,6 +46,7 @@ ErrorNumber test_func_supertrend( TA_History *history );
 ErrorNumber test_func_mfi     ( TA_History *history );
 ErrorNumber test_func_vwap    ( TA_History *history );
 ErrorNumber test_func_cmou    ( TA_History *history );
+ErrorNumber test_func_vortex  ( TA_History *history );
 ErrorNumber test_func_cumsum  ( TA_History *history );
 ErrorNumber test_func_fosc    ( TA_History *history );
 ErrorNumber test_func_zlema   ( TA_History *history );

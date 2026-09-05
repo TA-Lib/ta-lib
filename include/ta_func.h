@@ -15017,6 +15017,90 @@ TA_LIB_API TA_RetCode TA_VHF_Value( const TA_VHF_Stream *stream, double *outReal
 TA_LIB_API TA_RetCode TA_VHF_Clone( const TA_VHF_Stream *stream, TA_VHF_Stream **clone );
 
 /*
+ * TA_VORTEX - Vortex Indicator
+ * 
+ * Input  = High, Low, Close
+ * Output = double, double
+ * 
+ * Optional Parameters
+ * -------------------
+ * optInTimePeriod:(From 1 to 100000)
+ *    Number of bars in the rolling sums
+ * 
+ * 
+ */
+TA_LIB_API TA_RetCode TA_VORTEX( int    startIdx,
+                                 int    endIdx,
+                                            const double inHigh[],
+                                            const double inLow[],
+                                            const double inClose[],
+                                            int           optInTimePeriod, /* From 1 to 100000 */
+                                            int          *outBegIdx,
+                                            int          *outNBElement,
+                                            double        outPlusVI[],
+                                            double        outMinusVI[] );
+
+TA_LIB_API TA_RetCode TA_S_VORTEX( int    startIdx,
+                                   int    endIdx,
+                                              const float  inHigh[],
+                                              const float  inLow[],
+                                              const float  inClose[],
+                                              int           optInTimePeriod, /* From 1 to 100000 */
+                                              int          *outBegIdx,
+                                              int          *outNBElement,
+                                              double        outPlusVI[],
+                                              double        outMinusVI[] );
+
+TA_LIB_API int TA_VORTEX_Lookback( int           optInTimePeriod );  /* From 1 to 100000 */
+
+
+
+/*
+ * Streaming API for TA_VORTEX — incremental per-bar evaluation.
+ * See docs/streaming-api-design.md.
+ */
+typedef struct TA_VORTEX_Stream TA_VORTEX_Stream;
+
+TA_LIB_API TA_RetCode TA_VORTEX_Open( TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double *outPlusVI, double *outMinusVI );
+
+TA_LIB_API TA_RetCode TA_VORTEX_Update( TA_VORTEX_Stream *stream, double inHigh, double inLow, double inClose, double *outPlusVI, double *outMinusVI );
+
+TA_LIB_API TA_RetCode TA_VORTEX_Peek( const TA_VORTEX_Stream *stream, double inHigh, double inLow, double inClose, double *outPlusVI, double *outMinusVI );
+
+TA_LIB_API TA_RetCode TA_VORTEX_Close( TA_VORTEX_Stream *stream );
+
+/*
+ * OpenAndFill: like Open, but a single pass ALSO fills the caller's arrays
+ * with the whole warm-up history — bit-identical to TA_VORTEX( 0, historyLen-1,
+ * ... ).
+ */
+TA_LIB_API TA_RetCode TA_VORTEX_OpenAndFill( TA_VORTEX_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, int *outBegIdx, int *outNBElement, double outPlusVI[], double outMinusVI[] );
+
+/*
+ * UpdateAndFill: commit barCount closed bars and write the barCount values,
+ * in one call — barCount back-to-back TA_VORTEX_Update calls, including the
+ * per-bar rejection. A rejected bar k leaves the bars before it committed and
+ * written, itself uncommitted and its output slot untouched; TA_StreamOutRange
+ * then reports k+1, the rejected bar being the last one counted. Outputs must
+ * not alias the inputs or each other.
+ */
+TA_LIB_API TA_RetCode TA_VORTEX_UpdateAndFill( TA_VORTEX_Stream *stream, const double inHigh[], const double inLow[], const double inClose[], int barCount, double outPlusVI[], double outMinusVI[] );
+
+/*
+ * Value: the value(s) at the last bar the stream counted — the bar
+ * TA_StreamOutRange ends on — without recomputing. Seeded by Open, refreshed by
+ * every accepted Update and UpdateAndFill, left alone by Peek.
+ */
+TA_LIB_API TA_RetCode TA_VORTEX_Value( const TA_VORTEX_Stream *stream, double *outPlusVI, double *outMinusVI );
+
+/*
+ * Clone: fork the stream — an independent stream at the same bar, owning its
+ * own copy of everything the original owns. Both must be closed. The fork
+ * carries the value and the range verbatim.
+ */
+TA_LIB_API TA_RetCode TA_VORTEX_Clone( const TA_VORTEX_Stream *stream, TA_VORTEX_Stream **clone );
+
+/*
  * TA_VWAP - Volume Weighted Average Price
  * 
  * Input  = High, Low, Close, Volume

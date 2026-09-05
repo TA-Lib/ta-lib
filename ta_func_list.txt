@@ -187,6 +187,7 @@ TYPPRICE            Typical Price
 ULTOSC              Ultimate Oscillator
 VAR                 Variance
 VHF                 Vertical Horizontal Filter
+VORTEX              Vortex Indicator
 VWAP                Volume Weighted Average Price
 VWMA                Volume Weighted Moving Average
 WAD                 Williams' Accumulation/Distribution

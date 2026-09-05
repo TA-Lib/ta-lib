@@ -302,6 +302,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeUltosc(),
             MakeVar(),
             MakeVhf(),
+            MakeVortex(),
             MakeVwap(),
             MakeVwma(),
             MakeWad(),
@@ -4521,6 +4522,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.VHF(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeVortex() => new(
+        name: "VORTEX",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Vortex Indicator",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHLC", PriceComponents.High | PriceComponents.Low | PriceComponents.Close, [PriceComponents.High, PriceComponents.Low, PriceComponents.Close]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Number of bars in the rolling sums", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outPlusVI", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outMinusVI", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.VORTEX_Lookback(c.IntOpt(0)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.VORTEX(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Close), c.IntOpt(0), c.RealOut(0), c.RealOut(1)));
 
     private static FunctionInfo MakeVwap() => new(
         name: "VWAP",

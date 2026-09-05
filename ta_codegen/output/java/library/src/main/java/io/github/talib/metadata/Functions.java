@@ -309,6 +309,7 @@ public final class Functions {
       put(m, f_ULTOSC());
       put(m, f_VAR());
       put(m, f_VHF());
+      put(m, f_VORTEX());
       put(m, f_VWAP());
       put(m, f_VWMA());
       put(m, f_WAD());
@@ -3521,6 +3522,25 @@ public final class Functions {
          ),
          List.of(
             new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_VORTEX() {
+      return new FunctionInfo(
+         "VORTEX", "Momentum Indicators", "Vortex Indicator", 0x02000000,
+         List.of(
+            new InputInfo(InputType.PRICE, "inPriceHLC", 0x0000000E)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInTimePeriod", 0x00000000,
+               "Time Period", "Number of bars in the rolling sums", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outPlusVI", 0x00000001),
+            new OutputInfo(OutputType.REAL, "outMinusVI", 0x00000001)
          ));
    }
 
