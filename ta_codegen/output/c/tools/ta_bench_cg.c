@@ -116,6 +116,7 @@
 #include "ta_CORREL.c"
 #include "ta_COS.c"
 #include "ta_COSH.c"
+#include "ta_CVI.c"
 #include "ta_DEMA.c"
 #include "ta_DIV.c"
 #include "ta_DONCHIAN.c"
@@ -147,6 +148,7 @@
 #include "ta_MACDFIX.c"
 #include "ta_MAMA.c"
 #include "ta_MARKETFI.c"
+#include "ta_MASSI.c"
 #include "ta_MAVP.c"
 #include "ta_MAX.c"
 #include "ta_MAXINDEX.c"
@@ -1760,6 +1762,22 @@ static void bench_all(const char *filter, int iters) {
         printf("COSH %lld\n", best / iters);
         fflush(stdout);
     }
+    if( func_matches(filter, "CVI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_CVI(0, g_nPoints - 1, g_high, g_low, 10, 10, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("CVI %lld\n", best / iters);
+        fflush(stdout);
+    }
     if( func_matches(filter, "DEMA") ) {
         long long best = 0;
         for( int pass = 0; pass < 3; pass++ ) {
@@ -2283,6 +2301,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("MARKETFI %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "MASSI") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_MASSI(0, g_nPoints - 1, g_high, g_low, 9, 25, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("MASSI %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "MAVP") ) {

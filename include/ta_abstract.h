@@ -216,8 +216,8 @@ typedef int TA_FuncFlags;
                                           * when. ta_regtest holds every
                                           * function WITHOUT this flag to
                                           * finite output.
-                                          * ACOS, ASIN, DIV, LN, LOG10, SQRT,
-                                          * VWMA -- and no others.
+                                          * ACOS, ASIN, DIV, LN, LOG10, RVOL,
+                                          * SQRT, VWMA -- and no others.
                                           */
 /* The 0x01000000-and-up run above is the historical allocation and now has one
  * slot left, 0x80000000 -- the sign bit of the signed TA_FuncFlags, which is

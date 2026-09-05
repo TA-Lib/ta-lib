@@ -130,6 +130,7 @@ extern const TA_FuncDef TA_DEF_CMOU;
 extern const TA_FuncDef TA_DEF_CORREL;
 extern const TA_FuncDef TA_DEF_COS;
 extern const TA_FuncDef TA_DEF_COSH;
+extern const TA_FuncDef TA_DEF_CVI;
 extern const TA_FuncDef TA_DEF_DEMA;
 extern const TA_FuncDef TA_DEF_DIV;
 extern const TA_FuncDef TA_DEF_DONCHIAN;
@@ -162,6 +163,7 @@ extern const TA_FuncDef TA_DEF_MACDEXT;
 extern const TA_FuncDef TA_DEF_MACDFIX;
 extern const TA_FuncDef TA_DEF_MAMA;
 extern const TA_FuncDef TA_DEF_MARKETFI;
+extern const TA_FuncDef TA_DEF_MASSI;
 extern const TA_FuncDef TA_DEF_MAVP;
 extern const TA_FuncDef TA_DEF_MAX;
 extern const TA_FuncDef TA_DEF_MAXINDEX;
@@ -296,6 +298,8 @@ NULL };
 const TA_FuncDef *TA_PerGroupFunc_3[] = {
 &TA_DEF_ADR,
 &TA_DEF_ATR,
+&TA_DEF_CVI,
+&TA_DEF_MASSI,
 &TA_DEF_NATR,
 &TA_DEF_TRANGE,
 NULL };

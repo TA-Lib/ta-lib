@@ -3813,6 +3813,64 @@
 	</FinancialFunction>
 
 
+	<!-- CVI -->
+	<FinancialFunction>
+		<Abbreviation>CVI</Abbreviation>
+		<ShortDescription>Chaikin&apos;s Volatility</ShortDescription>
+		<GroupId>Volatility Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Time Period</Name>
+				<ShortDescription>Period of the EMA smoothing the high-low spread</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>ROC Period</Name>
+				<ShortDescription>Number of bars the rate of change reaches back</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>4</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- DEMA -->
 	<FinancialFunction>
 		<Abbreviation>DEMA</Abbreviation>
@@ -5212,6 +5270,64 @@
 				<Name>Volume</Name>
 			</RequiredInputArgument>
 		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- MASSI -->
+	<FinancialFunction>
+		<Abbreviation>MASSI</Abbreviation>
+		<ShortDescription>Mass Index</ShortDescription>
+		<GroupId>Volatility Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>High</Type>
+				<Name>High</Name>
+			</RequiredInputArgument>
+			<RequiredInputArgument>
+				<Type>Low</Type>
+				<Name>Low</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>Fast Period</Name>
+				<ShortDescription>Period of both exponential averages of the high-low range</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>2</SuggestedStart>
+					<SuggestedEnd>50</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>9</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>Slow Period</Name>
+				<ShortDescription>Number of bars the ratio is summed over</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>2</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>10</SuggestedStart>
+					<SuggestedEnd>50</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>25</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
 		<OutputArguments>
 			<OutputArgument>
 				<Type>Double Array</Type>

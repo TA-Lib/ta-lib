@@ -203,6 +203,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeCorrel(),
             MakeCos(),
             MakeCosh(),
+            MakeCvi(),
             MakeDema(),
             MakeDiv(),
             MakeDonchian(),
@@ -235,6 +236,7 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeMacdfix(),
             MakeMama(),
             MakeMarketfi(),
+            MakeMassi(),
             MakeMavp(),
             MakeMax(),
             MakeMaxindex(),
@@ -2239,6 +2241,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.COSH(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
+    private static FunctionInfo MakeCvi() => new(
+        name: "CVI",
+        group: FunctionGroup.VolatilityIndicators,
+        hint: "Chaikin's Volatility",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInTimePeriod", "Time Period", "Period of the EMA smoothing the high-low spread", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 10, 4, 200, 1)),
+            new OptInputInfo("optInROCPeriod", "ROC Period", "Number of bars the rate of change reaches back", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 4, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CVI_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.CVI(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
+
     private static FunctionInfo MakeDema() => new(
         name: "DEMA",
         group: FunctionGroup.OverlapStudies,
@@ -2963,6 +2989,30 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         invoke: static (core, c, startIdx, endIdx) =>
             core.MARKETFI(
                 startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.Price(0, PriceComponents.Volume), c.RealOut(0)));
+
+    private static FunctionInfo MakeMassi() => new(
+        name: "MASSI",
+        group: FunctionGroup.VolatilityIndicators,
+        hint: "Mass Index",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Price, "inPriceHL", PriceComponents.High | PriceComponents.Low, [PriceComponents.High, PriceComponents.Low]),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInFastPeriod", "Fast Period", "Period of both exponential averages of the high-low range", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 9, 2, 50, 1)),
+            new OptInputInfo("optInSlowPeriod", "Slow Period", "Number of bars the ratio is summed over", OptInputFlags.None, new OptInputDomain.IntegerRange(2, 100000, 25, 10, 50, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.MASSI_Lookback(c.IntOpt(0), c.IntOpt(1)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.MASSI(
+                startIdx, endIdx, c.Price(0, PriceComponents.High), c.Price(0, PriceComponents.Low), c.IntOpt(0), c.IntOpt(1), c.RealOut(0)));
 
     private static FunctionInfo MakeMavp() => new(
         name: "MAVP",

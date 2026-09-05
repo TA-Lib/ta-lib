@@ -52,6 +52,8 @@ ErrorNumber test_func_vhf     ( TA_History *history );
 ErrorNumber test_func_dpo     ( TA_History *history );
 ErrorNumber test_func_percentrank( TA_History *history );
 ErrorNumber test_func_percentile( TA_History *history );
+ErrorNumber test_func_cvi     ( TA_History *history );
+ErrorNumber test_func_massi   ( TA_History *history );
 ErrorNumber test_func_adr     ( TA_History *history );
 ErrorNumber test_func_rvol    ( TA_History *history );
 ErrorNumber test_func_variants( TA_History *history );

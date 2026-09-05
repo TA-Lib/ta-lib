@@ -247,8 +247,8 @@ pub struct CalleeSig {
     /// The callee is YAML `stream`-flagged (its public stream API exists).
     pub streaming: bool,
     /// The callee is YAML `nan_inf_output`-flagged: a *successful* call of it can
-    /// return NaN or ±Inf (#191 — the seven domain holes: ACOS, ASIN, LN, LOG10,
-    /// SQRT, DIV, VWMA). Such a function may not be composed into another
+    /// return NaN or ±Inf (#191 — the eight domain holes: ACOS, ASIN, LN, LOG10,
+    /// SQRT, DIV, VWMA, RVOL). Such a function may not be composed into another
     /// function's stream; see [`reject_nonfinite_callees`].
     pub nan_inf_output: bool,
     /// Number of input ARRAYS (price components expanded).

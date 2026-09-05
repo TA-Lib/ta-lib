@@ -1706,7 +1706,8 @@ impl streaming::CalleeLookup for FlagOneCallee<'_> {
 /// the caller boundary, and the composed step has nowhere to put a sub-stream's
 /// rejection, so the bar's state advance would be dropped silently.
 ///
-/// None of the seven flagged functions (ACOS, ASIN, LN, LOG10, SQRT, DIV, VWMA)
+/// None of the eight flagged functions (ACOS, ASIN, LN, LOG10, SQRT, DIV, VWMA,
+/// RVOL)
 /// is composed by anything today, so the gate is dormant against the shipped
 /// corpus — which is exactly why it needs a test that can see it fire. The
 /// flag is injected rather than written to `ma.yaml`, so the corpus is untouched.

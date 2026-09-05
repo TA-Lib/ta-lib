@@ -222,6 +222,8 @@ pub enum FuncId {
     COS,
     /// Vector Trigonometric Cosh — [`Core::COSH`](crate::Core::COSH).
     COSH,
+    /// Chaikin's Volatility — [`Core::CVI`](crate::Core::CVI).
+    CVI,
     /// Double Exponential Moving Average — [`Core::DEMA`](crate::Core::DEMA).
     DEMA,
     /// Vector Arithmetic Div — [`Core::DIV`](crate::Core::DIV).
@@ -286,6 +288,8 @@ pub enum FuncId {
     MAMA,
     /// Market Facilitation Index — [`Core::MARKETFI`](crate::Core::MARKETFI).
     MARKETFI,
+    /// Mass Index — [`Core::MASSI`](crate::Core::MASSI).
+    MASSI,
     /// Moving average with variable period — [`Core::MAVP`](crate::Core::MAVP).
     MAVP,
     /// Highest value over a specified period — [`Core::MAX`](crate::Core::MAX).
@@ -424,7 +428,7 @@ pub enum FuncId {
 
 impl FuncId {
     /// Number of functions in the registry.
-    pub const COUNT: usize = 189;
+    pub const COUNT: usize = 191;
     /// Metadata for this function (O(1) index into the const table).
     #[inline] pub fn info(self) -> &'static FuncInfo { &FUNC_TABLE[self as usize] }
     /// Upper-case TA name, e.g. "RSI".
@@ -557,7 +561,7 @@ flag_newtype!(
     /// call may write NaN or ±Inf (e.g. ACOS outside `[-1, 1]`, LN of zero,
     /// `0/0`). Not set where a non-finite value needs magnitudes large enough to
     /// overflow the intermediate arithmetic. Set on ACOS, ASIN, DIV, LN, LOG10,
-    /// SQRT and VWMA, and on no others.
+    /// RVOL, SQRT and VWMA, and on no others.
     NAN_INF_OUTPUT = 0x4000_0000,
     /// A period of 1 performs no smoothing: the lookback is 0 and every output
     /// value is a bit-exact copy of its input value.
@@ -749,7 +753,7 @@ impl FuncInfo {
 
 /// Backing storage for [`FUNCS`], indexed by [`FuncId`]. Link-time const, in
 /// `.rodata`. Private, so its length is nobody's business but this module's.
-static FUNC_TABLE: [FuncInfo; 189] = [
+static FUNC_TABLE: [FuncInfo; 191] = [
     FuncInfo {
         id: FuncId::AC,
         name: "AC",
@@ -1741,6 +1745,17 @@ static FUNC_TABLE: [FuncInfo; 189] = [
         unst_id: None,
     },
     FuncInfo {
+        id: FuncId::CVI,
+        name: "CVI",
+        group: Group::VolatilityIndicators,
+        hint: "Chaikin's Volatility",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Period of the EMA smoothing the high-low spread", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInROCPeriod", display_name: "ROC Period", hint: "Number of bars the rate of change reaches back", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 1, max: 100000, default: 10, suggested: (4, 200, 1) } }, ],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
         id: FuncId::DEMA,
         name: "DEMA",
         group: Group::OverlapStudies,
@@ -2089,6 +2104,17 @@ static FUNC_TABLE: [FuncInfo; 189] = [
         flags: FuncFlags(0x02000000),
         inputs: &[InputInfo { param_name: "inPriceHLV", kind: InputType::Price, flags: InputFlags(0x00000016) }, ],
         opt_inputs: &[],
+        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
+        unst_id: None,
+    },
+    FuncInfo {
+        id: FuncId::MASSI,
+        name: "MASSI",
+        group: Group::VolatilityIndicators,
+        hint: "Mass Index",
+        flags: FuncFlags(0x02000000),
+        inputs: &[InputInfo { param_name: "inPriceHL", kind: InputType::Price, flags: InputFlags(0x00000006) }, ],
+        opt_inputs: &[OptInputInfo { param_name: "optInFastPeriod", display_name: "Fast Period", hint: "Period of both exponential averages of the high-low range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 9, suggested: (2, 50, 1) } }, OptInputInfo { param_name: "optInSlowPeriod", display_name: "Slow Period", hint: "Number of bars the ratio is summed over", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 25, suggested: (10, 50, 1) } }, ],
         outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
@@ -2937,6 +2963,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "CORREL" => FuncId::CORREL,
         "COS" => FuncId::COS,
         "COSH" => FuncId::COSH,
+        "CVI" => FuncId::CVI,
         "DEMA" => FuncId::DEMA,
         "DIV" => FuncId::DIV,
         "DONCHIAN" => FuncId::DONCHIAN,
@@ -2969,6 +2996,7 @@ fn get_func_handle_exact(name: &str) -> Option<FuncId> {
         "MACDFIX" => FuncId::MACDFIX,
         "MAMA" => FuncId::MAMA,
         "MARKETFI" => FuncId::MARKETFI,
+        "MASSI" => FuncId::MASSI,
         "MAVP" => FuncId::MAVP,
         "MAX" => FuncId::MAX,
         "MAXINDEX" => FuncId::MAXINDEX,
@@ -3383,6 +3411,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::CORREL => self.core.CORREL_Lookback(self.int_opt[0]),
             FuncId::COS => self.core.COS_Lookback(),
             FuncId::COSH => self.core.COSH_Lookback(),
+            FuncId::CVI => self.core.CVI_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::DEMA => self.core.DEMA_Lookback(self.int_opt[0]),
             FuncId::DIV => self.core.DIV_Lookback(),
             FuncId::DONCHIAN => self.core.DONCHIAN_Lookback(self.int_opt[0]),
@@ -3415,6 +3444,7 @@ impl<'a> ParamHolder<'a> {
             FuncId::MACDFIX => self.core.MACDFIX_Lookback(self.int_opt[0]),
             FuncId::MAMA => self.core.MAMA_Lookback(self.real_opt[0], self.real_opt[1]),
             FuncId::MARKETFI => self.core.MARKETFI_Lookback(),
+            FuncId::MASSI => self.core.MASSI_Lookback(self.int_opt[0], self.int_opt[1]),
             FuncId::MAVP => self.core.MAVP_Lookback(self.int_opt[0], self.int_opt[1], MAType::try_from(self.int_opt[2])?),
             FuncId::MAX => self.core.MAX_Lookback(self.int_opt[0]),
             FuncId::MAXINDEX => self.core.MAXINDEX_Lookback(self.int_opt[0]),
@@ -4648,6 +4678,17 @@ impl<'a> ParamHolder<'a> {
                     Err(e) => e,
                 }
             }
+            FuncId::CVI => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.CVI(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
             FuncId::DEMA => {
                 let i0 = self.real_in[0].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
@@ -5010,6 +5051,17 @@ impl<'a> ParamHolder<'a> {
                 let i0_4 = self.price[0][4].ok_or(RetCode::BadParam)?;
                 let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
                 let res = self.core.MARKETFI(start_idx, end_idx, i0_1, i0_2, i0_4, &mut *o0);
+                self.real_out[0] = Some(o0);
+                match res {
+                    Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }
+                    Err(e) => e,
+                }
+            }
+            FuncId::MASSI => {
+                let i0_1 = self.price[0][1].ok_or(RetCode::BadParam)?;
+                let i0_2 = self.price[0][2].ok_or(RetCode::BadParam)?;
+                let mut o0 = self.real_out[0].take().ok_or(RetCode::BadParam)?;
+                let res = self.core.MASSI(start_idx, end_idx, i0_1, i0_2, self.int_opt[0], self.int_opt[1], &mut *o0);
                 self.real_out[0] = Some(o0);
                 match res {
                     Ok(r) => { beg = r.beg_idx; nb = r.count; RetCode::Success }

@@ -503,6 +503,8 @@ typedef enum
   TA_DPO_VACUOUS                     = 1664,
   TA_PERCENTRANK_VACUOUS             = 1665,
   TA_PERCENTILE_VACUOUS              = 1666,
+  TA_CVI_VACUOUS                     = 1662,
+  TA_MASSI_VACUOUS                   = 1663,
   TA_ADR_VACUOUS                     = 1659,
   TA_PVT_VACUOUS                     = 1660,
   TA_RVOL_VACUOUS                    = 1661,
