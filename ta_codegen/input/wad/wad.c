@@ -15,9 +15,9 @@
 int wad_lookback(void)
 {
    /* The first bar has no previous close, so it accumulates nothing and the
-    * line starts at 0.0 -- the same convention as the other four cumulative
-    * lines in the tree: OBV, AD, NVI and PVI all return 0 here and emit a
-    * seed value at startIdx. Tulip's ti_wad_start() returns 1 instead, so its
+    * line starts at 0.0 -- the same convention as the other cumulative
+    * lines in the tree: OBV, AD, NVI, PVI and PVT all return 0 here and emit
+    * a seed value at startIdx. Tulip's ti_wad_start() returns 1 instead, so its
     * series is this one without the leading zero.
     */
    return 0;

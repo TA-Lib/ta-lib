@@ -1485,7 +1485,7 @@ flag_newtype!(
     /// call may write NaN or ±Inf (e.g. ACOS outside `[-1, 1]`, LN of zero,
     /// `0/0`). Not set where a non-finite value needs magnitudes large enough to
     /// overflow the intermediate arithmetic. Set on ACOS, ASIN, DIV, LN, LOG10,
-    /// SQRT and VWMA, and on no others.
+    /// RVOL, SQRT and VWMA, and on no others.
     NAN_INF_OUTPUT = 0x4000_0000,
     /// A period of 1 performs no smoothing: the lookback is 0 and every output
     /// value is a bit-exact copy of its input value.

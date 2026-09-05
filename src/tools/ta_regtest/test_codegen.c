@@ -2072,7 +2072,7 @@ typedef struct {
     /* Of those, the ones whose class actually compared VALUES across ranges.
      * TA_STABLE_SKIP reaches the leg and checks coherency only, so counting it
      * as "verified" overstates the ratchet below -- and the inert set grows
-     * with every new path-dependent indicator (NVI, PVI, WAD today). */
+     * with every new post-cutover path-dependent indicator. */
     int               postCutRangeValueCompared;
     int               langIndex;   /* index into ALL_LANGUAGES */
     const CodegenLanguage *lang;
