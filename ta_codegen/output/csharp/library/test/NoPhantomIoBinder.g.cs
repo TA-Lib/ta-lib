@@ -625,6 +625,12 @@ internal static class NoPhantomIoBinder
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },
+        ["COPPOCK"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.COPPOCK_Impl(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
         ["CORREL"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.CORREL_Impl(
@@ -640,6 +646,12 @@ internal static class NoPhantomIoBinder
         ["COSH"] = static (core, c, startIdx, endIdx) =>
         {
             RetCode rc = core.COSH_Impl(
+                startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
+            return new CallOutcome(rc, b, n);
+        },
+        ["CUMSUM"] = static (core, c, startIdx, endIdx) =>
+        {
+            RetCode rc = core.CUMSUM_Impl(
                 startIdx, endIdx, c.Series(0), out int b, out int n, c.RealOut(0));
             return new CallOutcome(rc, b, n);
         },

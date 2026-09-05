@@ -207,9 +207,11 @@ public final class Functions {
       put(m, f_CMF());
       put(m, f_CMO());
       put(m, f_CMOU());
+      put(m, f_COPPOCK());
       put(m, f_CORREL());
       put(m, f_COS());
       put(m, f_COSH());
+      put(m, f_CUMSUM());
       put(m, f_CVI());
       put(m, f_DEMA());
       put(m, f_DIV());
@@ -1566,6 +1568,34 @@ public final class Functions {
          ));
    }
 
+   private static FunctionInfo f_COPPOCK() {
+      return new FunctionInfo(
+         "COPPOCK", "Momentum Indicators", "Coppock Curve", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInWMAPeriod", 0x00000000,
+               "WMA Period", "Smoothing period for the ROC sum", 10.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC1Period", 0x00000000,
+               "ROC-1 Period", "Short rate-of-change period", 11.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null),
+            new OptInputInfo(
+               OptInputType.INTEGER_RANGE, "optInROC2Period", 0x00000000,
+               "ROC-2 Period", "Long rate-of-change period", 14.0,
+               0.0, 0.0, 0, 0.0, 0.0, 0.0,
+               1, 100000, 1, 200, 1, null)
+         ),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
    private static FunctionInfo f_CORREL() {
       return new FunctionInfo(
          "CORREL", "Statistic Functions", "Pearson's Correlation Coefficient (r)", 0x02000000,
@@ -1600,6 +1630,18 @@ public final class Functions {
    private static FunctionInfo f_COSH() {
       return new FunctionInfo(
          "COSH", "Math Transform", "Vector Trigonometric Cosh", 0x02000000,
+         List.of(
+            new InputInfo(InputType.REAL, "inReal", 0x00000000)
+         ),
+         List.of(),
+         List.of(
+            new OutputInfo(OutputType.REAL, "outReal", 0x00000001)
+         ));
+   }
+
+   private static FunctionInfo f_CUMSUM() {
+      return new FunctionInfo(
+         "CUMSUM", "Math Operators", "Cumulative Sum", 0x22000000,
          List.of(
             new InputInfo(InputType.REAL, "inReal", 0x00000000)
          ),

@@ -317,6 +317,9 @@ final class Dispatch {
          case "CMOU":
             return core.CMOU(
                startIdx, endIdx, h.realInput(0), h.intOpt(0), h.realOutput(0));
+         case "COPPOCK":
+            return core.COPPOCK(
+               startIdx, endIdx, h.realInput(0), h.intOpt(0), h.intOpt(1), h.intOpt(2), h.realOutput(0));
          case "CORREL":
             return core.CORREL(
                startIdx, endIdx, h.realInput(0), h.realInput(1), h.intOpt(0), h.realOutput(0));
@@ -325,6 +328,9 @@ final class Dispatch {
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "COSH":
             return core.COSH(
+               startIdx, endIdx, h.realInput(0), h.realOutput(0));
+         case "CUMSUM":
+            return core.CUMSUM(
                startIdx, endIdx, h.realInput(0), h.realOutput(0));
          case "CVI":
             return core.CVI(
@@ -820,12 +826,16 @@ final class Dispatch {
             return core.CMO_Lookback(h.intOpt(0));
          case "CMOU":
             return core.CMOU_Lookback(h.intOpt(0));
+         case "COPPOCK":
+            return core.COPPOCK_Lookback(h.intOpt(0), h.intOpt(1), h.intOpt(2));
          case "CORREL":
             return core.CORREL_Lookback(h.intOpt(0));
          case "COS":
             return core.COS_Lookback();
          case "COSH":
             return core.COSH_Lookback();
+         case "CUMSUM":
+            return core.CUMSUM_Lookback();
          case "CVI":
             return core.CVI_Lookback(h.intOpt(0), h.intOpt(1));
          case "DEMA":

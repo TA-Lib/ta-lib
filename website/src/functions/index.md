@@ -16,6 +16,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 ## Math Operators
 
 - [ADD](/functions/add.md) — Vector Arithmetic Add
+- [CUMSUM](/functions/cumsum.md) — Cumulative Sum
 - [DIV](/functions/div.md) — Vector Arithmetic Div
 - [MAX](/functions/max.md) — Highest value over a specified period
 - [MAXINDEX](/functions/maxindex.md) — Index of highest value over a specified period
@@ -58,6 +59,7 @@ All technical-analysis functions, grouped by category. Each page documents the f
 - [CCI](/functions/cci.md) — Commodity Channel Index
 - [CMO](/functions/cmo.md) — Chande Momentum Oscillator
 - [CMOU](/functions/cmou.md) — Chande Momentum Oscillator (Unsmoothed)
+- [COPPOCK](/functions/coppock.md) — Coppock Curve
 - [DPO](/functions/dpo.md) — Detrended Price Oscillator
 - [DX](/functions/dx.md) — Directional Movement Index
 - [FOSC](/functions/fosc.md) — Forecast Oscillator

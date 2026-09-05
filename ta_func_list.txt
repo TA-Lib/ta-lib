@@ -85,9 +85,11 @@ CEIL                Vector Ceil
 CMF                 Chaikin Money Flow
 CMO                 Chande Momentum Oscillator
 CMOU                Chande Momentum Oscillator (Unsmoothed)
+COPPOCK             Coppock Curve
 CORREL              Pearson's Correlation Coefficient (r)
 COS                 Vector Trigonometric Cos
 COSH                Vector Trigonometric Cosh
+CUMSUM              Cumulative Sum
 CVI                 Chaikin's Volatility
 DEMA                Double Exponential Moving Average
 DIV                 Vector Arithmetic Div

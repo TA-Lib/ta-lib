@@ -200,9 +200,11 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             MakeCmf(),
             MakeCmo(),
             MakeCmou(),
+            MakeCoppock(),
             MakeCorrel(),
             MakeCos(),
             MakeCosh(),
+            MakeCumsum(),
             MakeCvi(),
             MakeDema(),
             MakeDiv(),
@@ -2179,6 +2181,31 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
             core.CMOU(
                 startIdx, endIdx, c.Series(0), c.IntOpt(0), c.RealOut(0)));
 
+    private static FunctionInfo MakeCoppock() => new(
+        name: "COPPOCK",
+        group: FunctionGroup.MomentumIndicators,
+        hint: "Coppock Curve",
+        flags: FunctionFlags.Stream,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs:
+        [
+            new OptInputInfo("optInWMAPeriod", "WMA Period", "Smoothing period for the ROC sum", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 10, 1, 200, 1)),
+            new OptInputInfo("optInROC1Period", "ROC-1 Period", "Short rate-of-change period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 11, 1, 200, 1)),
+            new OptInputInfo("optInROC2Period", "ROC-2 Period", "Long rate-of-change period", OptInputFlags.None, new OptInputDomain.IntegerRange(1, 100000, 14, 1, 200, 1)),
+        ],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.COPPOCK_Lookback(c.IntOpt(0), c.IntOpt(1), c.IntOpt(2)),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.COPPOCK(
+                startIdx, endIdx, c.Series(0), c.IntOpt(0), c.IntOpt(1), c.IntOpt(2), c.RealOut(0)));
+
     private static FunctionInfo MakeCorrel() => new(
         name: "CORREL",
         group: FunctionGroup.StatisticFunctions,
@@ -2241,6 +2268,26 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         lookback: static (core, c) => core.COSH_Lookback(),
         invoke: static (core, c, startIdx, endIdx) =>
             core.COSH(
+                startIdx, endIdx, c.Series(0), c.RealOut(0)));
+
+    private static FunctionInfo MakeCumsum() => new(
+        name: "CUMSUM",
+        group: FunctionGroup.MathOperators,
+        hint: "Cumulative Sum",
+        flags: FunctionFlags.Stream | FunctionFlags.PathDependent,
+        unstableId: null,
+        inputs:
+        [
+            new InputInfo(InputKind.Real, "inReal", PriceComponents.None, []),
+        ],
+        optInputs: [],
+        outputs:
+        [
+            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
+        ],
+        lookback: static (core, c) => core.CUMSUM_Lookback(),
+        invoke: static (core, c, startIdx, endIdx) =>
+            core.CUMSUM(
                 startIdx, endIdx, c.Series(0), c.RealOut(0)));
 
     private static FunctionInfo MakeCvi() => new(

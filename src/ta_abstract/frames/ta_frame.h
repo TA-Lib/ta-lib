@@ -830,6 +830,15 @@ TA_RetCode TA_CMOU_FramePP( const TA_ParamHolderPriv *params,
 unsigned int TA_CMOU_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
+TA_RetCode TA_COPPOCK_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_COPPOCK_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
 TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -855,6 +864,15 @@ TA_RetCode TA_COSH_FramePP( const TA_ParamHolderPriv *params,
                            int           *outNBElement )
 ;
 unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
+;
+
+TA_RetCode TA_CUMSUM_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+;
+unsigned int TA_CUMSUM_FramePPLB( const TA_ParamHolderPriv *params )
 ;
 
 TA_RetCode TA_CVI_FramePP( const TA_ParamHolderPriv *params,

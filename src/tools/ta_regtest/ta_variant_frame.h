@@ -3791,6 +3791,51 @@ static const TA_VOptSpec TA_VOpt_CMOU[] = {
    { "optInTimePeriod", TA_VOPT_INT, 2.0, 100000.0, 14.0 },
 };
 
+static TA_RetCode TA_COPPOCK_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_COPPOCK(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInWMAPeriod */,
+               (int)optIn[1] /* optInROC1Period */,
+               (int)optIn[2] /* optInROC2Period */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_COPPOCK_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)outInteger;
+   return TA_S_COPPOCK(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               (int)optIn[0] /* optInWMAPeriod */,
+               (int)optIn[1] /* optInROC1Period */,
+               (int)optIn[2] /* optInROC2Period */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_COPPOCK[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_COPPOCK[] = { 0 };
+static const TA_VOptSpec TA_VOpt_COPPOCK[] = {
+   { "optInWMAPeriod", TA_VOPT_INT, 1.0, 100000.0, 10.0 },
+   { "optInROC1Period", TA_VOPT_INT, 1.0, 100000.0, 11.0 },
+   { "optInROC2Period", TA_VOPT_INT, 1.0, 100000.0, 14.0 },
+};
+
 static TA_RetCode TA_CORREL_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
                   int *outBegIdx, int *outNBElement,
@@ -3903,6 +3948,42 @@ static TA_RetCode TA_COSH_VFrameS( int startIdx, int endIdx,
 
 static const TA_VInputKind TA_VIn_COSH[] = { TA_VIN_REAL };
 static const int TA_VOutIsInt_COSH[] = { 0 };
+
+static TA_RetCode TA_CUMSUM_VFrameD( int startIdx, int endIdx,
+                  const double *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_CUMSUM(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+static TA_RetCode TA_CUMSUM_VFrameS( int startIdx, int endIdx,
+                  const float *const in[], const double optIn[],
+                  int *outBegIdx, int *outNBElement,
+                  double *const outReal[], int *const outInteger[] )
+{
+   (void)optIn;
+   (void)outInteger;
+   return TA_S_CUMSUM(
+               startIdx,
+               endIdx,
+               in[0] /* inReal */,
+               outBegIdx,
+               outNBElement,
+               outReal[0] /* outReal */
+               );
+}
+
+static const TA_VInputKind TA_VIn_CUMSUM[] = { TA_VIN_REAL };
+static const int TA_VOutIsInt_CUMSUM[] = { 0 };
 
 static TA_RetCode TA_CVI_VFrameD( int startIdx, int endIdx,
                   const double *const in[], const double optIn[],
@@ -8326,12 +8407,16 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_CMO, 1, TA_VOpt_CMO, 1, TA_VOutIsInt_CMO, 0 },
    { "CMOU", TA_CMOU_VFrameD, TA_CMOU_VFrameS,
      1, TA_VIn_CMOU, 1, TA_VOpt_CMOU, 1, TA_VOutIsInt_CMOU, 0 },
+   { "COPPOCK", TA_COPPOCK_VFrameD, TA_COPPOCK_VFrameS,
+     1, TA_VIn_COPPOCK, 3, TA_VOpt_COPPOCK, 1, TA_VOutIsInt_COPPOCK, 0 },
    { "CORREL", TA_CORREL_VFrameD, TA_CORREL_VFrameS,
      2, TA_VIn_CORREL, 1, TA_VOpt_CORREL, 1, TA_VOutIsInt_CORREL, 0 },
    { "COS", TA_COS_VFrameD, TA_COS_VFrameS,
      1, TA_VIn_COS, 0, NULL, 1, TA_VOutIsInt_COS, 0 },
    { "COSH", TA_COSH_VFrameD, TA_COSH_VFrameS,
      1, TA_VIn_COSH, 0, NULL, 1, TA_VOutIsInt_COSH, 0 },
+   { "CUMSUM", TA_CUMSUM_VFrameD, TA_CUMSUM_VFrameS,
+     1, TA_VIn_CUMSUM, 0, NULL, 1, TA_VOutIsInt_CUMSUM, 0 },
    { "CVI", TA_CVI_VFrameD, TA_CVI_VFrameS,
      2, TA_VIn_CVI, 2, TA_VOpt_CVI, 1, TA_VOutIsInt_CVI, 0 },
    { "DEMA", TA_DEMA_VFrameD, TA_DEMA_VFrameS,
@@ -8540,6 +8625,6 @@ static const TA_VariantEntry TA_VariantTable[] = {
      1, TA_VIn_ZLEMA, 1, TA_VOpt_ZLEMA, 1, TA_VOutIsInt_ZLEMA, 0 },
 };
 
-#define TA_VARIANT_TABLE_SIZE 193
+#define TA_VARIANT_TABLE_SIZE 195
 
 #endif /* TA_VARIANT_FRAME_H */

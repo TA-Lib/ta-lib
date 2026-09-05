@@ -19,6 +19,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   - CMF: Chaikin Money Flow (#134)
   - CMOU: Chande Momentum Oscillator, Unsmoothed (#124)
   - CVI: Chaikin's Volatility, the percent change of a smoothed high-low spread (#358)
+  - COPPOCK: Coppock Curve (#362)
+  - CUMSUM: Cumulative Sum (#372)
   - DONCHIAN: Donchian Channels, the rolling extrema bands (#342)
   - DPO: Detrended Price Oscillator, price displaced back a half cycle less its moving average (#363)
   - EFI: Elder's Force Index (#206)

@@ -2027,6 +2027,30 @@ unsigned int TA_CMOU_FramePPLB( const TA_ParamHolderPriv *params )
 {
    return TA_CMOU_Lookback(params->optIn[0].data.optInInteger /* optInTimePeriod*/ );
 }
+TA_RetCode TA_COPPOCK_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_COPPOCK(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               params->optIn[0].data.optInInteger, /* optInWMAPeriod*/
+               params->optIn[1].data.optInInteger, /* optInROC1Period*/
+               params->optIn[2].data.optInInteger, /* optInROC2Period*/
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_COPPOCK_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   return TA_COPPOCK_Lookback(params->optIn[0].data.optInInteger, /* optInWMAPeriod*/
+                    params->optIn[1].data.optInInteger, /* optInROC1Period*/
+                    params->optIn[2].data.optInInteger /* optInROC2Period*/ );
+}
 TA_RetCode TA_CORREL_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,
                            int            endIdx,
@@ -2087,6 +2111,26 @@ unsigned int TA_COSH_FramePPLB( const TA_ParamHolderPriv *params )
 {
    (void)params;
    return TA_COSH_Lookback( );
+}
+TA_RetCode TA_CUMSUM_FramePP( const TA_ParamHolderPriv *params,
+                           int            startIdx,
+                           int            endIdx,
+                           int           *outBegIdx,
+                           int           *outNBElement )
+{
+   return TA_CUMSUM(
+               startIdx,
+               endIdx,
+               params->in[0].data.inReal, /* inReal */
+               outBegIdx, 
+               outNBElement, 
+               params->out[0].data.outReal /*  outReal */
+               );
+}
+unsigned int TA_CUMSUM_FramePPLB( const TA_ParamHolderPriv *params )
+{
+   (void)params;
+   return TA_CUMSUM_Lookback( );
 }
 TA_RetCode TA_CVI_FramePP( const TA_ParamHolderPriv *params,
                            int            startIdx,

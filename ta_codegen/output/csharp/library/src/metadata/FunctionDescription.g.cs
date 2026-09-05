@@ -3771,6 +3771,73 @@ public static class FunctionDescription
 	</FinancialFunction>
 
 
+	<!-- COPPOCK -->
+	<FinancialFunction>
+		<Abbreviation>COPPOCK</Abbreviation>
+		<ShortDescription>Coppock Curve</ShortDescription>
+		<GroupId>Momentum Indicators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OptionalInputArguments>
+			<OptionalInputArgument>
+				<Name>WMA Period</Name>
+				<ShortDescription>Smoothing period for the ROC sum</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>10</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>ROC-1 Period</Name>
+				<ShortDescription>Short rate-of-change period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>11</DefaultValue>
+			</OptionalInputArgument>
+			<OptionalInputArgument>
+				<Name>ROC-2 Period</Name>
+				<ShortDescription>Long rate-of-change period</ShortDescription>
+				<Type>Integer</Type>
+				<Range>
+					<Minimum>1</Minimum>
+					<Maximum>100000</Maximum>
+					<SuggestedStart>1</SuggestedStart>
+					<SuggestedEnd>200</SuggestedEnd>
+					<SuggestedIncrement>1</SuggestedIncrement>
+				</Range>
+				<DefaultValue>14</DefaultValue>
+			</OptionalInputArgument>
+		</OptionalInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
 	<!-- CORREL -->
 	<FinancialFunction>
 		<Abbreviation>CORREL</Abbreviation>
@@ -3849,6 +3916,33 @@ public static class FunctionDescription
 		<GroupId>Math Transform</GroupId>
 		<Flags>
 			<Flag>Streaming</Flag>
+		</Flags>
+		<RequiredInputArguments>
+			<RequiredInputArgument>
+				<Type>Double Array</Type>
+				<Name>inReal</Name>
+			</RequiredInputArgument>
+		</RequiredInputArguments>
+		<OutputArguments>
+			<OutputArgument>
+				<Type>Double Array</Type>
+				<Name>outReal</Name>
+				<Flags>
+					<Flag>Line</Flag>
+				</Flags>
+			</OutputArgument>
+		</OutputArguments>
+	</FinancialFunction>
+
+
+	<!-- CUMSUM -->
+	<FinancialFunction>
+		<Abbreviation>CUMSUM</Abbreviation>
+		<ShortDescription>Cumulative Sum</ShortDescription>
+		<GroupId>Math Operators</GroupId>
+		<Flags>
+			<Flag>Streaming</Flag>
+			<Flag>Path Dependent</Flag>
 		</Flags>
 		<RequiredInputArguments>
 			<RequiredInputArgument>

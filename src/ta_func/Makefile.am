@@ -90,9 +90,11 @@ libta_func_la_SOURCES = ta_utility.c \
 	ta_CMF.c \
 	ta_CMO.c \
 	ta_CMOU.c \
+	ta_COPPOCK.c \
 	ta_CORREL.c \
 	ta_COS.c \
 	ta_COSH.c \
+	ta_CUMSUM.c \
 	ta_CVI.c \
 	ta_DEMA.c \
 	ta_DIV.c \

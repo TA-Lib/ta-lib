@@ -113,9 +113,11 @@
 #include "ta_CMF.c"
 #include "ta_CMO.c"
 #include "ta_CMOU.c"
+#include "ta_COPPOCK.c"
 #include "ta_CORREL.c"
 #include "ta_COS.c"
 #include "ta_COSH.c"
+#include "ta_CUMSUM.c"
 #include "ta_CVI.c"
 #include "ta_DEMA.c"
 #include "ta_DIV.c"
@@ -1716,6 +1718,22 @@ static void bench_all(const char *filter, int iters) {
         printf("CMOU %lld\n", best / iters);
         fflush(stdout);
     }
+    if( func_matches(filter, "COPPOCK") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_COPPOCK(0, g_nPoints - 1, g_close, 10, 11, 14, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("COPPOCK %lld\n", best / iters);
+        fflush(stdout);
+    }
     if( func_matches(filter, "CORREL") ) {
         long long best = 0;
         for( int pass = 0; pass < 3; pass++ ) {
@@ -1762,6 +1780,22 @@ static void bench_all(const char *filter, int iters) {
             g_sink += (int)g_outBuf0[0];
         }
         printf("COSH %lld\n", best / iters);
+        fflush(stdout);
+    }
+    if( func_matches(filter, "CUMSUM") ) {
+        long long best = 0;
+        for( int pass = 0; pass < 3; pass++ ) {
+            int outBegIdx, outNBElement;
+            long long t0 = get_nanotime();
+            for( int it = 0; it < iters; it++ ) {
+                TA_CUMSUM(0, g_nPoints - 1, g_close, &outBegIdx, &outNBElement, g_outBuf0);
+            }
+            long long elapsed = get_nanotime() - t0;
+            if( !best || elapsed < best ) best = elapsed;
+            g_sink += outNBElement;
+            g_sink += (int)g_outBuf0[0];
+        }
+        printf("CUMSUM %lld\n", best / iters);
         fflush(stdout);
     }
     if( func_matches(filter, "CVI") ) {
