@@ -84,13 +84,13 @@
  *   producing history inside OC_MAX_BARS, or the run fails rather than
  *   quietly skipping it.
  *
- *   RSI AND CMO UNDER METASTOCK ARE LISTED AS OPEN, and asserted to STILL
- *   violate. The fix is a decision about the shipped library rather than
- *   something to slip in under a gate -- issue #388 may delete the
- *   compatibility mode outright, and the alternative (buffering the fill and
- *   committing it on success) costs a copy on every successful call. The
- *   sweep says so out loud and cannot rot into a silent pass: a listed row
- *   that stops violating fails the run.
+ *   THE KNOWN-OPEN LIST IS NOW EMPTY, and that is the mechanism working. RSI
+ *   and CMO under Metastock were listed as open and asserted to STILL
+ *   violate; #388 retired the compatibility mode, the violation went with it,
+ *   and the stale-entry check failed the run until the rows were removed --
+ *   which is exactly what a list that "cannot rot into a silent pass" is for.
+ *   A row that stops violating fails; so does a row added for a function that
+ *   does not violate.
  *
  *   THE PARAMETER LEG CARRIES ITS OWN ASSERTION. Its rejections come from the
  *   public frame, before the body runs, so they are the class that cannot
@@ -105,8 +105,10 @@
  *   no length -- so it stays where it already is, in the Rust crate's
  *   stream_open_contract.rs. Rust also cannot host what IS here: its
  *   Compatibility is pub(crate) and pinned to Default, with a unit test
- *   asserting there is no setter, so no Rust probe can reach the Metastock
- *   seeding path at all.
+ *   asserting there is no setter. That was written when the Metastock seeding
+ *   path still existed; after #388 the two modes are the same behaviour, so
+ *   the two-mode sweep here is now a redundancy check rather than a second
+ *   behaviour, and the ramp is what carries the leg.
  */
 
 #include <stdio.h>
@@ -150,11 +152,14 @@ typedef struct {
  * writes the Metastock seed output, and only then does the body discover it
  * has no bar left to continue from. Asserted to still fail -- see the header
  * comment for why they are listed rather than fixed. */
-static const OcKnownOpen ocKnownOpen[] = {
-   { "RSI", 1 },
-   { "CMO", 1 },
-};
-#define OC_NB_KNOWN_OPEN ((int)(sizeof(ocKnownOpen)/sizeof(ocKnownOpen[0])))
+/* EMPTY since #388 retired the Metastock behaviour. RSI and CMO were the two
+ * rows, and the thing that made them write on rejection -- the Metastock
+ * seeding path -- no longer exists, so the sweep stopped seeing them and the
+ * stale-entry check said so. Kept as a declaration rather than deleted: it is
+ * where the next known-open case goes, and OC_NB_KNOWN_OPEN doubles as the
+ * outNBElement ceiling, which correctly drops to zero with the list. */
+static const OcKnownOpen ocKnownOpen[] = { { NULL, 0 } };
+#define OC_NB_KNOWN_OPEN 0
 static int ocKnownOpenHit[OC_NB_KNOWN_OPEN];
 
 /* The two modes, in the order the sweep runs them. */
