@@ -374,6 +374,7 @@ static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double i
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         *outBegIdx = 0; *outNBElement = 0;
          TA_STOCH_Close( sub0 ); if( !outStride ) TA_Free( sc_outK ); if( !outStride ) TA_Free( sc_outD ); if( !outStride ) TA_Free( sc_outJ );
          return TA_INSUFFICIENT_HISTORY;
       }
@@ -404,7 +405,7 @@ static TA_RetCode TA_KDJ_OpenImpl( struct TA_KDJ_Stream **stream, const double i
       }
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_STOCH_Close( sub0 ); if( !outStride ) TA_Free( sc_outK ); if( !outStride ) TA_Free( sc_outD ); if( !outStride ) TA_Free( sc_outJ ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_STOCH_Close( sub0 ); if( !outStride ) TA_Free( sc_outK ); if( !outStride ) TA_Free( sc_outD ); if( !outStride ) TA_Free( sc_outJ ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_KDJ_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_STOCH_Close( sub0 ); if( !outStride ) TA_Free( sc_outK ); if( !outStride ) TA_Free( sc_outD ); if( !outStride ) TA_Free( sc_outJ ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

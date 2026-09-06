@@ -2026,7 +2026,7 @@ fn emit_composed_open_body(
     let _ = writeln!(o, "\n      /* Capture the live producer state + sub handles. */");
     let _ = writeln!(
         o,
-        "      if( dummyNBElement < 1 ) {{ {epilogue_cleanup}; return TA_INSUFFICIENT_HISTORY; }}"
+        "      if( dummyNBElement < 1 ) {{ *outBegIdx = 0; *outNBElement = 0; {epilogue_cleanup}; return TA_INSUFFICIENT_HISTORY; }}"
     );
     if let Some(model) = &cp.producer {
         o.push_str(&alloc_and_capture(
@@ -2310,23 +2310,27 @@ fn build_composed_open_bodies(
             {
                 None
             }
-            Statement::Return { value } => {
-                let mapped = match value {
-                    Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
-                        Some(Expr::Var("INSUFFICIENT_HISTORY".into()))
-                    }
-                    other => other,
-                };
-                // Close the subs opened so far and free the scratch arrays
-                // on every early exit (Close(NULL) is a no-op, so one
-                // uniform cleanup text is safe on every path).
+            // Close the subs opened so far and free the scratch arrays on every
+            // early exit (Close(NULL) is a no-op, so one uniform cleanup text is
+            // safe on every path). The region's own out-meta writes land on
+            // `dummyBegIdx`/`dummyNBElement` (see `composed_open_expr_fn`), so an
+            // INSUFFICIENT_HISTORY exit must ALSO zero the caller's real pair --
+            // #386, the class TA_MAVP_OpenAndFill and TA_ADXR_OpenAndFill shipped.
+            Statement::Return { value: Some(Expr::Var(v)) } if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
                 Some(Statement::Block {
                     body: vec![
+                        Statement::Expr(Expr::Var("*outBegIdx = 0; *outNBElement = 0".into())),
                         Statement::Expr(Expr::Var(cleanup_owned.clone())),
-                        Statement::Return { value: mapped },
+                        Statement::Return { value: Some(Expr::Var("INSUFFICIENT_HISTORY".into())) },
                     ],
                 })
             }
+            Statement::Return { value } => Some(Statement::Block {
+                body: vec![
+                    Statement::Expr(Expr::Var(cleanup_owned.clone())),
+                    Statement::Return { value },
+                ],
+            }),
             // Statements that cannot contain a nested body: the proof carries
             // straight across them.
             Statement::Assign { .. }
@@ -2520,10 +2524,17 @@ fn emit_dispatch_open(
         if mode != DispatchOpen::Fill {
             let _ = writeln!(o, "      if( startIdx > fillLb ) fillLb = startIdx;");
         }
-        let _ = writeln!(
-            o,
-            "      if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
-        );
+        if mode.fills() {
+            let _ = writeln!(
+                o,
+                "      if( historyLen < fillLb + 1 ) {{ *outBegIdx = 0; *outNBElement = 0; TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
+            );
+        } else {
+            let _ = writeln!(
+                o,
+                "      if( historyLen < fillLb + 1 ) {{ TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }}"
+            );
+        }
         if mode.fills() {
             let _ = writeln!(o, "      {{");
             let _ = writeln!(o, "         int fillIdx;");
@@ -4538,7 +4549,12 @@ fn emit_period_bank(
         "   lookbackTotal = {pre}_Lookback( {max}, {matype} );",
         matype = plan.matype_param
     );
-    let _ = writeln!(o, "   if( historyLen < lookbackTotal + 1 ) return TA_INSUFFICIENT_HISTORY;");
+    let _ = writeln!(o, "   if( historyLen < lookbackTotal + 1 )");
+    let _ = writeln!(o, "   {{");
+    let _ = writeln!(o, "      *outBegIdx = 0;");
+    let _ = writeln!(o, "      *outNBElement = 0;");
+    let _ = writeln!(o, "      return TA_INSUFFICIENT_HISTORY;");
+    let _ = writeln!(o, "   }}");
     let _ = writeln!(o, "\n   sp = (struct TA_{n}_Stream *)TA_Malloc( sizeof(*sp) );");
     let _ = writeln!(o, "   if( !sp ) return TA_ALLOC_ERR;");
     let _ = writeln!(o, "   memset( sp, 0, sizeof(*sp) );");
@@ -5099,7 +5115,12 @@ fn emit_identity_fast_path(
         // tier did not, and the #241 range leg is what first caught it.
         let _ = writeln!(o, "      int fillLb = {lb_call};");
         let _ = writeln!(o, "      if( startIdx > fillLb ) fillLb = startIdx;");
-        let _ = writeln!(o, "      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;");
+        let _ = writeln!(o, "      if( historyLen < fillLb + 1 )");
+        let _ = writeln!(o, "      {{");
+        let _ = writeln!(o, "         *outBegIdx = 0;");
+        let _ = writeln!(o, "         *outNBElement = 0;");
+        let _ = writeln!(o, "         return TA_INSUFFICIENT_HISTORY;");
+        let _ = writeln!(o, "      }}");
         o.push_str(&alloc_and_capture(
             func, model, "      ", /*with_state=*/ false, "", registry, helpers, counter,
         ));

@@ -348,14 +348,17 @@ fn dispatch_open_modes_differ_only_where_intended() {
     // count it publishes is `historyLen - anchor` — negative in C, a `usize`
     // underflow in Rust. That is the defect #241 shipped and 96d1052f8 fixed.
     //
-    // Asserted per mode, on a sliced body, because the three lines are emitted
-    // BYTE-IDENTICALLY by the scalar and the anchored fill: a whole-file
-    // `contains` is satisfied by whichever arm still happens to be right, so it
-    // stays green when only one of them regresses. Measured, not assumed —
-    // reordering the scalar arm alone left all 280 generator tests passing.
+    // Asserted per mode, on a sliced body. The scalar arm has no out-meta pair
+    // to write (assert above), so its recheck differs from the two fills' by
+    // exactly that write (#386: a rejection must zero the caller's real
+    // outBegIdx/outNBElement, not just the ones this arm never has).
     let clamp = "if( startIdx > fillLb ) fillLb = startIdx;";
-    let recheck = "if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }";
-    for (what, body) in [("OpenInternal", &scalar), ("OpenAndFillInternal", &internal)] {
+    let recheck_scalar = "if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }";
+    let recheck_fill = "if( historyLen < fillLb + 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }";
+    for (what, body, recheck) in [
+        ("OpenInternal", &scalar, recheck_scalar),
+        ("OpenAndFillInternal", &internal, recheck_fill),
+    ] {
         let c = body
             .find(clamp)
             .unwrap_or_else(|| panic!("{what} lost the startIdx clamp:\n{body}"));
@@ -370,7 +373,10 @@ fn dispatch_open_modes_differ_only_where_intended() {
     }
     // The public fill has no startIdx to clamp with, so it checks once and that
     // is the whole of it.
-    assert!(fill.contains(recheck), "the public fill must still check the history:\n{fill}");
+    assert!(
+        fill.contains(recheck_fill),
+        "the public fill must still check the history and zero the out-meta pair:\n{fill}"
+    );
 
     // Each mode delegates to the callee entry point that matches it.
     assert!(

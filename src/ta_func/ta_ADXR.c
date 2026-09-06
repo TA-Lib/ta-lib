@@ -349,6 +349,7 @@ static TA_RetCode TA_ADXR_OpenImpl( struct TA_ADXR_Stream **stream, const double
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         *outBegIdx = 0; *outNBElement = 0;
          TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
          return TA_INSUFFICIENT_HISTORY;
       }
@@ -392,7 +393,7 @@ static TA_RetCode TA_ADXR_OpenImpl( struct TA_ADXR_Stream **stream, const double
       dummyNBElement = nbElement;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_ADXR_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { free( adx ); TA_ADX_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

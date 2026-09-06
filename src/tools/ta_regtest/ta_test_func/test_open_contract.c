@@ -298,19 +298,27 @@ static void oc_param_judge_code( OcCtx *c, const TA_StreamEntry *e, int p,
    }
 }
 
-/* Judge one call that came back non-success. */
+/* Judge one call that came back non-success. `hasOutMeta` is 0 for the Open
+ * calls, which have no outBegIdx/outNBElement at all -- their two int
+ * arguments are always the literal OC_SENT_IDX filler, not a real read. */
 static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
-                             const char *what, int rc, int begIdx, int nbElement )
+                             const char *what, int rc, int begIdx, int nbElement,
+                             int hasOutMeta )
 {
    int slot;
 
    c->nbRejectChecked++;
    if( minParams ) c->nbMinParamRejects++;
 
-   /* A count is what turns a write a caller cannot see into a value it reads.
-    * 3.4 leaves the indices undefined on a rejection and most bodies zero them,
-    * so only a NON-ZERO one is a finding. */
-   if( nbElement != 0 && nbElement != OC_SENT_IDX )
+   /* 3.4 leaves the indices undefined on a rejection, and most of the corpus
+    * (a TA_BAD_PARAM or a too-short-history return before outBegIdx/
+    * outNBElement are even null-checked) genuinely relies on that -- writing
+    * through an unvalidated pointer there would be the bug. TA_INSUFFICIENT_HISTORY
+    * is different: every guard that can return it runs strictly after the
+    * null-check, and 200 of 201 zero the pair there (#386); MAVP's hand-rolled
+    * OpenAndFill was the one guard that returned without writing, so this is
+    * scoped to that one retCode rather than every rejection. */
+   if( hasOutMeta && rc == TA_INSUFFICIENT_HISTORY && nbElement != 0 )
    {
       if( c->nbReported < 12 )
       {
@@ -390,7 +398,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
 
       if( rc != TA_SUCCESS )
       {
-         oc_judge_reject( c, e, pass == 1, "OpenAndFill", (int)rc, (int)begIdx, (int)nbElement );
+         oc_judge_reject( c, e, pass == 1, "OpenAndFill", (int)rc, (int)begIdx, (int)nbElement, 1 );
       }
       else if( nbElement > 0 )
       {
@@ -416,7 +424,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
       rc = e->open( &stream, in, h, opt, outReal, outInt );
       if( stream ) e->close( stream );
       if( rc != TA_SUCCESS )
-         oc_judge_reject( c, e, pass == 1, "Open", (int)rc, OC_SENT_IDX, OC_SENT_IDX );
+         oc_judge_reject( c, e, pass == 1, "Open", (int)rc, OC_SENT_IDX, OC_SENT_IDX, 0 );
       else if( firstOkPass >= 0 )
       {
          /* Open's own control, on its own counter: it writes one slot per
@@ -471,7 +479,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
          if( rc != TA_SUCCESS )
          {
             oc_param_judge_code( c, e, i, opt[i], "OpenAndFill", (int)rc );
-            oc_judge_reject( c, e, 0, "OpenAndFill/param", (int)rc, (int)begIdx, (int)nbElement );
+            oc_judge_reject( c, e, 0, "OpenAndFill/param", (int)rc, (int)begIdx, (int)nbElement, 1 );
          }
          else
          {
@@ -489,7 +497,7 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
          if( rc != TA_SUCCESS )
          {
             oc_param_judge_code( c, e, i, opt[i], "Open", (int)rc );
-            oc_judge_reject( c, e, 0, "Open/param", (int)rc, OC_SENT_IDX, OC_SENT_IDX );
+            oc_judge_reject( c, e, 0, "Open/param", (int)rc, OC_SENT_IDX, OC_SENT_IDX, 0 );
          }
          else
             c->nbParamAccepted++;

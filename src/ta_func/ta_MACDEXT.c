@@ -654,6 +654,7 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         *outBegIdx = 0; *outNBElement = 0;
          TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist );
          return TA_INSUFFICIENT_HISTORY;
       }
@@ -777,7 +778,7 @@ static TA_RetCode TA_MACDEXT_OpenImpl( struct TA_MACDEXT_Stream **stream, const 
       dummyNBElement = outNbElement2;
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_MACDEXT_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_MA_Close( sub0 ); TA_MA_Close( sub1 ); TA_MA_Close( sub2 ); if( !outStride ) TA_Free( sc_outMACD ); if( !outStride ) TA_Free( sc_outMACDSignal ); if( !outStride ) TA_Free( sc_outMACDHist ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

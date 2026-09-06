@@ -478,7 +478,12 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
    {
       int fillLb = TA_CMO_Lookback( optInTimePeriod );
       if( startIdx > fillLb ) fillLb = startIdx;
-      if( historyLen < fillLb + 1 ) return TA_INSUFFICIENT_HISTORY;
+      if( historyLen < fillLb + 1 )
+      {
+         *outBegIdx = 0;
+         *outNBElement = 0;
+         return TA_INSUFFICIENT_HISTORY;
+      }
       sp = (struct TA_CMO_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

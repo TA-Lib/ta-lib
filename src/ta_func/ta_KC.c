@@ -494,6 +494,7 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         *outBegIdx = 0; *outNBElement = 0;
          TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand );
          return TA_INSUFFICIENT_HISTORY;
       }
@@ -603,7 +604,7 @@ static TA_RetCode TA_KC_OpenImpl( struct TA_KC_Stream **stream, const double inH
       free(tempATR);
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_KC_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_TYPPRICE_Close( sub0 ); TA_ATR_Close( sub1 ); TA_EMA_Close( sub2 ); if( !outStride ) TA_Free( sc_outRealUpperBand ); if( !outStride ) TA_Free( sc_outRealMiddleBand ); if( !outStride ) TA_Free( sc_outRealLowerBand ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

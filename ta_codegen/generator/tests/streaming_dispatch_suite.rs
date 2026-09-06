@@ -1943,7 +1943,7 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
     let open = &c[c.find("TA_RetCode TA_ADXR_Open").expect("ADXR Open")..];
     for guard in [
-        "if( dummyNBElement < 1 ) { free( adx );",
+        "if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; free( adx );",
         "if( !sp ) { free( adx );",
         "if( !sp->lagRing_adx ) { TA_Free( sp ); free( adx );",
     ] {

@@ -311,6 +311,7 @@ static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const do
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         *outBegIdx = 0; *outNBElement = 0;
          TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal );
          return TA_INSUFFICIENT_HISTORY;
       }
@@ -361,7 +362,7 @@ static TA_RetCode TA_STDDEV_OpenImpl( struct TA_STDDEV_Stream **stream, const do
       }
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_STDDEV_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_VAR_Close( sub0 ); if( !outStride ) TA_Free( sc_outReal ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );

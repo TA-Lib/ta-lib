@@ -567,7 +567,7 @@ TA_LIB_API TA_RetCode TA_MA_OpenAndFill( TA_MA_Stream **stream, const double inR
    if( optInTimePeriod == 1 || optInMAType == TA_MAType_DISABLED )
    {
       int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
-      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
+      if( historyLen < fillLb + 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
       {
          int fillIdx;
          *outBegIdx = fillLb;
@@ -718,7 +718,7 @@ TA_RetCode TA_MA_OpenAndFillInternal( struct TA_MA_Stream **stream, const double
    {
       int fillLb = TA_MA_Lookback( optInTimePeriod, optInMAType );
       if( startIdx > fillLb ) fillLb = startIdx;
-      if( historyLen < fillLb + 1 ) { TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
+      if( historyLen < fillLb + 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_Free( sp ); return TA_INSUFFICIENT_HISTORY; }
       {
          int fillIdx;
          *outBegIdx = fillLb;

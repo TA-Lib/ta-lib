@@ -444,6 +444,7 @@ static TA_RetCode TA_STOCHRSI_OpenImpl( struct TA_STOCHRSI_Stream **stream, cons
       {
          dummyBegIdx = 0;
          dummyNBElement = 0;
+         *outBegIdx = 0; *outNBElement = 0;
          TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD );
          return TA_INSUFFICIENT_HISTORY;
       }
@@ -497,7 +498,7 @@ static TA_RetCode TA_STOCHRSI_OpenImpl( struct TA_STOCHRSI_Stream **stream, cons
       }
 
       /* Capture the live producer state + sub handles. */
-      if( dummyNBElement < 1 ) { TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); return TA_INSUFFICIENT_HISTORY; }
+      if( dummyNBElement < 1 ) { *outBegIdx = 0; *outNBElement = 0; TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); return TA_INSUFFICIENT_HISTORY; }
       sp = (struct TA_STOCHRSI_Stream *)TA_Malloc( sizeof(*sp) );
       if( !sp ) { TA_RSI_Close( sub0 ); TA_STOCHF_Close( sub1 ); if( !outStride ) TA_Free( sc_outFastK ); if( !outStride ) TA_Free( sc_outFastD ); return TA_ALLOC_ERR; }
       memset( sp, 0, sizeof(*sp) );
