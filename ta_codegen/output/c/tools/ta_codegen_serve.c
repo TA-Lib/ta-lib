@@ -6023,7 +6023,6 @@ static int sv_steq_TA_WILLR( const struct TA_WILLR_Stream *a, const struct TA_WI
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->lowest, b->lowest, z) ) { *w = "lowest"; return 1; }
    if( sv_xtier_ne(a->highest, b->highest, z) ) { *w = "highest"; return 1; }
-   if( sv_xtier_ne(a->diff, b->diff, z) ) { *w = "diff"; return 1; }
    if( a->trailingIdx != b->trailingIdx ) { *w = "trailingIdx"; return 1; }
    if( a->lowestIdx != b->lowestIdx ) { *w = "lowestIdx"; return 1; }
    if( a->highestIdx != b->highestIdx ) { *w = "highestIdx"; return 1; }

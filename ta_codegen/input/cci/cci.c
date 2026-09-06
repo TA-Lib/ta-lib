@@ -23,6 +23,10 @@
  *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
  *                level: the fixed band zeroed the whole output for any
  *                instrument quoted small enough to fall under it.
+ *  090626 MF,CC  Fix #395. Test the divisor itself, not just the deviation it
+ *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
+ *                price the deviation's own band still calls "not flat", and
+ *                the division returned +/-Inf under TA_SUCCESS.
  */
 
 int cci_lookback(int optInTimePeriod)
@@ -113,7 +117,14 @@ TA_RetCode cci(int startIdx, int endIdx,
       /* And finally, the CCI... */
       tempReal = lastValue-theAverage;
 
-      /* Both tests are relative to the window's own price level (issue #253).
+      /* The third test is the divisor itself, and it is not implied by the
+       * second: the deviation's band is RELATIVE and the product's underflow is
+       * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+       * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+       * flatness question is already answered above, and this one is only
+       * asking whether the value the division uses exists.
+       *
+       * The first two tests are relative to the window's own price level (#253).
        * They ask "is this window flat?", and flatness is a property of the
        * prices relative to each other -- but a deviation carries the quote
        * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -124,7 +135,8 @@ TA_RetCode cci(int startIdx, int endIdx,
        */
       tempReal3 = fabs(theAverage);
 
-      if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
+      if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3)
+         && 0.015*tempReal2 != 0.0 )
       {
          outReal[outIdx++] = tempReal/(0.015*tempReal2);
       }

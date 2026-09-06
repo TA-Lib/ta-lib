@@ -67,6 +67,10 @@ public partial class Core
     *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
     *                level: the fixed band zeroed the whole output for any
     *                instrument quoted small enough to fall under it.
+    *  090626 MF,CC  Fix #395. Test the divisor itself, not just the deviation it
+    *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
+    *                price the deviation's own band still calls "not flat", and
+    *                the division returned +/-Inf under TA_SUCCESS.
     */
    /// <summary>
    /// Number of leading input bars <c>CCI</c> consumes before it can produce its
@@ -191,7 +195,14 @@ public partial class Core
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* The third test is the divisor itself, and it is not implied by the
+          * second: the deviation's band is RELATIVE and the product's underflow is
+          * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+          * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+          * flatness question is already answered above, and this one is only
+          * asking whether the value the division uses exists.
+          *
+          * The first two tests are relative to the window's own price level (#253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -201,7 +212,7 @@ public partial class Core
           * average, which is what it was widened for in the first place (#7).
           */
          tempReal3 = Math.Abs(theAverage);
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
@@ -290,7 +301,7 @@ public partial class Core
          tempReal2 /= optInTimePeriod;
          tempReal = lastValue - theAverage;
          tempReal3 = Math.Abs(theAverage);
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
@@ -589,7 +600,14 @@ public partial class Core
          tempReal2 /= sp.optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* The third test is the divisor itself, and it is not implied by the
+          * second: the deviation's band is RELATIVE and the product's underflow is
+          * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+          * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+          * flatness question is already answered above, and this one is only
+          * asking whether the value the division uses exists.
+          *
+          * The first two tests are relative to the window's own price level (#253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -599,7 +617,7 @@ public partial class Core
           * average, which is what it was widened for in the first place (#7).
           */
          tempReal3 = Math.Abs(theAverage);
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             cur_outReal = tempReal / (0.015 * tempReal2);
          } else {
             cur_outReal = 0.0;
@@ -650,7 +668,14 @@ public partial class Core
       tempReal2 /= sp.optInTimePeriod;
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      /* Both tests are relative to the window's own price level (issue #253).
+      /* The third test is the divisor itself, and it is not implied by the
+       * second: the deviation's band is RELATIVE and the product's underflow is
+       * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+       * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+       * flatness question is already answered above, and this one is only
+       * asking whether the value the division uses exists.
+       *
+       * The first two tests are relative to the window's own price level (#253).
        * They ask "is this window flat?", and flatness is a property of the
        * prices relative to each other -- but a deviation carries the quote
        * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -660,7 +685,7 @@ public partial class Core
        * average, which is what it was widened for in the first place (#7).
        */
       tempReal3 = Math.Abs(theAverage);
-      if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+      if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
          sp.cur_outReal = tempReal / (0.015 * tempReal2);
       } else {
          sp.cur_outReal = 0.0;
@@ -772,7 +797,14 @@ public partial class Core
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* The third test is the divisor itself, and it is not implied by the
+          * second: the deviation's band is RELATIVE and the product's underflow is
+          * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+          * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+          * flatness question is already answered above, and this one is only
+          * asking whether the value the division uses exists.
+          *
+          * The first two tests are relative to the window's own price level (#253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -782,7 +814,7 @@ public partial class Core
           * average, which is what it was widened for in the first place (#7).
           */
          tempReal3 = Math.Abs(theAverage);
-         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             outReal[outIdx++ * outStride] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++ * outStride] = 0.0;

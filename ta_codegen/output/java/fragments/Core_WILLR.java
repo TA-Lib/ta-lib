@@ -3,14 +3,19 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  090626 MF,CC Fix #395. Divide by the range, scale after, then clamp: the
+ *               hoisted `(highest-lowest)/-100.0` underflowed to 0.0 on a
+ *               denormal range that the guard still called "not flat", and
+ *               the pre-scaled divisor left the documented [-100,0] bound.
  */
 
    /**
@@ -59,7 +64,7 @@
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -97,8 +102,6 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -164,9 +167,29 @@
          }
          highest = sufHighest[0];
          lowest = sufLowest[0];
-         diff = (highest - lowest) / (0 - 100.0);
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - inClose[today]) / diff;
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor. It is also what puts a close on
+          * the period low at exactly -100.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [-100,0] noise (issue #107 / STOCH).
+          *
+          * The clamp is unreachable while lowest <= close <= highest -- the
+          * quotient is <= 1 under any rounding mode. Its domain is the close
+          * outside its own bar, which nothing here validates.
+          */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -216,9 +239,14 @@
                if( preLowest[m - 1] < lowest ) {
                   lowest = preLowest[m - 1];
                }
-               diff = (highest - lowest) / (0 - 100.0);
-               if( diff != 0.0 ) {
-                  outReal[outIdx++] = (highest - inClose[today + m - 1]) / diff;
+               if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  if( tempReal > 0.0 ) {
+                     tempReal = 0.0;
+                  } else if( tempReal < 0 - 100.0 ) {
+                     tempReal = 0 - 100.0;
+                  }
+                  outReal[outIdx++] = tempReal;
                } else {
                   outReal[outIdx++] = 0.0;
                }
@@ -261,7 +289,7 @@
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -291,7 +319,6 @@
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      diff = 0.0;
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
@@ -333,9 +360,14 @@
          }
          highest = sufHighest[0];
          lowest = sufLowest[0];
-         diff = (highest - lowest) / (0 - 100.0);
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - (double)inClose[today]) / diff;
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -377,9 +409,14 @@
                if( preLowest[m - 1] < lowest ) {
                   lowest = preLowest[m - 1];
                }
-               diff = (highest - lowest) / (0 - 100.0);
-               if( diff != 0.0 ) {
-                  outReal[outIdx++] = (highest - (double)inClose[today + m - 1]) / diff;
+               if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  if( tempReal > 0.0 ) {
+                     tempReal = 0.0;
+                  } else if( tempReal < 0 - 100.0 ) {
+                     tempReal = 0 - 100.0;
+                  }
+                  outReal[outIdx++] = tempReal;
                } else {
                   outReal[outIdx++] = 0.0;
                }
@@ -401,7 +438,7 @@
     * = close at period low (oversold).
     * <p><b>Formula</b>
     * <pre>{@code
-    * %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
     * }</pre>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -467,7 +504,7 @@
     * = close at period low (oversold).
     * <p><b>Formula</b>
     * <pre>{@code
-    * %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
     * }</pre>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -552,7 +589,6 @@
       int optInTimePeriod;
       double lowest;
       double highest;
-      double diff;
       int trailingIdx;
       int lowestIdx;
       int highestIdx;
@@ -596,7 +632,6 @@
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
          this.highest = other.highest;
-         this.diff = other.diff;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -648,8 +683,8 @@
             throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
          WillrStream sp = this;
          double tmp = 0.0;
+         double tempReal = 0.0;
          double cur_outReal = 0.0;
-         double diff = sp.diff;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;
@@ -690,11 +725,9 @@
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
@@ -709,14 +742,19 @@
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 ) {
-            cur_outReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / diff;
+         /* Same rule, band and clamp as the block scan above. */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            cur_outReal = tempReal;
          } else {
             cur_outReal = 0.0;
          }
@@ -752,6 +790,7 @@
    void willrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
+      double tempReal = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -776,11 +815,9 @@
                sp.lowest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       } else if( tmp <= sp.lowest ) {
          sp.lowestIdx = sp.today;
          sp.lowest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       }
       /* Set the highest high */
       tmp = sp.x_inHigh[sp.today & sp.xMask];
@@ -795,14 +832,19 @@
                sp.highest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       } else if( tmp >= sp.highest ) {
          sp.highestIdx = sp.today;
          sp.highest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       }
-      if( sp.diff != 0.0 ) {
-         sp.cur_outReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / sp.diff;
+      /* Same rule, band and clamp as the block scan above. */
+      if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
+         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * (0 - 100.0);
+         if( tempReal > 0.0 ) {
+            tempReal = 0.0;
+         } else if( tempReal < 0 - 100.0 ) {
+            tempReal = 0 - 100.0;
+         }
+         sp.cur_outReal = tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -814,7 +856,7 @@
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -860,8 +902,6 @@
          outNBElement.value = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -890,7 +930,6 @@
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       while( today <= endIdx ) {
          /* Set the lowest low */
          tmp = inLow[today];
@@ -905,11 +944,9 @@
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -924,14 +961,19 @@
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 ) {
-            outReal[outIdx++ * outStride] = (highest - inClose[today]) / diff;
+         /* Same rule, band and clamp as the block scan above. */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++ * outStride] = tempReal;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }
@@ -963,7 +1005,6 @@
       sp.optInTimePeriod = optInTimePeriod;
       sp.lowest = lowest;
       sp.highest = highest;
-      sp.diff = diff;
       sp.trailingIdx = trailingIdx;
       sp.lowestIdx = lowestIdx;
       sp.highestIdx = highestIdx;

@@ -45,14 +45,19 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  090626 MF,CC Fix #395. Divide by the range, scale after, then clamp: the
+ *               hoisted `(highest-lowest)/-100.0` underflowed to 0.0 on a
+ *               denormal range that the guard still called "not flat", and
+ *               the pre-scaled divisor left the documented [-100,0] bound.
  */
 
 // Import types from parent module
@@ -142,7 +147,7 @@ impl Core {
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
-        let mut diff: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut nbInitialElementNeeded: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
@@ -167,8 +172,6 @@ impl Core {
             (*outNBElement) = 0;
             return RetCode::Success;
         }
-        // Initialize 'diff', just to avoid warning.
-        diff = 0.0;
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the input and
         // output to be the same buffer.
@@ -252,9 +255,28 @@ impl Core {
             }
             highest = sufHighest[0];
             lowest = sufLowest[0];
-            diff = (highest - lowest) / (0_f64 - 100.0);
-            if diff != 0.0 {
-                outReal[outIdx] = (((highest - inClose[today]) / diff) as f64);
+            // Divide by the range itself and scale after: the guard has to test the
+            // very expression the division uses, or a scaling step can carry a
+            // guarded-non-zero into a zero divisor. It is also what puts a close on
+            // the period low at exactly -100.
+            //
+            // The band is the range against ITS OWN two extremes, not a fixed
+            // constant: the range carries the quote unit, so a constant answers
+            // "flat" for every window of an instrument quoted below it (issue #253).
+            // It absorbs the machine-flat window an exact test would divide into
+            // [-100,0] noise (issue #107 / STOCH).
+            //
+            // The clamp is unreachable while lowest <= close <= highest -- the
+            // quotient is <= 1 under any rounding mode. Its domain is the close
+            // outside its own bar, which nothing here validates.
+            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                tempReal = (highest - inClose[today]) / (highest - lowest) * (0_f64 - 100.0);
+                if tempReal > 0.0 {
+                    tempReal = 0.0;
+                } else if tempReal < 0_f64 - 100.0 {
+                    tempReal = 0_f64 - 100.0;
+                }
+                outReal[outIdx] = tempReal;
                 outIdx += 1;
             } else {
                 outReal[outIdx] = 0.0;
@@ -304,9 +326,14 @@ impl Core {
                     if preLowest[m - 1] < lowest {
                         lowest = preLowest[m - 1];
                     }
-                    diff = (highest - lowest) / (0_f64 - 100.0);
-                    if diff != 0.0 {
-                        outReal[outIdx] = (((highest - inClose[today + m - 1]) / diff) as f64);
+                    if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                        tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0_f64 - 100.0);
+                        if tempReal > 0.0 {
+                            tempReal = 0.0;
+                        } else if tempReal < 0_f64 - 100.0 {
+                            tempReal = 0_f64 - 100.0;
+                        }
+                        outReal[outIdx] = tempReal;
                         outIdx += 1;
                     } else {
                         outReal[outIdx] = 0.0;
@@ -463,7 +490,6 @@ struct WillrStreamState {
     optInTimePeriod: i32,
     lowest: f64,
     highest: f64,
-    diff: f64,
     trailingIdx: i32,
     lowestIdx: i32,
     highestIdx: i32,
@@ -484,6 +510,7 @@ struct WillrStreamState {
 impl Core {
     fn willr_step_impl(sp: &mut WillrStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         if sp.today >= 1073741824 {
             let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
             sp.today -= rebaseShift;
@@ -508,11 +535,9 @@ impl Core {
                     sp.lowest = tmp;
                 }
             }
-            sp.diff = (sp.highest - sp.lowest) / (0_f64 - 100.0);
         } else if tmp <= sp.lowest {
             sp.lowestIdx = sp.today;
             sp.lowest = tmp;
-            sp.diff = (sp.highest - sp.lowest) / (0_f64 - 100.0);
         }
         // Set the highest high
         tmp = sp.x_inHigh[(sp.today & sp.xMask) as usize];
@@ -527,14 +552,19 @@ impl Core {
                     sp.highest = tmp;
                 }
             }
-            sp.diff = (sp.highest - sp.lowest) / (0_f64 - 100.0);
         } else if tmp >= sp.highest {
             sp.highestIdx = sp.today;
             sp.highest = tmp;
-            sp.diff = (sp.highest - sp.lowest) / (0_f64 - 100.0);
         }
-        if sp.diff != 0.0 {
-            (*outReal) = (sp.highest - sp.x_inClose[(sp.today & sp.xMask) as usize]) / sp.diff;
+        // Same rule, band and clamp as the block scan above.
+        if !(((sp.highest - sp.lowest).abs() <= 1e-14 * ((sp.highest).abs() + (sp.lowest).abs()))) {
+            tempReal = (sp.highest - sp.x_inClose[(sp.today & sp.xMask) as usize]) / (sp.highest - sp.lowest) * (0_f64 - 100.0);
+            if tempReal > 0.0 {
+                tempReal = 0.0;
+            } else if tempReal < 0_f64 - 100.0 {
+                tempReal = 0_f64 - 100.0;
+            }
+            (*outReal) = tempReal;
         } else {
             (*outReal) = 0.0;
         }
@@ -575,7 +605,7 @@ impl Core {
         let mut lowest: f64 = 0.0_f64;
         let mut highest: f64 = 0.0_f64;
         let mut tmp: f64 = 0.0_f64;
-        let mut diff: f64 = 0.0_f64;
+        let mut tempReal: f64 = 0.0_f64;
         let mut outIdx: usize = 0_usize;
         let mut nbInitialElementNeeded: usize = 0_usize;
         let mut trailingIdx: usize = 0_usize;
@@ -598,8 +628,6 @@ impl Core {
             (*outNBElement) = 0;
             return Err(RetCode::InsufficientHistory);
         }
-        // Initialize 'diff', just to avoid warning.
-        diff = 0.0;
         // Proceed with the calculation for the requested range.
         // Note that this algorithm allows the input and
         // output to be the same buffer.
@@ -627,7 +655,6 @@ impl Core {
         lowestIdx = highestIdx;
         lowest = 0.0;
         highest = lowest;
-        diff = highest;
         while today <= endIdx {
             // Set the lowest low
             tmp = inLow[today];
@@ -642,11 +669,9 @@ impl Core {
                         lowest = tmp;
                     }
                 }
-                diff = (highest - lowest) / (0_f64 - 100.0);
             } else if tmp <= lowest {
                 lowestIdx = (today) as i32;
                 lowest = tmp;
-                diff = (highest - lowest) / (0_f64 - 100.0);
             }
             // Set the highest high
             tmp = inHigh[today];
@@ -661,14 +686,19 @@ impl Core {
                         highest = tmp;
                     }
                 }
-                diff = (highest - lowest) / (0_f64 - 100.0);
             } else if tmp >= highest {
                 highestIdx = (today) as i32;
                 highest = tmp;
-                diff = (highest - lowest) / (0_f64 - 100.0);
             }
-            if diff != 0.0 {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (((highest - inClose[today]) / diff) as f64);
+            // Same rule, band and clamp as the block scan above.
+            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                tempReal = (highest - inClose[today]) / (highest - lowest) * (0_f64 - 100.0);
+                if tempReal > 0.0 {
+                    tempReal = 0.0;
+                } else if tempReal < 0_f64 - 100.0 {
+                    tempReal = 0_f64 - 100.0;
+                }
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
@@ -705,7 +735,6 @@ impl Core {
             optInTimePeriod,
             lowest,
             highest,
-            diff,
             trailingIdx: (trailingIdx) as i32,
             lowestIdx: (lowestIdx) as i32,
             highestIdx: (highestIdx) as i32,
@@ -889,7 +918,7 @@ impl WillrStream {
             let sp = &self.state;
             let outReal = &mut outReal;
             let mut tmp: f64 = 0.0_f64;
-            let mut diff = sp.diff;
+            let mut tempReal: f64 = 0.0_f64;
             let mut highest = sp.highest;
             let mut highestIdx = sp.highestIdx;
             let mut i = sp.i;
@@ -930,11 +959,9 @@ impl WillrStream {
                         lowest = tmp;
                     }
                 }
-                diff = (highest - lowest) / (0_f64 - 100.0);
             } else if tmp <= lowest {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / (0_f64 - 100.0);
             }
             // Set the highest high
             tmp = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(today & sp.xMask) as usize] } else { pkVal0 });
@@ -949,14 +976,19 @@ impl WillrStream {
                         highest = tmp;
                     }
                 }
-                diff = (highest - lowest) / (0_f64 - 100.0);
             } else if tmp >= highest {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / (0_f64 - 100.0);
             }
-            if diff != 0.0 {
-                (*outReal) = (highest - (if ((today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(today & sp.xMask) as usize] } else { pkVal2 })) / diff;
+            // Same rule, band and clamp as the block scan above.
+            if !(((highest - lowest).abs() <= 1e-14 * ((highest).abs() + (lowest).abs()))) {
+                tempReal = (highest - (if ((today & sp.xMask) as usize) != pkSlot2 { sp.x_inClose[(today & sp.xMask) as usize] } else { pkVal2 })) / (highest - lowest) * (0_f64 - 100.0);
+                if tempReal > 0.0 {
+                    tempReal = 0.0;
+                } else if tempReal < 0_f64 - 100.0 {
+                    tempReal = 0_f64 - 100.0;
+                }
+                (*outReal) = tempReal;
             } else {
                 (*outReal) = 0.0;
             }

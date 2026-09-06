@@ -96,6 +96,7 @@ static ErrorNumber test_correl_exact_identity( void );
 static ErrorNumber test_correl_affine_invariance( void );
 static ErrorNumber test_correl_range_invariant( void );
 static ErrorNumber test_correl_degenerate( void );
+static ErrorNumber test_correl_small_scale( void );
 
 /**** Local variables definitions.     ****/
 static double cr_out[4096];
@@ -119,6 +120,8 @@ ErrorNumber test_func_correl( TA_History *history )
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed CORREL range invariant (#242) (Code=%d)\n", __FILE__, retValue ); return retValue; }
    retValue = test_correl_degenerate();
    if( retValue != TA_TEST_PASS ) { printf( "%s Failed CORREL degenerate contract (#242) (Code=%d)\n", __FILE__, retValue ); return retValue; }
+   retValue = test_correl_small_scale();
+   if( retValue != TA_TEST_PASS ) { printf( "%s Failed CORREL small-scale product (#395) (Code=%d)\n", __FILE__, retValue ); return retValue; }
 
    return TA_TEST_PASS;
 }
@@ -553,6 +556,55 @@ static ErrorNumber test_correl_degenerate( void )
                     k ? "const/varying" : "const/const", (int)begIdx + i, cr_out[i] );
             return TA_TESTUTIL_TFRR_BAD_CALCULATION;
          }
+   }
+   return TA_TEST_PASS;
+}
+
+/* (C7) Issue #395: the guard tested ssX and ssY separately, so it could not see
+ * their PRODUCT leave the double range. `ssX*ssY` underflows to exactly 0.0
+ * while both factors are ordinary normals carrying all 53 bits, and the [-1,1]
+ * clamp could not catch what came back: NaN passes both comparisons
+ * (NaN > 1.0 is false), and an infinity was rewritten to exactly +/-1.0 -- a
+ * perfect correlation reported from a degenerate window, which nothing
+ * downstream can tell from a genuine one.
+ *
+ * Testing the product makes such a window degenerate, so it takes the same
+ * exact 0.0 arm C6 pins for a constant series -- which is what correl.md
+ * promises ("the output is 0 rather than an error or NaN").
+ *
+ * Exact fixture: at 2^-283 the sums of squares are ~2e-170, normal doubles,
+ * while their product is 0.0. Pre-fix the three bars came back NaN, -1 and +1. */
+static ErrorNumber test_correl_small_scale( void )
+{
+   static const double xs[6] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
+   static const double ys[6] = { 0.0, 1.0, 1.0, 0.0, 1.0, 1.0 };
+   double x[6], y[6], scale;
+   TA_Integer begIdx, nbElement;
+   TA_RetCode rc;
+   int i;
+
+   scale = ldexp( 1.0, -283 );
+   for( i = 0; i < 6; i++ )
+   {
+      x[i] = xs[i] * scale;
+      y[i] = ys[i] * scale;
+   }
+
+   rc = TA_CORREL( 0, 5, x, y, 4, &begIdx, &nbElement, cr_out );
+   if( rc != TA_SUCCESS || nbElement != 3 )
+   {
+      printf( "CORREL #395 small-scale: rc=%d nbElement=%d\n",
+              (int)rc, (int)nbElement );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+   for( i = 0; i < (int)nbElement; i++ )
+   {
+      if( cr_out[i] != cr_out[i] || cr_out[i] != 0.0 )
+      {
+         printf( "CORREL #395 small-scale: bar=%d val=%.17g want exact 0\n",
+                 (int)begIdx + i, cr_out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
    }
    return TA_TEST_PASS;
 }

@@ -3,14 +3,19 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  090626 MF,CC Fix #395. Divide by the range, scale after, then clamp: the
+ *               hoisted `(highest-lowest)/-100.0` underflowed to 0.0 on a
+ *               denormal range that the guard still called "not flat", and
+ *               the pre-scaled divisor left the documented [-100,0] bound.
  *
  */
 
@@ -31,7 +36,7 @@ TA_RetCode willr(int startIdx, int endIdx,
    CIRCBUF_PROLOG(preHighest,double,30);
    CIRCBUF_PROLOG(sufLowest,double,30);
    CIRCBUF_PROLOG(preLowest,double,30);
-   double lowest, highest, tmp, diff;
+   double lowest, highest, tmp, tempReal;
    int outIdx, nbInitialElementNeeded;
    int trailingIdx;
    int today, i;
@@ -56,9 +61,6 @@ TA_RetCode willr(int startIdx, int endIdx,
       *outNBElement = 0;
       return TA_SUCCESS;
    }
-
-   /* Initialize 'diff', just to avoid warning. */
-   diff = 0.0;
 
    /* Proceed with the calculation for the requested range.
     * Note that this algorithm allows the input and
@@ -122,9 +124,29 @@ TA_RetCode willr(int startIdx, int endIdx,
 
       highest = sufHighest[0];
       lowest = sufLowest[0];
-      diff = (highest - lowest)/(-100.0);
-      if( diff != 0.0 )
-         outReal[outIdx++] = (highest-inClose[today])/diff;
+      /* Divide by the range itself and scale after: the guard has to test the
+       * very expression the division uses, or a scaling step can carry a
+       * guarded-non-zero into a zero divisor. It is also what puts a close on
+       * the period low at exactly -100.
+       *
+       * The band is the range against ITS OWN two extremes, not a fixed
+       * constant: the range carries the quote unit, so a constant answers
+       * "flat" for every window of an instrument quoted below it (issue #253).
+       * It absorbs the machine-flat window an exact test would divide into
+       * [-100,0] noise (issue #107 / STOCH).
+       *
+       * The clamp is unreachable while lowest <= close <= highest -- the
+       * quotient is <= 1 under any rounding mode. Its domain is the close
+       * outside its own bar, which nothing here validates. */
+      if( !TA_IS_ZERO_SCALED(highest-lowest, fabs(highest)+fabs(lowest)) )
+      {
+         tempReal = ((highest-inClose[today])/(highest-lowest))*(-100.0);
+         if( tempReal > 0.0 )
+            tempReal = 0.0;
+         else if( tempReal < -100.0 )
+            tempReal = -100.0;
+         outReal[outIdx++] = tempReal;
+      }
       else
          outReal[outIdx++] = 0.0;
       trailingIdx++;
@@ -185,9 +207,15 @@ TA_RetCode willr(int startIdx, int endIdx,
             {
                lowest = preLowest[m - 1];
             }
-            diff = (highest - lowest)/(-100.0);
-            if( diff != 0.0 )
-               outReal[outIdx++] = (highest-inClose[today + m - 1])/diff;
+            if( !TA_IS_ZERO_SCALED(highest-lowest, fabs(highest)+fabs(lowest)) )
+            {
+               tempReal = ((highest-inClose[today + m - 1])/(highest-lowest))*(-100.0);
+               if( tempReal > 0.0 )
+                  tempReal = 0.0;
+               else if( tempReal < -100.0 )
+                  tempReal = -100.0;
+               outReal[outIdx++] = tempReal;
+            }
             else
                outReal[outIdx++] = 0.0;
             m++;
@@ -221,7 +249,7 @@ TA_RetCode willr_ALT1(int startIdx, int endIdx,
    int *outBegIdx, int *outNBElement,
    double outReal[])
 {
-   double lowest, highest, tmp, diff;
+   double lowest, highest, tmp, tempReal;
    int outIdx, nbInitialElementNeeded;
    int trailingIdx, lowestIdx, highestIdx;
    int today, i;
@@ -245,9 +273,6 @@ TA_RetCode willr_ALT1(int startIdx, int endIdx,
       *outNBElement = 0;
       return TA_SUCCESS;
    }
-
-   /* Initialize 'diff', just to avoid warning. */
-   diff = 0.0;
 
    /* Proceed with the calculation for the requested range.
     * Note that this algorithm allows the input and
@@ -275,7 +300,7 @@ TA_RetCode willr_ALT1(int startIdx, int endIdx,
    trailingIdx = startIdx-nbInitialElementNeeded;
 
    lowestIdx   = highestIdx = -1;
-   diff = highest = lowest  = 0.0;
+   highest = lowest  = 0.0;
 
    while( today <= endIdx )
    {
@@ -296,13 +321,11 @@ TA_RetCode willr_ALT1(int startIdx, int endIdx,
                lowest = tmp;
             }
          }
-         diff = (highest - lowest)/(-100.0);
       }
       else if( tmp <= lowest )
       {
          lowestIdx = today;
          lowest = tmp;
-         diff = (highest - lowest)/(-100.0);
       }
 
       /* Set the highest high */
@@ -322,17 +345,23 @@ TA_RetCode willr_ALT1(int startIdx, int endIdx,
                highest = tmp;
             }
          }
-         diff = (highest - lowest)/(-100.0);
       }
       else if( tmp >= highest )
       {
          highestIdx = today;
          highest = tmp;
-         diff = (highest - lowest)/(-100.0);
       }
 
-      if( diff != 0.0 )
-         outReal[outIdx++] = (highest-inClose[today])/diff;
+      /* Same rule, band and clamp as the block scan above. */
+      if( !TA_IS_ZERO_SCALED(highest-lowest, fabs(highest)+fabs(lowest)) )
+      {
+         tempReal = ((highest-inClose[today])/(highest-lowest))*(-100.0);
+         if( tempReal > 0.0 )
+            tempReal = 0.0;
+         else if( tempReal < -100.0 )
+            tempReal = -100.0;
+         outReal[outIdx++] = tempReal;
+      }
       else
          outReal[outIdx++] = 0.0;
 

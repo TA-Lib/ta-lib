@@ -280,13 +280,11 @@ static void reExpected( RollingFunc which, int at, int period,
    case RE_WILLR:
       reNaiveWindow( reHigh, at, period, &lo, &hiOfHigh );
       reNaiveWindow( reLow,  at, period, &loOfLow, &hi );
-      /* Spelled exactly as the implementation does it -- dividing by
-       * (range / -100) is not bit-identical to dividing by the range and
-       * then scaling, and this comparison is bit-exact. */
-      {
-         double diff = (hiOfHigh - loOfLow) / (-100.0);
-         *exp0 = (diff != 0.0) ? (hiOfHigh - reClose[at]) / diff : 0.0;
-      }
+      /* The definition, and deliberately without the implementation's
+       * flat-window guard or its [-100,0] clamp: every shape here has a range
+       * of 3.0 with the close inside it, so neither is reachable, and an
+       * oracle carrying the clamp could not report it if it ever fired. */
+      *exp0 = ((hiOfHigh - reClose[at]) / (hiOfHigh - loOfLow)) * (-100.0);
       break;
    default:
       *exp0 = 0.0;

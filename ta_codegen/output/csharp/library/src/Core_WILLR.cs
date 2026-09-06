@@ -47,14 +47,19 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY    Description
     *  -------------------------------------------------------------------
-    *  010802 MF   Template creation.
-    *  052603 MF   Adapt code to compile with .NET Managed C++
+    *  010802 MF    Template creation.
+    *  052603 MF    Adapt code to compile with .NET Managed C++
+    *  090626 MF,CC Fix #395. Divide by the range, scale after, then clamp: the
+    *               hoisted `(highest-lowest)/-100.0` underflowed to 0.0 on a
+    *               denormal range that the guard still called "not flat", and
+    *               the pre-scaled divisor left the documented [-100,0] bound.
     */
    /// <summary>
    /// Number of leading input bars <c>WILLR</c> consumes before it can produce
@@ -105,7 +110,7 @@ public partial class Core
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -146,8 +151,6 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -213,9 +216,29 @@ public partial class Core
          }
          highest = sufHighest[0];
          lowest = sufLowest[0];
-         diff = (highest - lowest) / (0 - 100.0);
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - inClose[today]) / diff;
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor. It is also what puts a close on
+          * the period low at exactly -100.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [-100,0] noise (issue #107 / STOCH).
+          *
+          * The clamp is unreachable while lowest <= close <= highest -- the
+          * quotient is <= 1 under any rounding mode. Its domain is the close
+          * outside its own bar, which nothing here validates.
+          */
+         if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -265,9 +288,14 @@ public partial class Core
                if( preLowest[m - 1] < lowest ) {
                   lowest = preLowest[m - 1];
                }
-               diff = (highest - lowest) / (0 - 100.0);
-               if( diff != 0.0 ) {
-                  outReal[outIdx++] = (highest - inClose[today + m - 1]) / diff;
+               if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  if( tempReal > 0.0 ) {
+                     tempReal = 0.0;
+                  } else if( tempReal < 0 - 100.0 ) {
+                     tempReal = 0 - 100.0;
+                  }
+                  outReal[outIdx++] = tempReal;
                } else {
                   outReal[outIdx++] = 0.0;
                }
@@ -312,7 +340,7 @@ public partial class Core
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -342,7 +370,6 @@ public partial class Core
          outNBElement = 0;
          return RetCode.Success ;
       }
-      diff = 0.0;
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
@@ -384,9 +411,14 @@ public partial class Core
          }
          highest = sufHighest[0];
          lowest = sufLowest[0];
-         diff = (highest - lowest) / (0 - 100.0);
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - (double)inClose[today]) / diff;
+         if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -428,9 +460,14 @@ public partial class Core
                if( preLowest[m - 1] < lowest ) {
                   lowest = preLowest[m - 1];
                }
-               diff = (highest - lowest) / (0 - 100.0);
-               if( diff != 0.0 ) {
-                  outReal[outIdx++] = (highest - (double)inClose[today + m - 1]) / diff;
+               if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  if( tempReal > 0.0 ) {
+                     tempReal = 0.0;
+                  } else if( tempReal < 0 - 100.0 ) {
+                     tempReal = 0 - 100.0;
+                  }
+                  outReal[outIdx++] = tempReal;
                } else {
                   outReal[outIdx++] = 0.0;
                }
@@ -454,7 +491,7 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+   /// %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
    /// </code>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -521,7 +558,7 @@ public partial class Core
    /// <remarks>
    /// <b>Formula</b>
    /// <code>
-   /// %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+   /// %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
    /// </code>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -611,7 +648,6 @@ public partial class Core
       internal int optInTimePeriod;
       internal double lowest;
       internal double highest;
-      internal double diff;
       internal int trailingIdx;
       internal int lowestIdx;
       internal int highestIdx;
@@ -658,7 +694,6 @@ public partial class Core
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
          this.highest = other.highest;
-         this.diff = other.diff;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -720,8 +755,8 @@ public partial class Core
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("WILLR", "peek", RetCode.BadParam);
          WillrStream sp = this;
          double tmp = 0.0;
+         double tempReal = 0.0;
          double cur_outReal = 0.0;
-         double diff = sp.diff;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;
@@ -762,11 +797,9 @@ public partial class Core
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
@@ -781,14 +814,19 @@ public partial class Core
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 ) {
-            cur_outReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / diff;
+         /* Same rule, band and clamp as the block scan above. */
+         if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+            tempReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            cur_outReal = tempReal;
          } else {
             cur_outReal = 0.0;
          }
@@ -815,6 +853,7 @@ public partial class Core
    internal void WillrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
+      double tempReal = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -839,11 +878,9 @@ public partial class Core
                sp.lowest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       } else if( tmp <= sp.lowest ) {
          sp.lowestIdx = sp.today;
          sp.lowest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       }
       /* Set the highest high */
       tmp = sp.x_inHigh[sp.today & sp.xMask];
@@ -858,14 +895,19 @@ public partial class Core
                sp.highest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       } else if( tmp >= sp.highest ) {
          sp.highestIdx = sp.today;
          sp.highest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       }
-      if( sp.diff != 0.0 ) {
-         sp.cur_outReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / sp.diff;
+      /* Same rule, band and clamp as the block scan above. */
+      if( !(Math.Abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.Abs(sp.highest) + Math.Abs(sp.lowest))) ) {
+         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * (0 - 100.0);
+         if( tempReal > 0.0 ) {
+            tempReal = 0.0;
+         } else if( tempReal < 0 - 100.0 ) {
+            tempReal = 0 - 100.0;
+         }
+         sp.cur_outReal = tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -880,7 +922,7 @@ public partial class Core
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -926,8 +968,6 @@ public partial class Core
          outNBElement = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -956,7 +996,6 @@ public partial class Core
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       while( today <= endIdx ) {
          /* Set the lowest low */
          tmp = inLow[today];
@@ -971,11 +1010,9 @@ public partial class Core
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -990,14 +1027,19 @@ public partial class Core
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 ) {
-            outReal[outIdx++ * outStride] = (highest - inClose[today]) / diff;
+         /* Same rule, band and clamp as the block scan above. */
+         if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++ * outStride] = tempReal;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }
@@ -1029,7 +1071,6 @@ public partial class Core
       sp.optInTimePeriod = optInTimePeriod;
       sp.lowest = lowest;
       sp.highest = highest;
-      sp.diff = diff;
       sp.trailingIdx = trailingIdx;
       sp.lowestIdx = lowestIdx;
       sp.highestIdx = highestIdx;

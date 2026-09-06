@@ -90,7 +90,8 @@
  *       form changed AND the result fuses -- and %K dividing by the window
  *       range rather than by a copy pre-scaled by 1/100 (STOCH, STOCHF), which
  *       is what makes a close on the window high exactly 100.0. STOCH's rows
- *       cover its fma-inheriting alt case too; #390 is simply the larger.
+ *       cover its fma-inheriting alt case too; #390 is simply the larger. %R
+ *       took the same treatment in #395, against a copy pre-scaled by 1/-100.
  *
  * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD and
  * MACDEXT are all bit-exact against v0.6.4 on this series, their divergences
@@ -140,6 +141,7 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "LINEARREG_SLOPE",     2e-12 },  /* #103  measured 3.49e-13             */
    { "STOCH",               3e-13 },  /* #390  measured 8.53e-14             */
    { "STOCHF",              2e-13 },  /* #390  measured 4.26e-14             */
+   { "WILLR",               3e-14 },  /* #395  measured 7.11e-15             */
    /* Sized at the frozen periods (14 and 19) and only there: unlike the rows
     * above, this divergence is output-proportional and grows with the period,
     * so a re-freeze that adds a longer-period case has to re-measure. */

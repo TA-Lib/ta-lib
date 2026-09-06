@@ -17475,6 +17475,10 @@ public final class Core {
  *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
  *                level: the fixed band zeroed the whole output for any
  *                instrument quoted small enough to fall under it.
+ *  090626 MF,CC  Fix #395. Test the divisor itself, not just the deviation it
+ *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
+ *                price the deviation's own band still calls "not flat", and
+ *                the division returned +/-Inf under TA_SUCCESS.
  */
 
    /**
@@ -17595,7 +17599,14 @@ public final class Core {
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* The third test is the divisor itself, and it is not implied by the
+          * second: the deviation's band is RELATIVE and the product's underflow is
+          * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+          * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+          * flatness question is already answered above, and this one is only
+          * asking whether the value the division uses exists.
+          *
+          * The first two tests are relative to the window's own price level (#253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -17605,7 +17616,7 @@ public final class Core {
           * average, which is what it was widened for in the first place (#7).
           */
          tempReal3 = Math.abs(theAverage);
-         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
@@ -17692,7 +17703,7 @@ public final class Core {
          tempReal2 /= optInTimePeriod;
          tempReal = lastValue - theAverage;
          tempReal3 = Math.abs(theAverage);
-         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             outReal[outIdx++] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++] = 0.0;
@@ -17974,7 +17985,14 @@ public final class Core {
          tempReal2 /= sp.optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* The third test is the divisor itself, and it is not implied by the
+          * second: the deviation's band is RELATIVE and the product's underflow is
+          * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+          * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+          * flatness question is already answered above, and this one is only
+          * asking whether the value the division uses exists.
+          *
+          * The first two tests are relative to the window's own price level (#253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -17984,7 +18002,7 @@ public final class Core {
           * average, which is what it was widened for in the first place (#7).
           */
          tempReal3 = Math.abs(theAverage);
-         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             cur_outReal = tempReal / (0.015 * tempReal2);
          } else {
             cur_outReal = 0.0;
@@ -18044,7 +18062,14 @@ public final class Core {
       tempReal2 /= sp.optInTimePeriod;
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      /* Both tests are relative to the window's own price level (issue #253).
+      /* The third test is the divisor itself, and it is not implied by the
+       * second: the deviation's band is RELATIVE and the product's underflow is
+       * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+       * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+       * flatness question is already answered above, and this one is only
+       * asking whether the value the division uses exists.
+       *
+       * The first two tests are relative to the window's own price level (#253).
        * They ask "is this window flat?", and flatness is a property of the
        * prices relative to each other -- but a deviation carries the quote
        * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -18054,7 +18079,7 @@ public final class Core {
        * average, which is what it was widened for in the first place (#7).
        */
       tempReal3 = Math.abs(theAverage);
-      if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+      if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
          sp.cur_outReal = tempReal / (0.015 * tempReal2);
       } else {
          sp.cur_outReal = 0.0;
@@ -18163,7 +18188,14 @@ public final class Core {
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* The third test is the divisor itself, and it is not implied by the
+          * second: the deviation's band is RELATIVE and the product's underflow is
+          * ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+          * copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+          * flatness question is already answered above, and this one is only
+          * asking whether the value the division uses exists.
+          *
+          * The first two tests are relative to the window's own price level (#253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -18173,7 +18205,7 @@ public final class Core {
           * average, which is what it was widened for in the first place (#7).
           */
          tempReal3 = Math.abs(theAverage);
-         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
+         if( !(Math.abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.abs(tempReal2) <= 0.00000000000001 * (tempReal3)) && 0.015 * tempReal2 != 0.0 ) {
             outReal[outIdx++ * outStride] = tempReal / (0.015 * tempReal2);
          } else {
             outReal[outIdx++ * outStride] = 0.0;
@@ -72969,18 +73001,23 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  120802 MF   Template creation.
- *  101003 MF   Initial Coding
- *  062804 MF   Resolve div by zero bug on limit case.
- *  082326 MF   Fix #242. Cancellation-free sums (shifted data + reseed, as
- *              TA_VAR does since #118), per-factor degeneracy test and a
- *              range clamp.
+ *  120802 MF    Template creation.
+ *  101003 MF    Initial Coding
+ *  062804 MF    Resolve div by zero bug on limit case.
+ *  082326 MF    Fix #242. Cancellation-free sums (shifted data + reseed, as
+ *               TA_VAR does since #118), per-factor degeneracy test and a
+ *               range clamp.
+ *  090626 MF,CC Fix #395. Test the product too: it underflows to 0.0 while ssX
+ *               and ssY are still ordinary normals, and the divide then
+ *               returned NaN under TA_SUCCESS -- which the range clamp cannot
+ *               catch -- or a perfect correlation from a degenerate window.
  */
 
    /**
@@ -73214,21 +73251,19 @@ public final class Core {
           *
           * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
           * established both are positive, so the product needs no protection from
-          * a negative operand, and the second square root is worth ~25% of the
-          * runtime.
+          * a negative operand, and the second square root is worth ~14% of this
+          * function's runtime (measured, #395).
           *
-          * The product CAN overflow to +Inf, and the one-root form is chosen with
-          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-          * arrays are not range-checked, so ssX and ssY are bounded only by the
-          * double range and their product exceeds it once |x| passes ~1e154. The
-          * two-root form would not overflow there -- but the form this replaces
-          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-          * correlation. Trading a quarter of the runtime for a case that already
-          * behaved this way, on inputs 117 orders past any price, is not a trade
-          * worth making. Revisit only if input range-checking is ever added.
+          * The product is then tested on its own, because neither factor's test
+          * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+          * and ssY are still ordinary normals (#395). A zero divisor there gives
+          * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+          * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+          * not a band: an absolute band on the product is the #253 defect at a new
+          * address. At the other end the product overflows to +Inf and the quotient
+          * is 0.0, the degenerate answer anyway.
           */
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
             tempReal = spXY / Math.sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
@@ -73383,7 +73418,7 @@ public final class Core {
          trailingX = (double)inReal0[trailingIdx] - shiftX;
          trailingY = (double)inReal1[trailingIdx] - shiftY;
          trailingIdx += 1;
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
             tempReal = spXY / Math.sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
@@ -73809,21 +73844,19 @@ public final class Core {
           *
           * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
           * established both are positive, so the product needs no protection from
-          * a negative operand, and the second square root is worth ~25% of the
-          * runtime.
+          * a negative operand, and the second square root is worth ~14% of this
+          * function's runtime (measured, #395).
           *
-          * The product CAN overflow to +Inf, and the one-root form is chosen with
-          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-          * arrays are not range-checked, so ssX and ssY are bounded only by the
-          * double range and their product exceeds it once |x| passes ~1e154. The
-          * two-root form would not overflow there -- but the form this replaces
-          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-          * correlation. Trading a quarter of the runtime for a case that already
-          * behaved this way, on inputs 117 orders past any price, is not a trade
-          * worth making. Revisit only if input range-checking is ever added.
+          * The product is then tested on its own, because neither factor's test
+          * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+          * and ssY are still ordinary normals (#395). A zero divisor there gives
+          * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+          * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+          * not a band: an absolute band on the product is the #253 defect at a new
+          * address. At the other end the product overflows to +Inf and the quotient
+          * is 0.0, the degenerate answer anyway.
           */
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
             tempReal = spXY / Math.sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
@@ -73995,21 +74028,19 @@ public final class Core {
        *
        * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
        * established both are positive, so the product needs no protection from
-       * a negative operand, and the second square root is worth ~25% of the
-       * runtime.
+       * a negative operand, and the second square root is worth ~14% of this
+       * function's runtime (measured, #395).
        *
-       * The product CAN overflow to +Inf, and the one-root form is chosen with
-       * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-       * arrays are not range-checked, so ssX and ssY are bounded only by the
-       * double range and their product exceeds it once |x| passes ~1e154. The
-       * two-root form would not overflow there -- but the form this replaces
-       * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-       * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-       * correlation. Trading a quarter of the runtime for a case that already
-       * behaved this way, on inputs 117 orders past any price, is not a trade
-       * worth making. Revisit only if input range-checking is ever added.
+       * The product is then tested on its own, because neither factor's test
+       * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+       * and ssY are still ordinary normals (#395). A zero divisor there gives
+       * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+       * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+       * not a band: an absolute band on the product is the #253 defect at a new
+       * address. At the other end the product overflows to +Inf and the quotient
+       * is 0.0, the degenerate answer anyway.
        */
-      if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 ) {
+      if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 && ssX * ssY > 0.0 ) {
          tempReal = spXY / Math.sqrt(ssX * ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it a few ulp outside.
@@ -74246,21 +74277,19 @@ public final class Core {
           *
           * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
           * established both are positive, so the product needs no protection from
-          * a negative operand, and the second square root is worth ~25% of the
-          * runtime.
+          * a negative operand, and the second square root is worth ~14% of this
+          * function's runtime (measured, #395).
           *
-          * The product CAN overflow to +Inf, and the one-root form is chosen with
-          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-          * arrays are not range-checked, so ssX and ssY are bounded only by the
-          * double range and their product exceeds it once |x| passes ~1e154. The
-          * two-root form would not overflow there -- but the form this replaces
-          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-          * correlation. Trading a quarter of the runtime for a case that already
-          * behaved this way, on inputs 117 orders past any price, is not a trade
-          * worth making. Revisit only if input range-checking is ever added.
+          * The product is then tested on its own, because neither factor's test
+          * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+          * and ssY are still ordinary normals (#395). A zero divisor there gives
+          * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+          * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+          * not a band: an absolute band on the product is the #253 defect at a new
+          * address. At the other end the product overflows to +Inf and the quotient
+          * is 0.0, the degenerate answer anyway.
           */
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
             tempReal = spXY / Math.sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
@@ -176231,14 +176260,19 @@ public final class Core {
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  090626 MF,CC Fix #395. Divide by the range, scale after, then clamp: the
+ *               hoisted `(highest-lowest)/-100.0` underflowed to 0.0 on a
+ *               denormal range that the guard still called "not flat", and
+ *               the pre-scaled divisor left the documented [-100,0] bound.
  */
 
    /**
@@ -176287,7 +176321,7 @@ public final class Core {
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -176325,8 +176359,6 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -176392,9 +176424,29 @@ public final class Core {
          }
          highest = sufHighest[0];
          lowest = sufLowest[0];
-         diff = (highest - lowest) / (0 - 100.0);
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - inClose[today]) / diff;
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor. It is also what puts a close on
+          * the period low at exactly -100.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [-100,0] noise (issue #107 / STOCH).
+          *
+          * The clamp is unreachable while lowest <= close <= highest -- the
+          * quotient is <= 1 under any rounding mode. Its domain is the close
+          * outside its own bar, which nothing here validates.
+          */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -176444,9 +176496,14 @@ public final class Core {
                if( preLowest[m - 1] < lowest ) {
                   lowest = preLowest[m - 1];
                }
-               diff = (highest - lowest) / (0 - 100.0);
-               if( diff != 0.0 ) {
-                  outReal[outIdx++] = (highest - inClose[today + m - 1]) / diff;
+               if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                  tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  if( tempReal > 0.0 ) {
+                     tempReal = 0.0;
+                  } else if( tempReal < 0 - 100.0 ) {
+                     tempReal = 0 - 100.0;
+                  }
+                  outReal[outIdx++] = tempReal;
                } else {
                   outReal[outIdx++] = 0.0;
                }
@@ -176489,7 +176546,7 @@ public final class Core {
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -176519,7 +176576,6 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.Success ;
       }
-      diff = 0.0;
       outIdx = 0;
       today = startIdx;
       trailingIdx = startIdx - nbInitialElementNeeded;
@@ -176561,9 +176617,14 @@ public final class Core {
          }
          highest = sufHighest[0];
          lowest = sufLowest[0];
-         diff = (highest - lowest) / (0 - 100.0);
-         if( diff != 0.0 ) {
-            outReal[outIdx++] = (highest - (double)inClose[today]) / diff;
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++] = tempReal;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -176605,9 +176666,14 @@ public final class Core {
                if( preLowest[m - 1] < lowest ) {
                   lowest = preLowest[m - 1];
                }
-               diff = (highest - lowest) / (0 - 100.0);
-               if( diff != 0.0 ) {
-                  outReal[outIdx++] = (highest - (double)inClose[today + m - 1]) / diff;
+               if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+                  tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+                  if( tempReal > 0.0 ) {
+                     tempReal = 0.0;
+                  } else if( tempReal < 0 - 100.0 ) {
+                     tempReal = 0 - 100.0;
+                  }
+                  outReal[outIdx++] = tempReal;
                } else {
                   outReal[outIdx++] = 0.0;
                }
@@ -176629,7 +176695,7 @@ public final class Core {
     * = close at period low (oversold).
     * <p><b>Formula</b>
     * <pre>{@code
-    * %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
     * }</pre>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -176695,7 +176761,7 @@ public final class Core {
     * = close at period low (oversold).
     * <p><b>Formula</b>
     * <pre>{@code
-    * %R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
     * }</pre>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -176780,7 +176846,6 @@ public final class Core {
       int optInTimePeriod;
       double lowest;
       double highest;
-      double diff;
       int trailingIdx;
       int lowestIdx;
       int highestIdx;
@@ -176824,7 +176889,6 @@ public final class Core {
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
          this.highest = other.highest;
-         this.diff = other.diff;
          this.trailingIdx = other.trailingIdx;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
@@ -176876,8 +176940,8 @@ public final class Core {
             throw new TaLibArgumentException("WILLR peek: BadParam", RetCode.BadParam);
          WillrStream sp = this;
          double tmp = 0.0;
+         double tempReal = 0.0;
          double cur_outReal = 0.0;
-         double diff = sp.diff;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;
@@ -176918,11 +176982,9 @@ public final class Core {
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
@@ -176937,14 +176999,19 @@ public final class Core {
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 ) {
-            cur_outReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / diff;
+         /* Same rule, band and clamp as the block scan above. */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - (((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            cur_outReal = tempReal;
          } else {
             cur_outReal = 0.0;
          }
@@ -176980,6 +177047,7 @@ public final class Core {
    void willrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
+      double tempReal = 0.0;
       if( sp.today >= 1073741824 ) {
          int rebaseShift = sp.trailingIdx & ~sp.xMask;
          sp.today -= rebaseShift;
@@ -177004,11 +177072,9 @@ public final class Core {
                sp.lowest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       } else if( tmp <= sp.lowest ) {
          sp.lowestIdx = sp.today;
          sp.lowest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       }
       /* Set the highest high */
       tmp = sp.x_inHigh[sp.today & sp.xMask];
@@ -177023,14 +177089,19 @@ public final class Core {
                sp.highest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       } else if( tmp >= sp.highest ) {
          sp.highestIdx = sp.today;
          sp.highest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / (0 - 100.0);
       }
-      if( sp.diff != 0.0 ) {
-         sp.cur_outReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / sp.diff;
+      /* Same rule, band and clamp as the block scan above. */
+      if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
+         tempReal = (sp.highest - sp.x_inClose[sp.today & sp.xMask]) / (sp.highest - sp.lowest) * (0 - 100.0);
+         if( tempReal > 0.0 ) {
+            tempReal = 0.0;
+         } else if( tempReal < 0 - 100.0 ) {
+            tempReal = 0 - 100.0;
+         }
+         sp.cur_outReal = tempReal;
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -177042,7 +177113,7 @@ public final class Core {
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
+      double tempReal = 0;
       int outIdx = 0;
       int nbInitialElementNeeded = 0;
       int trailingIdx = 0;
@@ -177088,8 +177159,6 @@ public final class Core {
          outNBElement.value = 0;
          return RetCode.InsufficientHistory ;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -177118,7 +177187,6 @@ public final class Core {
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       while( today <= endIdx ) {
          /* Set the lowest low */
          tmp = inLow[today];
@@ -177133,11 +177201,9 @@ public final class Core {
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -177152,14 +177218,19 @@ public final class Core {
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 ) {
-            outReal[outIdx++ * outStride] = (highest - inClose[today]) / diff;
+         /* Same rule, band and clamp as the block scan above. */
+         if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 ) {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 ) {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++ * outStride] = tempReal;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }
@@ -177191,7 +177262,6 @@ public final class Core {
       sp.optInTimePeriod = optInTimePeriod;
       sp.lowest = lowest;
       sp.highest = highest;
-      sp.diff = diff;
       sp.trailingIdx = trailingIdx;
       sp.lowestIdx = lowestIdx;
       sp.highestIdx = highestIdx;
