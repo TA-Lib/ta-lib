@@ -124,6 +124,31 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     // it. KAMA below is the contrast -- it carries `sumROC1`, so the same reasoning
     // does not reach it.
     ("VWMA", "tempV", "unguarded by decision: stateless per bar", "nan_inf_output"),
+
+    // OPEN, reported by the inline arm, and MEASURED on the released library in
+    // #395: both return TA_SUCCESS with inf/NaN. CCI guards `tempReal2` and divides
+    // by `0.015*tempReal2` (cci.c:127,129) -- the scaling underflows while the guard
+    // passes. CORREL guards `ssX` and `ssY` separately and divides by
+    // `sqrt(ssX*ssY)` (correl.c:234,236) -- the product underflows independently of
+    // either factor, and where `spXY` is zero the result is NaN, which the [-1,1]
+    // clamp does not catch because `NaN > 1.0` is false.
+    ("CCI", "0.015*tempReal2", "OPEN: inline scaling of a guarded operand; see #395", ""),
+    ("CORREL", "sqrt(ssX*ssY)", "OPEN: product underflows independently; see #395", ""),
+
+    // OPEN, same shape, REACHABILITY NOT DEMONSTRATED -- by me or by #395, which does
+    // not mention them. The Hilbert family guards `Im != 0.0 && Re != 0.0` and then
+    // divides by `atan(Im/Re)*rad2Deg` (ht_dcperiod.c:318-319 and its six twins).
+    // Both operands being non-zero does not make the quotient representable: a small
+    // enough `Im/Re` underflows to 0.0 and `atan(0.0)` is exactly 0.0. That is the
+    // structural argument; I did not construct an input that reaches it, so these
+    // rows say "shape matches" and nothing stronger.
+    ("HT_DCPERIOD", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    ("HT_DCPHASE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    ("HT_PHASOR", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    ("HT_SINE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    ("HT_TRENDLINE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    ("HT_TRENDMODE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    ("MAMA", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
 ];
 
 /// Variables assigned, inside a loop, from an expression that MULTIPLIES OR DIVIDES
@@ -263,6 +288,86 @@ fn accumulated_in_loop(body: &[Statement], in_loop: bool, out: &mut HashSet<Stri
             }
             _ => {}
         }
+    }
+}
+
+/// Did a guard attempt ANY lower bound on `var`, sound or not?
+fn bounded_below(cond: &Expr, var: &str) -> bool {
+    match cond {
+        Expr::BinOp(l, BinOp::And | BinOp::Or, r) => {
+            bounded_below(l, var) || bounded_below(r, var)
+        }
+        Expr::BinOp(l, BinOp::Greater | BinOp::GreaterEq, r) => {
+            names(l).contains(var) && !names(r).contains(var)
+        }
+        Expr::BinOp(l, BinOp::Less | BinOp::LessEq, r) => {
+            names(r).contains(var) && !names(l).contains(var)
+        }
+        Expr::BinOp(l, BinOp::NotEq | BinOp::Eq, r) => {
+            names(l).contains(var) || names(r).contains(var)
+        }
+        Expr::Not(i) => bounded_below(i, var),
+        Expr::FuncCall(n, args) if n.contains("IS_ZERO") => {
+            args.first().map(|a| names(a).contains(var)).unwrap_or(false)
+        }
+        _ => false,
+    }
+}
+
+/// Is `e` an inline product or quotient -- a value no guard can name?
+///
+/// `sqrt(...)` and `fabs(...)` are transparent: the scaling is inside them, and the
+/// call itself carries the same zeroness as its argument.
+fn inline_scaling(e: &Expr) -> bool {
+    match e {
+        Expr::BinOp(_, BinOp::Mul | BinOp::Div, _) => true,
+        Expr::FuncCall(n, args) if n == "sqrt" || n == "fabs" || n == "std_fabs" => {
+            args.first().map(inline_scaling).unwrap_or(false)
+        }
+        Expr::Cast(_, i) => inline_scaling(i),
+        _ => false,
+    }
+}
+
+/// A guard naming the whole expression, not just one of its operands.
+fn tests_expr_against_zero(cond: &Expr, den: &Expr) -> bool {
+    fn same(a: &Expr, b: &Expr) -> bool {
+        format!("{a:?}") == format!("{b:?}")
+    }
+    match cond {
+        Expr::BinOp(l, BinOp::And | BinOp::Or, r) => {
+            tests_expr_against_zero(l, den) || tests_expr_against_zero(r, den)
+        }
+        Expr::BinOp(l, _, r) => same(l, den) || same(r, den),
+        Expr::Not(i) => tests_expr_against_zero(i, den),
+        Expr::FuncCall(n, args) if n.contains("IS_ZERO") => {
+            args.first().map(|a| same(a, den)).unwrap_or(false)
+        }
+        _ => false,
+    }
+}
+
+/// A short, stable rendering of a divisor expression for the report.
+fn render_expr(e: &Expr) -> String {
+    match e {
+        Expr::Var(v) => v.clone(),
+        Expr::Literal(l) => format!("{l}"),
+        Expr::IntLiteral(i) => format!("{i}"),
+        Expr::BinOp(l, op, r) => {
+            let o = match op {
+                BinOp::Mul => "*",
+                BinOp::Div => "/",
+                BinOp::Add => "+",
+                BinOp::Sub => "-",
+                _ => "?",
+            };
+            format!("{}{}{}", render_expr(l), o, render_expr(r))
+        }
+        Expr::FuncCall(n, args) => {
+            format!("{n}({})", args.iter().map(render_expr).collect::<Vec<_>>().join(","))
+        }
+        Expr::Cast(_, i) => render_expr(i),
+        _ => "<expr>".to_string(),
     }
 }
 
@@ -432,6 +537,10 @@ enum FindingKind {
     /// Divisor is a SCALED derivation of a quantity a dominating guard does test —
     /// the guard proves the pre-scaled value non-zero, which the divisor is not.
     ScaledFromGuarded,
+    /// The divisor is an INLINE product or quotient whose operands are guarded but
+    /// whose value is not. Same defect as `ScaledFromGuarded`, one step earlier: the
+    /// scaling never lands in a variable, so there is nothing for a guard to name.
+    InlineScaled,
 }
 
 impl FindingKind {
@@ -439,6 +548,7 @@ impl FindingKind {
         match self {
             FindingKind::Accumulated => "accumulated, untested",
             FindingKind::ScaledFromGuarded => "scaled from a guarded value",
+            FindingKind::InlineScaled => "inline product/quotient of guarded operands",
         }
     }
 }
@@ -455,6 +565,30 @@ fn scan_expr(
     out: &mut Vec<Finding>,
 ) {
     if let Expr::BinOp(num, BinOp::Div, den) = e {
+        // Third shape: the divisor is an inline product or quotient. A guard on an
+        // OPERAND does not establish the value: `0.015*tempReal2` underflows to
+        // exactly 0.0 while `tempReal2` is still non-zero (cci.c:127,129), and
+        // `sqrt(ssX*ssY)` underflows independently of either factor guarded
+        // separately (correl.c:234,236). Only a guard naming the divisor as a whole
+        // -- which for an inline expression cannot exist -- would settle it.
+        if inline_scaling(den) && !guards.iter().any(|g| tests_expr_against_zero(g, den)) {
+            // Deliberately looser than `tests_var_against_zero`: the question here is
+            // only whether someone TRIED to bound an operand, not whether that bound
+            // is sound. CORREL guards `ssX > 1e-14*sumX2` -- a relative band, not a
+            // literal floor -- and the strict test rejects it, which is right for the
+            // other arms and wrong for this one. The strict test stays where the ER
+            // self-test pins it.
+            let any_operand_guarded = names(den)
+                .iter()
+                .any(|v| guards.iter().any(|g| bounded_below(g, v)));
+            if any_operand_guarded {
+                out.push(Finding {
+                    func: func.to_string(),
+                    divisor: render_expr(den),
+                    kind: FindingKind::InlineScaled,
+                });
+            }
+        }
         for v in names(den) {
             let guarded = guards.iter().any(|g| {
                 tests_var_against_zero(g, &v)
@@ -1010,6 +1144,72 @@ fn divide_by_a_scaled_copy(body: &mut [Statement]) {
                 walk(then_body);
                 walk(else_body);
             }
+            _ => {}
+        }
+    }
+}
+
+/// The inline arm must go quiet when the guard names the whole divisor.
+///
+/// Third self-test, same requirement as the other two: a check that flagged every
+/// inline product unconditionally would pass the "it found CCI" bar and be worthless.
+/// Rewriting CCI's guard to test `0.015*tempReal2` — the divisor itself — must clear
+/// the finding.
+#[test]
+fn the_inline_arm_clears_when_the_guard_names_the_divisor() {
+    let funcs = load();
+    let cci = funcs.iter().find(|f| f.name == "CCI").expect("CCI is in the tree");
+
+    assert!(
+        findings_for(cci).iter().any(|f| f.kind == FindingKind::InlineScaled),
+        "CCI ships guarding `tempReal2` while dividing by `0.015*tempReal2`"
+    );
+
+    let mut fixed = cci.clone();
+    guard_the_whole_divisor(&mut fixed.body);
+    guard_the_whole_divisor(&mut fixed.private_body);
+    assert!(
+        !findings_for(&fixed).iter().any(|f| f.kind == FindingKind::InlineScaled),
+        "the inline arm still flags CCI after the guard was moved onto the divisor \
+         itself — it is not reading the guard, it is flagging every inline product"
+    );
+}
+
+/// Replace CCI's `TA_IS_ZERO_SCALED(tempReal2, ...)` with a test on `0.015*tempReal2`.
+fn guard_the_whole_divisor(body: &mut [Statement]) {
+    fn divisor() -> Expr {
+        Expr::BinOp(
+            Box::new(Expr::Literal(0.015)),
+            BinOp::Mul,
+            Box::new(Expr::Var("tempReal2".to_string())),
+        )
+    }
+    fn fix(e: &Expr) -> Expr {
+        match e {
+            Expr::FuncCall(n, args)
+                if n.contains("IS_ZERO") && args.iter().any(|a| names(a).contains("tempReal2")) =>
+            {
+                Expr::BinOp(Box::new(divisor()), BinOp::Eq, Box::new(Expr::Literal(0.0)))
+            }
+            Expr::Not(i) => Expr::Not(Box::new(fix(i))),
+            Expr::BinOp(l, op, r) if matches!(op, BinOp::And | BinOp::Or) => {
+                Expr::BinOp(Box::new(fix(l)), op.clone(), Box::new(fix(r)))
+            }
+            _ => e.clone(),
+        }
+    }
+    for st in body.iter_mut() {
+        match st {
+            Statement::If { condition, then_body, else_body, .. } => {
+                *condition = fix(condition);
+                guard_the_whole_divisor(then_body);
+                guard_the_whole_divisor(else_body);
+            }
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::ForC { body, .. }
+            | Statement::Block { body } => guard_the_whole_divisor(body),
             _ => {}
         }
     }
