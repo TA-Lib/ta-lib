@@ -140,8 +140,6 @@ fn test_rust_ema_scalar_recurrence_stream_section() {
     assert!(s.contains("prevMA: f64,"));
     assert!(s.contains("optInK_1: f64,"));
     assert!(!s.contains("Vec<f64>,"), "EMA carries only scalars");
-    // Compatibility is consumed during the transcribed open (read from self).
-    assert!(s.contains("self.compatibility"));
     // Update returns the bare value.
     assert!(s.contains("pub fn update(&mut self, inReal: f64) -> Result<f64, RetCode> {"));
     // Peek runs a frame against the borrowed state.

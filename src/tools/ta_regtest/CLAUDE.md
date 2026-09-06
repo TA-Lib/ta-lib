@@ -511,10 +511,9 @@ value, sample index, and the pinned retCode/outBegIdx/outNbElement. A
 regeneration must not lose two things: integer periods are never 1 (period-1 is
 the intentional v0.6.4 divergence and belongs to the PERIOD1/BOUNDARY group) and
 MAType never exceeds 8 (9+ post-date the freeze). The group also establishes the
-state it needs rather than inheriting it — `DO_TEST` resets compatibility between
-groups but not unstable periods or candle settings, and earlier groups change
-both — zeroing every unstable period and restoring the candle defaults, then
-putting both back.
+state it needs rather than inheriting it — `DO_TEST` resets neither unstable
+periods nor candle settings, and earlier groups change both — zeroing every
+unstable period and restoring the candle defaults, then putting both back.
 
 **At re-freeze:** regenerate against the new reference and delete every
 `LEGACY_TOL` row; both divergence causes are specific to v0.6.4. The libm floors
@@ -694,13 +693,6 @@ server == expected".
   handler (`TA_<name>`, not `abstract_call`) with an FNV-1a of the raw GUARDED
   output bytes. C's per-function handler is `#ifndef TA_REF_SERVE`-guarded, its
   `fuzz_hash_*` living in `fuzz_data.h`, absent from the frozen `ta_ref_serve`.
-- **Metastock legs are C-only, permanently.** A hand-written test running under
-  non-default compatibility is skipped for Rust, Java and C# by design:
-  `TA_SetCompatibility` is deprecated in C and the ported backends expose no
-  equivalent, so there is no second implementation to compare against.
-  `codegen_lang_has_compatibility_api` is the single place that says so, and
-  closing this "gap" would mean implementing a deprecated feature in three
-  backends so that a test could verify it.
 - **Tolerance rule.** Bitwise for C ⇄ Rust (same system libm as the golden). Java
   and C# are bitwise for pure arithmetic and IEEE ops (SQRT/CEIL/FLOOR included)
   and take `CODEGEN_TRANSCENDENTAL_TOL` (1e-9, against measured drift

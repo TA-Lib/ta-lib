@@ -69997,16 +69997,12 @@ public final class Core {
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
-      double tempValue3 = 0;
-      double tempValue4 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -70064,18 +70060,6 @@ public final class Core {
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -70104,6 +70088,12 @@ public final class Core {
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
@@ -70170,16 +70160,12 @@ public final class Core {
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
-      double tempValue3 = 0;
-      double tempValue4 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -70213,7 +70199,6 @@ public final class Core {
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -70591,16 +70576,12 @@ public final class Core {
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
-      double tempValue3 = 0;
-      double tempValue4 = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -70669,18 +70650,6 @@ public final class Core {
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -70709,6 +70678,12 @@ public final class Core {
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
@@ -70891,9 +70866,8 @@ public final class Core {
       /* CMOU needs optInTimePeriod price changes -> optInTimePeriod+1 prices ->
        * the first output is at index optInTimePeriod.
        *
-       * Unlike the shipped CMO, there is NO unstable period and NO Metastock
-       * "extra initial bar" adjustment: CMOU is a plain moving-window sum, so its
-       * lookback is exactly the period.
+       * Unlike the shipped CMO, there is NO unstable period: CMOU is a plain
+       * moving-window sum, so its lookback is exactly the period.
        */
       return optInTimePeriod ;
 
@@ -76670,14 +76644,9 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum
-       *    of its first 'period' inputs, accumulated from 0.0 in
-       *    input order (0.0+x is not x for x=-0.0), divided by
-       *    the period.
-       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-       *    EMA2 from the first EMA1 value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order (0.0+x is
+       *    not x for x=-0.0), divided by the period.
        *
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
@@ -77184,14 +77153,9 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum
-       *    of its first 'period' inputs, accumulated from 0.0 in
-       *    input order (0.0+x is not x for x=-0.0), divided by
-       *    the period.
-       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-       *    EMA2 from the first EMA1 value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order (0.0+x is
+       *    not x for x=-0.0), divided by the period.
        *
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
@@ -80928,16 +80892,8 @@ public final class Core {
       }
       outBegIdx.value = startIdx;
       /* The first EMA value is a simple average of the first 'period' force
-       * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-       * applied to the force series rather than to the input array.
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-       * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-       * deprecated: it is preserved for the functions that already shipped with
-       * it and dropped from new ones, and it is not reachable at all from the
-       * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-       * here would make EFI's C output diverge from the other three backends for
-       * a setting they cannot even read.
+       * values; it then seeds the recursion. This is ema.c's seeding applied
+       * to the force series rather than to the input array.
        */
       today = startIdx - lookbackTotal + 1;
       prevClose = inClose[today - 1];
@@ -81524,16 +81480,8 @@ public final class Core {
           */
          outBegIdx.value = startIdx;
          /* The first EMA value is a simple average of the first 'period' force
-          * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-          * applied to the force series rather than to the input array.
-          *
-          * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-          * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-          * deprecated: it is preserved for the functions that already shipped with
-          * it and dropped from new ones, and it is not reachable at all from the
-          * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-          * here would make EFI's C output diverge from the other three backends for
-          * a setting they cannot even read.
+          * values; it then seeds the recursion. This is ema.c's seeding applied
+          * to the force series rather than to the input array.
           */
          today = startIdx - lookbackTotal + 1;
          prevClose = inClose[today - 1];
@@ -81763,26 +81711,6 @@ public final class Core {
       }
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
-      /* The first EMA is calculated differently. It
-       * then become the seed for subsequent EMA.
-       *
-       * The algorithm for this seed vary widely.
-       * Only 3 are implemented here:
-       *
-       * TA_MA_CLASSIC:
-       *    Use a simple MA of the first 'period'.
-       *    This is the approach most widely documented.
-       *
-       * TA_MA_METASTOCK:
-       *    Use first price bar value as a seed
-       *    from the begining of all the available
-       *    data.
-       *
-       * TA_MA_TRADESTATION:
-       *    Use 4th price bar as a seed, except when
-       *    period is 1 who use 2th price bar or something
-       *    like that... (not an obvious one...).
-       */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -82216,26 +82144,6 @@ public final class Core {
       }
       outBegIdx.value = startIdx;
       /* Do the EMA calculation using tight loops. */
-      /* The first EMA is calculated differently. It
-       * then become the seed for subsequent EMA.
-       *
-       * The algorithm for this seed vary widely.
-       * Only 3 are implemented here:
-       *
-       * TA_MA_CLASSIC:
-       *    Use a simple MA of the first 'period'.
-       *    This is the approach most widely documented.
-       *
-       * TA_MA_METASTOCK:
-       *    Use first price bar value as a seed
-       *    from the begining of all the available
-       *    data.
-       *
-       * TA_MA_TRADESTATION:
-       *    Use 4th price bar as a seed, except when
-       *    period is 1 who use 2th price bar or something
-       *    like that... (not an obvious one...).
-       */
       today = startIdx - lookbackTotal;
       i = optInTimePeriod;
       tempReal = 0.0;
@@ -83350,13 +83258,10 @@ public final class Core {
        *
        * One fused loop, not ema() + a combine map: a composed form cannot
        * stream (raw bar inputs are outside check_map_step's provenance), which
-       * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-       * op for op -- sequential seed sum from 0.0 then one divide, the
-       * unstable-period warm-up consumed bar by bar -- so the differential
-       * against shipped TA_EMA holds bitwise. No compatibility branch: the
-       * Metastock arm is unreachable from three of the four backends, and a
-       * new function honouring it would make C diverge from them (EFI/SMI
-       * precedent).
+       * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+       * sequential seed sum from 0.0 then one divide, the unstable-period
+       * warm-up consumed bar by bar -- so the differential against shipped
+       * TA_EMA holds bitwise.
        *
        * No division in the per-bar map: no 0/0, no NaN path (#112 by
        * construction). Bull >= Bear on every bar since high >= low.
@@ -83908,13 +83813,10 @@ public final class Core {
           *
           * One fused loop, not ema() + a combine map: a composed form cannot
           * stream (raw bar inputs are outside check_map_step's provenance), which
-          * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-          * op for op -- sequential seed sum from 0.0 then one divide, the
-          * unstable-period warm-up consumed bar by bar -- so the differential
-          * against shipped TA_EMA holds bitwise. No compatibility branch: the
-          * Metastock arm is unreachable from three of the four backends, and a
-          * new function honouring it would make C diverge from them (EFI/SMI
-          * precedent).
+          * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+          * sequential seed sum from 0.0 then one divide, the unstable-period
+          * warm-up consumed bar by bar -- so the differential against shipped
+          * TA_EMA holds bitwise.
           *
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
@@ -83974,13 +83876,10 @@ public final class Core {
           *
           * One fused loop, not ema() + a combine map: a composed form cannot
           * stream (raw bar inputs are outside check_map_step's provenance), which
-          * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-          * op for op -- sequential seed sum from 0.0 then one divide, the
-          * unstable-period warm-up consumed bar by bar -- so the differential
-          * against shipped TA_EMA holds bitwise. No compatibility branch: the
-          * Metastock arm is unreachable from three of the four backends, and a
-          * new function honouring it would make C diverge from them (EFI/SMI
-          * precedent).
+          * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+          * sequential seed sum from 0.0 then one divide, the unstable-period
+          * warm-up consumed bar by bar -- so the differential against shipped
+          * TA_EMA holds bitwise.
           *
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
@@ -112485,16 +112384,11 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum of
-       *    its first 'period' inputs, accumulated from 0.0 in input
-       *    order, divided by the period. The fast and slow seed
-       *    windows end on the same bar. The signal EMA is seeded the
-       *    same way from the first 'signal period' MACD-line values.
-       *  - Metastock compatibility: the fast and slow EMA are seeded
-       *    from inReal[0], the signal EMA from the first MACD-line
-       *    value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order, divided by
+       *    the period. The fast and slow seed windows end on the
+       *    same bar. The signal EMA is seeded the same way from the
+       *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
        * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -113203,16 +113097,11 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum of
-       *    its first 'period' inputs, accumulated from 0.0 in input
-       *    order, divided by the period. The fast and slow seed
-       *    windows end on the same bar. The signal EMA is seeded the
-       *    same way from the first 'signal period' MACD-line values.
-       *  - Metastock compatibility: the fast and slow EMA are seeded
-       *    from inReal[0], the signal EMA from the first MACD-line
-       *    value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order, divided by
+       *    the period. The fast and slow seed windows end on the
+       *    same bar. The signal EMA is seeded the same way from the
+       *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
        * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -114561,16 +114450,11 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum of
-       *    its first 'period' inputs, accumulated from 0.0 in input
-       *    order, divided by the period. The fast and slow seed
-       *    windows end on the same bar. The signal EMA is seeded the
-       *    same way from the first 'signal period' MACD-line values.
-       *  - Metastock compatibility: the fast and slow EMA are seeded
-       *    from inReal[0], the signal EMA from the first MACD-line
-       *    value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order, divided by
+       *    the period. The fast and slow seed windows end on the
+       *    same bar. The signal EMA is seeded the same way from the
+       *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
        * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -115216,16 +115100,11 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum of
-       *    its first 'period' inputs, accumulated from 0.0 in input
-       *    order, divided by the period. The fast and slow seed
-       *    windows end on the same bar. The signal EMA is seeded the
-       *    same way from the first 'signal period' MACD-line values.
-       *  - Metastock compatibility: the fast and slow EMA are seeded
-       *    from inReal[0], the signal EMA from the first MACD-line
-       *    value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order, divided by
+       *    the period. The fast and slow seed windows end on the
+       *    same bar. The signal EMA is seeded the same way from the
+       *    first 'signal period' MACD-line values.
        *
        * In-place (an output == inReal) is supported: outputs at
        * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -118170,11 +118049,6 @@ public final class Core {
        * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-       * unreachable from the Rust, Java and C# APIs, so consulting
-       * TA_GetCompatibility() here would make C diverge from three backends for a
-       * setting they cannot read.
        */
       optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
       ema1 = 0.0;
@@ -118845,11 +118719,6 @@ public final class Core {
        * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
        * is warmed. The seed sums accumulate from 0.0 in production order; do not
        * reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-       * unreachable from the Rust, Java and C# APIs, so consulting
-       * TA_GetCompatibility() here would make C diverge from three backends for a
-       * setting they cannot read.
        */
       optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
       ema1 = 0.0;
@@ -145091,12 +144960,10 @@ public final class Core {
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -145113,11 +144980,6 @@ public final class Core {
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
-       *
-       * Metastock is starting the calculation one price
-       * bar earlier. To make this possible, they assume
-       * that the very first bar will be identical to the
-       * previous one (no gain or loss).
        */
       /* If changing this function, please check also CMO
        * which is mostly identical (just different in one step
@@ -145159,18 +145021,6 @@ public final class Core {
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -145200,6 +145050,12 @@ public final class Core {
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
@@ -145271,12 +145127,10 @@ public final class Core {
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -145312,7 +145166,6 @@ public final class Core {
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -145720,12 +145573,10 @@ public final class Core {
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
       int historyLen = inReal.length;
@@ -145771,11 +145622,6 @@ public final class Core {
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
-       *
-       * Metastock is starting the calculation one price
-       * bar earlier. To make this possible, they assume
-       * that the very first bar will be identical to the
-       * previous one (no gain or loss).
        */
       /* If changing this function, please check also CMO
        * which is mostly identical (just different in one step
@@ -145799,18 +145645,6 @@ public final class Core {
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -145840,6 +145674,12 @@ public final class Core {
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
@@ -152681,12 +152521,6 @@ public final class Core {
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-       * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
        */
       kSlow = 2.0 / (double)(optInSlowPeriod + 1);
       kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -153796,12 +153630,6 @@ public final class Core {
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-       * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
        */
       kSlow = 2.0 / (double)(optInSlowPeriod + 1);
       kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -162817,17 +162645,11 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum
-       *    of its first 'period' inputs, accumulated from 0.0 in
-       *    input order (0.0+x is not x for x=-0.0), divided by
-       *    the period.
-       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-       *    EMA2 from the first EMA1 value, EMA3 from the first EMA2
-       *    value.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order (0.0+x is
+       *    not x for x=-0.0), divided by the period.
        *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
        *    added to EMA3 on the left.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
        *
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
@@ -163379,17 +163201,11 @@ public final class Core {
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum
-       *    of its first 'period' inputs, accumulated from 0.0 in
-       *    input order (0.0+x is not x for x=-0.0), divided by
-       *    the period.
-       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-       *    EMA2 from the first EMA1 value, EMA3 from the first EMA2
-       *    value.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order (0.0+x is
+       *    not x for x=-0.0), divided by the period.
        *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
        *    added to EMA3 on the left.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
        *
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
@@ -167580,11 +167396,6 @@ public final class Core {
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
        *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-       *
        * prevClose is carried in a scalar rather than re-read from inReal[t-1]
        * because outReal may alias inReal: the slot holding close[t-1] may already
        * hold an output written a bar earlier.
@@ -168233,11 +168044,6 @@ public final class Core {
        * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
        *
        * prevClose is carried in a scalar rather than re-read from inReal[t-1]
        * because outReal may alias inReal: the slot holding close[t-1] may already

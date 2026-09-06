@@ -14,7 +14,7 @@
 //! `Open` transcribes the ENTIRE batch body (startIdx=0, endIdx=historyLen-1,
 //! output writes redirected to `lastValue_*` scalars) and then captures the
 //! still-live locals into the freshly allocated state struct — batch-equal
-//! state by construction, seeding/compatibility/unstable-period handling
+//! state by construction, seeding/unstable-period handling
 //! carried verbatim. Bit-exactness versus `batch(startIdx=0)` follows because
 //! every rewritten statement renders through the same [`super::c`] renderer
 //! in the same order.
@@ -303,13 +303,12 @@ pub fn open_signature(func: &FuncDef) -> String {
 /// Internal `OpenInternal` prototype (no trailing `;`). The scalar-sink entry
 /// point onto `<N>_OpenImpl`: it takes an extra `startIdx` — the bar within the
 /// history buffer at which warm-up begins (0 = warm from the very first bar).
-/// The public `Open` is a thin wrapper that calls this with 0; only generated
-/// functions opening a sub-stream) passes a non-zero startIdx, handing the sub
-/// the FULL buffer from bar 0 so it seeds itself exactly as its batch would —
-/// including MA types that seed from the absolute origin (`inReal[0]`) under
-/// Metastock/Tradestation. The seeding stays inside each callee's own body; the
-/// composer never reasons about MA types. Kept out of the public header so the
-/// public API stays simple and this entry point can grow new knobs internally.
+/// The public `Open` is a thin wrapper that calls this with 0; only a generated
+/// function opening a sub-stream passes a non-zero startIdx, handing the sub the
+/// FULL buffer from bar 0 so it seeds itself exactly as its batch would. The
+/// seeding stays inside each callee's own body; the composer never reasons about
+/// MA types. Kept out of the public header so the public API stays simple and
+/// this entry point can grow new knobs internally.
 pub fn open_internal_signature(func: &FuncDef) -> String {
     let n = uname(func);
     let mut history = String::new();
@@ -1738,8 +1737,7 @@ fn emit_composed_sub_open(
     // the scratch arrays; materialized intermediates and bar inputs keep their
     // name). The sub sees the FULL history from the origin and warms up at the
     // sub-call's own startIdx, so it seeds exactly as its batch would — the
-    // seeding (incl. absolute-origin MA types under Metastock) stays inside the
-    // callee's own Open, no anchor arithmetic here.
+    // seeding stays inside the callee's own Open, no anchor arithmetic here.
     let src_ptrs: String = sub
         .srcs
         .iter()
@@ -5326,12 +5324,10 @@ fn build_open_body_from(model: &StreamModel, body: &[Statement]) -> Vec<Statemen
             }),
             Statement::Return { value } => {
                 let mapped = match value {
-                    // Any early success return maps to INSUFFICIENT_HISTORY.
-                    // This is not just the no-data guard: a mid-body seed
-                    // return (RSI/CMO under Metastock) exits with state the
-                    // batch would REWIND and rebuild before continuing, so no
-                    // bit-exact continuation exists — the stream honestly
-                    // asks for one more bar instead (strict min-history).
+                    // Any early success return maps to INSUFFICIENT_HISTORY:
+                    // the no-data guard has no last value to report, so the
+                    // stream honestly asks for one more bar instead (strict
+                    // min-history).
                     Some(Expr::Var(v)) if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
                         Some(Expr::Var("INSUFFICIENT_HISTORY".into()))
                     }

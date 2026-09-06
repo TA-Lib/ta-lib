@@ -22,10 +22,6 @@ int rsi_lookback(int optInTimePeriod)
    int retValue;
 
    retValue = optInTimePeriod + TA_GetUnstablePeriod(TA_FUNC_UNST_RSI);
-   if( TA_GetCompatibility() == TA_COMPATIBILITY_METASTOCK )
-   {
-      retValue = retValue - 1;
-   }
 
    return retValue;
 }
@@ -39,23 +35,16 @@ TA_RetCode rsi(int startIdx, int endIdx,
    size_t outIdx;
    size_t today;
    size_t lookbackTotal;
-   int unstablePeriod;
    int i;
    double prevGain;
    double prevLoss;
    double prevValue;
-   double savePrevValue;
    double tempValue1;
    double tempValue2;
 
    /* The following algorithm is base on the original
     * work from Wilder's and shall represent the
     * original idea behind the classic RSI.
-    *
-    * Metastock is starting the calculation one price
-    * bar earlier. To make this possible, they assume
-    * that the very first bar will be identical to the
-    * previous one (no gain or loss).
     */
 
    /* If changing this function, please check also CMO
@@ -106,86 +95,6 @@ TA_RetCode rsi(int startIdx, int endIdx,
    today = startIdx-lookbackTotal;
    prevValue = (double)(inReal[today]);
 
-   unstablePeriod = TA_GetUnstablePeriod(TA_FUNC_UNST_RSI);
-
-   /* If there is no unstable period,
-    * calculate the 'additional' initial
-    * price bar who is particuliar to
-    * metastock.
-    * If there is an unstable period,
-    * no need to calculate since this
-    * first value will be surely skip.
-    */
-   if( (unstablePeriod == 0) &&
-      (TA_GetCompatibility() == TA_COMPATIBILITY_METASTOCK))
-   {
-      /* Preserve prevValue because it may get
-       * overwritten by the output.
-       *(because output ptr could be the same as input ptr).
-       */
-      savePrevValue = prevValue;
-
-      /* No unstable period, so must calculate first output
-       * particular to Metastock.
-       * (Metastock re-use the first price bar, so there
-       *  is no loss/gain at first. Beats me why they
-       *  are doing all this).
-       */
-      prevGain = 0.0;
-      prevLoss = 0.0;
-      for( i = optInTimePeriod; i > 0; i-- ) {
-         tempValue1 = (double)(inReal[today]); today = today + 1;
-         tempValue2 = tempValue1 - prevValue;
-         prevValue  = tempValue1;
-         if( tempValue2 < 0.0 )
-         {
-            prevLoss -= tempValue2;
-         }
-         else
-         {
-            prevGain += tempValue2;
-         }
-      }
-
-      tempValue1 = prevLoss/(double)optInTimePeriod;
-      tempValue2 = prevGain/(double)optInTimePeriod;
-
-      /* Write the output.
-       *
-       * Both halves are averages of non-negative magnitudes, so the total is
-       * zero only when every change since the seed was exactly zero -- test it
-       * exactly, do not compare it to a fixed band.  A gain carries the quote
-       * unit, so any constant put against it is a constant in some arbitrary
-       * unit, and zeroes a healthy oscillator for an instrument quoted below it
-       * (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
-       * unlike a sliding sum this total cannot hold cancellation residue.
-       */
-      tempValue1 = tempValue2+tempValue1;
-      if( tempValue1 > 0.0 )
-      {
-         outReal[outIdx] = 100.0*(tempValue2/tempValue1); outIdx = outIdx + 1;
-      }
-      else
-      {
-         outReal[outIdx] = 0.0; outIdx = outIdx + 1;
-      }
-
-      /* Are we done? */
-      if( today > endIdx )
-      {
-         *outBegIdx    = startIdx;
-         *outNBElement = outIdx;
-         return TA_SUCCESS;
-      }
-
-      /* Start over for the next price bar. */
-      today = today - (size_t)optInTimePeriod;
-      prevValue = savePrevValue;
-   }
-
-   /* Remaining of the processing is identical
-    * for both Classic calculation and Metastock.
-    */
    prevGain = 0.0;
    prevLoss = 0.0;
    today = today + 1;
@@ -219,6 +128,12 @@ TA_RetCode rsi(int startIdx, int endIdx,
     *    RSI = 100 * (prevGain/(prevGain+prevLoss))
     *
     * The second equation is used here for speed optimization.
+    *
+    * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+    * when every change since the seed was exactly zero -- test it exactly, never
+    * against a fixed band. A gain carries the quote unit, so a constant put
+    * against it zeroes a healthy oscillator for an instrument quoted below it
+    * (issue #253).
     */
    if( today > startIdx )
    {

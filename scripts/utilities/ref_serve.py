@@ -124,9 +124,10 @@ def ensure_reference_serve(root, bin_dir):
         # Transport (server source + headers) comes from the CURRENT tree so the
         # JSON-RPC protocol never drifts from what ta_regtest speaks (e.g. the
         # use_float leg); the ORACLE property lives in lib_a, which stays the
-        # frozen pinned-tag build. The two trees' public C API declarations are
-        # identical (audited), so current headers link cleanly against the
-        # frozen library.
+        # frozen pinned-tag build. The frozen library exports symbols the current
+        # header no longer declares (#388 removed two), and TA_LibcPriv's layout
+        # differs between the two trees -- safe only while nothing in the
+        # -DTA_REF_SERVE translation unit dereferences TA_Globals.
         serve_src, _lib_ignored, includes = _ta_ref_serve_paths(root, os.path.join(root, "cmake-build"))
         # Build the frozen reference static lib (the tag is immutable, but the
         # FP-contraction setting must match this tree's — see build_frozen_lib).

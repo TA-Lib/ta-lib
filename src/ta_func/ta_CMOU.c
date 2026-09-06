@@ -69,9 +69,8 @@ TA_LIB_API int TA_CMOU_Lookback( int optInTimePeriod )
    /* CMOU needs optInTimePeriod price changes -> optInTimePeriod+1 prices ->
     * the first output is at index optInTimePeriod.
     *
-    * Unlike the shipped CMO, there is NO unstable period and NO Metastock
-    * "extra initial bar" adjustment: CMOU is a plain moving-window sum, so its
-    * lookback is exactly the period.
+    * Unlike the shipped CMO, there is NO unstable period: CMOU is a plain
+    * moving-window sum, so its lookback is exactly the period.
     */
    return optInTimePeriod;
 }

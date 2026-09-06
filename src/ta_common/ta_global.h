@@ -100,9 +100,6 @@ typedef struct
 
    const char *localCachePath;
 
-   /* For handling the compatibility with other software */
-   TA_Compatibility compatibility;
-
    /* For handling the unstable period of some TA function. */
    unsigned int unstablePeriod[TA_FUNC_UNST_COUNT];
 

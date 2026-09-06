@@ -44,16 +44,6 @@ ErrorNumber test_codegen(const TA_History *history,
  */
 int codegen_short_filter_token_matches(const char *name, const char *token);
 
-/* Can this language server select a compatibility variant?
- * Only C still carries the deprecated TA_SetCompatibility. Rust, Java and the
- * managed C# are pinned to Default with no public setter — their backends
- * constant-fold the Metastock branches out of the generated code entirely, so
- * those arms do not exist to be selected. A Metastock leg would silently
- * re-run the Default one — callers must skip it visibly instead. The
- * Metastock arms keep their bit-exact coverage in C.
- * Returns 1 when the mode can be switched. */
-int codegen_lang_has_compatibility_api(const char *lang);
-
 /* True if this language must drop transcendental-reaching calls to the 1e-9
  * element compare instead of a bitwise hash. Single definition shared by
  * --xlang-hash and server_verify; see the comment on the implementation. */

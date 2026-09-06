@@ -2953,7 +2953,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
         emit_func_h_block(&mut o, func, &ref_lookup);
     }
 
-    // Utility function section (unstable period, compatibility, candle settings).
+    // Utility function section (unstable period, candle settings).
     o.push_str(
         "/* Some TA functions takes a certain amount of input data\n\
          \x20* before stabilizing and outputing meaningful data. This is\n\
@@ -2979,12 +2979,17 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \n\
          TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n\
          \n\
-         /* DEPRECATED: TA_SetCompatibility is deprecated and may be removed in\n\
-         \x20* a future release. Avoid it in new code and rely on TA-Lib's default\n\
-         \x20* behavior. See ta_defs.h for the enumeration TA_Compatibility.\n\
+         /* DEPRECATED: the MetaStock variant was removed in 0.8.1, so\n\
+         \x20* TA_SetCompatibility does nothing and TA_GetCompatibility always\n\
+         \x20* answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing\n\
+         \x20* sources still compile and link; avoid them in new code.\n\
+         \x20*\n\
+         \x20* Deliberately NOT TA_LIB_API: no released version ever exported\n\
+         \x20* them from the Windows DLL, and a retired setting is not the one\n\
+         \x20* to start. Adding it back would widen the shipped surface.\n\
          \x20*/\n\
-         TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
-         TA_LIB_API TA_Compatibility TA_GetCompatibility( void );\n\
+         TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
+         TA_Compatibility TA_GetCompatibility( void );\n\
          \n\
          /* Candlesticks struct and functions\n\
          \x20* Because candlestick patterns are subjective, it is necessary \n\

@@ -151,11 +151,6 @@ bite while authoring the `.c`):
   writing that bar's output; a trailing index can reach the slot you just wrote, so
   carry what you need in a scalar. `ta_regtest`'s in-place alias gate (issue #130)
   checks every (input, output) pair bitwise on every function.
-- Do **not** honour `TA_SetCompatibility`. The constants are preserved for the
-  functions that already read one, and the Rust, Java and C# APIs expose no such
-  setting — a new function that branches on it makes its C output diverge from three
-  backends that cannot reach the branch. Copying an EMA-shaped function hands you a
-  `TA_MA_METASTOCK` seeding arm; drop it.
 - Open the file with the contributor / change-history comment block (copy its shape
   from `ta_codegen/input/cmf/cmf.c`): add your initials and a one-line `MMDDYY` entry.
   Do **not** add a license header — the generator injects the BSD-3-Clause notice into
@@ -324,6 +319,6 @@ automatically; Rust is concrete `f64` and has no `_s` variant.
 | Simple loop | MULT | while, assign, array access |
 | Accumulator | SMA | if/else, return, cast, running sum |
 | Stateful | RSI | `TA_GetUnstablePeriod`, `TA_IS_ZERO`, for-loop, complex lookback |
-| Recursive | EMA | k factor, seeded recursion, operator precedence (its `TA_COMPATIBILITY_*` arm is legacy-only — do not copy it) |
+| Recursive | EMA | k factor, seeded recursion, operator precedence |
 | Dispatcher | MA | switch/case, cross-call dispatch, `TA_BAD_PARAM`/`TA_SUCCESS` |
 | Multi-output | BBANDS | multiple output arrays |

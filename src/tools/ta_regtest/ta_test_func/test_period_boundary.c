@@ -230,7 +230,6 @@ ErrorNumber test_func_period_boundary( TA_History *history )
 
    /* These tests assume pristine global settings. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    errNb = testLookbackContract();
    if( errNb != TA_TEST_PASS )
@@ -262,7 +261,6 @@ ErrorNumber test_func_period_boundary( TA_History *history )
 
    /* Leave globals as found. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    return TA_TEST_PASS;
 }
@@ -559,16 +557,6 @@ static ErrorNumber testIdentityAtPeriodOne( const TA_History *history )
    if( errNb != TA_TEST_PASS ) return errNb;
    errNb = pbCheckSameSeries( "EMA(1) unstable=3", gBuffer[0].out0,
                               &history->close[outBegIdx], outNbElement );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   /* Identity holds under Metastock compatibility (different seeding). */
-   TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
-   retCode = TA_EMA( 0, endIdx, gBuffer[0].in, 1, &outBegIdx, &outNbElement, gBuffer[0].out0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
-   errNb = pbCheckCallShape( "EMA(1) metastock", retCode, outBegIdx, 0, outNbElement, endIdx );
-   if( errNb != TA_TEST_PASS ) return errNb;
-   errNb = pbCheckSameSeries( "EMA(1) metastock", gBuffer[0].out0,
-                              history->close, outNbElement );
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* In-place call: output over the input buffer must give the same result. */
@@ -1279,7 +1267,6 @@ static ErrorNumber testEveryMovingAverageIdentity( const TA_History *history )
    ErrorNumber errNb;
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    errNb = pbSweepMaIdentity( history, "reference series" );
    if( errNb != TA_TEST_PASS )
@@ -1499,7 +1486,7 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
       if( errNb != TA_TEST_PASS ) return errNb;
    }
 
-   /* signal==macd still holds with a non-zero EMA unstable period... */
+   /* signal==macd still holds with a non-zero EMA unstable period. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 3 );
    retCode = TA_MACD( 0, endIdx, gBuffer[0].in, 12, 26, 1,
                       &outBegIdx, &outNbElement,
@@ -1509,18 +1496,6 @@ static ErrorNumber testMacdFamilySignalOne( const TA_History *history )
                                  TA_MACD_Lookback( 12, 26, 1 ),
                                  (const double[]){ 12, 26, 1 }, 3 );
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
-   if( errNb != TA_TEST_PASS ) return errNb;
-
-   /* ...and under Metastock compatibility. */
-   TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
-   retCode = TA_MACD( 0, endIdx, gBuffer[0].in, 12, 26, 1,
-                      &outBegIdx, &outNbElement,
-                      gBuffer[0].out0, gBuffer[0].out1, gBuffer[0].out2 );
-   errNb = pbCheckMacdSignalOne( "MACD(12,26,1) metastock", "MACD", history,
-                                 retCode, outBegIdx, outNbElement,
-                                 TA_MACD_Lookback( 12, 26, 1 ),
-                                 (const double[]){ 12, 26, 1 }, 3 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
    if( errNb != TA_TEST_PASS ) return errNb;
 
    /* Exhaustive startIdx/endIdx sweep of all 3 outputs at sig=1. */
@@ -1633,7 +1608,6 @@ static ErrorNumber testMacdSignalOneHostile( void )
    char label[96];
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    for( r = 0; r < sizeof(pbMacdRuns)/sizeof(pbMacdRuns[0]); r++ )
    {

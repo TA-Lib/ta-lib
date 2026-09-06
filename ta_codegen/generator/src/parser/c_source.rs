@@ -3409,17 +3409,7 @@ impl Parser {
 // --- Helper functions ---
 
 /// Strip `TA_` prefix from enum-like identifiers (all caps after TA_).
-/// Also strips `TA_COMPATIBILITY_` prefix to just the enum variant name.
 fn strip_ta_prefix(name: &str) -> String {
-    // Handle TA_COMPATIBILITY_XXX -> strip to just the variant (METASTOCK, DEFAULT)
-    if let Some(rest) = name.strip_prefix("TA_COMPATIBILITY_") {
-        if rest
-            .chars()
-            .all(|c| c.is_ascii_uppercase() || c == '_' || c.is_ascii_digit())
-        {
-            return rest.to_string();
-        }
-    }
     if let Some(rest) = name.strip_prefix("TA_") {
         // Only strip if the rest looks like an enum value (uppercase/underscores)
         if rest
@@ -3436,9 +3426,6 @@ fn strip_ta_prefix(name: &str) -> String {
 fn transform_func_name(name: &str) -> String {
     if name == "TA_GetUnstablePeriod" {
         return "UNSTABLE_PERIOD".to_string();
-    }
-    if name == "TA_GetCompatibility" {
-        return "COMPATIBILITY".to_string();
     }
     if let Some(rest) = name.strip_prefix("TA_") {
         return rest.to_string();
@@ -4019,17 +4006,6 @@ TA_RetCode TA_TEST(void)
         match expr {
             Expr::FuncCall(name, _) => {
                 assert_eq!(name, "UNSTABLE_PERIOD");
-            }
-            other => panic!("Expected FuncCall, got {other:?}"),
-        }
-
-        let tokens2 = tokenize("TA_GetCompatibility()");
-        let mut parser2 = Parser::new(tokens2);
-        let expr2 = parser2.parse_expr();
-        match expr2 {
-            Expr::FuncCall(name, args) => {
-                assert_eq!(name, "COMPATIBILITY");
-                assert!(args.is_empty());
             }
             other => panic!("Expected FuncCall, got {other:?}"),
         }
@@ -6174,20 +6150,11 @@ TA_RetCode test_func(int startIdx, int *outBegIdx)
         assert!(!Parser::is_all_caps_macro("a")); // too short
     }
 
-    // ===== strip_ta_prefix with TA_COMPATIBILITY_ =====
-
-    #[test]
-    fn test_strip_ta_compatibility_prefix() {
-        assert_eq!(strip_ta_prefix("TA_COMPATIBILITY_DEFAULT"), "DEFAULT");
-        assert_eq!(strip_ta_prefix("TA_COMPATIBILITY_METASTOCK"), "METASTOCK");
-    }
-
     // ===== transform_func_name =====
 
     #[test]
     fn test_transform_func_name() {
         assert_eq!(transform_func_name("TA_GetUnstablePeriod"), "UNSTABLE_PERIOD");
-        assert_eq!(transform_func_name("TA_GetCompatibility"), "COMPATIBILITY");
         assert_eq!(transform_func_name("TA_SMA"), "SMA");
         assert_eq!(transform_func_name("plain_func"), "plain_func");
     }

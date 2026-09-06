@@ -54,12 +54,10 @@
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -76,11 +74,6 @@
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
-       *
-       * Metastock is starting the calculation one price
-       * bar earlier. To make this possible, they assume
-       * that the very first bar will be identical to the
-       * previous one (no gain or loss).
        */
       /* If changing this function, please check also CMO
        * which is mostly identical (just different in one step
@@ -122,18 +115,6 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -163,6 +144,12 @@
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
@@ -234,12 +221,10 @@
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -275,7 +260,6 @@
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -683,12 +667,10 @@
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
       int historyLen = inReal.length;
@@ -734,11 +716,6 @@
       /* The following algorithm is base on the original
        * work from Wilder's and shall represent the
        * original idea behind the classic RSI.
-       *
-       * Metastock is starting the calculation one price
-       * bar earlier. To make this possible, they assume
-       * that the very first bar will be identical to the
-       * previous one (no gain or loss).
        */
       /* If changing this function, please check also CMO
        * which is mostly identical (just different in one step
@@ -762,18 +739,6 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today = today + 1;
@@ -803,6 +768,12 @@
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;

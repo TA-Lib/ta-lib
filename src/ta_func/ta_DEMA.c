@@ -174,65 +174,44 @@ TA_LIB_API TA_RetCode TA_DEMA( int    startIdx,
     * The arithmetic order below is the bit-exactness contract
     * (do not reorder or fuse operations):
     *  - EMA recursion: ((x-prev)*k)+prev.
-    *  - Default compatibility: each EMA is seeded with the sum
-    *    of its first 'period' inputs, accumulated from 0.0 in
-    *    input order (0.0+x is not x for x=-0.0), divided by
-    *    the period.
-    *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-    *    EMA2 from the first EMA1 value.
-    * Output alignment is identical for all compatibility modes;
-    * only the seed values differ.
+    *  - Each EMA is seeded with the sum of its first 'period'
+    *    inputs, accumulated from 0.0 in input order (0.0+x is
+    *    not x for x=-0.0), divided by the period.
     *
     * In-place (inReal == outReal) is supported: outReal[outIdx]
     * is written only after inReal[startIdx+outIdx] was read.
     */
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   /* Seed EMA1 with a simple average of the first
+    * 'period' price bars.
+    */
+   today = startIdx - lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
    {
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
-       */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-   } else 
-   {
-      /* Metastock/Tradestation: seed each EMA with its first
-       * input value: EMA1 from inReal[0], EMA2 from the first
-       * EMA1 value.
-       */
-      prevEMA1 = inReal[0];
-      today = 1;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      prevEMA2 = prevEMA1;
+      tempReal += inReal[today++];
    }
+   prevEMA1 = tempReal / optInTimePeriod;
+   /* Advance EMA1 alone through its unstable period, up to
+    * the bar where EMA2 seeding begins.
+    */
+   while( today <= startIdx - lookbackEMA )
+   {
+      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+   }
+   /* Seed EMA2 with a simple average of the first 'period'
+    * EMA1 values, accumulated as EMA1 produces them.
+    */
+   tempReal = 0.0;
+   tempReal += prevEMA1;
+   i = optInTimePeriod - 1;
+   while( i-- > 0 )
+   {
+      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      tempReal += prevEMA1;
+   }
+   prevEMA2 = tempReal / optInTimePeriod;
    /* Advance both EMA in lockstep through the unstable period
     * of EMA2, up to the first output bar.
     */
@@ -320,39 +299,27 @@ TA_RetCode TA_S_DEMA( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   today = startIdx - lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
    {
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevEMA1 = (double)inReal[0];
-      today = 1;
-      while( today <= startIdx - lookbackEMA )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      prevEMA2 = prevEMA1;
+      tempReal += (double)inReal[today++];
    }
+   prevEMA1 = tempReal / optInTimePeriod;
+   while( today <= startIdx - lookbackEMA )
+   {
+      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+   }
+   tempReal = 0.0;
+   tempReal += prevEMA1;
+   i = optInTimePeriod - 1;
+   while( i-- > 0 )
+   {
+      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      tempReal += prevEMA1;
+   }
+   prevEMA2 = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
@@ -510,65 +477,44 @@ static TA_RetCode TA_DEMA_OpenImpl( struct TA_DEMA_Stream **stream, const double
        * The arithmetic order below is the bit-exactness contract
        * (do not reorder or fuse operations):
        *  - EMA recursion: ((x-prev)*k)+prev.
-       *  - Default compatibility: each EMA is seeded with the sum
-       *    of its first 'period' inputs, accumulated from 0.0 in
-       *    input order (0.0+x is not x for x=-0.0), divided by
-       *    the period.
-       *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-       *    EMA2 from the first EMA1 value.
-       * Output alignment is identical for all compatibility modes;
-       * only the seed values differ.
+       *  - Each EMA is seeded with the sum of its first 'period'
+       *    inputs, accumulated from 0.0 in input order (0.0+x is
+       *    not x for x=-0.0), divided by the period.
        *
        * In-place (inReal == outReal) is supported: outReal[outIdx]
        * is written only after inReal[startIdx+outIdx] was read.
        */
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
       {
-         /* Seed EMA1 with a simple average of the first
-          * 'period' price bars.
-          */
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 )
-         {
-            tempReal += inReal[today++];
-         }
-         prevEMA1 = tempReal / optInTimePeriod;
-         /* Advance EMA1 alone through its unstable period, up to
-          * the bar where EMA2 seeding begins.
-          */
-         while( today <= startIdx - lookbackEMA )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         }
-         /* Seed EMA2 with a simple average of the first 'period'
-          * EMA1 values, accumulated as EMA1 produces them.
-          */
-         tempReal = 0.0;
-         tempReal += prevEMA1;
-         i = optInTimePeriod - 1;
-         while( i-- > 0 )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-            tempReal += prevEMA1;
-         }
-         prevEMA2 = tempReal / optInTimePeriod;
-      } else 
-      {
-         /* Metastock/Tradestation: seed each EMA with its first
-          * input value: EMA1 from inReal[0], EMA2 from the first
-          * EMA1 value.
-          */
-         prevEMA1 = inReal[0];
-         today = 1;
-         while( today <= startIdx - lookbackEMA )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         }
-         prevEMA2 = prevEMA1;
+         tempReal += inReal[today++];
       }
+      prevEMA1 = tempReal / optInTimePeriod;
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx - lookbackEMA )
+      {
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      }
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance both EMA in lockstep through the unstable period
        * of EMA2, up to the first output bar.
        */

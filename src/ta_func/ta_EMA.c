@@ -142,41 +142,14 @@ TA_LIB_API TA_RetCode TA_EMA( int    startIdx,
    }
    *outBegIdx= startIdx;
    /* Do the EMA calculation using tight loops. */
-   /* The first EMA is calculated differently. It
-    * then become the seed for subsequent EMA.
-    *
-    * The algorithm for this seed vary widely.
-    * Only 3 are implemented here:
-    *
-    * TA_MA_CLASSIC:
-    *    Use a simple MA of the first 'period'.
-    *    This is the approach most widely documented.
-    *
-    * TA_MA_METASTOCK:
-    *    Use first price bar value as a seed
-    *    from the begining of all the available
-    *    data.
-    *
-    * TA_MA_TRADESTATION:
-    *    Use 4th price bar as a seed, except when
-    *    period is 1 who use 2th price bar or something
-    *    like that... (not an obvious one...).
-    */
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   today = startIdx - lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
    {
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += inReal[today++];
-      }
-      prevMA = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevMA = inReal[0];
-      today = 1;
+      tempReal += inReal[today++];
    }
+   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);
@@ -250,21 +223,14 @@ TA_RetCode TA_S_EMA( int    startIdx,
       return TA_SUCCESS;
    }
    *outBegIdx= startIdx;
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   today = startIdx - lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
    {
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += (double)inReal[today++];
-      }
-      prevMA = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevMA = (double)inReal[0];
-      today = 1;
+      tempReal += (double)inReal[today++];
    }
+   prevMA = tempReal / optInTimePeriod;
    while( today <= startIdx )
    {
       prevMA = fma((double)inReal[today++] - prevMA, optInK_1, prevMA);
@@ -390,41 +356,14 @@ static TA_RetCode TA_EMA_OpenImpl( struct TA_EMA_Stream **stream, const double i
       }
       *outBegIdx= startIdx;
       /* Do the EMA calculation using tight loops. */
-      /* The first EMA is calculated differently. It
-       * then become the seed for subsequent EMA.
-       *
-       * The algorithm for this seed vary widely.
-       * Only 3 are implemented here:
-       *
-       * TA_MA_CLASSIC:
-       *    Use a simple MA of the first 'period'.
-       *    This is the approach most widely documented.
-       *
-       * TA_MA_METASTOCK:
-       *    Use first price bar value as a seed
-       *    from the begining of all the available
-       *    data.
-       *
-       * TA_MA_TRADESTATION:
-       *    Use 4th price bar as a seed, except when
-       *    period is 1 who use 2th price bar or something
-       *    like that... (not an obvious one...).
-       */
-      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
       {
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 )
-         {
-            tempReal += inReal[today++];
-         }
-         prevMA = tempReal / optInTimePeriod;
-      } else 
-      {
-         prevMA = inReal[0];
-         today = 1;
+         tempReal += inReal[today++];
       }
+      prevMA = tempReal / optInTimePeriod;
       while( today <= startIdx )
       {
          prevMA = fma(inReal[today++] - prevMA, optInK_1, prevMA);

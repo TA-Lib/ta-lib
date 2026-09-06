@@ -31,7 +31,7 @@
 //! empty the bodies it then finds.
 
 use crate::backends::builtins::StdlibFn;
-use crate::backends::compat_fold::{fold_cond, CondFold};
+use crate::backends::cond_fold::{fold_cond, CondFold};
 use crate::ir::{BinOp, CircBuf, Expr, Statement};
 
 /// Fold away the guard on a cross-indicator call whose rejection the calling

@@ -507,9 +507,9 @@ ErrorNumber test_func_legacy( TA_History *history )
    g_legacyRealCmp = g_legacyIntCmp = g_legacyShapeCmp = 0;
 
    /* The freeze was taken with every unstable period at 0 and the candle
-    * settings at their defaults. DO_TEST resets compatibility between groups
-    * but neither of those, and earlier groups do change them -- so establish
-    * the state this gate needs rather than inheriting whatever ran before it.
+    * settings at their defaults. DO_TEST resets neither, and earlier groups do
+    * change them -- so establish the state this gate needs rather than
+    * inheriting whatever ran before it.
     * Unstable periods are restored afterwards; candle settings are left at the
     * documented defaults, which is where a group that changes them is
     * responsible for leaving them anyway. */

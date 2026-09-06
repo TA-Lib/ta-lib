@@ -90,16 +90,6 @@ use super::stmt_walk::StatementEmitter;
 /// unconditionally before the `if`.
 pub(crate) const JAVA_CANDLE_FNS: &[&str] = &["ta_candlerange", "ta_candleaverage"];
 
-// The compatibility fold (Java pins the mode to Default) lives in the shared
-// [`compat_fold`](super::compat_fold) module — C# folds the identical way. It
-// hangs off [`StatementEmitter::if_stmt`], which every Java render path funnels
-// through — batch bodies, `LookbackExpr::Code` (CMO/RSI test the mode inside
-// their lookback), and the streaming warm-up opens. Anything that reaches
-// [`ExprEmitter::var`] or the `Compatibility` builtin afterwards is a construct
-// the fold does not understand, and panics rather than emitting a reference to
-// a field that no longer exists.
-use super::compat_fold::{fold_compat_cond, CondFold};
-
 /// Per-render state for the Java backend, mirroring `RustRenderCtx`/`CRenderCtx`.
 /// Bundles the loose per-render state (precision flag, address-of variable sets,
 /// float input params, and the inline-helper counter) threaded through the
@@ -1407,13 +1397,12 @@ impl JavaStmt<'_> {
                 && matches!(else_body.get(code_start), Some(Statement::If { .. }));
             if is_else_if {
                 // The `} else if` collapse pastes the walked inner `if`
-                // unbraced after `else` — but the compat fold can dissolve
+                // unbraced after `else` — but a render-time fold can dissolve
                 // that inner `if` into bare statements or nothing, and
                 // `} else <bare>` either lets statements escape the else or
                 // dangles onto the next sibling. Collapse only when the walk
                 // still starts with an `if(`; otherwise fall through to the
-                // braced form. (Latent today — every compat site is a
-                // top-level if — but the C# float fold proved the mechanism.)
+                // braced form.
                 let inner = self.walk_stmt(&else_body[code_start], indent);
                 if inner.trim_start().starts_with("if(") {
                     for c in &else_body[..code_start] {
@@ -1706,31 +1695,6 @@ impl StatementEmitter for JavaStmt<'_> {
         // Skip post-allocation null-check blocks (dead code in Java — `new` never returns null)
         if contains_alloc_err_return(then_body) {
             return String::new();
-        }
-        // Compatibility is pinned to Default in Java: fold the branch away and
-        // splice the surviving arm in place (see `fold_compat_cond`). The dropped
-        // arm's statements are the only thing removed — the survivor renders at
-        // this `if`'s own indent, since its block is dissolved.
-        match fold_compat_cond(condition) {
-            CondFold::Known(taken) => {
-                let kept = if taken { then_body } else { else_body };
-                return kept.iter().map(|s| self.walk_stmt(s, indent)).collect();
-            }
-            CondFold::Open { expr, changed: true } => {
-                // A compound condition that lost a compatibility operand (e.g.
-                // `unstablePeriod == 0 && COMPATIBILITY() == METASTOCK`) re-renders
-                // through the normal path with the survivor alone. The per-operand
-                // comments no longer line up with the shortened `&&`-chain, so they
-                // are dropped rather than mis-attached.
-                let rebuilt = Statement::If {
-                    condition: expr,
-                    then_body: then_body.to_vec(),
-                    else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
-                };
-                return self.walk_stmt(&rebuilt, indent);
-            }
-            CondFold::Open { changed: false, .. } => {}
         }
         // Split `if(A && B)` into nested `if(A) { if(B)` when both sides
         // contain a candle helper call (ta_candlerange/ta_candleaverage).
@@ -2045,15 +2009,6 @@ struct JavaExpr<'a> {
 impl ExprEmitter for JavaExpr<'_> {
     fn var(&self, name: &str) -> String {
         let mapped = match name {
-            // Java has no compatibility field: every read is folded away by
-            // `fold_compat_cond` before rendering. Reaching here means a new
-            // construct escaped the fold — fail loudly rather than emit a
-            // reference to a field that does not exist.
-            "COMPATIBILITY" | "METASTOCK" | "DEFAULT" => panic!(
-                "java: compatibility reference `{name}` survived the render-time fold \
-                 (Java pins the mode to Default — extend fold_compat_cond to cover \
-                 this construct)"
-            ),
             "BAD_PARAM" => "RetCode.BadParam".to_string(),
             "SUCCESS" => "RetCode.Success".to_string(),
             "ALLOC_ERR" => "RetCode.AllocErr".to_string(),
@@ -2471,15 +2426,6 @@ fn render_func_call(
                     return format!("this.unstablePeriod[FuncUnstId.{variant}.ordinal()]");
                 }
                 "this.unstablePeriod[0]".to_string()
-            }
-            SpecialBuiltin::Compatibility => {
-                // See the `var` hook: Java pins the mode to Default and carries no
-                // compatibility field, so a surviving read is a generator bug.
-                panic!(
-                    "java: COMPATIBILITY() survived the render-time fold (Java pins \
-                     the mode to Default — extend fold_compat_cond to cover this \
-                     construct)"
-                )
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled

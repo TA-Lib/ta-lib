@@ -766,7 +766,6 @@ static ErrorNumber testTAFunction_ALL( void )
          printf( "%*s: Testing....", TAG_W, displayTag(str,label) ); \
          fflush(stdout); \
          showFeedback(); \
-         TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT ); \
          retValue = func( &history ); \
          if( retValue != TA_TEST_PASS ) \
             return retValue; \

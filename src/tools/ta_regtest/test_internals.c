@@ -59,6 +59,7 @@
 /**** Headers ****/
 #include <limits.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -68,6 +69,7 @@
 #include "ta_common.h"
 #include "ta_abstract.h"
 #include "codegen_pipe.h"
+#include "../../ta_common/ta_global.h"   /* the #144 canary pokes TA_Globals */
 
 
 /**** External functions declarations. ****/
@@ -86,6 +88,7 @@
 static ErrorNumber testCircularBuffer( void );
 static ErrorNumber testBoundedAppend( void );
 static ErrorNumber testUnstablePeriodBounds( void );
+static ErrorNumber testCompatibilityIsInert( void );
 static ErrorNumber testCandleSettingsBounds( void );
 static ErrorNumber testEnumValueContract( void );
 static ErrorNumber testStreamShortHistory( void );
@@ -124,6 +127,13 @@ ErrorNumber test_internals( void )
    if( retValue != TA_TEST_PASS )
    {
       printf( "\nFailed: Unstable period bound tests (%d)\n", retValue );
+      return retValue;
+   }
+
+   retValue = testCompatibilityIsInert();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Compatibility no-op tests (%d)\n", retValue );
       return retValue;
    }
 
@@ -1424,20 +1434,22 @@ static ErrorNumber testEnumValueContract( void )
 /* TA_Set/GetUnstablePeriod index TA_Globals->unstablePeriod[id] after a bound
  * check that used to test only the upper end. TA_TEST_UNST_NONE is -1 and makes
  * the enum signed, so every negative id slipped past and read/wrote off the
- * front of the array -- onto TA_Globals->compatibility, which sits immediately
- * before it. The setter still returned TA_SUCCESS while silently corrupting the
- * global (issue #144).
+ * front of the array. The setter still returned TA_SUCCESS while silently
+ * corrupting the neighbouring field (issue #144).
  *
  * Asserted here: both sentinels and an arbitrary negative are rejected, the
  * wildcard still sets every function, and a normal id still round-trips.
  * Non-vacuity: the setter half is caught by the returned TA_BAD_PARAM, and the
- * getter half only because compatibility is parked at a non-zero value first --
- * otherwise an out-of-bounds read of it returns 0 and looks correct.
+ * getter half only because the memory `unstablePeriod[-1]` aliases is parked at
+ * a non-zero value first -- otherwise an out-of-bounds read of it returns 0 and
+ * looks correct. TA_Globals->localCachePath is that neighbour and the library
+ * never reads it, so poking it costs nothing.
  */
 static ErrorNumber testUnstablePeriodBounds( void )
 {
    ErrorNumber retValue;
    TA_RetCode retCode;
+   const char *savedPath;
    int id;
 
    retValue = allocLib();
@@ -1447,13 +1459,13 @@ static ErrorNumber testUnstablePeriodBounds( void )
       return retValue;
    }
 
-   /* Park a non-zero value in the field that unstablePeriod[-1] aliases, so the
-    * assertions below can tell a real guard from an accidental zero. Without
-    * this the getter checks pass even with the guard reverted, because a fresh
-    * TA_Initialize leaves compatibility == 0 and an out-of-bounds read of it
-    * looks exactly like the correct answer.
+   /* All bits set, so the half of the pointer that `unstablePeriod[-1]` aliases
+    * is non-zero whichever end this machine puts it at. A fresh TA_Initialize
+    * leaves the whole struct zeroed, which is what would make the reads below
+    * pass with the guard reverted.
     */
-   TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK );
+   savedPath = TA_Globals->localCachePath;
+   TA_Globals->localCachePath = (const char *)~(uintptr_t)0;
 
    /* Out-of-range ids must be refused, not indexed. */
    if( TA_SetUnstablePeriod( TA_TEST_UNST_NONE, 99 ) != TA_BAD_PARAM ||
@@ -1464,18 +1476,18 @@ static ErrorNumber testUnstablePeriodBounds( void )
       return TA_INTERNAL_UNST_BOUND_FAIL_0;
    }
 
-   /* ...and must not have written anything. TA_Globals->compatibility is the
-    * field the id == -1 write landed on.
+   /* ...and must not have written anything. localCachePath is the field the
+    * id == -1 write landed on.
     */
-   if( TA_GetCompatibility() != TA_COMPATIBILITY_METASTOCK )
+   if( TA_Globals->localCachePath != (const char *)~(uintptr_t)0 )
    {
-      printf( "\nFailed: rejected TA_SetUnstablePeriod id corrupted compatibility\n" );
+      printf( "\nFailed: rejected TA_SetUnstablePeriod id corrupted the neighbouring field\n" );
       return TA_INTERNAL_UNST_BOUND_FAIL_1;
    }
 
    /* Reads of the sentinels are defined as 0, never an out-of-bounds load. With
-    * compatibility == METASTOCK (1) above, an unguarded read of [-1] yields 1
-    * and fails here.
+    * every bit of localCachePath set above, an unguarded read of [-1] yields
+    * 0xFFFFFFFF and fails here.
     */
    if( TA_GetUnstablePeriod( TA_TEST_UNST_NONE ) != 0 ||
        TA_GetUnstablePeriod( TA_FUNC_UNST_ALL ) != 0 ||
@@ -1485,10 +1497,10 @@ static ErrorNumber testUnstablePeriodBounds( void )
       return TA_INTERNAL_UNST_BOUND_FAIL_2;
    }
 
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
+   TA_Globals->localCachePath = savedPath;
 
-   /* The valid range still works: the wildcard sets every function, a single
-    * id round-trips, and neither disturbs compatibility.
+   /* The valid range still works: the wildcard sets every function and a single
+    * id round-trips.
     */
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 7 );
    if( retCode != TA_SUCCESS )
@@ -1542,8 +1554,7 @@ static ErrorNumber testUnstablePeriodBounds( void )
    if( retCode != TA_SUCCESS ||
        TA_GetUnstablePeriod( TA_FUNC_UNST_RSI ) != 3 ||
        TA_GetUnstablePeriod( TA_FUNC_UNST_EMA ) != 7 ||
-       TA_GetUnstablePeriod( TA_FUNC_UNST_ADX ) != 7 ||
-       TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT )
+       TA_GetUnstablePeriod( TA_FUNC_UNST_ADX ) != 7 )
    {
       printf( "\nFailed: single-id TA_SetUnstablePeriod round-trip\n" );
       return TA_INTERNAL_UNST_BOUND_FAIL_3;
@@ -1560,6 +1571,74 @@ static ErrorNumber testUnstablePeriodBounds( void )
    return TA_TEST_PASS;
 }
 
+/* TA_SetCompatibility is kept only so existing sources still compile and link;
+ * #388 removed the behaviour it selected. Non-vacuity is the RSI leg: the
+ * MetaStock variant used to shorten RSI's lookback by one and emit an extra
+ * seed bar, so a setter that still selected anything would move outBegIdx here.
+ */
+static ErrorNumber testCompatibilityIsInert( void )
+{
+   static const double closes[] = {
+      91.5, 94.815, 94.375, 95.095, 93.78, 94.625, 92.53, 92.75, 90.315,
+      92.47, 96.125, 97.25, 98.5, 89.875, 91.0, 92.815, 89.155, 89.345,
+      91.625, 89.875, 88.375, 87.625, 84.78, 83.0
+   };
+   const int nbBar = (int)(sizeof(closes)/sizeof(closes[0]));
+   double outDefault[32], outAfterSet[32];
+   int begDefault, nbDefault, begAfterSet, nbAfterSet, i;
+   ErrorNumber retValue;
+   TA_RetCode retCode;
+
+   retValue = allocLib();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "\nFailed: Can't initialize the library\n" );
+      return retValue;
+   }
+
+   retCode = TA_RSI( 0, nbBar-1, closes, 14, &begDefault, &nbDefault, outDefault );
+   if( retCode != TA_SUCCESS || nbDefault <= 0 )
+   {
+      printf( "\nFailed: TA_RSI baseline RetCode = %d, nb = %d\n",
+              (int)retCode, nbDefault );
+      return TA_INTERNAL_COMPAT_NOOP_FAIL_0;
+   }
+
+   /* Any value is accepted and nothing is stored, so the getter still answers
+    * the only behaviour the library has.
+    */
+   if( TA_SetCompatibility( TA_COMPATIBILITY_METASTOCK ) != TA_SUCCESS ||
+       TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT )
+   {
+      printf( "\nFailed: TA_SetCompatibility is no longer inert\n" );
+      return TA_INTERNAL_COMPAT_NOOP_FAIL_1;
+   }
+
+   retCode = TA_RSI( 0, nbBar-1, closes, 14, &begAfterSet, &nbAfterSet, outAfterSet );
+   if( retCode != TA_SUCCESS ||
+       begAfterSet != begDefault || nbAfterSet != nbDefault ||
+       TA_RSI_Lookback( 14 ) != begDefault )
+   {
+      printf( "\nFailed: TA_SetCompatibility moved TA_RSI's range (%d,%d) -> (%d,%d)\n",
+              begDefault, nbDefault, begAfterSet, nbAfterSet );
+      return TA_INTERNAL_COMPAT_NOOP_FAIL_2;
+   }
+   for( i = 0; i < nbDefault; i++ )
+   {
+      if( outDefault[i] != outAfterSet[i] )
+      {
+         printf( "\nFailed: TA_SetCompatibility moved TA_RSI[%d]: %f != %f\n",
+                 i, outDefault[i], outAfterSet[i] );
+         return TA_INTERNAL_COMPAT_NOOP_FAIL_2;
+      }
+   }
+
+   retValue = freeLib();
+   if( retValue != TA_TEST_PASS )
+      return retValue;
+
+   return TA_TEST_PASS;
+}
 #define CANDLE_NB_BAR 64
 
 /* Runs CDLDOJI over the whole series and checks the lookback against what the

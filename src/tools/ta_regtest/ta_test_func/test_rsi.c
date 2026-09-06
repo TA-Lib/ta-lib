@@ -86,7 +86,6 @@ typedef struct
    TA_Integer endIdx;
 
    TA_Integer optInTimePeriod;
-   TA_Integer compatibility;
 
    TA_RetCode expectedRetCode;
 
@@ -114,76 +113,40 @@ static TA_Test tableTest[] =
    /**********************/
    /*      RSI TEST      */
    /**********************/
-   { 1, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, 49.14,  14,  252-14 }, /* First Value */
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1, 52.32,  14,  252-14 },
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      2, 46.07,  14,  252-14 },
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-15, 49.63,  14,  252-14 },  /* Last Value */
+   { 1, TA_RSI_TEST, 0, 0, 251, 14, TA_SUCCESS,      0, 49.14,  14,  252-14 }, /* First Value */
+   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_SUCCESS,      1, 52.32,  14,  252-14 },
+   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_SUCCESS,      2, 46.07,  14,  252-14 },
+   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_SUCCESS, 252-15, 49.63,  14,  252-14 },  /* Last Value */
 
    /* No output value. */
-   { 0, TA_RSI_TEST, 0, 1, 1,  14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 0, 0, 0},
+   { 0, TA_RSI_TEST, 0, 1, 1,  14, TA_SUCCESS, 0, 0, 0, 0},
 
    /* One value tests. */
-   { 0, TA_RSI_TEST, 0, 14,  14, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 49.14,     14, 1},
+   { 0, TA_RSI_TEST, 0, 14,  14, 14, TA_SUCCESS, 0, 49.14,     14, 1},
 
    /* Index too low test. */
-   { 0, TA_RSI_TEST, 0, 0,  15, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 49.14,     14, 2},
-   { 0, TA_RSI_TEST, 0, 1,  15, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 49.14,     14, 2},
-   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 49.14,     14, 3},
-   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 1, 52.32,     14, 3},
-   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 2, 46.07,     14, 3},
-   { 0, TA_RSI_TEST, 0, 0,  14, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 49.14,     14, 1},
-   { 0, TA_RSI_TEST, 0, 0,  13, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 0, 49.14,     14, 0},
+   { 0, TA_RSI_TEST, 0, 0,  15, 14, TA_SUCCESS, 0, 49.14,     14, 2},
+   { 0, TA_RSI_TEST, 0, 1,  15, 14, TA_SUCCESS, 0, 49.14,     14, 2},
+   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_SUCCESS, 0, 49.14,     14, 3},
+   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_SUCCESS, 1, 52.32,     14, 3},
+   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_SUCCESS, 2, 46.07,     14, 3},
+   { 0, TA_RSI_TEST, 0, 0,  14, 14, TA_SUCCESS, 0, 49.14,     14, 1},
+   { 0, TA_RSI_TEST, 0, 0,  13, 14, TA_SUCCESS, 0, 49.14,     14, 0},
 
    /* Test with 1 unstable price bar. Test for period 1, 2, 14 */
-   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0,     52.32,  15,  252-(14+1) },
-   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1,     46.07,  15,  252-(14+1) },
-   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-(15+1), 49.63,  15,  252-(14+1) },  /* Last Value */
+   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_SUCCESS,      0,     52.32,  15,  252-(14+1) },
+   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_SUCCESS,      1,     46.07,  15,  252-(14+1) },
+   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_SUCCESS, 252-(15+1), 49.63,  15,  252-(14+1) },  /* Last Value */
 
    /* Test with 2 unstable price bar. Test for period 1, 2, 14 */
-   { 0, TA_RSI_TEST, 2, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0,     46.07,  16,  252-(14+2) },
-   { 0, TA_RSI_TEST, 2, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-(15+2), 49.63,  16,  252-(14+2) },  /* Last Value */
-
-
-   /**********************/
-   /* RSI Metastock TEST */
-   /**********************/
-   { 1, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, 47.11,  13,  252-13 }, /* First Value */
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, 49.14,  13,  252-13 },
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      2, 52.32,  13,  252-13 },
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      3, 46.07,  13,  252-13 },
-   { 0, TA_RSI_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-14, 49.63,  13,  252-13 }, /* Last Value */
-
-   /* No output value. */
-   { 0, TA_RSI_TEST, 0, 1, 1,  14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 0, 0, 0},
-
-   /* One value tests. */
-   { 0, TA_RSI_TEST, 0, 13, 13, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11, 13, 1},
-   { 0, TA_RSI_TEST, 0, 13, 13, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11, 13, 1},
-
-   /* Index too low test. */
-   { 0, TA_RSI_TEST, 0, 0,  15, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 3},
-   { 0, TA_RSI_TEST, 0, 1,  15, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 3},
-   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 4},
-   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 1, 49.14,     13, 4},
-   { 0, TA_RSI_TEST, 0, 2,  16, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 2, 52.32,     13, 4},
-   { 0, TA_RSI_TEST, 0, 0,  14, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 2},
-   { 0, TA_RSI_TEST, 0, 0,  13, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 1},
-   { 0, TA_RSI_TEST, 0, 0,  12, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 0, 47.11,     13, 0},
-
-   /* Test with 1 unstable price bar. Test for period 1, 2, 14 */
-   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0,     49.14,  14,  252-(13+1) },
-   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1,     52.32,  14,  252-(13+1) },
-   { 0, TA_RSI_TEST, 1, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-(14+1), 49.63,  14,  252-(13+1) },  /* Last Value */
-
-   /* Test with 2 unstable price bar. Test for period 1, 2, 14 */
-   { 0, TA_RSI_TEST, 2, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0,     52.32,  15,  252-(13+2) },
-   { 0, TA_RSI_TEST, 2, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-(14+2), 49.63,  15,  252-(13+2) },  /* Last Value */
+   { 0, TA_RSI_TEST, 2, 0, 251, 14, TA_SUCCESS,      0,     46.07,  16,  252-(14+2) },
+   { 0, TA_RSI_TEST, 2, 0, 251, 14, TA_SUCCESS, 252-(15+2), 49.63,  16,  252-(14+2) },  /* Last Value */
 
    /**********************/
    /*      CMO TEST      */
    /**********************/
-   { 1, TA_CMO_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -1.70,  14,  252-14 },
-   { 1, TA_CMO_TEST, 0, 0, 251, 14, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,    0, -5.76,  13,  252-13 },
+   { 1, TA_CMO_TEST, 0, 0, 251, 14, TA_SUCCESS,      0, -1.70,  14,  252-14 }, /* First Value */
+   { 0, TA_CMO_TEST, 0, 0, 251, 14, TA_SUCCESS, 252-15, -0.74,  14,  252-14 }, /* Last Value */
 
 };
 
@@ -293,8 +256,6 @@ static ErrorNumber do_test( const TA_History *history,
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
-
-   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );

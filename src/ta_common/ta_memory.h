@@ -75,7 +75,6 @@
  * kept so the generated call sites stay stable across backends.
  */
 #define TA_GLOBALS_UNSTABLE_PERIOD(x,y) (TA_Globals->unstablePeriod[x])
-#define TA_GLOBALS_COMPATIBILITY        (TA_Globals->compatibility)
 
 
 

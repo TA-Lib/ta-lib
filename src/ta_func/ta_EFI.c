@@ -178,16 +178,8 @@ TA_LIB_API TA_RetCode TA_EFI( int    startIdx,
    }
    *outBegIdx= startIdx;
    /* The first EMA value is a simple average of the first 'period' force
-    * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-    * applied to the force series rather than to the input array.
-    *
-    * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-    * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-    * deprecated: it is preserved for the functions that already shipped with
-    * it and dropped from new ones, and it is not reachable at all from the
-    * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-    * here would make EFI's C output diverge from the other three backends for
-    * a setting they cannot even read.
+    * values; it then seeds the recursion. This is ema.c's seeding applied
+    * to the force series rather than to the input array.
     */
    today = startIdx - lookbackTotal + 1;
    prevClose = inClose[today - 1];
@@ -539,16 +531,8 @@ static TA_RetCode TA_EFI_OpenImpl( struct TA_EFI_Stream **stream, const double i
        */
       *outBegIdx= startIdx;
       /* The first EMA value is a simple average of the first 'period' force
-       * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-       * applied to the force series rather than to the input array.
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-       * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-       * deprecated: it is preserved for the functions that already shipped with
-       * it and dropped from new ones, and it is not reachable at all from the
-       * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-       * here would make EFI's C output diverge from the other three backends for
-       * a setting they cannot even read.
+       * values; it then seeds the recursion. This is ema.c's seeding applied
+       * to the force series rather than to the input array.
        */
       today = startIdx - lookbackTotal + 1;
       prevClose = inClose[today - 1];

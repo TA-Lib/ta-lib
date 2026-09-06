@@ -744,13 +744,6 @@ public class TaCodegenServe {
                 }
                 return "{\"error\":\"Invalid id\"}";
             }
-            else if (method == "set_compatibility") {
-                int mode = GetInt(p, "mode", 0);
-                if (mode == 0) {
-                    return "{\"status\":\"ok\"}";
-                }
-                return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-            }
             else if (method == "set_candle_settings") {
                 int settingType = GetInt(p, "settingType", -1);
                 int rangeType = GetInt(p, "rangeType", -1);
@@ -1143,10 +1136,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 5);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 34);
         int optInSignalPeriod = GetInt(req, "optInSignalPeriod", 5);
@@ -1218,13 +1207,12 @@ public class TaCodegenServe {
                 try { _ = c2.AcOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AcStream st;
                 try { st = c2.AcOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
@@ -1262,7 +1250,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AcStream sA = c2.AcOpen(fz_h[..p0], fz_l[..p0], optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1283,7 +1271,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AcStream sQ = c2.AcOpen(fz_h[..pa], fz_l[..pa], optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -1340,10 +1328,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -1460,13 +1444,12 @@ public class TaCodegenServe {
                 try { _ = c2.AccbandsOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AccbandsStream st;
                 try { st = c2.AccbandsOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -1514,7 +1497,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AccbandsStream sA = c2.AccbandsOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -1537,7 +1520,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AccbandsStream sQ = c2.AccbandsOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -1596,10 +1579,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -1666,13 +1645,12 @@ public class TaCodegenServe {
                 try { _ = c2.AcosOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AcosStream st;
                 try { st = c2.AcosOpen(fz_c[..p]); }
@@ -1710,7 +1688,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AcosStream sA = c2.AcosOpen(fz_c[..p0]);
@@ -1731,7 +1709,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AcosStream sQ = c2.AcosOpen(fz_c[..pa]);
@@ -1781,10 +1759,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -1857,13 +1831,12 @@ public class TaCodegenServe {
                 try { _ = c2.AdOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdStream st;
                 try { st = c2.AdOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p]); }
@@ -1901,7 +1874,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdStream sA = c2.AdOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], fz_v[..p0]);
@@ -1922,7 +1895,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AdStream sQ = c2.AdOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], fz_v[..pa]);
@@ -1972,10 +1945,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -2044,13 +2013,12 @@ public class TaCodegenServe {
                 try { _ = c2.AddOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AddStream st;
                 try { st = c2.AddOpen(fz_c[..p], fz_v[..p]); }
@@ -2088,7 +2056,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AddStream sA = c2.AddOpen(fz_c[..p0], fz_v[..p0]);
@@ -2109,7 +2077,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AddStream sQ = c2.AddOpen(fz_c[..pa], fz_v[..pa]);
@@ -2159,10 +2127,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 3);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 10);
         double[] fz_o = new double[svN];
@@ -2238,13 +2202,12 @@ public class TaCodegenServe {
                 try { _ = c2.AdoscOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdoscStream st;
                 try { st = c2.AdoscOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInFastPeriod, optInSlowPeriod); }
@@ -2282,7 +2245,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdoscStream sA = c2.AdoscOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], fz_v[..p0], optInFastPeriod, optInSlowPeriod);
@@ -2303,7 +2266,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AdoscStream sQ = c2.AdoscOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], fz_v[..pa], optInFastPeriod, optInSlowPeriod);
@@ -2360,10 +2323,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -2433,13 +2392,12 @@ public class TaCodegenServe {
                 try { _ = c2.AdrOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdrStream st;
                 try { st = c2.AdrOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -2477,7 +2435,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdrStream sA = c2.AdrOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -2498,7 +2456,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AdrStream sQ = c2.AdrOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -2555,10 +2513,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -2631,13 +2585,12 @@ public class TaCodegenServe {
                 try { _ = c2.AdxOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdxStream st;
                 try { st = c2.AdxOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -2675,7 +2628,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdxStream sA = c2.AdxOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -2696,7 +2649,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AdxStream sQ = c2.AdxOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -2753,10 +2706,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -2829,13 +2778,12 @@ public class TaCodegenServe {
                 try { _ = c2.AdxrOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdxrStream st;
                 try { st = c2.AdxrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -2873,7 +2821,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdxrStream sA = c2.AdxrOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -2894,7 +2842,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AdxrStream sQ = c2.AdxrOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -2951,10 +2899,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 5);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 34);
         double[] fz_o = new double[svN];
@@ -3025,13 +2969,12 @@ public class TaCodegenServe {
                 try { _ = c2.AoOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInFastPeriod, optInSlowPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AoStream st;
                 try { st = c2.AoOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod); }
@@ -3069,7 +3012,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AoStream sA = c2.AoOpen(fz_h[..p0], fz_l[..p0], optInFastPeriod, optInSlowPeriod);
@@ -3090,7 +3033,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AoStream sQ = c2.AoOpen(fz_h[..pa], fz_l[..pa], optInFastPeriod, optInSlowPeriod);
@@ -3147,10 +3090,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
         int _raw_optInMAType = GetInt(req, "optInMAType", 1);
@@ -3238,13 +3177,12 @@ public class TaCodegenServe {
                 try { _ = c2.ApoOpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ApoStream st;
                 try { st = c2.ApoOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType); }
@@ -3282,7 +3220,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ApoStream sA = c2.ApoOpen(fz_c[..p0], optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -3303,7 +3241,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.ApoStream sQ = c2.ApoOpen(fz_c[..pa], optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -3360,10 +3298,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -3451,13 +3385,12 @@ public class TaCodegenServe {
                 try { _ = c2.AroonOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AroonStream st;
                 try { st = c2.AroonOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -3500,7 +3433,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AroonStream sA = c2.AroonOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -3522,7 +3455,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AroonStream sQ = c2.AroonOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -3580,10 +3513,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -3653,13 +3582,12 @@ public class TaCodegenServe {
                 try { _ = c2.AroonoscOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AroonoscStream st;
                 try { st = c2.AroonoscOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -3697,7 +3625,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AroonoscStream sA = c2.AroonoscOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -3718,7 +3646,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AroonoscStream sQ = c2.AroonoscOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -3775,10 +3703,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -3845,13 +3769,12 @@ public class TaCodegenServe {
                 try { _ = c2.AsinOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AsinStream st;
                 try { st = c2.AsinOpen(fz_c[..p]); }
@@ -3889,7 +3812,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AsinStream sA = c2.AsinOpen(fz_c[..p0]);
@@ -3910,7 +3833,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AsinStream sQ = c2.AsinOpen(fz_c[..pa]);
@@ -3960,10 +3883,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -4030,13 +3949,12 @@ public class TaCodegenServe {
                 try { _ = c2.AtanOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AtanStream st;
                 try { st = c2.AtanOpen(fz_c[..p]); }
@@ -4074,7 +3992,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AtanStream sA = c2.AtanOpen(fz_c[..p0]);
@@ -4095,7 +4013,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AtanStream sQ = c2.AtanOpen(fz_c[..pa]);
@@ -4145,10 +4063,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -4221,13 +4135,12 @@ public class TaCodegenServe {
                 try { _ = c2.AtrOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AtrStream st;
                 try { st = c2.AtrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -4265,7 +4178,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AtrStream sA = c2.AtrOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -4286,7 +4199,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AtrStream sQ = c2.AtrOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -4343,10 +4256,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -4414,13 +4323,12 @@ public class TaCodegenServe {
                 try { _ = c2.AvgdevOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AvgdevStream st;
                 try { st = c2.AvgdevOpen(fz_c[..p], optInTimePeriod); }
@@ -4458,7 +4366,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AvgdevStream sA = c2.AvgdevOpen(fz_c[..p0], optInTimePeriod);
@@ -4479,7 +4387,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AvgdevStream sQ = c2.AvgdevOpen(fz_c[..pa], optInTimePeriod);
@@ -4536,10 +4444,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -4612,13 +4516,12 @@ public class TaCodegenServe {
                 try { _ = c2.AvgpriceOpenAndFill(ovIn.AsSpan(0, svN), fz_h, fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AvgpriceStream st;
                 try { st = c2.AvgpriceOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -4656,7 +4559,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AvgpriceStream sA = c2.AvgpriceOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -4677,7 +4580,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.AvgpriceStream sQ = c2.AvgpriceOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -4727,10 +4630,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double optInNbDevUp = GetDouble(req, "optInNbDevUp", 2e0);
         double optInNbDevDn = GetDouble(req, "optInNbDevDn", 2e0);
@@ -4860,13 +4759,12 @@ public class TaCodegenServe {
                 try { _ = c2.BbandsOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.BbandsStream st;
                 try { st = c2.BbandsOpen(fz_c[..p], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); }
@@ -4914,7 +4812,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.BbandsStream sA = c2.BbandsOpen(fz_c[..p0], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -4937,7 +4835,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.BbandsStream sQ = c2.BbandsOpen(fz_c[..pa], optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -4996,10 +4894,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 5);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -5069,13 +4963,12 @@ public class TaCodegenServe {
                 try { _ = c2.BetaOpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.BetaStream st;
                 try { st = c2.BetaOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
@@ -5113,7 +5006,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.BetaStream sA = c2.BetaOpen(fz_c[..p0], fz_v[..p0], optInTimePeriod);
@@ -5134,7 +5027,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.BetaStream sQ = c2.BetaOpen(fz_c[..pa], fz_v[..pa], optInTimePeriod);
@@ -5191,10 +5084,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -5267,13 +5156,12 @@ public class TaCodegenServe {
                 try { _ = c2.BopOpenAndFill(ovIn.AsSpan(0, svN), fz_h, fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.BopStream st;
                 try { st = c2.BopOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -5311,7 +5199,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.BopStream sA = c2.BopOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -5332,7 +5220,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.BopStream sQ = c2.BopOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -5382,10 +5270,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -5457,13 +5341,12 @@ public class TaCodegenServe {
                 try { _ = c2.CciOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CciStream st;
                 try { st = c2.CciOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -5501,7 +5384,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CciStream sA = c2.CciOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -5522,7 +5405,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CciStream sQ = c2.CciOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -5579,10 +5462,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -5650,13 +5529,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl2crowsStream st;
                 try { st = c2.Cdl2crowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -5694,7 +5572,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl2crowsStream sA = c2.Cdl2crowsOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -5715,7 +5593,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl2crowsStream sQ = c2.Cdl2crowsOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -5733,7 +5611,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -5792,10 +5670,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -5863,13 +5737,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3blackcrowsStream st;
                 try { st = c2.Cdl3blackcrowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -5907,7 +5780,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3blackcrowsStream sA = c2.Cdl3blackcrowsOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -5928,7 +5801,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl3blackcrowsStream sQ = c2.Cdl3blackcrowsOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -5946,7 +5819,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -6005,10 +5878,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -6076,13 +5945,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3insideStream st;
                 try { st = c2.Cdl3insideOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -6120,7 +5988,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3insideStream sA = c2.Cdl3insideOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -6141,7 +6009,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl3insideStream sQ = c2.Cdl3insideOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -6159,7 +6027,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -6218,10 +6086,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -6289,13 +6153,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3linestrikeStream st;
                 try { st = c2.Cdl3linestrikeOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -6333,7 +6196,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3linestrikeStream sA = c2.Cdl3linestrikeOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -6354,7 +6217,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl3linestrikeStream sQ = c2.Cdl3linestrikeOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -6372,7 +6235,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -6431,10 +6294,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -6502,13 +6361,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3outsideStream st;
                 try { st = c2.Cdl3outsideOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -6546,7 +6404,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3outsideStream sA = c2.Cdl3outsideOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -6567,7 +6425,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl3outsideStream sQ = c2.Cdl3outsideOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -6585,7 +6443,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -6644,10 +6502,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -6715,13 +6569,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3starsinsouthStream st;
                 try { st = c2.Cdl3starsinsouthOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -6759,7 +6612,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3starsinsouthStream sA = c2.Cdl3starsinsouthOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -6780,7 +6633,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl3starsinsouthStream sQ = c2.Cdl3starsinsouthOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -6798,7 +6651,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -6857,10 +6710,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -6928,13 +6777,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3whitesoldiersStream st;
                 try { st = c2.Cdl3whitesoldiersOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -6972,7 +6820,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3whitesoldiersStream sA = c2.Cdl3whitesoldiersOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -6993,7 +6841,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdl3whitesoldiersStream sQ = c2.Cdl3whitesoldiersOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -7011,7 +6859,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -7070,10 +6918,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 3e-1);
         double[] fz_o = new double[svN];
@@ -7142,13 +6986,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlabandonedbabyStream st;
                 try { st = c2.CdlabandonedbabyOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -7186,7 +7029,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlabandonedbabyStream sA = c2.CdlabandonedbabyOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -7207,7 +7050,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlabandonedbabyStream sQ = c2.CdlabandonedbabyOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -7225,7 +7068,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -7284,10 +7127,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -7355,13 +7194,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdladvanceblockStream st;
                 try { st = c2.CdladvanceblockOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -7399,7 +7237,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdladvanceblockStream sA = c2.CdladvanceblockOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -7420,7 +7258,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdladvanceblockStream sQ = c2.CdladvanceblockOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -7438,7 +7276,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -7497,10 +7335,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -7568,13 +7402,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlbeltholdStream st;
                 try { st = c2.CdlbeltholdOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -7612,7 +7445,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlbeltholdStream sA = c2.CdlbeltholdOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -7633,7 +7466,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlbeltholdStream sQ = c2.CdlbeltholdOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -7651,7 +7484,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -7710,10 +7543,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -7781,13 +7610,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlbreakawayStream st;
                 try { st = c2.CdlbreakawayOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -7825,7 +7653,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlbreakawayStream sA = c2.CdlbreakawayOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -7846,7 +7674,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlbreakawayStream sQ = c2.CdlbreakawayOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -7864,7 +7692,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -7923,10 +7751,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -7994,13 +7818,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlclosingmarubozuStream st;
                 try { st = c2.CdlclosingmarubozuOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -8038,7 +7861,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlclosingmarubozuStream sA = c2.CdlclosingmarubozuOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -8059,7 +7882,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlclosingmarubozuStream sQ = c2.CdlclosingmarubozuOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -8077,7 +7900,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -8136,10 +7959,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -8207,13 +8026,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlconcealbabyswallStream st;
                 try { st = c2.CdlconcealbabyswallOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -8251,7 +8069,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlconcealbabyswallStream sA = c2.CdlconcealbabyswallOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -8272,7 +8090,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlconcealbabyswallStream sQ = c2.CdlconcealbabyswallOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -8290,7 +8108,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -8349,10 +8167,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -8420,13 +8234,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlcounterattackStream st;
                 try { st = c2.CdlcounterattackOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -8464,7 +8277,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlcounterattackStream sA = c2.CdlcounterattackOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -8485,7 +8298,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlcounterattackStream sQ = c2.CdlcounterattackOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -8503,7 +8316,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -8562,10 +8375,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 5e-1);
         double[] fz_o = new double[svN];
@@ -8634,13 +8443,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldarkcloudcoverStream st;
                 try { st = c2.CdldarkcloudcoverOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -8678,7 +8486,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldarkcloudcoverStream sA = c2.CdldarkcloudcoverOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -8699,7 +8507,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdldarkcloudcoverStream sQ = c2.CdldarkcloudcoverOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -8717,7 +8525,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -8776,10 +8584,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -8847,13 +8651,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldojiStream st;
                 try { st = c2.CdldojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -8891,7 +8694,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldojiStream sA = c2.CdldojiOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -8912,7 +8715,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdldojiStream sQ = c2.CdldojiOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -8930,7 +8733,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -8989,10 +8792,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -9060,13 +8859,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldojistarStream st;
                 try { st = c2.CdldojistarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -9104,7 +8902,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldojistarStream sA = c2.CdldojistarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -9125,7 +8923,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdldojistarStream sQ = c2.CdldojistarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -9143,7 +8941,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -9202,10 +9000,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -9273,13 +9067,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldragonflydojiStream st;
                 try { st = c2.CdldragonflydojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -9317,7 +9110,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldragonflydojiStream sA = c2.CdldragonflydojiOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -9338,7 +9131,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdldragonflydojiStream sQ = c2.CdldragonflydojiOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -9356,7 +9149,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -9415,10 +9208,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -9486,13 +9275,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlengulfingStream st;
                 try { st = c2.CdlengulfingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -9530,7 +9318,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlengulfingStream sA = c2.CdlengulfingOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -9551,7 +9339,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlengulfingStream sQ = c2.CdlengulfingOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -9569,7 +9357,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -9628,10 +9416,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 3e-1);
         double[] fz_o = new double[svN];
@@ -9700,13 +9484,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdleveningdojistarStream st;
                 try { st = c2.CdleveningdojistarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -9744,7 +9527,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdleveningdojistarStream sA = c2.CdleveningdojistarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -9765,7 +9548,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdleveningdojistarStream sQ = c2.CdleveningdojistarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -9783,7 +9566,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -9842,10 +9625,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 3e-1);
         double[] fz_o = new double[svN];
@@ -9914,13 +9693,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdleveningstarStream st;
                 try { st = c2.CdleveningstarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -9958,7 +9736,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdleveningstarStream sA = c2.CdleveningstarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -9979,7 +9757,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdleveningstarStream sQ = c2.CdleveningstarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -9997,7 +9775,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -10056,10 +9834,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -10127,13 +9901,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlgapsidesidewhiteStream st;
                 try { st = c2.CdlgapsidesidewhiteOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -10171,7 +9944,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlgapsidesidewhiteStream sA = c2.CdlgapsidesidewhiteOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -10192,7 +9965,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlgapsidesidewhiteStream sQ = c2.CdlgapsidesidewhiteOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -10210,7 +9983,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -10269,10 +10042,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -10340,13 +10109,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlgravestonedojiStream st;
                 try { st = c2.CdlgravestonedojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -10384,7 +10152,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlgravestonedojiStream sA = c2.CdlgravestonedojiOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -10405,7 +10173,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlgravestonedojiStream sQ = c2.CdlgravestonedojiOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -10423,7 +10191,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -10482,10 +10250,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -10553,13 +10317,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhammerStream st;
                 try { st = c2.CdlhammerOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -10597,7 +10360,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhammerStream sA = c2.CdlhammerOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -10618,7 +10381,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlhammerStream sQ = c2.CdlhammerOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -10636,7 +10399,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -10695,10 +10458,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -10766,13 +10525,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhangingmanStream st;
                 try { st = c2.CdlhangingmanOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -10810,7 +10568,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhangingmanStream sA = c2.CdlhangingmanOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -10831,7 +10589,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlhangingmanStream sQ = c2.CdlhangingmanOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -10849,7 +10607,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -10908,10 +10666,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -10979,13 +10733,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlharamiStream st;
                 try { st = c2.CdlharamiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -11023,7 +10776,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlharamiStream sA = c2.CdlharamiOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -11044,7 +10797,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlharamiStream sQ = c2.CdlharamiOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -11062,7 +10815,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -11121,10 +10874,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -11192,13 +10941,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlharamicrossStream st;
                 try { st = c2.CdlharamicrossOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -11236,7 +10984,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlharamicrossStream sA = c2.CdlharamicrossOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -11257,7 +11005,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlharamicrossStream sQ = c2.CdlharamicrossOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -11275,7 +11023,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -11334,10 +11082,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -11405,13 +11149,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhighwaveStream st;
                 try { st = c2.CdlhighwaveOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -11449,7 +11192,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhighwaveStream sA = c2.CdlhighwaveOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -11470,7 +11213,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlhighwaveStream sQ = c2.CdlhighwaveOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -11488,7 +11231,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -11547,10 +11290,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -11618,13 +11357,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhikkakeStream st;
                 try { st = c2.CdlhikkakeOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -11662,7 +11400,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhikkakeStream sA = c2.CdlhikkakeOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -11683,7 +11421,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlhikkakeStream sQ = c2.CdlhikkakeOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -11701,7 +11439,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -11760,10 +11498,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -11831,13 +11565,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhikkakemodStream st;
                 try { st = c2.CdlhikkakemodOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -11875,7 +11608,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhikkakemodStream sA = c2.CdlhikkakemodOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -11896,7 +11629,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlhikkakemodStream sQ = c2.CdlhikkakemodOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -11914,7 +11647,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -11973,10 +11706,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -12044,13 +11773,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhomingpigeonStream st;
                 try { st = c2.CdlhomingpigeonOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -12088,7 +11816,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhomingpigeonStream sA = c2.CdlhomingpigeonOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -12109,7 +11837,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlhomingpigeonStream sQ = c2.CdlhomingpigeonOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -12127,7 +11855,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -12186,10 +11914,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -12257,13 +11981,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlidentical3crowsStream st;
                 try { st = c2.Cdlidentical3crowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -12301,7 +12024,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlidentical3crowsStream sA = c2.Cdlidentical3crowsOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -12322,7 +12045,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdlidentical3crowsStream sQ = c2.Cdlidentical3crowsOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -12340,7 +12063,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -12399,10 +12122,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -12470,13 +12189,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlinneckStream st;
                 try { st = c2.CdlinneckOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -12514,7 +12232,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlinneckStream sA = c2.CdlinneckOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -12535,7 +12253,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlinneckStream sQ = c2.CdlinneckOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -12553,7 +12271,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -12612,10 +12330,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -12683,13 +12397,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlinvertedhammerStream st;
                 try { st = c2.CdlinvertedhammerOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -12727,7 +12440,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlinvertedhammerStream sA = c2.CdlinvertedhammerOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -12748,7 +12461,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlinvertedhammerStream sQ = c2.CdlinvertedhammerOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -12766,7 +12479,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -12825,10 +12538,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -12896,13 +12605,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlkickingStream st;
                 try { st = c2.CdlkickingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -12940,7 +12648,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlkickingStream sA = c2.CdlkickingOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -12961,7 +12669,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlkickingStream sQ = c2.CdlkickingOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -12979,7 +12687,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -13038,10 +12746,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -13109,13 +12813,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlkickingbylengthStream st;
                 try { st = c2.CdlkickingbylengthOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -13153,7 +12856,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlkickingbylengthStream sA = c2.CdlkickingbylengthOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -13174,7 +12877,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlkickingbylengthStream sQ = c2.CdlkickingbylengthOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -13192,7 +12895,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -13251,10 +12954,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -13322,13 +13021,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlladderbottomStream st;
                 try { st = c2.CdlladderbottomOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -13366,7 +13064,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlladderbottomStream sA = c2.CdlladderbottomOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -13387,7 +13085,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlladderbottomStream sQ = c2.CdlladderbottomOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -13405,7 +13103,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -13464,10 +13162,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -13535,13 +13229,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdllongleggeddojiStream st;
                 try { st = c2.CdllongleggeddojiOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -13579,7 +13272,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdllongleggeddojiStream sA = c2.CdllongleggeddojiOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -13600,7 +13293,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdllongleggeddojiStream sQ = c2.CdllongleggeddojiOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -13618,7 +13311,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -13677,10 +13370,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -13748,13 +13437,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdllonglineStream st;
                 try { st = c2.CdllonglineOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -13792,7 +13480,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdllonglineStream sA = c2.CdllonglineOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -13813,7 +13501,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdllonglineStream sQ = c2.CdllonglineOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -13831,7 +13519,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -13890,10 +13578,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -13961,13 +13645,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmarubozuStream st;
                 try { st = c2.CdlmarubozuOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -14005,7 +13688,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmarubozuStream sA = c2.CdlmarubozuOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -14026,7 +13709,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlmarubozuStream sQ = c2.CdlmarubozuOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -14044,7 +13727,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -14103,10 +13786,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -14174,13 +13853,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmatchinglowStream st;
                 try { st = c2.CdlmatchinglowOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -14218,7 +13896,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmatchinglowStream sA = c2.CdlmatchinglowOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -14239,7 +13917,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlmatchinglowStream sQ = c2.CdlmatchinglowOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -14257,7 +13935,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -14316,10 +13994,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 5e-1);
         double[] fz_o = new double[svN];
@@ -14388,13 +14062,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmatholdStream st;
                 try { st = c2.CdlmatholdOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -14432,7 +14105,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmatholdStream sA = c2.CdlmatholdOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -14453,7 +14126,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlmatholdStream sQ = c2.CdlmatholdOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -14471,7 +14144,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -14530,10 +14203,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 3e-1);
         double[] fz_o = new double[svN];
@@ -14602,13 +14271,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmorningdojistarStream st;
                 try { st = c2.CdlmorningdojistarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -14646,7 +14314,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmorningdojistarStream sA = c2.CdlmorningdojistarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -14667,7 +14335,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlmorningdojistarStream sQ = c2.CdlmorningdojistarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -14685,7 +14353,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -14744,10 +14412,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double optInPenetration = GetDouble(req, "optInPenetration", 3e-1);
         double[] fz_o = new double[svN];
@@ -14816,13 +14480,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmorningstarStream st;
                 try { st = c2.CdlmorningstarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p], optInPenetration); }
@@ -14860,7 +14523,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmorningstarStream sA = c2.CdlmorningstarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0], optInPenetration);
@@ -14881,7 +14544,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlmorningstarStream sQ = c2.CdlmorningstarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa], optInPenetration);
@@ -14899,7 +14562,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -14958,10 +14621,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -15029,13 +14688,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlonneckStream st;
                 try { st = c2.CdlonneckOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -15073,7 +14731,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlonneckStream sA = c2.CdlonneckOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -15094,7 +14752,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlonneckStream sQ = c2.CdlonneckOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -15112,7 +14770,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -15171,10 +14829,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -15242,13 +14896,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlpiercingStream st;
                 try { st = c2.CdlpiercingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -15286,7 +14939,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlpiercingStream sA = c2.CdlpiercingOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -15307,7 +14960,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlpiercingStream sQ = c2.CdlpiercingOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -15325,7 +14978,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -15384,10 +15037,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -15455,13 +15104,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlrickshawmanStream st;
                 try { st = c2.CdlrickshawmanOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -15499,7 +15147,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlrickshawmanStream sA = c2.CdlrickshawmanOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -15520,7 +15168,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlrickshawmanStream sQ = c2.CdlrickshawmanOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -15538,7 +15186,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -15597,10 +15245,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -15668,13 +15312,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlrisefall3methodsStream st;
                 try { st = c2.Cdlrisefall3methodsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -15712,7 +15355,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlrisefall3methodsStream sA = c2.Cdlrisefall3methodsOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -15733,7 +15376,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdlrisefall3methodsStream sQ = c2.Cdlrisefall3methodsOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -15751,7 +15394,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -15810,10 +15453,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -15881,13 +15520,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlseparatinglinesStream st;
                 try { st = c2.CdlseparatinglinesOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -15925,7 +15563,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlseparatinglinesStream sA = c2.CdlseparatinglinesOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -15946,7 +15584,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlseparatinglinesStream sQ = c2.CdlseparatinglinesOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -15964,7 +15602,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -16023,10 +15661,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -16094,13 +15728,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlshootingstarStream st;
                 try { st = c2.CdlshootingstarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -16138,7 +15771,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlshootingstarStream sA = c2.CdlshootingstarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -16159,7 +15792,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlshootingstarStream sQ = c2.CdlshootingstarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -16177,7 +15810,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -16236,10 +15869,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -16307,13 +15936,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlshortlineStream st;
                 try { st = c2.CdlshortlineOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -16351,7 +15979,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlshortlineStream sA = c2.CdlshortlineOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -16372,7 +16000,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlshortlineStream sQ = c2.CdlshortlineOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -16390,7 +16018,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -16449,10 +16077,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -16520,13 +16144,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlspinningtopStream st;
                 try { st = c2.CdlspinningtopOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -16564,7 +16187,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlspinningtopStream sA = c2.CdlspinningtopOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -16585,7 +16208,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlspinningtopStream sQ = c2.CdlspinningtopOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -16603,7 +16226,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -16662,10 +16285,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -16733,13 +16352,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlstalledpatternStream st;
                 try { st = c2.CdlstalledpatternOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -16777,7 +16395,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlstalledpatternStream sA = c2.CdlstalledpatternOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -16798,7 +16416,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlstalledpatternStream sQ = c2.CdlstalledpatternOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -16816,7 +16434,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -16875,10 +16493,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -16946,13 +16560,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlsticksandwichStream st;
                 try { st = c2.CdlsticksandwichOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -16990,7 +16603,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlsticksandwichStream sA = c2.CdlsticksandwichOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -17011,7 +16624,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlsticksandwichStream sQ = c2.CdlsticksandwichOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -17029,7 +16642,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -17088,10 +16701,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -17159,13 +16768,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdltakuriStream st;
                 try { st = c2.CdltakuriOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -17203,7 +16811,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdltakuriStream sA = c2.CdltakuriOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -17224,7 +16832,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdltakuriStream sQ = c2.CdltakuriOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -17242,7 +16850,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -17301,10 +16909,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -17372,13 +16976,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdltasukigapStream st;
                 try { st = c2.CdltasukigapOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -17416,7 +17019,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdltasukigapStream sA = c2.CdltasukigapOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -17437,7 +17040,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdltasukigapStream sQ = c2.CdltasukigapOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -17455,7 +17058,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -17514,10 +17117,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -17585,13 +17184,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlthrustingStream st;
                 try { st = c2.CdlthrustingOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -17629,7 +17227,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlthrustingStream sA = c2.CdlthrustingOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -17650,7 +17248,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdlthrustingStream sQ = c2.CdlthrustingOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -17668,7 +17266,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -17727,10 +17325,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -17798,13 +17392,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdltristarStream st;
                 try { st = c2.CdltristarOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -17842,7 +17435,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdltristarStream sA = c2.CdltristarOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -17863,7 +17456,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CdltristarStream sQ = c2.CdltristarOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -17881,7 +17474,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -17940,10 +17533,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -18011,13 +17600,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlunique3riverStream st;
                 try { st = c2.Cdlunique3riverOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -18055,7 +17643,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlunique3riverStream sA = c2.Cdlunique3riverOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -18076,7 +17664,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdlunique3riverStream sQ = c2.Cdlunique3riverOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -18094,7 +17682,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -18153,10 +17741,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -18224,13 +17808,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlupsidegap2crowsStream st;
                 try { st = c2.Cdlupsidegap2crowsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -18268,7 +17851,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlupsidegap2crowsStream sA = c2.Cdlupsidegap2crowsOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -18289,7 +17872,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdlupsidegap2crowsStream sQ = c2.Cdlupsidegap2crowsOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -18307,7 +17890,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -18366,10 +17949,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = GetInt(req, "candleLegs", 0);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -18437,13 +18016,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlxsidegap3methodsStream st;
                 try { st = c2.Cdlxsidegap3methodsOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -18481,7 +18059,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlxsidegap3methodsStream sA = c2.Cdlxsidegap3methodsOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -18502,7 +18080,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Cdlxsidegap3methodsStream sQ = c2.Cdlxsidegap3methodsOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -18520,7 +18098,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pc = lb + 1 + seedShift;
+                int pc = lb + 1;
                 if (pc <= svN - 1) {
                     CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();
                     int[] m0 = new int[svN];
@@ -18579,10 +18157,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -18649,13 +18223,12 @@ public class TaCodegenServe {
                 try { _ = c2.CeilOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CeilStream st;
                 try { st = c2.CeilOpen(fz_c[..p]); }
@@ -18693,7 +18266,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CeilStream sA = c2.CeilOpen(fz_c[..p0]);
@@ -18714,7 +18287,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CeilStream sQ = c2.CeilOpen(fz_c[..pa]);
@@ -18764,10 +18337,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -18841,13 +18410,12 @@ public class TaCodegenServe {
                 try { _ = c2.CmfOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CmfStream st;
                 try { st = c2.CmfOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInTimePeriod); }
@@ -18885,7 +18453,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CmfStream sA = c2.CmfOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], fz_v[..p0], optInTimePeriod);
@@ -18906,7 +18474,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CmfStream sQ = c2.CmfOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], fz_v[..pa], optInTimePeriod);
@@ -18963,10 +18531,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -19035,13 +18599,12 @@ public class TaCodegenServe {
                 try { _ = c2.CmoOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = (svCompat == 1) ? 1 : 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CmoStream st;
                 try { st = c2.CmoOpen(fz_c[..p], optInTimePeriod); }
@@ -19079,7 +18642,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CmoStream sA = c2.CmoOpen(fz_c[..p0], optInTimePeriod);
@@ -19100,7 +18663,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CmoStream sQ = c2.CmoOpen(fz_c[..pa], optInTimePeriod);
@@ -19157,10 +18720,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -19228,13 +18787,12 @@ public class TaCodegenServe {
                 try { _ = c2.CmouOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CmouStream st;
                 try { st = c2.CmouOpen(fz_c[..p], optInTimePeriod); }
@@ -19272,7 +18830,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CmouStream sA = c2.CmouOpen(fz_c[..p0], optInTimePeriod);
@@ -19293,7 +18851,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CmouStream sQ = c2.CmouOpen(fz_c[..pa], optInTimePeriod);
@@ -19350,10 +18908,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInWMAPeriod = GetInt(req, "optInWMAPeriod", 10);
         int optInROC1Period = GetInt(req, "optInROC1Period", 11);
         int optInROC2Period = GetInt(req, "optInROC2Period", 14);
@@ -19423,13 +18977,12 @@ public class TaCodegenServe {
                 try { _ = c2.CoppockOpenAndFill(ovIn.AsSpan(0, svN), optInWMAPeriod, optInROC1Period, optInROC2Period, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CoppockStream st;
                 try { st = c2.CoppockOpen(fz_c[..p], optInWMAPeriod, optInROC1Period, optInROC2Period); }
@@ -19467,7 +19020,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CoppockStream sA = c2.CoppockOpen(fz_c[..p0], optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -19488,7 +19041,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CoppockStream sQ = c2.CoppockOpen(fz_c[..pa], optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -19545,10 +19098,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -19618,13 +19167,12 @@ public class TaCodegenServe {
                 try { _ = c2.CorrelOpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CorrelStream st;
                 try { st = c2.CorrelOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
@@ -19662,7 +19210,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CorrelStream sA = c2.CorrelOpen(fz_c[..p0], fz_v[..p0], optInTimePeriod);
@@ -19683,7 +19231,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CorrelStream sQ = c2.CorrelOpen(fz_c[..pa], fz_v[..pa], optInTimePeriod);
@@ -19740,10 +19288,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -19810,13 +19354,12 @@ public class TaCodegenServe {
                 try { _ = c2.CosOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CosStream st;
                 try { st = c2.CosOpen(fz_c[..p]); }
@@ -19854,7 +19397,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CosStream sA = c2.CosOpen(fz_c[..p0]);
@@ -19875,7 +19418,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CosStream sQ = c2.CosOpen(fz_c[..pa]);
@@ -19925,10 +19468,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -19995,13 +19534,12 @@ public class TaCodegenServe {
                 try { _ = c2.CoshOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CoshStream st;
                 try { st = c2.CoshOpen(fz_c[..p]); }
@@ -20039,7 +19577,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CoshStream sA = c2.CoshOpen(fz_c[..p0]);
@@ -20060,7 +19598,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CoshStream sQ = c2.CoshOpen(fz_c[..pa]);
@@ -20110,10 +19648,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -20180,13 +19714,12 @@ public class TaCodegenServe {
                 try { _ = c2.CumsumOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CumsumStream st;
                 try { st = c2.CumsumOpen(fz_c[..p]); }
@@ -20224,7 +19757,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CumsumStream sA = c2.CumsumOpen(fz_c[..p0]);
@@ -20245,7 +19778,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CumsumStream sQ = c2.CumsumOpen(fz_c[..pa]);
@@ -20295,10 +19828,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         int optInROCPeriod = GetInt(req, "optInROCPeriod", 10);
         double[] fz_o = new double[svN];
@@ -20370,13 +19899,12 @@ public class TaCodegenServe {
                 try { _ = c2.CviOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, optInROCPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CviStream st;
                 try { st = c2.CviOpen(fz_h[..p], fz_l[..p], optInTimePeriod, optInROCPeriod); }
@@ -20414,7 +19942,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CviStream sA = c2.CviOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod, optInROCPeriod);
@@ -20435,7 +19963,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.CviStream sQ = c2.CviOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod, optInROCPeriod);
@@ -20492,10 +20020,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -20564,13 +20088,12 @@ public class TaCodegenServe {
                 try { _ = c2.DemaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DemaStream st;
                 try { st = c2.DemaOpen(fz_c[..p], optInTimePeriod); }
@@ -20608,7 +20131,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DemaStream sA = c2.DemaOpen(fz_c[..p0], optInTimePeriod);
@@ -20629,7 +20152,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.DemaStream sQ = c2.DemaOpen(fz_c[..pa], optInTimePeriod);
@@ -20686,10 +20209,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -20758,13 +20277,12 @@ public class TaCodegenServe {
                 try { _ = c2.DivOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DivStream st;
                 try { st = c2.DivOpen(fz_c[..p], fz_v[..p]); }
@@ -20802,7 +20320,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DivStream sA = c2.DivOpen(fz_c[..p0], fz_v[..p0]);
@@ -20823,7 +20341,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.DivStream sQ = c2.DivOpen(fz_c[..pa], fz_v[..pa]);
@@ -20873,10 +20391,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -20987,13 +20501,12 @@ public class TaCodegenServe {
                 try { _ = c2.DonchianOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DonchianStream st;
                 try { st = c2.DonchianOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -21041,7 +20554,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DonchianStream sA = c2.DonchianOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -21064,7 +20577,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.DonchianStream sQ = c2.DonchianOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -21123,10 +20636,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -21194,13 +20703,12 @@ public class TaCodegenServe {
                 try { _ = c2.DpoOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DpoStream st;
                 try { st = c2.DpoOpen(fz_c[..p], optInTimePeriod); }
@@ -21238,7 +20746,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DpoStream sA = c2.DpoOpen(fz_c[..p0], optInTimePeriod);
@@ -21259,7 +20767,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.DpoStream sQ = c2.DpoOpen(fz_c[..pa], optInTimePeriod);
@@ -21316,10 +20824,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -21392,13 +20896,12 @@ public class TaCodegenServe {
                 try { _ = c2.DxOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DxStream st;
                 try { st = c2.DxOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -21436,7 +20939,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DxStream sA = c2.DxOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -21457,7 +20960,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.DxStream sQ = c2.DxOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -21514,10 +21017,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 13);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -21587,13 +21086,12 @@ public class TaCodegenServe {
                 try { _ = c2.EfiOpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.EfiStream st;
                 try { st = c2.EfiOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
@@ -21631,7 +21129,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.EfiStream sA = c2.EfiOpen(fz_c[..p0], fz_v[..p0], optInTimePeriod);
@@ -21652,7 +21150,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.EfiStream sQ = c2.EfiOpen(fz_c[..pa], fz_v[..pa], optInTimePeriod);
@@ -21709,10 +21207,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -21781,13 +21275,12 @@ public class TaCodegenServe {
                 try { _ = c2.EmaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.EmaStream st;
                 try { st = c2.EmaOpen(fz_c[..p], optInTimePeriod); }
@@ -21825,7 +21318,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.EmaStream sA = c2.EmaOpen(fz_c[..p0], optInTimePeriod);
@@ -21846,7 +21339,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.EmaStream sQ = c2.EmaOpen(fz_c[..pa], optInTimePeriod);
@@ -21903,10 +21396,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -21974,13 +21463,12 @@ public class TaCodegenServe {
                 try { _ = c2.ErOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ErStream st;
                 try { st = c2.ErOpen(fz_c[..p], optInTimePeriod); }
@@ -22018,7 +21506,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ErStream sA = c2.ErOpen(fz_c[..p0], optInTimePeriod);
@@ -22039,7 +21527,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.ErStream sQ = c2.ErOpen(fz_c[..pa], optInTimePeriod);
@@ -22096,10 +21584,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 13);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -22192,13 +21676,12 @@ public class TaCodegenServe {
                 try { _ = c2.EriOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.EriStream st;
                 try { st = c2.EriOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -22241,7 +21724,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.EriStream sA = c2.EriOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -22263,7 +21746,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.EriStream sQ = c2.EriOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -22321,10 +21804,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -22391,13 +21870,12 @@ public class TaCodegenServe {
                 try { _ = c2.ExpOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ExpStream st;
                 try { st = c2.ExpOpen(fz_c[..p]); }
@@ -22435,7 +21913,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ExpStream sA = c2.ExpOpen(fz_c[..p0]);
@@ -22456,7 +21934,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.ExpStream sQ = c2.ExpOpen(fz_c[..pa]);
@@ -22506,10 +21984,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -22576,13 +22050,12 @@ public class TaCodegenServe {
                 try { _ = c2.FloorOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.FloorStream st;
                 try { st = c2.FloorOpen(fz_c[..p]); }
@@ -22620,7 +22093,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.FloorStream sA = c2.FloorOpen(fz_c[..p0]);
@@ -22641,7 +22114,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.FloorStream sQ = c2.FloorOpen(fz_c[..pa]);
@@ -22691,10 +22164,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 5);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -22762,13 +22231,12 @@ public class TaCodegenServe {
                 try { _ = c2.FoscOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.FoscStream st;
                 try { st = c2.FoscOpen(fz_c[..p], optInTimePeriod); }
@@ -22806,7 +22274,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.FoscStream sA = c2.FoscOpen(fz_c[..p0], optInTimePeriod);
@@ -22827,7 +22295,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.FoscStream sQ = c2.FoscOpen(fz_c[..pa], optInTimePeriod);
@@ -22884,10 +22352,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInLeftBars = GetInt(req, "optInLeftBars", 2);
         int optInRightBars = GetInt(req, "optInRightBars", 2);
         double[] fz_o = new double[svN];
@@ -22962,13 +22426,12 @@ public class TaCodegenServe {
                 try { _ = c2.FractalOpenAndFill(fz_h, fz_l, optInLeftBars, optInRightBars, ovI.AsSpan(0, svN), ovI.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.FractalStream st;
                 try { st = c2.FractalOpen(fz_h[..p], fz_l[..p], optInLeftBars, optInRightBars); }
@@ -23011,7 +22474,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.FractalStream sA = c2.FractalOpen(fz_h[..p0], fz_l[..p0], optInLeftBars, optInRightBars);
@@ -23033,7 +22496,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.FractalStream sQ = c2.FractalOpen(fz_h[..pa], fz_l[..pa], optInLeftBars, optInRightBars);
@@ -23091,10 +22554,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -23250,13 +22709,12 @@ public class TaCodegenServe {
                 try { _ = c2.HaOpenAndFill(ovIn.AsSpan(0, svN), fz_h, fz_l, fz_c, f0, f1, f2, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 3 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HaStream st;
                 try { st = c2.HaOpen(fz_o[..p], fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -23309,7 +22767,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HaStream sA = c2.HaOpen(fz_o[..p0], fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -23333,7 +22791,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HaStream sQ = c2.HaOpen(fz_o[..pa], fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -23383,10 +22841,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -23454,13 +22908,12 @@ public class TaCodegenServe {
                 try { _ = c2.HmaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HmaStream st;
                 try { st = c2.HmaOpen(fz_c[..p], optInTimePeriod); }
@@ -23498,7 +22951,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HmaStream sA = c2.HmaOpen(fz_c[..p0], optInTimePeriod);
@@ -23519,7 +22972,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HmaStream sQ = c2.HmaOpen(fz_c[..pa], optInTimePeriod);
@@ -23576,10 +23029,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -23647,13 +23096,12 @@ public class TaCodegenServe {
                 try { _ = c2.HtDcperiodOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtDcperiodStream st;
                 try { st = c2.HtDcperiodOpen(fz_c[..p]); }
@@ -23691,7 +23139,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtDcperiodStream sA = c2.HtDcperiodOpen(fz_c[..p0]);
@@ -23712,7 +23160,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HtDcperiodStream sQ = c2.HtDcperiodOpen(fz_c[..pa]);
@@ -23762,10 +23210,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -23833,13 +23277,12 @@ public class TaCodegenServe {
                 try { _ = c2.HtDcphaseOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtDcphaseStream st;
                 try { st = c2.HtDcphaseOpen(fz_c[..p]); }
@@ -23877,7 +23320,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtDcphaseStream sA = c2.HtDcphaseOpen(fz_c[..p0]);
@@ -23898,7 +23341,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HtDcphaseStream sQ = c2.HtDcphaseOpen(fz_c[..pa]);
@@ -23948,10 +23391,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -24035,13 +23474,12 @@ public class TaCodegenServe {
                 try { _ = c2.HtPhasorOpenAndFill(ovIn.AsSpan(0, svN), f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtPhasorStream st;
                 try { st = c2.HtPhasorOpen(fz_c[..p]); }
@@ -24084,7 +23522,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtPhasorStream sA = c2.HtPhasorOpen(fz_c[..p0]);
@@ -24106,7 +23544,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HtPhasorStream sQ = c2.HtPhasorOpen(fz_c[..pa]);
@@ -24156,10 +23594,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -24243,13 +23677,12 @@ public class TaCodegenServe {
                 try { _ = c2.HtSineOpenAndFill(ovIn.AsSpan(0, svN), f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtSineStream st;
                 try { st = c2.HtSineOpen(fz_c[..p]); }
@@ -24292,7 +23725,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtSineStream sA = c2.HtSineOpen(fz_c[..p0]);
@@ -24314,7 +23747,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HtSineStream sQ = c2.HtSineOpen(fz_c[..pa]);
@@ -24364,10 +23797,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -24435,13 +23864,12 @@ public class TaCodegenServe {
                 try { _ = c2.HtTrendlineOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtTrendlineStream st;
                 try { st = c2.HtTrendlineOpen(fz_c[..p]); }
@@ -24479,7 +23907,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtTrendlineStream sA = c2.HtTrendlineOpen(fz_c[..p0]);
@@ -24500,7 +23928,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HtTrendlineStream sQ = c2.HtTrendlineOpen(fz_c[..pa]);
@@ -24550,10 +23978,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -24615,13 +24039,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtTrendmodeStream st;
                 try { st = c2.HtTrendmodeOpen(fz_c[..p]); }
@@ -24659,7 +24082,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtTrendmodeStream sA = c2.HtTrendmodeOpen(fz_c[..p0]);
@@ -24680,7 +24103,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.HtTrendmodeStream sQ = c2.HtTrendmodeOpen(fz_c[..pa]);
@@ -24730,10 +24153,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -24803,13 +24222,12 @@ public class TaCodegenServe {
                 try { _ = c2.ImiOpenAndFill(ovIn.AsSpan(0, svN), fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ImiStream st;
                 try { st = c2.ImiOpen(fz_o[..p], fz_c[..p], optInTimePeriod); }
@@ -24847,7 +24265,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ImiStream sA = c2.ImiOpen(fz_o[..p0], fz_c[..p0], optInTimePeriod);
@@ -24868,7 +24286,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.ImiStream sQ = c2.ImiOpen(fz_o[..pa], fz_c[..pa], optInTimePeriod);
@@ -24925,10 +24343,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -24997,13 +24411,12 @@ public class TaCodegenServe {
                 try { _ = c2.KamaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.KamaStream st;
                 try { st = c2.KamaOpen(fz_c[..p], optInTimePeriod); }
@@ -25041,7 +24454,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.KamaStream sA = c2.KamaOpen(fz_c[..p0], optInTimePeriod);
@@ -25062,7 +24475,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.KamaStream sQ = c2.KamaOpen(fz_c[..pa], optInTimePeriod);
@@ -25119,10 +24532,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         int optInATRPeriod = GetInt(req, "optInATRPeriod", 10);
         double optInNbDev = GetDouble(req, "optInNbDev", 2e0);
@@ -25243,13 +24652,12 @@ public class TaCodegenServe {
                 try { _ = c2.KcOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.KcStream st;
                 try { st = c2.KcOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInATRPeriod, optInNbDev); }
@@ -25297,7 +24705,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.KcStream sA = c2.KcOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -25320,7 +24728,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.KcStream sQ = c2.KcOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -25379,10 +24787,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 9);
         int optInSlowK_Period = GetInt(req, "optInSlowK_Period", 3);
         int _raw_optInSlowK_MAType = GetInt(req, "optInSlowK_MAType", 13);
@@ -25526,13 +24930,12 @@ public class TaCodegenServe {
                 try { _ = c2.KdjOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.KdjStream st;
                 try { st = c2.KdjOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
@@ -25580,7 +24983,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.KdjStream sA = c2.KdjOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -25603,7 +25006,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.KdjStream sQ = c2.KdjOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -25662,10 +25065,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -25733,13 +25132,12 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregStream st;
                 try { st = c2.LinearregOpen(fz_c[..p], optInTimePeriod); }
@@ -25777,7 +25175,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregStream sA = c2.LinearregOpen(fz_c[..p0], optInTimePeriod);
@@ -25798,7 +25196,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.LinearregStream sQ = c2.LinearregOpen(fz_c[..pa], optInTimePeriod);
@@ -25855,10 +25253,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -25926,13 +25320,12 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregAngleOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregAngleStream st;
                 try { st = c2.LinearregAngleOpen(fz_c[..p], optInTimePeriod); }
@@ -25970,7 +25363,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregAngleStream sA = c2.LinearregAngleOpen(fz_c[..p0], optInTimePeriod);
@@ -25991,7 +25384,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.LinearregAngleStream sQ = c2.LinearregAngleOpen(fz_c[..pa], optInTimePeriod);
@@ -26048,10 +25441,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -26119,13 +25508,12 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregInterceptOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregInterceptStream st;
                 try { st = c2.LinearregInterceptOpen(fz_c[..p], optInTimePeriod); }
@@ -26163,7 +25551,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregInterceptStream sA = c2.LinearregInterceptOpen(fz_c[..p0], optInTimePeriod);
@@ -26184,7 +25572,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.LinearregInterceptStream sQ = c2.LinearregInterceptOpen(fz_c[..pa], optInTimePeriod);
@@ -26241,10 +25629,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -26312,13 +25696,12 @@ public class TaCodegenServe {
                 try { _ = c2.LinearregSlopeOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregSlopeStream st;
                 try { st = c2.LinearregSlopeOpen(fz_c[..p], optInTimePeriod); }
@@ -26356,7 +25739,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregSlopeStream sA = c2.LinearregSlopeOpen(fz_c[..p0], optInTimePeriod);
@@ -26377,7 +25760,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.LinearregSlopeStream sQ = c2.LinearregSlopeOpen(fz_c[..pa], optInTimePeriod);
@@ -26434,10 +25817,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -26504,13 +25883,12 @@ public class TaCodegenServe {
                 try { _ = c2.LnOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LnStream st;
                 try { st = c2.LnOpen(fz_c[..p]); }
@@ -26548,7 +25926,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LnStream sA = c2.LnOpen(fz_c[..p0]);
@@ -26569,7 +25947,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.LnStream sQ = c2.LnOpen(fz_c[..pa]);
@@ -26619,10 +25997,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -26689,13 +26063,12 @@ public class TaCodegenServe {
                 try { _ = c2.Log10OpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Log10Stream st;
                 try { st = c2.Log10Open(fz_c[..p]); }
@@ -26733,7 +26106,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Log10Stream sA = c2.Log10Open(fz_c[..p0]);
@@ -26754,7 +26127,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Log10Stream sQ = c2.Log10Open(fz_c[..pa]);
@@ -26804,10 +26177,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         int _raw_optInMAType = GetInt(req, "optInMAType", 0);
         MAType optInMAType = (MAType)_raw_optInMAType;
@@ -26894,13 +26263,12 @@ public class TaCodegenServe {
                 try { _ = c2.MaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MaStream st;
                 try { st = c2.MaOpen(fz_c[..p], optInTimePeriod, optInMAType); }
@@ -26938,7 +26306,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MaStream sA = c2.MaOpen(fz_c[..p0], optInTimePeriod, optInMAType);
@@ -26959,7 +26327,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MaStream sQ = c2.MaOpen(fz_c[..pa], optInTimePeriod, optInMAType);
@@ -27016,10 +26384,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
         int optInSignalPeriod = GetInt(req, "optInSignalPeriod", 9);
@@ -27127,13 +26491,12 @@ public class TaCodegenServe {
                 try { _ = c2.MacdOpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MacdStream st;
                 try { st = c2.MacdOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
@@ -27181,7 +26544,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MacdStream sA = c2.MacdOpen(fz_c[..p0], optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -27204,7 +26567,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MacdStream sQ = c2.MacdOpen(fz_c[..pa], optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -27263,10 +26626,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int _raw_optInFastMAType = GetInt(req, "optInFastMAType", 0);
         MAType optInFastMAType = (MAType)_raw_optInFastMAType;
@@ -27400,13 +26759,12 @@ public class TaCodegenServe {
                 try { _ = c2.MacdextOpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MacdextStream st;
                 try { st = c2.MacdextOpen(fz_c[..p], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); }
@@ -27454,7 +26812,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MacdextStream sA = c2.MacdextOpen(fz_c[..p0], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -27477,7 +26835,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MacdextStream sQ = c2.MacdextOpen(fz_c[..pa], optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -27536,10 +26894,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInSignalPeriod = GetInt(req, "optInSignalPeriod", 9);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -27645,13 +26999,12 @@ public class TaCodegenServe {
                 try { _ = c2.MacdfixOpenAndFill(ovIn.AsSpan(0, svN), optInSignalPeriod, f0, f1, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 2 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MacdfixStream st;
                 try { st = c2.MacdfixOpen(fz_c[..p], optInSignalPeriod); }
@@ -27699,7 +27052,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MacdfixStream sA = c2.MacdfixOpen(fz_c[..p0], optInSignalPeriod);
@@ -27722,7 +27075,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MacdfixStream sQ = c2.MacdfixOpen(fz_c[..pa], optInSignalPeriod);
@@ -27781,10 +27134,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double optInFastLimit = GetDouble(req, "optInFastLimit", 5e-1);
         double optInSlowLimit = GetDouble(req, "optInSlowLimit", 5e-2);
         double[] fz_o = new double[svN];
@@ -27870,13 +27219,12 @@ public class TaCodegenServe {
                 try { _ = c2.MamaOpenAndFill(ovIn.AsSpan(0, svN), optInFastLimit, optInSlowLimit, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MamaStream st;
                 try { st = c2.MamaOpen(fz_c[..p], optInFastLimit, optInSlowLimit); }
@@ -27919,7 +27267,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MamaStream sA = c2.MamaOpen(fz_c[..p0], optInFastLimit, optInSlowLimit);
@@ -27941,7 +27289,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MamaStream sQ = c2.MamaOpen(fz_c[..pa], optInFastLimit, optInSlowLimit);
@@ -27991,10 +27339,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -28065,13 +27409,12 @@ public class TaCodegenServe {
                 try { _ = c2.MarketfiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MarketfiStream st;
                 try { st = c2.MarketfiOpen(fz_h[..p], fz_l[..p], fz_v[..p]); }
@@ -28109,7 +27452,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MarketfiStream sA = c2.MarketfiOpen(fz_h[..p0], fz_l[..p0], fz_v[..p0]);
@@ -28130,7 +27473,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MarketfiStream sQ = c2.MarketfiOpen(fz_h[..pa], fz_l[..pa], fz_v[..pa]);
@@ -28180,10 +27523,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 9);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 25);
         double[] fz_o = new double[svN];
@@ -28255,13 +27594,12 @@ public class TaCodegenServe {
                 try { _ = c2.MassiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInFastPeriod, optInSlowPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MassiStream st;
                 try { st = c2.MassiOpen(fz_h[..p], fz_l[..p], optInFastPeriod, optInSlowPeriod); }
@@ -28299,7 +27637,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MassiStream sA = c2.MassiOpen(fz_h[..p0], fz_l[..p0], optInFastPeriod, optInSlowPeriod);
@@ -28320,7 +27658,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MassiStream sQ = c2.MassiOpen(fz_h[..pa], fz_l[..pa], optInFastPeriod, optInSlowPeriod);
@@ -28377,10 +27715,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInMinPeriod = GetInt(req, "optInMinPeriod", 2);
         int optInMaxPeriod = GetInt(req, "optInMaxPeriod", 30);
         int _raw_optInMAType = GetInt(req, "optInMAType", 0);
@@ -28471,13 +27805,12 @@ public class TaCodegenServe {
                 try { _ = c2.MavpOpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MavpStream st;
                 try { st = c2.MavpOpen(fz_c[..p], fz_v[..p], optInMinPeriod, optInMaxPeriod, optInMAType); }
@@ -28515,7 +27848,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MavpStream sA = c2.MavpOpen(fz_c[..p0], fz_v[..p0], optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -28536,7 +27869,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MavpStream sQ = c2.MavpOpen(fz_c[..pa], fz_v[..pa], optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -28593,10 +27926,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -28664,13 +27993,12 @@ public class TaCodegenServe {
                 try { _ = c2.MaxOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MaxStream st;
                 try { st = c2.MaxOpen(fz_c[..p], optInTimePeriod); }
@@ -28708,7 +28036,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MaxStream sA = c2.MaxOpen(fz_c[..p0], optInTimePeriod);
@@ -28729,7 +28057,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MaxStream sQ = c2.MaxOpen(fz_c[..pa], optInTimePeriod);
@@ -28786,10 +28114,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -28851,13 +28175,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MaxindexStream st;
                 try { st = c2.MaxindexOpen(fz_c[..p], optInTimePeriod); }
@@ -28895,7 +28218,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MaxindexStream sA = c2.MaxindexOpen(fz_c[..p0], optInTimePeriod);
@@ -28916,7 +28239,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MaxindexStream sQ = c2.MaxindexOpen(fz_c[..pa], optInTimePeriod);
@@ -28973,10 +28296,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -29045,13 +28364,12 @@ public class TaCodegenServe {
                 try { _ = c2.MedpriceOpenAndFill(ovIn.AsSpan(0, svN), fz_l, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MedpriceStream st;
                 try { st = c2.MedpriceOpen(fz_h[..p], fz_l[..p]); }
@@ -29089,7 +28407,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MedpriceStream sA = c2.MedpriceOpen(fz_h[..p0], fz_l[..p0]);
@@ -29110,7 +28428,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MedpriceStream sQ = c2.MedpriceOpen(fz_h[..pa], fz_l[..pa]);
@@ -29160,10 +28478,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -29237,13 +28551,12 @@ public class TaCodegenServe {
                 try { _ = c2.MfiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MfiStream st;
                 try { st = c2.MfiOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p], optInTimePeriod); }
@@ -29281,7 +28594,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MfiStream sA = c2.MfiOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], fz_v[..p0], optInTimePeriod);
@@ -29302,7 +28615,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MfiStream sQ = c2.MfiOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], fz_v[..pa], optInTimePeriod);
@@ -29359,10 +28672,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -29430,13 +28739,12 @@ public class TaCodegenServe {
                 try { _ = c2.MidpointOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MidpointStream st;
                 try { st = c2.MidpointOpen(fz_c[..p], optInTimePeriod); }
@@ -29474,7 +28782,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MidpointStream sA = c2.MidpointOpen(fz_c[..p0], optInTimePeriod);
@@ -29495,7 +28803,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MidpointStream sQ = c2.MidpointOpen(fz_c[..pa], optInTimePeriod);
@@ -29552,10 +28860,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -29625,13 +28929,12 @@ public class TaCodegenServe {
                 try { _ = c2.MidpriceOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MidpriceStream st;
                 try { st = c2.MidpriceOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -29669,7 +28972,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MidpriceStream sA = c2.MidpriceOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -29690,7 +28993,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MidpriceStream sQ = c2.MidpriceOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -29747,10 +29050,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -29818,13 +29117,12 @@ public class TaCodegenServe {
                 try { _ = c2.MinOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinStream st;
                 try { st = c2.MinOpen(fz_c[..p], optInTimePeriod); }
@@ -29862,7 +29160,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinStream sA = c2.MinOpen(fz_c[..p0], optInTimePeriod);
@@ -29883,7 +29181,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MinStream sQ = c2.MinOpen(fz_c[..pa], optInTimePeriod);
@@ -29940,10 +29238,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -30005,13 +29299,12 @@ public class TaCodegenServe {
                 /* R2b: PARTIAL overlap -- only spans can express it, and it is
                    the only shape that separates Overlaps from identity. */
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinindexStream st;
                 try { st = c2.MinindexOpen(fz_c[..p], optInTimePeriod); }
@@ -30049,7 +29342,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinindexStream sA = c2.MinindexOpen(fz_c[..p0], optInTimePeriod);
@@ -30070,7 +29363,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MinindexStream sQ = c2.MinindexOpen(fz_c[..pa], optInTimePeriod);
@@ -30127,10 +29420,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -30214,13 +29503,12 @@ public class TaCodegenServe {
                 try { _ = c2.MinmaxOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinmaxStream st;
                 try { st = c2.MinmaxOpen(fz_c[..p], optInTimePeriod); }
@@ -30263,7 +29551,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinmaxStream sA = c2.MinmaxOpen(fz_c[..p0], optInTimePeriod);
@@ -30285,7 +29573,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MinmaxStream sQ = c2.MinmaxOpen(fz_c[..pa], optInTimePeriod);
@@ -30343,10 +29631,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -30420,13 +29704,12 @@ public class TaCodegenServe {
                 try { _ = c2.MinmaxindexOpenAndFill(fz_c, optInTimePeriod, ovI.AsSpan(0, svN), ovI.AsSpan(0, svN + 1)); fillOk = false; }
                 catch (ArgumentException) { /* expected: outputs 0/1 partially overlap (same start, longer) */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinmaxindexStream st;
                 try { st = c2.MinmaxindexOpen(fz_c[..p], optInTimePeriod); }
@@ -30469,7 +29752,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinmaxindexStream sA = c2.MinmaxindexOpen(fz_c[..p0], optInTimePeriod);
@@ -30491,7 +29774,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MinmaxindexStream sQ = c2.MinmaxindexOpen(fz_c[..pa], optInTimePeriod);
@@ -30549,10 +29832,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -30625,13 +29904,12 @@ public class TaCodegenServe {
                 try { _ = c2.MinusDiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinusDiStream st;
                 try { st = c2.MinusDiOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -30669,7 +29947,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinusDiStream sA = c2.MinusDiOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -30690,7 +29968,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MinusDiStream sQ = c2.MinusDiOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -30747,10 +30025,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -30821,13 +30095,12 @@ public class TaCodegenServe {
                 try { _ = c2.MinusDmOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinusDmStream st;
                 try { st = c2.MinusDmOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -30865,7 +30138,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinusDmStream sA = c2.MinusDmOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -30886,7 +30159,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MinusDmStream sQ = c2.MinusDmOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -30943,10 +30216,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -31014,13 +30283,12 @@ public class TaCodegenServe {
                 try { _ = c2.MomOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MomStream st;
                 try { st = c2.MomOpen(fz_c[..p], optInTimePeriod); }
@@ -31058,7 +30326,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MomStream sA = c2.MomOpen(fz_c[..p0], optInTimePeriod);
@@ -31079,7 +30347,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MomStream sQ = c2.MomOpen(fz_c[..pa], optInTimePeriod);
@@ -31136,10 +30404,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -31208,13 +30472,12 @@ public class TaCodegenServe {
                 try { _ = c2.MultOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MultStream st;
                 try { st = c2.MultOpen(fz_c[..p], fz_v[..p]); }
@@ -31252,7 +30515,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MultStream sA = c2.MultOpen(fz_c[..p0], fz_v[..p0]);
@@ -31273,7 +30536,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.MultStream sQ = c2.MultOpen(fz_c[..pa], fz_v[..pa]);
@@ -31323,10 +30586,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -31399,13 +30658,12 @@ public class TaCodegenServe {
                 try { _ = c2.NatrOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.NatrStream st;
                 try { st = c2.NatrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -31443,7 +30701,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.NatrStream sA = c2.NatrOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -31464,7 +30722,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.NatrStream sQ = c2.NatrOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -31521,10 +30779,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -31593,13 +30847,12 @@ public class TaCodegenServe {
                 try { _ = c2.NviOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.NviStream st;
                 try { st = c2.NviOpen(fz_c[..p], fz_v[..p]); }
@@ -31637,7 +30890,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.NviStream sA = c2.NviOpen(fz_c[..p0], fz_v[..p0]);
@@ -31658,7 +30911,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.NviStream sQ = c2.NviOpen(fz_c[..pa], fz_v[..pa]);
@@ -31708,10 +30961,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -31780,13 +31029,12 @@ public class TaCodegenServe {
                 try { _ = c2.ObvOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ObvStream st;
                 try { st = c2.ObvOpen(fz_c[..p], fz_v[..p]); }
@@ -31824,7 +31072,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ObvStream sA = c2.ObvOpen(fz_c[..p0], fz_v[..p0]);
@@ -31845,7 +31093,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.ObvStream sQ = c2.ObvOpen(fz_c[..pa], fz_v[..pa]);
@@ -31895,10 +31143,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double optInPercentile = GetDouble(req, "optInPercentile", 5e1);
         double[] fz_o = new double[svN];
@@ -31967,13 +31211,12 @@ public class TaCodegenServe {
                 try { _ = c2.PercentileOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInPercentile, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PercentileStream st;
                 try { st = c2.PercentileOpen(fz_c[..p], optInTimePeriod, optInPercentile); }
@@ -32011,7 +31254,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PercentileStream sA = c2.PercentileOpen(fz_c[..p0], optInTimePeriod, optInPercentile);
@@ -32032,7 +31275,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PercentileStream sQ = c2.PercentileOpen(fz_c[..pa], optInTimePeriod, optInPercentile);
@@ -32089,10 +31332,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 100);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -32160,13 +31399,12 @@ public class TaCodegenServe {
                 try { _ = c2.PercentrankOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PercentrankStream st;
                 try { st = c2.PercentrankOpen(fz_c[..p], optInTimePeriod); }
@@ -32204,7 +31442,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PercentrankStream sA = c2.PercentrankOpen(fz_c[..p0], optInTimePeriod);
@@ -32225,7 +31463,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PercentrankStream sQ = c2.PercentrankOpen(fz_c[..pa], optInTimePeriod);
@@ -32282,10 +31520,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -32358,13 +31592,12 @@ public class TaCodegenServe {
                 try { _ = c2.PlusDiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PlusDiStream st;
                 try { st = c2.PlusDiOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -32402,7 +31635,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PlusDiStream sA = c2.PlusDiOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -32423,7 +31656,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PlusDiStream sQ = c2.PlusDiOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -32480,10 +31713,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -32554,13 +31783,12 @@ public class TaCodegenServe {
                 try { _ = c2.PlusDmOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PlusDmStream st;
                 try { st = c2.PlusDmOpen(fz_h[..p], fz_l[..p], optInTimePeriod); }
@@ -32598,7 +31826,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PlusDmStream sA = c2.PlusDmOpen(fz_h[..p0], fz_l[..p0], optInTimePeriod);
@@ -32619,7 +31847,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PlusDmStream sQ = c2.PlusDmOpen(fz_h[..pa], fz_l[..pa], optInTimePeriod);
@@ -32676,10 +31904,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
         int _raw_optInMAType = GetInt(req, "optInMAType", 1);
@@ -32767,13 +31991,12 @@ public class TaCodegenServe {
                 try { _ = c2.PpoOpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PpoStream st;
                 try { st = c2.PpoOpen(fz_c[..p], optInFastPeriod, optInSlowPeriod, optInMAType); }
@@ -32811,7 +32034,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PpoStream sA = c2.PpoOpen(fz_c[..p0], optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -32832,7 +32055,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PpoStream sQ = c2.PpoOpen(fz_c[..pa], optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -32889,10 +32112,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -32961,13 +32180,12 @@ public class TaCodegenServe {
                 try { _ = c2.PviOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PviStream st;
                 try { st = c2.PviOpen(fz_c[..p], fz_v[..p]); }
@@ -33005,7 +32223,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PviStream sA = c2.PviOpen(fz_c[..p0], fz_v[..p0]);
@@ -33026,7 +32244,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PviStream sQ = c2.PviOpen(fz_c[..pa], fz_v[..pa]);
@@ -33076,10 +32294,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 12);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 26);
         int _raw_optInMAType = GetInt(req, "optInMAType", 1);
@@ -33167,13 +32381,12 @@ public class TaCodegenServe {
                 try { _ = c2.PvoOpenAndFill(ovIn.AsSpan(0, svN), optInFastPeriod, optInSlowPeriod, optInMAType, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PvoStream st;
                 try { st = c2.PvoOpen(fz_v[..p], optInFastPeriod, optInSlowPeriod, optInMAType); }
@@ -33211,7 +32424,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PvoStream sA = c2.PvoOpen(fz_v[..p0], optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -33232,7 +32445,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PvoStream sQ = c2.PvoOpen(fz_v[..pa], optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -33289,10 +32502,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -33361,13 +32570,12 @@ public class TaCodegenServe {
                 try { _ = c2.PvtOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PvtStream st;
                 try { st = c2.PvtOpen(fz_c[..p], fz_v[..p]); }
@@ -33405,7 +32613,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PvtStream sA = c2.PvtOpen(fz_c[..p0], fz_v[..p0]);
@@ -33426,7 +32634,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.PvtStream sQ = c2.PvtOpen(fz_c[..pa], fz_v[..pa]);
@@ -33476,10 +32684,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -33549,13 +32753,12 @@ public class TaCodegenServe {
                 try { _ = c2.QstickOpenAndFill(ovIn.AsSpan(0, svN), fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.QstickStream st;
                 try { st = c2.QstickOpen(fz_o[..p], fz_c[..p], optInTimePeriod); }
@@ -33593,7 +32796,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.QstickStream sA = c2.QstickOpen(fz_o[..p0], fz_c[..p0], optInTimePeriod);
@@ -33614,7 +32817,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.QstickStream sQ = c2.QstickOpen(fz_o[..pa], fz_c[..pa], optInTimePeriod);
@@ -33671,10 +32874,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -33743,13 +32942,12 @@ public class TaCodegenServe {
                 try { _ = c2.RmaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RmaStream st;
                 try { st = c2.RmaOpen(fz_c[..p], optInTimePeriod); }
@@ -33787,7 +32985,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RmaStream sA = c2.RmaOpen(fz_c[..p0], optInTimePeriod);
@@ -33808,7 +33006,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RmaStream sQ = c2.RmaOpen(fz_c[..pa], optInTimePeriod);
@@ -33865,10 +33063,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -33936,13 +33130,12 @@ public class TaCodegenServe {
                 try { _ = c2.RocOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RocStream st;
                 try { st = c2.RocOpen(fz_c[..p], optInTimePeriod); }
@@ -33980,7 +33173,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RocStream sA = c2.RocOpen(fz_c[..p0], optInTimePeriod);
@@ -34001,7 +33194,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RocStream sQ = c2.RocOpen(fz_c[..pa], optInTimePeriod);
@@ -34058,10 +33251,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -34129,13 +33318,12 @@ public class TaCodegenServe {
                 try { _ = c2.RocpOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RocpStream st;
                 try { st = c2.RocpOpen(fz_c[..p], optInTimePeriod); }
@@ -34173,7 +33361,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RocpStream sA = c2.RocpOpen(fz_c[..p0], optInTimePeriod);
@@ -34194,7 +33382,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RocpStream sQ = c2.RocpOpen(fz_c[..pa], optInTimePeriod);
@@ -34251,10 +33439,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -34322,13 +33506,12 @@ public class TaCodegenServe {
                 try { _ = c2.RocrOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RocrStream st;
                 try { st = c2.RocrOpen(fz_c[..p], optInTimePeriod); }
@@ -34366,7 +33549,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RocrStream sA = c2.RocrOpen(fz_c[..p0], optInTimePeriod);
@@ -34387,7 +33570,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RocrStream sQ = c2.RocrOpen(fz_c[..pa], optInTimePeriod);
@@ -34444,10 +33627,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -34515,13 +33694,12 @@ public class TaCodegenServe {
                 try { _ = c2.Rocr100OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Rocr100Stream st;
                 try { st = c2.Rocr100Open(fz_c[..p], optInTimePeriod); }
@@ -34559,7 +33737,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Rocr100Stream sA = c2.Rocr100Open(fz_c[..p0], optInTimePeriod);
@@ -34580,7 +33758,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.Rocr100Stream sQ = c2.Rocr100Open(fz_c[..pa], optInTimePeriod);
@@ -34637,10 +33815,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -34709,13 +33883,12 @@ public class TaCodegenServe {
                 try { _ = c2.RsiOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = (svCompat == 1) ? 1 : 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RsiStream st;
                 try { st = c2.RsiOpen(fz_c[..p], optInTimePeriod); }
@@ -34753,7 +33926,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RsiStream sA = c2.RsiOpen(fz_c[..p0], optInTimePeriod);
@@ -34774,7 +33947,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RsiStream sQ = c2.RsiOpen(fz_c[..pa], optInTimePeriod);
@@ -34831,10 +34004,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         int optInStdDevPeriod = GetInt(req, "optInStdDevPeriod", 10);
         double[] fz_o = new double[svN];
@@ -34904,13 +34073,12 @@ public class TaCodegenServe {
                 try { _ = c2.RviOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInStdDevPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RviStream st;
                 try { st = c2.RviOpen(fz_c[..p], optInTimePeriod, optInStdDevPeriod); }
@@ -34948,7 +34116,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RviStream sA = c2.RviOpen(fz_c[..p0], optInTimePeriod, optInStdDevPeriod);
@@ -34969,7 +34137,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RviStream sQ = c2.RviOpen(fz_c[..pa], optInTimePeriod, optInStdDevPeriod);
@@ -35026,10 +34194,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 20);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -35097,13 +34261,12 @@ public class TaCodegenServe {
                 try { _ = c2.RvolOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RvolStream st;
                 try { st = c2.RvolOpen(fz_v[..p], optInTimePeriod); }
@@ -35141,7 +34304,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RvolStream sA = c2.RvolOpen(fz_v[..p0], optInTimePeriod);
@@ -35162,7 +34325,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.RvolStream sQ = c2.RvolOpen(fz_v[..pa], optInTimePeriod);
@@ -35219,10 +34382,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double optInAcceleration = GetDouble(req, "optInAcceleration", 2e-2);
         double optInMaximum = GetDouble(req, "optInMaximum", 2e-1);
         double[] fz_o = new double[svN];
@@ -35293,13 +34452,12 @@ public class TaCodegenServe {
                 try { _ = c2.SarOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInAcceleration, optInMaximum, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SarStream st;
                 try { st = c2.SarOpen(fz_h[..p], fz_l[..p], optInAcceleration, optInMaximum); }
@@ -35337,7 +34495,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SarStream sA = c2.SarOpen(fz_h[..p0], fz_l[..p0], optInAcceleration, optInMaximum);
@@ -35358,7 +34516,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SarStream sQ = c2.SarOpen(fz_h[..pa], fz_l[..pa], optInAcceleration, optInMaximum);
@@ -35408,10 +34566,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double optInStartValue = GetDouble(req, "optInStartValue", 0e0);
         double optInOffsetOnReverse = GetDouble(req, "optInOffsetOnReverse", 0e0);
         double optInAccelerationInitLong = GetDouble(req, "optInAccelerationInitLong", 2e-2);
@@ -35488,13 +34642,12 @@ public class TaCodegenServe {
                 try { _ = c2.SarextOpenAndFill(ovIn.AsSpan(0, svN), fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SarextStream st;
                 try { st = c2.SarextOpen(fz_h[..p], fz_l[..p], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); }
@@ -35532,7 +34685,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SarextStream sA = c2.SarextOpen(fz_h[..p0], fz_l[..p0], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -35553,7 +34706,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SarextStream sQ = c2.SarextOpen(fz_h[..pa], fz_l[..pa], optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -35603,10 +34756,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -35673,13 +34822,12 @@ public class TaCodegenServe {
                 try { _ = c2.SinOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SinStream st;
                 try { st = c2.SinOpen(fz_c[..p]); }
@@ -35717,7 +34865,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SinStream sA = c2.SinOpen(fz_c[..p0]);
@@ -35738,7 +34886,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SinStream sQ = c2.SinOpen(fz_c[..pa]);
@@ -35788,10 +34936,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -35858,13 +35002,12 @@ public class TaCodegenServe {
                 try { _ = c2.SinhOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SinhStream st;
                 try { st = c2.SinhOpen(fz_c[..p]); }
@@ -35902,7 +35045,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SinhStream sA = c2.SinhOpen(fz_c[..p0]);
@@ -35923,7 +35066,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SinhStream sQ = c2.SinhOpen(fz_c[..pa]);
@@ -35973,10 +35116,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -36044,13 +35183,12 @@ public class TaCodegenServe {
                 try { _ = c2.SmaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SmaStream st;
                 try { st = c2.SmaOpen(fz_c[..p], optInTimePeriod); }
@@ -36088,7 +35226,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SmaStream sA = c2.SmaOpen(fz_c[..p0], optInTimePeriod);
@@ -36109,7 +35247,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SmaStream sQ = c2.SmaOpen(fz_c[..pa], optInTimePeriod);
@@ -36166,10 +35304,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 13);
         int optInFastPeriod = GetInt(req, "optInFastPeriod", 2);
         int optInSlowPeriod = GetInt(req, "optInSlowPeriod", 25);
@@ -36265,13 +35399,12 @@ public class TaCodegenServe {
                 try { _ = c2.SmiOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SmiStream st;
                 try { st = c2.SmiOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
@@ -36314,7 +35447,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SmiStream sA = c2.SmiOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -36336,7 +35469,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SmiStream sQ = c2.SmiOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -36394,10 +35527,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -36464,13 +35593,12 @@ public class TaCodegenServe {
                 try { _ = c2.SqrtOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SqrtStream st;
                 try { st = c2.SqrtOpen(fz_c[..p]); }
@@ -36508,7 +35636,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SqrtStream sA = c2.SqrtOpen(fz_c[..p0]);
@@ -36529,7 +35657,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SqrtStream sQ = c2.SqrtOpen(fz_c[..pa]);
@@ -36579,10 +35707,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 5);
         double optInNbDev = GetDouble(req, "optInNbDev", 1e0);
         double[] fz_o = new double[svN];
@@ -36651,13 +35775,12 @@ public class TaCodegenServe {
                 try { _ = c2.StddevOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDev, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StddevStream st;
                 try { st = c2.StddevOpen(fz_c[..p], optInTimePeriod, optInNbDev); }
@@ -36695,7 +35818,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StddevStream sA = c2.StddevOpen(fz_c[..p0], optInTimePeriod, optInNbDev);
@@ -36716,7 +35839,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.StddevStream sQ = c2.StddevOpen(fz_c[..pa], optInTimePeriod, optInNbDev);
@@ -36773,10 +35896,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 5);
         int optInSlowK_Period = GetInt(req, "optInSlowK_Period", 3);
         int _raw_optInSlowK_MAType = GetInt(req, "optInSlowK_MAType", 0);
@@ -36893,13 +36012,12 @@ public class TaCodegenServe {
                 try { _ = c2.StochOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StochStream st;
                 try { st = c2.StochOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
@@ -36942,7 +36060,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StochStream sA = c2.StochOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -36964,7 +36082,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.StochStream sQ = c2.StochOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -37022,10 +36140,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 5);
         int optInFastD_Period = GetInt(req, "optInFastD_Period", 3);
         int _raw_optInFastD_MAType = GetInt(req, "optInFastD_MAType", 0);
@@ -37139,13 +36253,12 @@ public class TaCodegenServe {
                 try { _ = c2.StochfOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StochfStream st;
                 try { st = c2.StochfOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
@@ -37188,7 +36301,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StochfStream sA = c2.StochfOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -37210,7 +36323,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.StochfStream sQ = c2.StochfOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -37268,10 +36381,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         int optInFastK_Period = GetInt(req, "optInFastK_Period", 5);
         int optInFastD_Period = GetInt(req, "optInFastD_Period", 3);
@@ -37379,13 +36488,12 @@ public class TaCodegenServe {
                 try { _ = c2.StochrsiOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = (svCompat == 1) ? 1 : 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StochrsiStream st;
                 try { st = c2.StochrsiOpen(fz_c[..p], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
@@ -37428,7 +36536,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StochrsiStream sA = c2.StochrsiOpen(fz_c[..p0], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -37450,7 +36558,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.StochrsiStream sQ = c2.StochrsiOpen(fz_c[..pa], optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -37508,10 +36616,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -37580,13 +36684,12 @@ public class TaCodegenServe {
                 try { _ = c2.SubOpenAndFill(ovIn.AsSpan(0, svN), fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SubStream st;
                 try { st = c2.SubOpen(fz_c[..p], fz_v[..p]); }
@@ -37624,7 +36727,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SubStream sA = c2.SubOpen(fz_c[..p0], fz_v[..p0]);
@@ -37645,7 +36748,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SubStream sQ = c2.SubOpen(fz_c[..pa], fz_v[..pa]);
@@ -37695,10 +36798,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -37766,13 +36865,12 @@ public class TaCodegenServe {
                 try { _ = c2.SumOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SumStream st;
                 try { st = c2.SumOpen(fz_c[..p], optInTimePeriod); }
@@ -37810,7 +36908,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SumStream sA = c2.SumOpen(fz_c[..p0], optInTimePeriod);
@@ -37831,7 +36929,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SumStream sQ = c2.SumOpen(fz_c[..pa], optInTimePeriod);
@@ -37888,10 +36986,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 10);
         double optInMultiplier = GetDouble(req, "optInMultiplier", 3e0);
         double[] fz_o = new double[svN];
@@ -37970,13 +37064,12 @@ public class TaCodegenServe {
                 try { _ = c2.SupertrendOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, optInMultiplier, ovIn.AsSpan(1, svN), f1); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SupertrendStream st;
                 try { st = c2.SupertrendOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod, optInMultiplier); }
@@ -38019,7 +37112,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SupertrendStream sA = c2.SupertrendOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod, optInMultiplier);
@@ -38041,7 +37134,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.SupertrendStream sQ = c2.SupertrendOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod, optInMultiplier);
@@ -38099,10 +37192,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 5);
         double optInVFactor = GetDouble(req, "optInVFactor", 7e-1);
         double[] fz_o = new double[svN];
@@ -38172,13 +37261,12 @@ public class TaCodegenServe {
                 try { _ = c2.T3OpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInVFactor, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.T3Stream st;
                 try { st = c2.T3Open(fz_c[..p], optInTimePeriod, optInVFactor); }
@@ -38216,7 +37304,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.T3Stream sA = c2.T3Open(fz_c[..p0], optInTimePeriod, optInVFactor);
@@ -38237,7 +37325,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.T3Stream sQ = c2.T3Open(fz_c[..pa], optInTimePeriod, optInVFactor);
@@ -38294,10 +37382,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -38364,13 +37448,12 @@ public class TaCodegenServe {
                 try { _ = c2.TanOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TanStream st;
                 try { st = c2.TanOpen(fz_c[..p]); }
@@ -38408,7 +37491,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TanStream sA = c2.TanOpen(fz_c[..p0]);
@@ -38429,7 +37512,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TanStream sQ = c2.TanOpen(fz_c[..pa]);
@@ -38479,10 +37562,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -38549,13 +37628,12 @@ public class TaCodegenServe {
                 try { _ = c2.TanhOpenAndFill(ovIn.AsSpan(0, svN), ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TanhStream st;
                 try { st = c2.TanhOpen(fz_c[..p]); }
@@ -38593,7 +37671,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TanhStream sA = c2.TanhOpen(fz_c[..p0]);
@@ -38614,7 +37692,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TanhStream sQ = c2.TanhOpen(fz_c[..pa]);
@@ -38664,10 +37742,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -38736,13 +37810,12 @@ public class TaCodegenServe {
                 try { _ = c2.TemaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TemaStream st;
                 try { st = c2.TemaOpen(fz_c[..p], optInTimePeriod); }
@@ -38780,7 +37853,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TemaStream sA = c2.TemaOpen(fz_c[..p0], optInTimePeriod);
@@ -38801,7 +37874,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TemaStream sQ = c2.TemaOpen(fz_c[..pa], optInTimePeriod);
@@ -38858,10 +37931,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -38932,13 +38001,12 @@ public class TaCodegenServe {
                 try { _ = c2.TrangeOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TrangeStream st;
                 try { st = c2.TrangeOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -38976,7 +38044,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TrangeStream sA = c2.TrangeOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -38997,7 +38065,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TrangeStream sQ = c2.TrangeOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -39047,10 +38115,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -39118,13 +38182,12 @@ public class TaCodegenServe {
                 try { _ = c2.TrimaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TrimaStream st;
                 try { st = c2.TrimaOpen(fz_c[..p], optInTimePeriod); }
@@ -39162,7 +38225,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TrimaStream sA = c2.TrimaOpen(fz_c[..p0], optInTimePeriod);
@@ -39183,7 +38246,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TrimaStream sQ = c2.TrimaOpen(fz_c[..pa], optInTimePeriod);
@@ -39240,10 +38303,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -39312,13 +38371,12 @@ public class TaCodegenServe {
                 try { _ = c2.TrixOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TrixStream st;
                 try { st = c2.TrixOpen(fz_c[..p], optInTimePeriod); }
@@ -39356,7 +38414,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TrixStream sA = c2.TrixOpen(fz_c[..p0], optInTimePeriod);
@@ -39377,7 +38435,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TrixStream sQ = c2.TrixOpen(fz_c[..pa], optInTimePeriod);
@@ -39434,10 +38492,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -39505,13 +38559,12 @@ public class TaCodegenServe {
                 try { _ = c2.TsfOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TsfStream st;
                 try { st = c2.TsfOpen(fz_c[..p], optInTimePeriod); }
@@ -39549,7 +38602,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TsfStream sA = c2.TsfOpen(fz_c[..p0], optInTimePeriod);
@@ -39570,7 +38623,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TsfStream sQ = c2.TsfOpen(fz_c[..pa], optInTimePeriod);
@@ -39627,10 +38680,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInFirstPeriod = GetInt(req, "optInFirstPeriod", 25);
         int optInSecondPeriod = GetInt(req, "optInSecondPeriod", 13);
         double[] fz_o = new double[svN];
@@ -39700,13 +38749,12 @@ public class TaCodegenServe {
                 try { _ = c2.TsiOpenAndFill(ovIn.AsSpan(0, svN), optInFirstPeriod, optInSecondPeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TsiStream st;
                 try { st = c2.TsiOpen(fz_c[..p], optInFirstPeriod, optInSecondPeriod); }
@@ -39744,7 +38792,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TsiStream sA = c2.TsiOpen(fz_c[..p0], optInFirstPeriod, optInSecondPeriod);
@@ -39765,7 +38813,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TsiStream sQ = c2.TsiOpen(fz_c[..pa], optInFirstPeriod, optInSecondPeriod);
@@ -39822,10 +38870,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -39896,13 +38940,12 @@ public class TaCodegenServe {
                 try { _ = c2.TyppriceOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TyppriceStream st;
                 try { st = c2.TyppriceOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -39940,7 +38983,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TyppriceStream sA = c2.TyppriceOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -39961,7 +39004,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.TyppriceStream sQ = c2.TyppriceOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -40011,10 +39054,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod1 = GetInt(req, "optInTimePeriod1", 7);
         int optInTimePeriod2 = GetInt(req, "optInTimePeriod2", 14);
         int optInTimePeriod3 = GetInt(req, "optInTimePeriod3", 28);
@@ -40088,13 +39127,12 @@ public class TaCodegenServe {
                 try { _ = c2.UltoscOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.UltoscStream st;
                 try { st = c2.UltoscOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); }
@@ -40132,7 +39170,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.UltoscStream sA = c2.UltoscOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -40153,7 +39191,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.UltoscStream sQ = c2.UltoscOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -40210,10 +39248,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 5);
         double optInNbDev = GetDouble(req, "optInNbDev", 1e0);
         double[] fz_o = new double[svN];
@@ -40282,13 +39316,12 @@ public class TaCodegenServe {
                 try { _ = c2.VarOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, optInNbDev, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VarStream st;
                 try { st = c2.VarOpen(fz_c[..p], optInTimePeriod, optInNbDev); }
@@ -40326,7 +39359,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VarStream sA = c2.VarOpen(fz_c[..p0], optInTimePeriod, optInNbDev);
@@ -40347,7 +39380,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.VarStream sQ = c2.VarOpen(fz_c[..pa], optInTimePeriod, optInNbDev);
@@ -40404,10 +39437,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 28);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -40475,13 +39504,12 @@ public class TaCodegenServe {
                 try { _ = c2.VhfOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VhfStream st;
                 try { st = c2.VhfOpen(fz_c[..p], optInTimePeriod); }
@@ -40519,7 +39547,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VhfStream sA = c2.VhfOpen(fz_c[..p0], optInTimePeriod);
@@ -40540,7 +39568,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.VhfStream sQ = c2.VhfOpen(fz_c[..pa], optInTimePeriod);
@@ -40597,10 +39625,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -40692,13 +39716,12 @@ public class TaCodegenServe {
                 try { _ = c2.VortexOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, f0, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 1 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VortexStream st;
                 try { st = c2.VortexOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -40741,7 +39764,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VortexStream sA = c2.VortexOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -40763,7 +39786,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.VortexStream sQ = c2.VortexOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -40821,10 +39844,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -40897,13 +39916,12 @@ public class TaCodegenServe {
                 try { _ = c2.VwapOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, fz_v, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VwapStream st;
                 try { st = c2.VwapOpen(fz_h[..p], fz_l[..p], fz_c[..p], fz_v[..p]); }
@@ -40941,7 +39959,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VwapStream sA = c2.VwapOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], fz_v[..p0]);
@@ -40962,7 +39980,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.VwapStream sQ = c2.VwapOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], fz_v[..pa]);
@@ -41012,10 +40030,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -41085,13 +40099,12 @@ public class TaCodegenServe {
                 try { _ = c2.VwmaOpenAndFill(ovIn.AsSpan(0, svN), fz_v, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VwmaStream st;
                 try { st = c2.VwmaOpen(fz_c[..p], fz_v[..p], optInTimePeriod); }
@@ -41129,7 +40142,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VwmaStream sA = c2.VwmaOpen(fz_c[..p0], fz_v[..p0], optInTimePeriod);
@@ -41150,7 +40163,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.VwmaStream sQ = c2.VwmaOpen(fz_c[..pa], fz_v[..pa], optInTimePeriod);
@@ -41207,10 +40220,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -41281,13 +40290,12 @@ public class TaCodegenServe {
                 try { _ = c2.WadOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WadStream st;
                 try { st = c2.WadOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -41325,7 +40333,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WadStream sA = c2.WadOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -41346,7 +40354,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.WadStream sQ = c2.WadOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -41396,10 +40404,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -41470,13 +40474,12 @@ public class TaCodegenServe {
                 try { _ = c2.WclpriceOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WclpriceStream st;
                 try { st = c2.WclpriceOpen(fz_h[..p], fz_l[..p], fz_c[..p]); }
@@ -41514,7 +40517,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WclpriceStream sA = c2.WclpriceOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0]);
@@ -41535,7 +40538,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.WclpriceStream sQ = c2.WclpriceOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa]);
@@ -41585,10 +40588,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 14);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -41660,13 +40659,12 @@ public class TaCodegenServe {
                 try { _ = c2.WillrOpenAndFill(ovIn.AsSpan(0, svN), fz_l, fz_c, optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WillrStream st;
                 try { st = c2.WillrOpen(fz_h[..p], fz_l[..p], fz_c[..p], optInTimePeriod); }
@@ -41704,7 +40702,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WillrStream sA = c2.WillrOpen(fz_h[..p0], fz_l[..p0], fz_c[..p0], optInTimePeriod);
@@ -41725,7 +40723,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.WillrStream sQ = c2.WillrOpen(fz_h[..pa], fz_l[..pa], fz_c[..pa], optInTimePeriod);
@@ -41782,10 +40780,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -41853,13 +40847,12 @@ public class TaCodegenServe {
                 try { _ = c2.WmaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WmaStream st;
                 try { st = c2.WmaOpen(fz_c[..p], optInTimePeriod); }
@@ -41897,7 +40890,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WmaStream sA = c2.WmaOpen(fz_c[..p0], optInTimePeriod);
@@ -41918,7 +40911,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.WmaStream sQ = c2.WmaOpen(fz_c[..pa], optInTimePeriod);
@@ -41975,10 +40968,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = GetInt(req, "unstablePeriod", 0);
-        int svCompat = GetInt(req, "compatibility", 0);
-        if (svCompat != 0) {
-            return "{\"error\":\"csharp has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = GetInt(req, "optInTimePeriod", 30);
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -42047,13 +41036,12 @@ public class TaCodegenServe {
                 try { _ = c2.ZlemaOpenAndFill(ovIn.AsSpan(0, svN), optInTimePeriod, ovIn.AsSpan(1, svN)); fillOk = false; }
                 catch (ArgumentException) { /* expected: output 0 partially overlaps an input */ }
             } catch (ArgumentException) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             Array.Sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.Length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ZlemaStream st;
                 try { st = c2.ZlemaOpen(fz_c[..p], optInTimePeriod); }
@@ -42091,7 +41079,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ZlemaStream sA = c2.ZlemaOpen(fz_c[..p0], optInTimePeriod);
@@ -42112,7 +41100,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int pa = lb + 1 + seedShift;
+                int pa = lb + 1;
                 if (pa <= svN - 1) {
                     try {
                         Core.ZlemaStream sQ = c2.ZlemaOpen(fz_c[..pa], optInTimePeriod);

@@ -87,7 +87,6 @@ typedef struct
    TA_Integer optInFastPeriod;
    TA_Integer optInSlowPeriod;
    TA_Integer optInSignalPeriod_2;
-   TA_Integer compatibility;
 
    TA_RetCode expectedRetCode;
 
@@ -122,50 +121,42 @@ static TA_Test tableTest[] =
    /*********************/
    /*   MACD - CLASSIC  */
    /*********************/
-   { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
+   { 0, TA_MACD_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
                                                           0, (-1.9738)-(-2.7071) }, /* Histogram */
 
    /* Test period inversion */
-   { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
+   { 0, TA_MACD_TEST, 0, 251, 26, 12, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
                                                           0, (-1.9738)-(-2.7071) }, /* Histogram */
-
-   /***********************/
-   /*   MACD - METASTOCK  */
-   /***********************/
 
    /*******************************/
    /*   MACDEXT - MIMIC CLASSIC   */
    /*******************************/
-   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
+   { 0, TA_MACDEXT_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
                                                           0, -1.9738,  /* MACD */
                                                           0, -2.7071,  /* Signal */
                                                           0, (-1.9738)-(-2.7071)}, /* Histogram */
 
-   /***************************/
-   /*   MACD FIX - CLASSIC    */
-   /***************************/
+   /***************/
+   /*   MACD FIX  */
+   /***************/
+   { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
+                                                          0, -1.9519,  /* MACD */
+                                                          0, -2.6865,  /* Signal */
+                                                          0, (-1.9519)-(-2.6865) }, /* Histogram */
 
-   /***************************/
-   /*   MACD FIX - METASTOCK  */
-   /***************************/
-   { 1, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,  33, 252-33, /* 25, 252-25,*/
-                                                          0, -1.2185,  /* MACD */
-                                                          0, -1.7119,  /* Signal */
-                                                          0, (-1.2185)-(-1.7119) }, /* Histogram */
-
-   { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33,
-                                                        252-34,  0.8764, /* MACD */
+   { 0, TA_MACDFIX_TEST, 0, 251, 12, 26, 9, TA_SUCCESS, 33, 252-33,
+                                                        252-34,  0.8768, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8764)-(1.3533)}, /* Histogram */
+                                                        252-34,  (0.8768)-(1.3533)}, /* Histogram */
    /* Test period inversion */
-   { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 33, 252-33,
-                                                        252-34,  0.8764, /* MACD */
+   { 0, TA_MACDFIX_TEST, 0, 251, 26, 12, 9, TA_SUCCESS, 33, 252-33,
+                                                        252-34,  0.8768, /* MACD */
                                                         252-34,  1.3533,   /* Signal */
-                                                        252-34,  (0.8764)-(1.3533)} /* Histogram */
+                                                        252-34,  (0.8768)-(1.3533)} /* Histogram */
 
 };
 
@@ -325,8 +316,6 @@ static ErrorNumber do_test( const TA_History *history,
    retCode = TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
    if( retCode != TA_SUCCESS )
       return TA_TEST_TFRR_SETUNSTABLE_PERIOD_FAIL;
-
-   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();

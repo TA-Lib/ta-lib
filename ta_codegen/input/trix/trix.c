@@ -62,48 +62,34 @@ TA_RetCode trix(int startIdx, int endIdx,
     */
    optInK_1 = 2.0 / ((double)(optInTimePeriod + 1));
 
-   if( TA_GetCompatibility() == TA_COMPATIBILITY_DEFAULT )
+   /* Seed EMA1 with a simple average of the first
+    * 'period' price bars.
+    */
+   today = startIdx-lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
+      tempReal += inReal[today++];
+   prevEMA1 = tempReal / optInTimePeriod;
+
+   /* Advance EMA1 alone through its unstable period, up to
+    * the bar where EMA2 seeding begins.
+    */
+   while( today <= startIdx-((lookbackEMA*2)+1) )
+      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+
+   /* Seed EMA2 with a simple average of the first 'period'
+    * EMA1 values, accumulated as EMA1 produces them.
+    */
+   tempReal = 0.0;
+   tempReal += prevEMA1;
+   i = optInTimePeriod-1;
+   while( i-- > 0 )
    {
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
-       */
-      today = startIdx-lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-         tempReal += inReal[today++];
-      prevEMA1 = tempReal / optInTimePeriod;
-
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx-((lookbackEMA*2)+1) )
-         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
+      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
       tempReal += prevEMA1;
-      i = optInTimePeriod-1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
    }
-   else
-   {
-      /* Metastock/Tradestation: seed EMA1 from the first price
-       * bar, EMA2 from the first EMA1 value.
-       */
-      prevEMA1 = inReal[0];
-      today = 1;
-      while( today <= startIdx-((lookbackEMA*2)+1) )
-         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-      prevEMA2 = prevEMA1;
-   }
+   prevEMA2 = tempReal / optInTimePeriod;
 
    /* Advance EMA1 and EMA2 in lockstep through the unstable
     * period of EMA2, up to the bar where EMA3 seeding begins.
@@ -114,29 +100,19 @@ TA_RetCode trix(int startIdx, int endIdx,
       prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
    }
 
-   if( TA_GetCompatibility() == TA_COMPATIBILITY_DEFAULT )
+   /* Seed EMA3 with a simple average of the first 'period'
+    * EMA2 values, accumulated as EMA2 produces them.
+    */
+   tempReal = 0.0;
+   tempReal += prevEMA2;
+   i = optInTimePeriod-1;
+   while( i-- > 0 )
    {
-      /* Seed EMA3 with a simple average of the first 'period'
-       * EMA2 values, accumulated as EMA2 produces them.
-       */
-      tempReal = 0.0;
+      prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
+      prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
       tempReal += prevEMA2;
-      i = optInTimePeriod-1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = ((inReal[today++]-prevEMA1)*optInK_1) + prevEMA1;
-         prevEMA2 = ((prevEMA1-prevEMA2)*optInK_1) + prevEMA2;
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
    }
-   else
-   {
-      /* Metastock/Tradestation: seed EMA3 from the first EMA2
-       * value.
-       */
-      prevEMA3 = prevEMA2;
-   }
+   prevEMA3 = tempReal / optInTimePeriod;
 
    /* Advance all three EMA in lockstep through the unstable
     * period of EMA3, up to the bar before the first output.
