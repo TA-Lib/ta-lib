@@ -54,7 +54,8 @@ Three consequences worth stating outright:
 - **One error per call.** A call reports one condition and stops; it never
   accumulates.
 - **Checks precede writes.** A rejection leaves each caller-owned buffer, and
-  `OutRange`, exactly as it found them.
+  `OutRange`, exactly as it found them. `TA_ALLOC_ERR` is the one exception, and
+  Part 3 says why.
 - **Order matters where the codes differ.** Rules answering the same code are
   mutually unordered in practice: a caller cannot tell which of them fired, so
   swapping two is invisible. What has to hold is that all four backends answer
@@ -153,7 +154,7 @@ For Rust it is returned with `Result<usize, RetCode>` as `Err(RetCode::BadParam)
 | B5 | A buffer is too short: every declared input must reach `endIdx`, an output must hold the count actually produced (`endIdx - max(startIdx, lookback) + 1`). On a range shorter than the lookback that count is 0, so no output space is needed — but the input bound still holds | `TA_BAD_PARAM` ⚠️ | ⚠️<br>[3] | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6 | Two outputs are the **same buffer** (Appendix E) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | B6a | An output is unexpectedly **omitted** — null, or zero-length. Omission accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| B7 | A memory allocation failed. Only C reports it — Rust aborts, and the managed runtimes raise their own out-of-memory error. **Warning: implemented, but no CI job or probe covers it** — provoking one needs a failable allocator | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
+| B7 | A memory allocation failed. **Fatal — nothing past it is defined**, and nothing covers it, by decision rather than by omission (Part 3). Only C reports it; Rust aborts, and the managed runtimes raise their own out-of-memory error | `TA_ALLOC_ERR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 | B8 | The library detected an inconsistency in its own state — a likely bug, please report it to the TA-Lib developers (Appendix A, "Internal errors"). **Warning: implemented, but the individual sites are not tested** | `TA_INTERNAL_ERROR` ⚠️ | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; | ⚠️<br>&nbsp; |
 
 **Test Coverage**: `testIndexRange`, `checkOutputAliasRejected`,
@@ -403,8 +404,8 @@ earlier call to have handed it a value — `clone()` gives a second stream at th
 same bar, and `peek` would answer for a bar that has not been committed.
 
 **The fork has an error surface in C alone.** `TA_<N>_Clone` answers
-`TA_BAD_PARAM` for a NULL stream or a NULL `clone`, and `TA_ALLOC_ERR` if any
-allocation fails; on either, `*clone` is NULL and the original is untouched.
+`TA_BAD_PARAM` for a NULL stream or a NULL `clone` — on which `*clone` is NULL
+and the original is untouched — and `TA_ALLOC_ERR` if any allocation fails.
 Java's and C#'s `clone()`/`Clone()` and Rust's derived `Clone` cannot fail
 short of the runtime's own allocation failure, which is not a `RetCode`.
 
@@ -531,6 +532,19 @@ identity, which is rule B6; whole-buffer in place is legal and supported, which
 is rule N4. Appendix E has the reasoning and the per-backend table.
 
 ---
+
+### Allocation failure
+
+`TA_ALLOC_ERR` is returned, and that is the entire promise. **Nothing about the
+call is defined past it** — not the outputs, not the handle, not what any rule
+above would otherwise have held. Nothing is tested there either. Treat it as
+fatal: stop.
+
+The library will not abort on your behalf; that choice is the caller's. What it
+will not do is pretend a path it never tests is safe to continue from.
+
+Allocation failure only. Every `TA_ALLOC_ERR` the library returns is a null
+check on `TA_Malloc`; a condition the caller could have avoided is `TA_BAD_PARAM`.
 
 ## Appendix A — How each backend spells the seven RetCodes
 
@@ -680,9 +694,7 @@ Each ✅ rests on two independent checks; neither alone is enough.
    documented output-domain hole). C's memory-unsafe rules are probed with
    guard-paged buffers, so a read or write past a declared length faults instead
    of silently corrupting neighbouring memory, and each such scenario runs in a
-   forked child so a crash is an observation rather than the end of the run. An
-   allocation failure (B7) is probed with an interposed `malloc` that fails above a
-   size threshold, against a non-allocating control that must still succeed.
+   forked child so a crash is an observation rather than the end of the run.
 
 2. **A structural check over the whole generated corpus** — a probe on one
    function says nothing about the rest. Verified mechanically, from the

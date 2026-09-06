@@ -882,6 +882,9 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL( test_func_stream_finite,
             "SMA,MINUS_DI,MA,MAVP,BBANDS,STOCH,CDLDOJI,STREAM,FINITE",
             "Streaming finite-input gate" );
+   DO_TEST_LBL( test_func_open_contract,
+            "STREAM,OPEN,REJECT,CONTRACT",
+            "Open rejection write contract" );
 
    /* A filter that matched nothing must not read as success. The group tags are
     * hand-maintained and cover far fewer names than the library exports, so a

@@ -510,6 +510,10 @@ typedef enum
   TA_HA_VACUOUS                      = 1678,
   TA_RVI_VACUOUS                     = 1676,
 
+  /* A rejected Open/OpenAndFill and the caller's output buffer (#389). */
+  TA_OPEN_CONTRACT_WROTE             = 1680,
+  TA_OPEN_CONTRACT_VACUOUS           = 1682,
+
   /* --function= named something no test group covers, on a run that had
    * nothing else to do. Reported rather than passed silently. */
   TA_REGTEST_FILTER_MATCHED_NOTHING  = 1600,

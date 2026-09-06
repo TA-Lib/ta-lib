@@ -132,7 +132,7 @@ typedef enum {
     TA_SUCCESS                   =  0, /* No error */
     TA_LIB_NOT_INITIALIZE        =  1, /* TA_Initialize was not successfully called */
     TA_BAD_PARAM                 =  2, /* A parameter is out of range */
-    TA_ALLOC_ERR                 =  3, /* Possibly out-of-memory */
+    TA_ALLOC_ERR                 =  3, /* Out-of-memory. Fatal: nothing past it is defined */
     TA_GROUP_NOT_FOUND           =  4,
     TA_FUNC_NOT_FOUND            =  5,
     TA_INVALID_HANDLE            =  6,

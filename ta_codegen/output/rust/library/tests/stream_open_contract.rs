@@ -189,6 +189,18 @@ fn a_short_history_reaches_the_warm_up_check_not_the_capacity_one() {
     let core = Core::new();
     let data = series(252);
     let lb = core.SMA_Lookback(30).expect("valid");
+    // A full-size output is the only shape that can observe a write: the
+    // capacity bound floors at zero here, so the body runs with the caller's
+    // buffer bound and rejects from inside it. That is #389's class, and it is
+    // asserted before the empty-output probe below, which can only panic.
+    const SENTINEL: f64 = -777.0;
+    let mut armed = vec![SENTINEL; data.len()];
+    assert_eq!(
+        core.sma_open_and_fill(&data[..lb], 30, &mut armed).err(),
+        Some(RetCode::InsufficientHistory)
+    );
+    assert!(armed.iter().all(|v| *v == SENTINEL), "a rejection from inside the body wrote nothing");
+
     let mut nothing: [f64; 0] = [];
     assert_eq!(
         core.sma_open_and_fill(&data[..lb], 30, &mut nothing).err(),
