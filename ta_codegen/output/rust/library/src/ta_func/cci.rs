@@ -65,9 +65,10 @@
  *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
  *                level: the fixed band zeroed the whole output for any
  *                instrument quoted small enough to fall under it.
- *  090626 MF,CC  Fix #395. Divide by the mean deviation, scale after: the
- *                pre-scaled `0.015*tempReal2` underflowed to 0.0 on a
- *                denormal price that the guard still called "not flat".
+ *  090626 MF,CC  Fix #395. Test the divisor itself, not just the deviation it
+ *                scales: `0.015*tempReal2` underflows to 0.0 on a denormal
+ *                price the deviation's own band still calls "not flat", and
+ *                the division returned +/-Inf under TA_SUCCESS.
  */
 
 // Import types from parent module
@@ -216,13 +217,14 @@ impl Core {
             tempReal2 /= ((optInTimePeriod) as f64);
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
-            // Divide by the mean deviation itself and scale after: the guard has to
-            // test the very expression the division uses, or a scaling step can
-            // carry a guarded-non-zero into a zero divisor. The band is relative and
-            // the underflow of the 0.015 product is absolute, so no band on the
-            // deviation can cover the product.
+            // The third test is the divisor itself, and it is not implied by the
+            // second: the deviation's band is RELATIVE and the product's underflow is
+            // ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+            // copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+            // flatness question is already answered above, and this one is only
+            // asking whether the value the division uses exists.
             //
-            // Both tests are relative to the window's own price level (issue #253).
+            // The first two tests are relative to the window's own price level (#253).
             // They ask "is this window flat?", and flatness is a property of the
             // prices relative to each other -- but a deviation carries the quote
             // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -231,8 +233,8 @@ impl Core {
             // absorb the sub-epsilon residue an identical-price window leaves in the
             // average, which is what it was widened for in the first place (#7).
             tempReal3 = (theAverage).abs();
-            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
-                outReal[outIdx] = tempReal / tempReal2 / 0.015;
+            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
+                outReal[outIdx] = tempReal / (0.015 * tempReal2);
                 outIdx += 1;
             } else {
                 outReal[outIdx] = 0.0;
@@ -430,13 +432,14 @@ impl Core {
         tempReal2 /= ((sp.optInTimePeriod) as f64);
         // And finally, the CCI...
         tempReal = lastValue - theAverage;
-        // Divide by the mean deviation itself and scale after: the guard has to
-        // test the very expression the division uses, or a scaling step can
-        // carry a guarded-non-zero into a zero divisor. The band is relative and
-        // the underflow of the 0.015 product is absolute, so no band on the
-        // deviation can cover the product.
+        // The third test is the divisor itself, and it is not implied by the
+        // second: the deviation's band is RELATIVE and the product's underflow is
+        // ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+        // copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+        // flatness question is already answered above, and this one is only
+        // asking whether the value the division uses exists.
         //
-        // Both tests are relative to the window's own price level (issue #253).
+        // The first two tests are relative to the window's own price level (#253).
         // They ask "is this window flat?", and flatness is a property of the
         // prices relative to each other -- but a deviation carries the quote
         // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -445,8 +448,8 @@ impl Core {
         // absorb the sub-epsilon residue an identical-price window leaves in the
         // average, which is what it was widened for in the first place (#7).
         tempReal3 = (theAverage).abs();
-        if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
-            (*outReal) = tempReal / tempReal2 / 0.015;
+        if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
+            (*outReal) = tempReal / (0.015 * tempReal2);
         } else {
             (*outReal) = 0.0;
         }
@@ -561,13 +564,14 @@ impl Core {
             tempReal2 /= ((optInTimePeriod) as f64);
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
-            // Divide by the mean deviation itself and scale after: the guard has to
-            // test the very expression the division uses, or a scaling step can
-            // carry a guarded-non-zero into a zero divisor. The band is relative and
-            // the underflow of the 0.015 product is absolute, so no band on the
-            // deviation can cover the product.
+            // The third test is the divisor itself, and it is not implied by the
+            // second: the deviation's band is RELATIVE and the product's underflow is
+            // ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+            // copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+            // flatness question is already answered above, and this one is only
+            // asking whether the value the division uses exists.
             //
-            // Both tests are relative to the window's own price level (issue #253).
+            // The first two tests are relative to the window's own price level (#253).
             // They ask "is this window flat?", and flatness is a property of the
             // prices relative to each other -- but a deviation carries the quote
             // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -576,8 +580,8 @@ impl Core {
             // absorb the sub-epsilon residue an identical-price window leaves in the
             // average, which is what it was widened for in the first place (#7).
             tempReal3 = (theAverage).abs();
-            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal / tempReal2 / 0.015;
+            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal / (0.015 * tempReal2);
             } else {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 0.0;
             }
@@ -808,13 +812,14 @@ impl CciStream {
             tempReal2 /= ((sp.optInTimePeriod) as f64);
             // And finally, the CCI...
             tempReal = lastValue - theAverage;
-            // Divide by the mean deviation itself and scale after: the guard has to
-            // test the very expression the division uses, or a scaling step can
-            // carry a guarded-non-zero into a zero divisor. The band is relative and
-            // the underflow of the 0.015 product is absolute, so no band on the
-            // deviation can cover the product.
+            // The third test is the divisor itself, and it is not implied by the
+            // second: the deviation's band is RELATIVE and the product's underflow is
+            // ABSOLUTE, so below ~1.6e-308 the band admits a deviation whose scaled
+            // copy is exactly 0.0 (issue #395). An exact test, not a band -- the
+            // flatness question is already answered above, and this one is only
+            // asking whether the value the division uses exists.
             //
-            // Both tests are relative to the window's own price level (issue #253).
+            // The first two tests are relative to the window's own price level (#253).
             // They ask "is this window flat?", and flatness is a property of the
             // prices relative to each other -- but a deviation carries the quote
             // unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -823,8 +828,8 @@ impl CciStream {
             // absorb the sub-epsilon residue an identical-price window leaves in the
             // average, which is what it was widened for in the first place (#7).
             tempReal3 = (theAverage).abs();
-            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) {
-                (*outReal) = tempReal / tempReal2 / 0.015;
+            if !(((tempReal).abs() <= 1e-14 * (tempReal3))) && !(((tempReal2).abs() <= 1e-14 * (tempReal3))) && 0.015 * tempReal2 != 0.0 {
+                (*outReal) = tempReal / (0.015 * tempReal2);
             } else {
                 (*outReal) = 0.0;
             }

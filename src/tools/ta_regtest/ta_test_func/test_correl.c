@@ -560,26 +560,25 @@ static ErrorNumber test_correl_degenerate( void )
    return TA_TEST_PASS;
 }
 
-/* (C7) Issue #395: the guard tests ssX and ssY separately, so it cannot see
- * their PRODUCT leave the double range. `sqrt(ssX*ssY)` underflowed to exactly
- * 0.0 while both factors were ordinary normals carrying all 53 bits, and the
- * [-1,1] clamp at the divide could not catch what came back: NaN passes both
- * comparisons (NaN > 1.0 is false), and an infinity was rewritten to exactly
- * +/-1.0 -- a perfect correlation reported from a degenerate window, which
- * nothing downstream can tell from a genuine one.
+/* (C7) Issue #395: the guard tested ssX and ssY separately, so it could not see
+ * their PRODUCT leave the double range. `ssX*ssY` underflows to exactly 0.0
+ * while both factors are ordinary normals carrying all 53 bits, and the [-1,1]
+ * clamp could not catch what came back: NaN passes both comparisons
+ * (NaN > 1.0 is false), and an infinity was rewritten to exactly +/-1.0 -- a
+ * perfect correlation reported from a degenerate window, which nothing
+ * downstream can tell from a genuine one.
  *
- * A root of each factor cannot do that: sqrt maps any finite positive double
- * into [2.3e-162, 1.4e154], so the product of two of them is representable at
- * both ends.
+ * Testing the product makes such a window degenerate, so it takes the same
+ * exact 0.0 arm C6 pins for a constant series -- which is what correl.md
+ * promises ("the output is 0 rather than an error or NaN").
  *
- * Exact fixture, no oracle needed. At 2^-283 the sums of squares are ~2e-170 --
- * normal doubles -- while their product is 0.0. Pre-fix the three bars came
- * back NaN, -1 and +1. */
+ * Exact fixture: at 2^-283 the sums of squares are ~2e-170, normal doubles,
+ * while their product is 0.0. Pre-fix the three bars came back NaN, -1 and +1. */
 static ErrorNumber test_correl_small_scale( void )
 {
    static const double xs[6] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
    static const double ys[6] = { 0.0, 1.0, 1.0, 0.0, 1.0, 1.0 };
-   double x[6], y[6], want[3], scale;
+   double x[6], y[6], scale;
    TA_Integer begIdx, nbElement;
    TA_RetCode rc;
    int i;
@@ -590,9 +589,6 @@ static ErrorNumber test_correl_small_scale( void )
       x[i] = xs[i] * scale;
       y[i] = ys[i] * scale;
    }
-   want[0] =  0.0;
-   want[1] = -1.0 / sqrt( 15.0 );
-   want[2] =  1.0 / sqrt( 15.0 );
 
    rc = TA_CORREL( 0, 5, x, y, 4, &begIdx, &nbElement, cr_out );
    if( rc != TA_SUCCESS || nbElement != 3 )
@@ -603,12 +599,10 @@ static ErrorNumber test_correl_small_scale( void )
    }
    for( i = 0; i < (int)nbElement; i++ )
    {
-      /* Correctly rounded, so equality is the right test -- a tolerance here
-       * would also accept the +/-1.0 the clamp used to manufacture. */
-      if( cr_out[i] != want[i] )
+      if( cr_out[i] != cr_out[i] || cr_out[i] != 0.0 )
       {
-         printf( "CORREL #395 small-scale: bar=%d val=%.17g want %.17g\n",
-                 (int)begIdx + i, cr_out[i], want[i] );
+         printf( "CORREL #395 small-scale: bar=%d val=%.17g want exact 0\n",
+                 (int)begIdx + i, cr_out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }

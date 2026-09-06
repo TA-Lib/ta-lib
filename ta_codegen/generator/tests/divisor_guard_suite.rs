@@ -125,15 +125,6 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     // does not reach it.
     ("VWMA", "tempV", "unguarded by decision: stateless per bar", "nan_inf_output"),
 
-    // Reported by the inline arm and CLEARED by the range of the operation, which is
-    // what makes it the answer to #395 rather than another instance of it. `sqrt` maps
-    // any finite positive double into [2.3e-162, 1.4e154], so a product of two of them
-    // is representable at both ends -- it cannot underflow to 0.0 the way `sqrt(a*b)`
-    // does while `a` and `b` are still normals, and cannot overflow to +Inf either.
-    //
-    // The row is also the only structural hold on that fix: revert `correl.c:236` to
-    // one root and this key goes stale AND the new divisor arrives unannotated.
-    ("CORREL", "sqrt(ssX)*sqrt(ssY)", "a root of each factor stays in range", ""),
 
     // The Hilbert family divides by `atan(Im/Re)*rad2Deg` under `Im != 0.0 && Re != 0.0`
     // (`ht_dcperiod.c:318-319` and its six twins), which bounds neither operand enough
@@ -333,6 +324,22 @@ fn inline_scaling(e: &Expr) -> bool {
     }
 }
 
+/// Does naming `a` settle whether `den` is zero?
+///
+/// `sqrt(v)` and `fabs(v)` are zero exactly when `v` is, so a guard on the radicand
+/// is a guard on the root -- the same transparency `inline_scaling` uses to look in.
+fn same_zeroness(a: &Expr, den: &Expr) -> bool {
+    if a == den {
+        return true;
+    }
+    match den {
+        Expr::FuncCall(n, args) if n == "sqrt" || n == "fabs" => {
+            args.first().map(|inner| same_zeroness(a, inner)).unwrap_or(false)
+        }
+        _ => false,
+    }
+}
+
 /// A guard naming the whole expression, not just one of its operands.
 fn tests_expr_against_zero(cond: &Expr, den: &Expr) -> bool {
     match cond {
@@ -348,10 +355,10 @@ fn tests_expr_against_zero(cond: &Expr, den: &Expr) -> bool {
             | BinOp::NotEq
             | BinOp::Eq,
             r,
-        ) => **l == *den || **r == *den,
+        ) => same_zeroness(l, den) || same_zeroness(r, den),
         Expr::Not(i) => tests_expr_against_zero(i, den),
         Expr::FuncCall(n, args) if n.contains("IS_ZERO") => {
-            args.first().map(|a| a == den).unwrap_or(false)
+            args.first().map(|a| same_zeroness(a, den)).unwrap_or(false)
         }
         _ => false,
     }
@@ -1162,47 +1169,35 @@ fn divide_by_a_scaled_copy(body: &mut [Statement]) {
 /// The inline arm fires on an inline product, and not otherwise.
 ///
 /// Third self-test, and the three halves the scaled arm next to it pins: it fires, it
-/// clears when the guard names the divisor, and it stays out of the other arms' way
-/// when nothing bounds an operand at all. #395 removed the last shipped instance of
-/// this shape, so the fixture reconstructs CCI's own pre-#395 divisor rather than
-/// reading a live defect — an arm anchored to a defect the tree is meant to lose goes
-/// red the day it is fixed.
+/// clears when a guard settles the divisor, and it stays out of the other arms' way
+/// when nothing bounds an operand at all. Built by REMOVING guards from the shipped
+/// CCI rather than by pointing at a live defect -- an arm anchored to a defect the tree
+/// is meant to lose goes red the day it is fixed.
 #[test]
 fn the_inline_arm_fires_on_an_inline_product_and_not_otherwise() {
     let funcs = load();
     let cci = funcs.iter().find(|f| f.name == "CCI").expect("CCI is in the tree");
 
-    // Sanity: as shipped since #395, CCI divides by the value its guard tests.
+    // Clears: since #395 CCI tests `0.015*tempReal2`, the divisor itself.
     assert!(
         !findings_for(cci).iter().any(|f| f.kind == FindingKind::InlineScaled),
-        "CCI ships dividing by `tempReal2` and scaling after; the inline arm should be \
-         silent on it"
+        "CCI ships testing `0.015*tempReal2`; the inline arm should be silent on it"
     );
 
-    // Put the pre-#395 divisor back: `tempReal/(0.015*tempReal2)`, still guarded on
-    // `tempReal2` alone.
+    // Fires: drop that test and the deviation's own band is all that is left -- a guard
+    // on an OPERAND, which is exactly what the arm exists to separate from a guard on
+    // the divisor.
     let mut broken = cci.clone();
-    divide_by_an_inline_product(&mut broken.body);
-    divide_by_an_inline_product(&mut broken.private_body);
+    drop_the_product_test(&mut broken.body);
+    drop_the_product_test(&mut broken.private_body);
     assert!(
         findings_for(&broken).iter().any(|f| f.divisor == "0.015*tempReal2"),
-        "the sweep did not flag CCI once its divisor was pre-scaled again — it cannot \
-         see the class this arm exists for"
+        "the sweep did not flag CCI once the test on its divisor was removed -- it \
+         cannot see the class this arm exists for"
     );
 
-    // Moving the guard onto the whole divisor must clear it, or the arm is flagging
-    // every inline product rather than reading the guard.
-    let mut guarded = broken.clone();
-    guard_the_whole_divisor(&mut guarded.body);
-    guard_the_whole_divisor(&mut guarded.private_body);
-    assert!(
-        !findings_for(&guarded).iter().any(|f| f.kind == FindingKind::InlineScaled),
-        "the inline arm still flags the divisor after the guard was moved onto it — it \
-         is not reading the guard, it is flagging every inline product"
-    );
-
-    // And with nothing bounding an operand it must stay silent: an untested divisor is
-    // the first arm's finding, and reporting it twice buries the rows that differ.
+    // Silent: with the operand unbounded too, an untested divisor is the FIRST arm's
+    // finding. Reporting it twice buries the rows that differ.
     let mut unguarded = broken.clone();
     drop_the_deviation_guard(&mut unguarded.body);
     drop_the_deviation_guard(&mut unguarded.private_body);
@@ -1212,39 +1207,34 @@ fn the_inline_arm_fires_on_an_inline_product_and_not_otherwise() {
     );
 }
 
-/// Rewrite `(tempReal/tempReal2)/0.015` back into `tempReal/(0.015*tempReal2)`.
-fn divide_by_an_inline_product(body: &mut [Statement]) {
+/// A guard conjunct that tests a product mentioning `tempReal2` against zero.
+fn is_product_test(e: &Expr) -> bool {
+    match e {
+        Expr::BinOp(l, BinOp::NotEq | BinOp::Eq, r) => {
+            [l, r].iter().any(|side| {
+                matches!(&***side, Expr::BinOp(_, BinOp::Mul, _))
+                    && names(side).contains("tempReal2")
+            })
+        }
+        Expr::Not(i) => is_product_test(i),
+        _ => false,
+    }
+}
+
+/// Drop `&& 0.015*tempReal2 != 0.0`, leaving the deviation's band as the only guard.
+fn drop_the_product_test(body: &mut [Statement]) {
     fn fix(e: &Expr) -> Expr {
-        if let Expr::BinOp(l, BinOp::Div, r) = e {
-            if let (Expr::BinOp(num, BinOp::Div, den), Expr::Literal(k)) = (&**l, &**r) {
-                return Expr::BinOp(
-                    num.clone(),
-                    BinOp::Div,
-                    Box::new(Expr::BinOp(
-                        Box::new(Expr::Literal(*k)),
-                        BinOp::Mul,
-                        den.clone(),
-                    )),
-                );
+        if let Expr::BinOp(l, BinOp::And, r) = e {
+            if is_product_test(r) {
+                return (**l).clone();
+            }
+            if is_product_test(l) {
+                return (**r).clone();
             }
         }
         e.clone()
     }
-    for st in body.iter_mut() {
-        match st {
-            Statement::Assign { value, .. } => *value = fix(value),
-            Statement::If { then_body, else_body, .. } => {
-                divide_by_an_inline_product(then_body);
-                divide_by_an_inline_product(else_body);
-            }
-            Statement::While { body, .. }
-            | Statement::DoWhile { body, .. }
-            | Statement::For { body, .. }
-            | Statement::ForC { body, .. }
-            | Statement::Block { body } => divide_by_an_inline_product(body),
-            _ => {}
-        }
-    }
+    walk_conditions(body, &fix);
 }
 
 /// Drop the `!TA_IS_ZERO_SCALED(tempReal2, ...)` conjunct, leaving the divisor's one
@@ -1261,67 +1251,32 @@ fn drop_the_deviation_guard(body: &mut [Statement]) {
     }
     fn fix(e: &Expr) -> Expr {
         if let Expr::BinOp(l, BinOp::And, r) = e {
-            if about_the_deviation(l) {
-                return (**r).clone();
-            }
             if about_the_deviation(r) {
                 return (**l).clone();
+            }
+            if about_the_deviation(l) {
+                return (**r).clone();
             }
         }
         e.clone()
     }
-    for st in body.iter_mut() {
-        match st {
-            Statement::If { condition, then_body, else_body, .. } => {
-                *condition = fix(condition);
-                drop_the_deviation_guard(then_body);
-                drop_the_deviation_guard(else_body);
-            }
-            Statement::While { body, .. }
-            | Statement::DoWhile { body, .. }
-            | Statement::For { body, .. }
-            | Statement::ForC { body, .. }
-            | Statement::Block { body } => drop_the_deviation_guard(body),
-            _ => {}
-        }
-    }
+    walk_conditions(body, &fix);
 }
 
-/// Replace CCI's `TA_IS_ZERO_SCALED(tempReal2, ...)` with a test on `0.015*tempReal2`.
-fn guard_the_whole_divisor(body: &mut [Statement]) {
-    fn divisor() -> Expr {
-        Expr::BinOp(
-            Box::new(Expr::Literal(0.015)),
-            BinOp::Mul,
-            Box::new(Expr::Var("tempReal2".to_string())),
-        )
-    }
-    fn fix(e: &Expr) -> Expr {
-        match e {
-            Expr::FuncCall(n, args)
-                if n.contains("IS_ZERO") && args.iter().any(|a| names(a).contains("tempReal2")) =>
-            {
-                Expr::BinOp(Box::new(divisor()), BinOp::Eq, Box::new(Expr::Literal(0.0)))
-            }
-            Expr::Not(i) => Expr::Not(Box::new(fix(i))),
-            Expr::BinOp(l, op, r) if matches!(op, BinOp::And | BinOp::Or) => {
-                Expr::BinOp(Box::new(fix(l)), op.clone(), Box::new(fix(r)))
-            }
-            _ => e.clone(),
-        }
-    }
+/// Apply `fix` to every `if` condition in `body`, recursively.
+fn walk_conditions(body: &mut [Statement], fix: &dyn Fn(&Expr) -> Expr) {
     for st in body.iter_mut() {
         match st {
             Statement::If { condition, then_body, else_body, .. } => {
                 *condition = fix(condition);
-                guard_the_whole_divisor(then_body);
-                guard_the_whole_divisor(else_body);
+                walk_conditions(then_body, fix);
+                walk_conditions(else_body, fix);
             }
             Statement::While { body, .. }
             | Statement::DoWhile { body, .. }
             | Statement::For { body, .. }
             | Statement::ForC { body, .. }
-            | Statement::Block { body } => guard_the_whole_divisor(body),
+            | Statement::Block { body } => walk_conditions(body, fix),
             _ => {}
         }
     }
