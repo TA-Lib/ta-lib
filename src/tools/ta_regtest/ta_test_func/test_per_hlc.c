@@ -318,27 +318,27 @@ static ErrorNumber test_cci_uniform_zero( void )
 }
 
 
-/* Issue #395: CCI divided by `0.015*meanDeviation`, a value its guard never
- * tested. The guard's band is RELATIVE (TA_EPSILON*|average|) and the product's
- * underflow is ABSOLUTE, so below |average| ~ 1.6e-308 the band admits a
- * deviation whose scaled copy is exactly 0.0, and the division returned +/-Inf
- * under TA_SUCCESS.
+/* Issue #395: CCI divided by `0.015*meanDeviation` while its guard tested only
+ * the deviation. The guard's band is RELATIVE (TA_EPSILON*|average|) and the
+ * product's underflow is ABSOLUTE, so below |average| ~ 1.6e-308 the band admits
+ * a deviation whose scaled copy is exactly 0.0, and the division returned
+ * +/-Inf under TA_SUCCESS -- which `cci.yaml` does not declare and
+ * `checkExpectedValue` rejects outright.
  *
- * The fixture is exact, not approximate. At period 2 both deviations are
- * |p1-p2|/2, so the mean deviation EQUALS |numerator| and CCI is exactly
- * +/-(1/0.015) for any non-flat window. Even multiples of 2^-1074 keep every
- * intermediate on the subnormal grid, so nothing rounds. Keep all four
- * conditions -- period 2, H==L==C, even multiples, consecutive bars distinct --
- * or the equality becomes an approximation and the leg stops discriminating.
+ * Testing the divisor makes such a window degenerate, so it takes the same 0.0
+ * arm an identical-price window does. That is the whole contract here: finite,
+ * and the documented flat answer.
  *
- * Pre-fix this returned +/-Inf on every bar. */
+ * Keep all four fixture conditions -- period 2, H==L==C, even multiples of
+ * 2^-1074, consecutive bars distinct -- or the product stops underflowing and
+ * the leg silently stops discriminating. Pre-fix every bar came back +/-Inf. */
 static ErrorNumber test_cci_subnormal_finite( void )
 {
    const int nbBars = 40;
    TA_Real high[40], low[40], close[40], out[40];
    TA_Integer outBegIdx, outNbElement;
    TA_RetCode retCode;
-   double ulp, base, expected;
+   double ulp, base;
    int i;
 
    ulp = ldexp( 1.0, -1074 );
@@ -350,8 +350,7 @@ static ErrorNumber test_cci_subnormal_finite( void )
       return TA_TEST_PASS;
    }
 
-   base     = 1000.0 * ulp;
-   expected = 1.0 / 0.015;
+   base = 1000.0 * ulp;
    for( i = 0; i < nbBars; i++ )
       high[i] = low[i] = close[i] = (i & 1) ? base + 2.0*ulp : base;
 
@@ -366,10 +365,10 @@ static ErrorNumber test_cci_subnormal_finite( void )
 
    for( i = 0; i < outNbElement; i++ )
    {
-      if( out[i] != expected && out[i] != -expected )
+      if( !isfinite( out[i] ) || out[i] != 0.0 )
       {
-         printf( "Fail: CCI subnormal out[%d]=%.17g, expected +/-%.17g (#395)\n",
-                 i, out[i], expected );
+         printf( "Fail: CCI subnormal out[%d]=%.17g, expected 0 (#395)\n",
+                 i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }

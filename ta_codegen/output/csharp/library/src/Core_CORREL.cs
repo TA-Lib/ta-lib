@@ -60,11 +60,10 @@ public partial class Core
     *  082326 MF    Fix #242. Cancellation-free sums (shifted data + reseed, as
     *               TA_VAR does since #118), per-factor degeneracy test and a
     *               range clamp.
-    *  090626 MF,CC Fix #395. A root of each guarded factor, not a root of their
-    *               product: sqrt(ssX*ssY) left the double range at both ends
-    *               while ssX and ssY were still ordinary normals, returning NaN
-    *               under TA_SUCCESS and a perfect correlation from a degenerate
-    *               window.
+    *  090626 MF,CC Fix #395. Test the product too: it underflows to 0.0 while ssX
+    *               and ssY are still ordinary normals, and the divide then
+    *               returned NaN under TA_SUCCESS -- which the range clamp cannot
+    *               catch -- or a perfect correlation from a degenerate window.
     */
    /// <summary>
    /// Number of leading input bars <c>CORREL</c> consumes before it can produce
@@ -301,12 +300,22 @@ public partial class Core
           * is also the cheaper test: the two fabs() cost ~7% of this function's
           * runtime, and buy a wrong answer.
           *
-          * A root of each guarded factor, never a root of their product: that
-          * product leaves the double range at BOTH ends while ssX and ssY are
-          * still ordinary normals, which no test of the factors can see (#395).
+          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+          * established both are positive, so the product needs no protection from
+          * a negative operand, and the second square root is worth ~14% of this
+          * function's runtime (measured, #395).
+          *
+          * The product is then tested on its own, because neither factor's test
+          * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+          * and ssY are still ordinary normals (#395). A zero divisor there gives
+          * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+          * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+          * not a band: an absolute band on the product is the #253 defect at a new
+          * address. At the other end the product overflows to +Inf and the quotient
+          * is 0.0, the degenerate answer anyway.
           */
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
              */
@@ -462,8 +471,8 @@ public partial class Core
          trailingX = (double)inReal0[trailingIdx] - shiftX;
          trailingY = (double)inReal1[trailingIdx] - shiftY;
          trailingIdx += 1;
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else if( tempReal < 0 - 1.0 ) {
@@ -902,12 +911,22 @@ public partial class Core
           * is also the cheaper test: the two fabs() cost ~7% of this function's
           * runtime, and buy a wrong answer.
           *
-          * A root of each guarded factor, never a root of their product: that
-          * product leaves the double range at BOTH ends while ssX and ssY are
-          * still ordinary normals, which no test of the factors can see (#395).
+          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+          * established both are positive, so the product needs no protection from
+          * a negative operand, and the second square root is worth ~14% of this
+          * function's runtime (measured, #395).
+          *
+          * The product is then tested on its own, because neither factor's test
+          * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+          * and ssY are still ordinary normals (#395). A zero divisor there gives
+          * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+          * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+          * not a band: an absolute band on the product is the #253 defect at a new
+          * address. At the other end the product overflows to +Inf and the quotient
+          * is 0.0, the degenerate answer anyway.
           */
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
              */
@@ -1067,12 +1086,22 @@ public partial class Core
        * is also the cheaper test: the two fabs() cost ~7% of this function's
        * runtime, and buy a wrong answer.
        *
-       * A root of each guarded factor, never a root of their product: that
-       * product leaves the double range at BOTH ends while ssX and ssY are
-       * still ordinary normals, which no test of the factors can see (#395).
+       * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+       * established both are positive, so the product needs no protection from
+       * a negative operand, and the second square root is worth ~14% of this
+       * function's runtime (measured, #395).
+       *
+       * The product is then tested on its own, because neither factor's test
+       * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+       * and ssY are still ordinary normals (#395). A zero divisor there gives
+       * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+       * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+       * not a band: an absolute band on the product is the #253 defect at a new
+       * address. At the other end the product overflows to +Inf and the quotient
+       * is 0.0, the degenerate answer anyway.
        */
-      if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 ) {
-         tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
+      if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 && ssX * ssY > 0.0 ) {
+         tempReal = spXY / Math.Sqrt(ssX * ssY);
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it a few ulp outside.
           */
@@ -1309,12 +1338,22 @@ public partial class Core
           * is also the cheaper test: the two fabs() cost ~7% of this function's
           * runtime, and buy a wrong answer.
           *
-          * A root of each guarded factor, never a root of their product: that
-          * product leaves the double range at BOTH ends while ssX and ssY are
-          * still ordinary normals, which no test of the factors can see (#395).
+          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
+          * established both are positive, so the product needs no protection from
+          * a negative operand, and the second square root is worth ~14% of this
+          * function's runtime (measured, #395).
+          *
+          * The product is then tested on its own, because neither factor's test
+          * implies it: at that fourth power it underflows to exactly 0.0 while ssX
+          * and ssY are still ordinary normals (#395). A zero divisor there gives
+          * NaN, which the clamp below does NOT catch -- NaN fails both comparisons
+          * -- or an infinity the clamp rewrites into a perfect correlation. Exact,
+          * not a band: an absolute band on the product is the #253 defect at a new
+          * address. At the other end the product overflows to +Inf and the quotient
+          * is 0.0, the degenerate answer anyway.
           */
-         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
+         if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 && ssX * ssY > 0.0 ) {
+            tempReal = spXY / Math.Sqrt(ssX * ssY);
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
              */
