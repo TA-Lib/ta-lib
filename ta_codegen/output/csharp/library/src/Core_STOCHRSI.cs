@@ -482,9 +482,9 @@ public partial class Core
    /// <summary>One <c>STOCHRSI</c> output set, in batch output order.</summary>
    /// <remarks>
    /// <para>Equality is the compiler-generated record-struct equality, which compares
-   /// the components with <c>==</c>: <c>NaN</c> does not equal <c>NaN</c>, and
-   /// <c>0.0</c> equals <c>-0.0</c>. That is deliberately <em>not</em> the Java
-   /// <c>Value</c> contract, which compares bitwise — compare
+   /// each component with <see cref="System.Double.Equals(System.Double)"/>, not
+   /// <c>==</c>: any two <c>NaN</c> payloads compare equal, and <c>0.0</c>
+   /// equals <c>-0.0</c>. Compare
    /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
    /// when bit-level identity is what you mean.</para>
    /// </remarks>
