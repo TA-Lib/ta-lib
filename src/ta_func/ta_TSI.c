@@ -151,11 +151,6 @@ TA_LIB_API TA_RetCode TA_TSI( int    startIdx,
     * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
     * bit-exactness contract against the composed reference.
     *
-    * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-    * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-    * preserved for the functions that already shipped with it and dropped from
-    * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-    *
     * prevClose is carried in a scalar rather than re-read from inReal[t-1]
     * because outReal may alias inReal: the slot holding close[t-1] may already
     * hold an output written a bar earlier.
@@ -426,8 +421,7 @@ TA_RetCode TA_S_TSI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_TSI_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_TSI_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_TSI_Value). */
@@ -541,11 +535,6 @@ static TA_RetCode TA_TSI_OpenImpl( struct TA_TSI_Stream **stream, const double i
        * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
        * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
        * bit-exactness contract against the composed reference.
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
        *
        * prevClose is carried in a scalar rather than re-read from inReal[t-1]
        * because outReal may alias inReal: the slot holding close[t-1] may already
@@ -782,6 +771,21 @@ TA_LIB_API TA_RetCode TA_TSI_Value( const TA_TSI_Stream *stream, double *outReal
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TSI_OutRange( const TA_TSI_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TSI_Advance( TA_TSI_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

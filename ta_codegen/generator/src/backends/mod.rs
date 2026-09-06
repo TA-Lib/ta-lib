@@ -5,7 +5,7 @@ pub mod c_hygiene;
 pub mod c_stream;
 pub mod cmake_lists;
 pub mod common;
-pub mod compat_fold;
+pub mod cond_fold;
 pub mod ir_cleanup;
 pub mod csharp;
 pub mod csharp_doc;

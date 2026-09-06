@@ -224,16 +224,8 @@ impl Core {
         }
         (*outBegIdx) = startIdx;
         // The first EMA value is a simple average of the first 'period' force
-        // values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-        // applied to the force series rather than to the input array.
-        //
-        // TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-        // a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-        // deprecated: it is preserved for the functions that already shipped with
-        // it and dropped from new ones, and it is not reachable at all from the
-        // Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-        // here would make EFI's C output diverge from the other three backends for
-        // a setting they cannot even read.
+        // values; it then seeds the recursion. This is ema.c's seeding applied
+        // to the force series rather than to the input array.
         today = startIdx - lookbackTotal + 1;
         prevClose = inClose[today - 1];
         i = (optInTimePeriod) as usize;
@@ -601,16 +593,8 @@ impl Core {
             // warns about.
             (*outBegIdx) = startIdx;
             // The first EMA value is a simple average of the first 'period' force
-            // values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-            // applied to the force series rather than to the input array.
-            //
-            // TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-            // a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-            // deprecated: it is preserved for the functions that already shipped with
-            // it and dropped from new ones, and it is not reachable at all from the
-            // Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-            // here would make EFI's C output diverge from the other three backends for
-            // a setting they cannot even read.
+            // values; it then seeds the recursion. This is ema.c's seeding applied
+            // to the force series rather than to the input array.
             today = startIdx - lookbackTotal + 1;
             prevClose = inClose[today - 1];
             i = (optInTimePeriod) as usize;
@@ -863,7 +847,7 @@ impl EfiStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_EFI_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -875,7 +859,7 @@ impl EfiStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_EFI_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

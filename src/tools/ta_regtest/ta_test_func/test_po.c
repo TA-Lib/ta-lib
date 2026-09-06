@@ -83,7 +83,6 @@ typedef struct
    TA_Integer optInFastPeriod; /* From 1 to 200 */
    TA_Integer optInSlowPeriod; /* From 1 to 200 */
    TA_Integer optInMethod_2;
-   TA_Integer compatibility;
 
    TA_RetCode expectedRetCode;
 
@@ -112,111 +111,82 @@ static ErrorNumber test_default_is_ema( const TA_History *history,
 /**** Local variables definitions.     ****/
 static TA_Test tableTest[] =
 {
-   /**********************************/
-   /*    APO TEST - SIMPLE - CLASSIC */
-   /**********************************/
-   { 1, 0, 0, 251, 26, 12, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 1, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
+   /************************/
+   /*    APO TEST - SIMPLE */
+   /************************/
+   { 1, 0, 0, 251, 26, 12, TA_MAType_SMA, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
+   { 1, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
-   { 0, 0, 250, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MAType_SMA, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MAType_SMA, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MAType_SMA, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
+   { 0, 0, 250, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
 
-   /************************************/
-   /*    APO TEST - SIMPLE - METASTOCK */
-   /************************************/
-   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.3124, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.5876, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.1667, 25,  252-25 }, /* Last Value */
+   /*****************************/
+   /*    APO TEST - EXPONENTIAL */
+   /*****************************/
+   /* The EMA arm is range-DEPENDENT: seeded with the SMA of its own first
+    * window, a call starting at bar S warms the fast EMA from S-lookback while
+    * a full-range call has run it since bar 11. Both regimes are pinned; a
+    * single-output range is the seed itself, which is why those rows carry the
+    * SMA value. doRangeTest is handed TA_FUNC_UNST_EMA so it compares the
+    * stable tail. */
+   { 1, 0, 0, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,      0, -4.1103, 25,  252-25 }, /* First Value */
+   { 0, 0, 0, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,      1, -4.0027, 25,  252-25 },
+   { 0, 0, 0, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS, 252-26, 0.90401, 25,  252-25 }, /* Last Value */
 
-   { 0, 0, 0,   1, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* First/Last Value */
-   { 0, 0, 250, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  -0.1667,  250,  2 }, /* Last  Value */
+   { 0, 0, 0,   1, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 1,   1, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 0, 25,  25, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,  -3.3124,   25,  1 }, /* Just enough to calculate first. */
+   { 0, 0, 26,  26, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,  -3.5876,   26,  1 }, /* Just enough to calculate second. */
+   { 0, 0, 250, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,   1, -0.07817,  250,  2 }, /* Last  Value */
+   { 0, 0, 251, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,  -0.1667,  251,  1 }, /* Last  Value */
 
-
-   /***************************************/
-   /*    APO TEST - EXPONENTIAL - CLASSIC */
-   /***************************************/
-   /* !!! To be done. */
-
-   /*****************************************/
-   /*    APO TEST - EXPONENTIAL - METASTOCK */
-   /*****************************************/
-   { 1, 0, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.4193, 25,  252-25 }, /* First Value */
-   { 0, 0, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.4367, 25,  252-25 },
-   { 0, 0, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.90401, 25,  252-25 }, /* Last Value */
-
-   { 0, 0, 0,   1, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 1,   1, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 0, 25,  25, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },
-   { 0, 0, 250, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,  0.90401,  250,  2 }, /* Last  Value */
-
-   { 0, 0, 251, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.90401,  251,  1 },  /* Last  Value */
-   { 0, 0, 25,  25, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4193,   25,  1 },  /* Just enough to calculate first. */
-   { 0, 0, 26,  26, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.4367,   26,  1 },  /* Just enough to calculate second. */
-
-   /**********************************/
-   /*    PPO TEST - SIMPLE - CLASSIC */
-   /**********************************/
-   { 1, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
+   /************************/
+   /*    PPO TEST - SIMPLE */
+   /************************/
+   { 1, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
    /* Was -0.02813 (#188). Closes 94.815 / 94.375 / 95.095 give SMA2 = 94.735 and
     * SMA3 = 94.7616666..., so (SMA2-SMA3)/SMA3*100 = -0.0281407742230402. A
     * search over percentage-oscillator variants (/slow, /fast, /mean, absolute)
-    * across period pairs and bars finds nothing yielding -0.02813. PPO over SMA
-    * has no compatibility dependence, so the METASTOCK row below is identical. */
-   { 0, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.0281407742, 2,  252-2 },
-   { 0, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
+    * across period pairs and bars finds nothing yielding -0.02813. */
+   { 0, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_SUCCESS,   1, -0.0281407742, 2,  252-2 },
+   { 0, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
-   { 0, 1, 0,   1, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 2,   2, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
+   { 0, 1, 0,   1, 2, 3, TA_MAType_SMA, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 2, 3, TA_MAType_SMA, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 2,   2, 2, 3, TA_MAType_SMA, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 2, 3, TA_MAType_SMA, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
 
-   /************************************/
-   /*    PPO TEST - SIMPLE - METASTOCK */
-   /************************************/
-   { 0, 1, 0, 251, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
-   { 0, 1, 0, 251, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.0281407742, 2,  252-2 },   /* see #188 note above */
-   { 0, 1, 0, 251, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
+   /* Test period inversion */
+   { 1, 1, 0, 251, 3, 2, TA_MAType_SMA, TA_SUCCESS,   0,  1.10264, 2,  252-2 }, /* First Value */
+   { 0, 1, 0, 251, 3, 2, TA_MAType_SMA, TA_SUCCESS, 249, -0.21191, 2,  252-2 }, /* Last Value */
 
-   { 0, 1, 0,   1, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 1, 1, 1,   1, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 1, 1, 2,   2, 2, 3, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  1.10264,   2,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 3, 2, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.21191, 250,  2 }, /* Last  Value */
+   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
+   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
 
-   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -3.6393, 25,  252-25 }, /* First Value */
-   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -3.9534, 25,  252-25 },
-   { 0, 1, 0, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, -0.15281, 25,  252-25 }, /* Last Value */
+   { 0, 1, 0,   1, 12, 26, TA_MAType_SMA, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 12, 26, TA_MAType_SMA, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
+   { 0, 1, 25,  25, 12, 26, TA_MAType_SMA, TA_SUCCESS,   0, -3.6393,   25,  1 }, /* First/Last Value */
+   { 0, 1, 250, 251, 12, 26, TA_MAType_SMA, TA_SUCCESS,   1, -0.15281, 250,  2 }, /* Last  Value */
 
-   { 0, 1, 0,   1, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,   0,  0 }, /* Out of range value */
-   { 0, 1, 25,  25, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0, -3.6393,   25,  1 }, /* First/Last Value */
-   { 0, 1, 250, 251, 12, 26, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1, -0.15281, 250,  2 }, /* Last  Value */
+   /*****************************/
+   /*    PPO TEST - EXPONENTIAL */
+   /*****************************/
+   /* Whole-history values only -- see the APO EMA note above. */
+   { 1, 1, 0, 251, 26, 12, TA_MAType_EMA, TA_SUCCESS,      0, -4.5159, 25,  252-25 }, /* First Value */
+   { 0, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,      1, -4.4214, 25,  252-25 },
+   { 0, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS, 252-26, 0.83645, 25,  252-25 }, /* Last Value */
 
-   /***************************************/
-   /*    PPO TEST - EXPONENTIAL - CLASSIC */
-   /***************************************/
-   /* !!! To be done. */
-
-   /*****************************************/
-   /*    PPO TEST - EXPONENTIAL - METASTOCK */
-   /*****************************************/
-   { 1, 1, 0, 251, 26, 12, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      0, -2.7083, 25,  252-25 }, /* First Value */
-   { 0, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,      1, -2.7390, 25,  252-25 },
-   { 0, 1, 0, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS, 252-26, 0.83644, 25,  252-25 }, /* Last Value */
-
-   { 0, 1, 0,   1, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 1, 1,   1, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
-   { 0, 1, 25,  25, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,   -2.7083,   25,  1 },
-   { 0, 1, 250, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   1,   0.83644,  250,  2 }, /* Last  Value */
-
-   { 0, 1, 251, 251, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  0.83644,  251,  1 },  /* Last  Value */
-   { 0, 1, 25,  25, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7083,   25,  1 },  /* Just enough to calculate first. */
-   { 0, 1, 26,  26, 12, 26, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,   0,  -2.7390,   26,  1 },  /* Just enough to calculate second. */
+   { 0, 1, 0,   1, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 1, 1,   1, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,        0,    0,  0 }, /* Out of range value */
+   { 0, 1, 25,  25, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,  -3.6393,   25,  1 }, /* Just enough to calculate first. */
+   { 0, 1, 26,  26, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0,  -3.9534,   26,  1 }, /* Just enough to calculate second. */
+   { 0, 1, 250, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,   1, -0.07175,  250,  2 }, /* Last  Value */
+   { 0, 1, 251, 251, 12, 26, TA_MAType_EMA, TA_SUCCESS,   0, -0.15281,  251,  1 }, /* Last  Value */
 };
 
 #define NB_TEST (sizeof(tableTest)/sizeof(TA_Test))
@@ -332,8 +302,6 @@ static ErrorNumber do_test( const TA_History *history,
 
    /* Set to NAN all the elements of the gBuffers.  */
    clearAllBuffers();
-
-   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
 
    /* Build the input. */
    setInputBuffer( 0, history->close, history->nbBars );
@@ -501,7 +469,6 @@ static ErrorNumber test_default_is_ema( const TA_History *history,
 
    /* Deterministic global state: EMA has an unstable period; pin it to 0 so the
     * explicit-EMA and default-MAType calls are directly comparable. */
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
    TA_SetUnstablePeriod( TA_FUNC_UNST_EMA, 0 );
 
    /* (a) Declared default: the MAType optional input defaults to EMA. */

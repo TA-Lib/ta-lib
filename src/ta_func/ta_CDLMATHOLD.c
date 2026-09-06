@@ -313,8 +313,7 @@ TA_RetCode TA_S_CDLMATHOLD( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_CDLMATHOLD_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_CDLMATHOLD_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_CDLMATHOLD_Value). */
@@ -699,6 +698,21 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Value( const TA_CDLMATHOLD_Stream *stream, i
 {
    if( !stream || !outInteger ) return TA_BAD_PARAM;
    *outInteger = stream->cur_outInteger;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_OutRange( const TA_CDLMATHOLD_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_CDLMATHOLD_Advance( TA_CDLMATHOLD_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

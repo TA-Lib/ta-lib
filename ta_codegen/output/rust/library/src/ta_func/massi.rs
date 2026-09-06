@@ -219,11 +219,6 @@ impl Core {
         // confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
         // is warmed. The seed sums accumulate from 0.0 in production order; do not
         // reorder or fuse them (0.0+x is not x for x=-0.0).
-        //
-        // Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-        // unreachable from the Rust, Java and C# APIs, so consulting
-        // TA_GetCompatibility() here would make C diverge from three backends for a
-        // setting they cannot read.
         optInK_1 = 2.0 / ((optInFastPeriod + 1) as f64);
         ema1 = 0.0;
         ema2 = 0.0;
@@ -581,11 +576,6 @@ impl Core {
         // confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
         // is warmed. The seed sums accumulate from 0.0 in production order; do not
         // reorder or fuse them (0.0+x is not x for x=-0.0).
-        //
-        // Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-        // unreachable from the Rust, Java and C# APIs, so consulting
-        // TA_GetCompatibility() here would make C diverge from three backends for a
-        // setting they cannot read.
         optInK_1 = 2.0 / ((optInFastPeriod + 1) as f64);
         ema1 = 0.0;
         ema2 = 0.0;
@@ -910,7 +900,7 @@ impl MassiStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_MASSI_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -922,7 +912,7 @@ impl MassiStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_MASSI_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

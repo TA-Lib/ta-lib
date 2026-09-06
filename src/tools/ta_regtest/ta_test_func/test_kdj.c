@@ -120,9 +120,7 @@ typedef struct { KdjArm arm; int n; int m1; int m2; int bar;
  *    stochastic, then `ti_wilders(m1)` and `ti_wilders(m2)`, then 3K-2D. This
  *    is the only arm with an INDEPENDENT WILDER KERNEL: wilders.c seeds with
  *    the simple average of the first `period` values exactly as TA_RMA does,
- *    then steps (x-v)*(1/n)+v where TA_RMA steps wAlpha*x + wBeta*v. Its raw
- *    stochastic is independent too -- 100*((close-min)/(max-min)) against our
- *    divide by (max-min)/100.
+ *    then steps (x-v)*(1/n)+v where TA_RMA steps wAlpha*x + wBeta*v.
  *  KDJ_ARM_TS -- trading-signals 8.3.0, in TypeScript, on node v22.21.1.
  *    `StochasticOscillator` computes the whole indicator including an
  *    INDEPENDENTLY IMPLEMENTED J line (`stochJ: 3 * stochK - 2 * stochD`) and

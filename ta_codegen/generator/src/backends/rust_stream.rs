@@ -5,8 +5,8 @@
 //! file: an opaque `#[derive(Clone)]` handle (`<Name>Stream { core, state }`),
 //! a private state struct mirroring the C stream struct field-for-field, a
 //! `<name>_step_impl` transition method on `Core` (so batch rendering
-//! conventions — `self.candle_settings`, `self.compatibility`, lookback calls —
-//! work verbatim), a `pub(crate) <name>_open_internal(.., startIdx, ..)`
+//! conventions — `self.candle_settings`, lookback calls — work verbatim), a
+//! `pub(crate) <name>_open_internal(.., startIdx, ..)`
 //! composition seam, the public `<name>_open` / `<name>_open_and_fill`
 //! constructors, and `update`/`peek` on the handle.
 //!
@@ -782,11 +782,11 @@ fn scale_by_stride(idx: Expr) -> Expr {
 // The handle's candlestick settings (issue #274)
 // ---------------------------------------------------------------------------
 //
-// A handle used to embed a whole `Core` by value — 280 bytes, of which a step
-// can reach only the `CandleSetting`s it names: the unstable period and the
-// compatibility mode are consumed at `Open`, where they set the lookback, and
-// nothing post-open consults them. 119 of the 176 generated steps read no
-// setting at all, so they were carrying 280 bytes to read none of them.
+// A handle used to embed a whole `Core` by value, of which a step can reach
+// only the `CandleSetting`s it names: the unstable period is consumed at
+// `Open`, where it sets the lookback, and nothing post-open consults it. 119
+// of the 176 generated steps read no setting at all, so they were carrying a
+// whole `Core` to read none of them.
 //
 // The handle now carries exactly the settings its own step reads, one
 // `cs_<snake>: CandleSetting` field each, and nothing when it reads none. The
@@ -1671,9 +1671,8 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
 
 /// Map a batch return-code expression to the stream tier's `Result` shape.
 /// Any early SUCCESS return maps to `Err(InsufficientHistory)` (strict
-/// min-history — the no-data guard AND the Metastock seed-boundary return, which
-/// exits with state the batch would rewind, so the stream honestly asks for one
-/// more bar); error codes map to their `Err(...)` equivalents.
+/// min-history — the no-data guard); error codes map to their `Err(...)`
+/// equivalents.
 fn map_return_code(v: &str) -> String {
     match v {
         "SUCCESS" | "TA_SUCCESS" => "Err(RetCode::InsufficientHistory)".to_string(),
@@ -3044,7 +3043,7 @@ fn emit_update_and_peek(
          \x20   /// `peek` — and a clone carries it verbatim. A plain `Open` hands back\n\
          \x20   /// only the last value, a subset of this range, because the caller chose\n\
          \x20   /// not to take the fill.\n\
-         \x20   #[doc(alias = \"TA_StreamOutRange\")]\n\
+         \x20   #[doc(alias = \"TA_{n}_OutRange\")]\n\
          \x20   pub fn out_range(&self) -> OutRange {{\n\
          \x20       self.out\n\
          \x20   }}"
@@ -3058,7 +3057,7 @@ fn emit_update_and_peek(
          \x20   /// For a bar the caller leaves out: one an `update` rejected and that\n\
          \x20   /// will not be re-fed, or a session with no print. Without it two handles\n\
          \x20   /// on one feed drift a bar apart when only one of them skips.\n\
-         \x20   #[doc(alias = \"TA_StreamAdvance\")]\n\
+         \x20   #[doc(alias = \"TA_{n}_Advance\")]\n\
          \x20   pub fn advance(&mut self) {{\n\
          {}\
          \x20   }}",

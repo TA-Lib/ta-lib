@@ -64,11 +64,6 @@ TA_RetCode tsi(int startIdx, int endIdx,
     * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
     * bit-exactness contract against the composed reference.
     *
-    * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-    * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-    * preserved for the functions that already shipped with it and dropped from
-    * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-    *
     * prevClose is carried in a scalar rather than re-read from inReal[t-1]
     * because outReal may alias inReal: the slot holding close[t-1] may already
     * hold an output written a bar earlier.

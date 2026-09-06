@@ -65,6 +65,9 @@
  *               small enough to fall under it.
  *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
  *               the stale *outNBElement overran outSlowK by lookbackDSlow.
+ *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
+ *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
+ *               range that the guard still called "not flat".
  */
 
 TA_LIB_API int TA_STOCH_Lookback( int optInFastK_Period, int optInSlowK_Period, TA_MAType optInSlowK_MAType, int optInSlowD_Period, TA_MAType optInSlowD_MAType )
@@ -118,7 +121,6 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    double lowest;
    double highest;
    double tmp;
-   double diff;
    double *tempBuffer;
    int outIdx;
    int lowestIdx;
@@ -247,7 +249,6 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
    lowestIdx = highestIdx;
    lowest = 0.0;
    highest = lowest;
-   diff = highest;
    /* Allocate a temporary buffer large enough to
     * store the K.
     *
@@ -291,12 +292,10 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
                lowest = tmp;
             }
          }
-         diff = (highest - lowest) / 100.0;
       } else if( tmp <= lowest )
       {
          lowestIdx = today;
          lowest = tmp;
-         diff = (highest - lowest) / 100.0;
       }
       /* Set the highest high */
       tmp = inHigh[today];
@@ -314,24 +313,24 @@ TA_LIB_API TA_RetCode TA_STOCH( int    startIdx,
                highest = tmp;
             }
          }
-         diff = (highest - lowest) / 100.0;
       } else if( tmp >= highest )
       {
          highestIdx = today;
          highest = tmp;
-         diff = (highest - lowest) / 100.0;
       }
-      /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-       * machine-flat window leaves a sub-epsilon residue that an exact check
-       * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-       * range against ITS OWN two extremes, not against a fixed band: the range
-       * carries the quote unit, so a constant put against it answers "flat" for
-       * every window of an instrument quoted below it and zeroed the whole
-       * output (issue #253).
+      /* Divide by the range itself and scale after: the guard has to test the
+       * very expression the division uses, or a scaling step can carry a
+       * guarded-non-zero into a zero divisor.
+       *
+       * The band is the range against ITS OWN two extremes, not a fixed
+       * constant: the range carries the quote unit, so a constant answers
+       * "flat" for every window of an instrument quoted below it (issue #253).
+       * It absorbs the machine-flat window an exact test would divide into
+       * [0,100] noise (issue #107 / STOCHRSI).
        */
       if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
-         tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+         tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
       } else 
       {
          tempBuffer[outIdx++] = 0.0;
@@ -410,7 +409,6 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    double lowest;
    double highest;
    double tmp;
-   double diff;
    double *tempBuffer;
    int outIdx;
    int lowestIdx;
@@ -486,7 +484,6 @@ TA_RetCode TA_S_STOCH( int    startIdx,
    lowestIdx = highestIdx;
    lowest = 0.0;
    highest = lowest;
-   diff = highest;
    bufferIsAllocated = 0;
    if( 0 || 0 || 0 )
    {
@@ -519,12 +516,10 @@ TA_RetCode TA_S_STOCH( int    startIdx,
                lowest = tmp;
             }
          }
-         diff = (highest - lowest) / 100.0;
       } else if( tmp <= lowest )
       {
          lowestIdx = today;
          lowest = tmp;
-         diff = (highest - lowest) / 100.0;
       }
       tmp = (double)inHigh[today];
       if( highestIdx < trailingIdx )
@@ -541,16 +536,14 @@ TA_RetCode TA_S_STOCH( int    startIdx,
                highest = tmp;
             }
          }
-         diff = (highest - lowest) / 100.0;
       } else if( tmp >= highest )
       {
          highestIdx = today;
          highest = tmp;
-         diff = (highest - lowest) / 100.0;
       }
       if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
-         tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
+         tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
       } else 
       {
          tempBuffer[outIdx++] = 0.0;
@@ -592,8 +585,7 @@ TA_RetCode TA_S_STOCH( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_STOCH_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_STOCH_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_STOCH_Value). */
@@ -606,7 +598,6 @@ struct TA_STOCH_Stream {
    TA_MAType optInSlowD_MAType;
    double lowest;
    double highest;
-   double diff;
    int lowestIdx;
    int highestIdx;
    int trailingIdx;
@@ -667,12 +658,10 @@ static TA_RetCode TA_STOCH_StepImpl( struct TA_STOCH_Stream *sp, double inHigh, 
             sp->lowest = tmp;
          }
       }
-      sp->diff = (sp->highest - sp->lowest) / 100.0;
    } else if( tmp <= sp->lowest )
    {
       sp->lowestIdx = sp->today;
       sp->lowest = tmp;
-      sp->diff = (sp->highest - sp->lowest) / 100.0;
    }
    /* Set the highest high */
    tmp = sp->x_inHigh[sp->today & sp->xMask];
@@ -690,24 +679,24 @@ static TA_RetCode TA_STOCH_StepImpl( struct TA_STOCH_Stream *sp, double inHigh, 
             sp->highest = tmp;
          }
       }
-      sp->diff = (sp->highest - sp->lowest) / 100.0;
    } else if( tmp >= sp->highest )
    {
       sp->highestIdx = sp->today;
       sp->highest = tmp;
-      sp->diff = (sp->highest - sp->lowest) / 100.0;
    }
-   /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-    * machine-flat window leaves a sub-epsilon residue that an exact check
-    * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-    * range against ITS OWN two extremes, not against a fixed band: the range
-    * carries the quote unit, so a constant put against it answers "flat" for
-    * every window of an instrument quoted below it and zeroed the whole
-    * output (issue #253).
+   /* Divide by the range itself and scale after: the guard has to test the
+    * very expression the division uses, or a scaling step can carry a
+    * guarded-non-zero into a zero divisor.
+    *
+    * The band is the range against ITS OWN two extremes, not a fixed
+    * constant: the range carries the quote unit, so a constant answers
+    * "flat" for every window of an instrument quoted below it (issue #253).
+    * It absorbs the machine-flat window an exact test would divide into
+    * [0,100] noise (issue #107 / STOCHRSI).
     */
    if( !TA_IS_ZERO_SCALED(sp->highest - sp->lowest, fabs(sp->highest) + fabs(sp->lowest)) )
    {
-      cur_tempBuffer = (sp->x_inClose[sp->today & sp->xMask] - sp->lowest) / sp->diff;
+      cur_tempBuffer = (sp->x_inClose[sp->today & sp->xMask] - sp->lowest) / (sp->highest - sp->lowest) * 100.0;
    } else 
    {
       cur_tempBuffer = 0.0;
@@ -799,7 +788,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       double lowest;
       double highest;
       double tmp;
-      double diff;
       double *tempBuffer;
       int outIdx;
       int lowestIdx;
@@ -887,7 +875,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
@@ -930,12 +917,10 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp <= lowest )
          {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -953,24 +938,24 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp >= highest )
          {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-          * machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-          * range against ITS OWN two extremes, not against a fixed band: the range
-          * carries the quote unit, so a constant put against it answers "flat" for
-          * every window of an instrument quoted below it and zeroed the whole
-          * output (issue #253).
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [0,100] noise (issue #107 / STOCHRSI).
           */
          if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
          {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+            tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
          } else 
          {
             tempBuffer[outIdx++] = 0.0;
@@ -1070,7 +1055,6 @@ static TA_RetCode TA_STOCH_OpenImpl( struct TA_STOCH_Stream **stream, const doub
       sp->optInSlowD_MAType = optInSlowD_MAType;
       sp->lowest = lowest;
       sp->highest = highest;
-      sp->diff = diff;
       sp->lowestIdx = lowestIdx;
       sp->highestIdx = highestIdx;
       sp->trailingIdx = trailingIdx;
@@ -1176,7 +1160,6 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    double cur_tempBuffer = 0.0;
    double cur_outSlowD = 0.0;
    double tmp;
-   double diff;
    double highest;
    int highestIdx;
    int i;
@@ -1196,7 +1179,6 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
 
    if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   diff = sp->diff;
    highest = sp->highest;
    highestIdx = sp->highestIdx;
    i = sp->i;
@@ -1238,12 +1220,10 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
             lowest = tmp;
          }
       }
-      diff = (highest - lowest) / 100.0;
    } else if( tmp <= lowest )
    {
       lowestIdx = today;
       lowest = tmp;
-      diff = (highest - lowest) / 100.0;
    }
    /* Set the highest high */
    tmp = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
@@ -1261,24 +1241,24 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
             highest = tmp;
          }
       }
-      diff = (highest - lowest) / 100.0;
    } else if( tmp >= highest )
    {
       highestIdx = today;
       highest = tmp;
-      diff = (highest - lowest) / 100.0;
    }
-   /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-    * machine-flat window leaves a sub-epsilon residue that an exact check
-    * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-    * range against ITS OWN two extremes, not against a fixed band: the range
-    * carries the quote unit, so a constant put against it answers "flat" for
-    * every window of an instrument quoted below it and zeroed the whole
-    * output (issue #253).
+   /* Divide by the range itself and scale after: the guard has to test the
+    * very expression the division uses, or a scaling step can carry a
+    * guarded-non-zero into a zero divisor.
+    *
+    * The band is the range against ITS OWN two extremes, not a fixed
+    * constant: the range carries the quote unit, so a constant answers
+    * "flat" for every window of an instrument quoted below it (issue #253).
+    * It absorbs the machine-flat window an exact test would divide into
+    * [0,100] noise (issue #107 / STOCHRSI).
     */
    if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
    {
-      cur_tempBuffer = ((((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2) - lowest) / diff;
+      cur_tempBuffer = ((((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2) - lowest) / (highest - lowest) * 100.0;
    } else 
    {
       cur_tempBuffer = 0.0;
@@ -1312,6 +1292,21 @@ TA_LIB_API TA_RetCode TA_STOCH_Value( const TA_STOCH_Stream *stream, double *out
    if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    *outSlowK = stream->cur_outSlowK;
    *outSlowD = stream->cur_outSlowD;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_OutRange( const TA_STOCH_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_STOCH_Advance( TA_STOCH_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

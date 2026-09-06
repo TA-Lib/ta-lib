@@ -2144,7 +2144,7 @@ fn build_csharp_library(root: &Path) -> bool {
 /// failing the build: `dotnet build` only needs the reference assemblies, which
 /// restore from NuGet, so a box can compile a TFM it cannot launch. It is
 /// printed loudly so the gap is visible in the log instead of reading as
-/// coverage — the same rule the compatibility skips in server_verify follow.
+/// coverage.
 ///
 /// Skipping them ALL is a failure, though. The tolerance above is "the others
 /// still ran"; with the library on a single TFM there are no others, so one

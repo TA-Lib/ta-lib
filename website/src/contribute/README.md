@@ -82,7 +82,6 @@ If this page and the repo disagree, the repo wins; it is versioned with the code
 - `<name>.md` documents the original algebra of the indicator, never implementation artifacts: no zero-guards, epsilon comparisons or `period == 1` special cases in the formula.
 - In the `.c` input, call other TA functions by their bare lowercase name (`sma(...)`, `ema_lookback(...)`); the generator resolves each to the language's native symbol.
 - Your function may be called with an output array aliasing one of its inputs — `outReal == inClose` is a supported, tested calling convention. Within a bar, read every input value you need *before* writing that bar's output; a trailing index can reach the slot you just wrote. Carry what you need in a scalar. Every function is checked, bitwise, on every input/output pair.
-- New functions do not support `TA_SetCompatibility`. The compatibility constants are preserved for the functions that already honour one, and the Rust, Java and C# APIs expose no such setting — so honouring it in a new function makes its C output diverge from three backends that cannot read it. Copying an EMA-shaped function will hand you a METASTOCK seeding arm; drop it.
 - Enums, groups and other shared surfaces are generated; search the generator before hand-adding one anywhere.
 - If `generate` panics on a C construct, do not contort the algorithm to dodge the parser. Match the style of a shipped input file, or raise it on the spec issue: parser extensions are generator changes and need maintainer sign-off.
 

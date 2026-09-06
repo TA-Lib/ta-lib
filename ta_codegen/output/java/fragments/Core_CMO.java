@@ -54,16 +54,12 @@
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
-      double tempValue3 = 0;
-      double tempValue4 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -121,18 +117,6 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -161,6 +145,12 @@
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;
@@ -227,16 +217,12 @@
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
-      double tempValue3 = 0;
-      double tempValue4 = 0;
       if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
          return RetCode.OutOfRangeStartIndex ;
       }
@@ -270,7 +256,6 @@
       }
       today = startIdx - lookbackTotal;
       prevValue = (double)inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -648,16 +633,12 @@
       int outIdx = 0;
       int today = 0;
       int lookbackTotal = 0;
-      int unstablePeriod = 0;
       int i = 0;
       double prevGain = 0;
       double prevLoss = 0;
       double prevValue = 0;
-      double savePrevValue = 0;
       double tempValue1 = 0;
       double tempValue2 = 0;
-      double tempValue3 = 0;
-      double tempValue4 = 0;
       int historyLen = inReal.length;
       int endIdx = historyLen - 1;
       if( historyLen < 1 ) {
@@ -726,18 +707,6 @@
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -766,6 +735,12 @@
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx ) {
          tempValue1 = prevGain + prevLoss;

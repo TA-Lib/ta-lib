@@ -1774,7 +1774,7 @@ fn scale_by_stride(idx: Expr) -> Expr {
 }
 
 /// Map a batch return-code variable for the open body. Early SUCCESS returns
-/// (the no-data guard AND the Metastock seed-boundary return) become
+/// (the no-data guard) become
 /// `InsufficientHistory`, which the wrapper types as
 /// `InsufficientHistoryException`. Everything else passes through.
 fn map_open_return(v: &str) -> String {

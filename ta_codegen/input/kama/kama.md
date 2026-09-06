@@ -13,6 +13,7 @@ KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
 ## Notes
 
 - A period of 1 performs no smoothing: the output is a copy of the input, consistent with `MA(period=1)` for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.
+- The output never leaves the range of the prices it has seen.
 
 ## Inputs
 

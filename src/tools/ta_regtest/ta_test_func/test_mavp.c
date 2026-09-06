@@ -185,7 +185,6 @@ ErrorNumber test_func_mavp( TA_History *history )
 
    /* These tests assume pristine global settings. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    /* Shape: one distinct period, straight from the data. */
    for( i = 0; i < MV_DATA_SIZE; i++ )
@@ -344,7 +343,6 @@ ErrorNumber test_func_mavp( TA_History *history )
 
    /* Leave globals as found. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    /* A floor, not an equality: the MAType list legitimately GROWS (HMA #139,
     * DISABLED #93, DEFAULT #182 were all added), so pinning it exactly would

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <time.h>
 
 /* Display flag set by ta_regtest.c --no-guarded */
@@ -78,16 +79,6 @@ static const CodegenLanguage ALL_LANGUAGES[] = {
     {"csharp", "C#",           argv_csharp},
 };
 #define NUM_LANGUAGES (sizeof(ALL_LANGUAGES) / sizeof(ALL_LANGUAGES[0]))
-
-/* See test_codegen.h. Rust, Java and (managed) C# pin compatibility to Default
- * and expose no setter, so their Metastock legs are skipped rather than run
- * vacuously. */
-int codegen_lang_has_compatibility_api(const char *lang)
-{
-    if( !lang ) return 1;
-    return !(strcmp(lang, "rust") == 0 || strcmp(lang, "java") == 0
-             || strcmp(lang, "csharp") == 0);
-}
 
 /* Which language servers implement the state-equivalence leg (#240): the
  * handle after Open(P) + (n-P) updates compared field-by-field against the
@@ -351,26 +342,10 @@ static int ref_diverges_on_partial_range( const char *name, TA_Integer startIdx,
  * dark. Mirrors the sentinel floor below. */
 static long g_codegenCompared[NUM_LANGUAGES];
 
-/* One line per language per kind of skipped leg, so the coverage a language
- * cannot take is stated in the log instead of quietly vanishing. */
-#define MAX_COMPAT_NOTES (NUM_LANGUAGES * 4)
-static void note_compat_skip(const char *lang, const char *what)
-{
-    static const char *reportedLang[MAX_COMPAT_NOTES];
-    static const char *reportedWhat[MAX_COMPAT_NOTES];
-    static int nbReported = 0;
-    int i;
-    for( i = 0; i < nbReported; i++ )
-        if( reportedLang[i] == lang && reportedWhat[i] == what ) return;
-    if( nbReported < (int)MAX_COMPAT_NOTES )
-    {
-        reportedLang[nbReported] = lang;
-        reportedWhat[nbReported] = what;
-        nbReported++;
-    }
-    printf("  NOTE [%s]: %s skipped - no compatibility API in this language\n",
-           lang, what);
-}
+/* Which fuzz data shapes the stream legs actually requested this run. The
+ * variant->shape mapping has drifted before (#240 left MONO_UP requested by
+ * nobody), and nothing downstream notices a shape that is never asked for. */
+static int g_streamShapeSeen[FUZZ_NSHAPES];
 
 /* ---- Global timing results store (Task 12) ---- */
 
@@ -2587,7 +2562,7 @@ static void test_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * ta_ref_serve at two parameter points per function. This sweep broadens the
  * sample: every IntegerRange param at a few non-default values, every
  * IntegerList (MAType) value, RealRange params at their suggested bounds,
- * plus a Metastock-compatibility pass and an unstable-period pass at the
+ * plus an unstable-period pass at the
  * defaults. Purely differential: for every variant both servers must agree on
  * retCode, outBegIdx, outNBElement and every output value.
  *
@@ -2627,17 +2602,6 @@ static int frozen_excludes_enum_value(const TA_OptInputParameterInfo *oi, int va
         return 1;
     }
     return 0;
-}
-
-/* Send a set_compatibility to one server. Returns 1 on success. */
-static int sweep_set_compat(CodegenPipe *pipe, int mode, char *respBuf)
-{
-    char req[96];
-    snprintf(req, sizeof(req),
-             "{\"method\":\"set_compatibility\",\"params\":{\"mode\":%d}}", mode);
-    if( codegen_pipe_call(pipe, req, respBuf, JSON_BUF_SIZE) != TA_TEST_PASS )
-        return 0;
-    return !json_is_error(respBuf);
 }
 
 /* In-process GUARDED comparison buffers for the sweep triangle (see below). */
@@ -3225,32 +3189,6 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
         }
     }
 
-    /* Metastock-compatibility pass at defaults (both servers AND the
-     * in-process library switched, for the guarded triangle leg). Languages
-     * with no compatibility API cannot take this leg — skip it out loud. */
-    if( params.codegenError == TA_TEST_PASS &&
-        !codegen_lang_has_compatibility_api(ctx->lang->name) )
-    {
-        note_compat_skip(ctx->lang->name, "sweep Metastock pass");
-    }
-    else if( params.codegenError == TA_TEST_PASS )
-    {
-        if( sweep_set_compat(params.refCp, 1, params.responseBuf) &&
-            sweep_set_compat(params.cp,    1, params.responseBuf) )
-        {
-            TA_SetCompatibility(TA_COMPATIBILITY_METASTOCK);
-            variants += sweep_run_variant(&params);
-            TA_SetCompatibility(TA_COMPATIBILITY_DEFAULT);
-            if( params.codegenError != TA_TEST_PASS )
-            {
-                failParam = "compatibility=METASTOCK";
-                failValue = 1;
-            }
-        }
-        sweep_set_compat(params.refCp, 0, params.responseBuf);
-        sweep_set_compat(params.cp,    0, params.responseBuf);
-    }
-
     /* Unstable-period pass at defaults (sent per-call to both servers).
      * Only genuinely recursive functions still carry TA_FUNC_FLG_UNST_PER and
      * a mapped unstId, so IMI and MFI (finite-window, reclassified stable) are
@@ -3317,9 +3255,9 @@ static void sweep_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
  * MACDEXT reaches it again. Overflow is a hard failure, never a skip. */
 #define STREAM_MAX_VEC 128
 #define STREAM_N       240
-/* Stream-leg variants: 0 = ambient defaults, 1 = unstable period, 2 = Metastock,
- * then one per data shape from MONO_UP up (FUZZ_NSHAPES - 1 of them). */
-#define STREAM_NVARIANT (3 + FUZZ_NSHAPES - 1)
+/* Stream-leg variants: 0 = ambient defaults, 1 = unstable period, then one per
+ * data shape from MONO_UP up (FUZZ_NSHAPES - 1 of them). */
+#define STREAM_NVARIANT (2 + FUZZ_NSHAPES - 1)
 
 static int stream_flag(const char *resp, const char *key)
 {
@@ -3331,13 +3269,13 @@ static int stream_flag(const char *resp, const char *key)
 static void stream_build_request(char *buf, const TA_FuncInfo *fi,
                                  const double *optVals,
                                  int shape, int seed, int n,
-                                 int unstablePeriod, int compat)
+                                 int unstablePeriod)
 {
     int pos = codegen_appendf(buf, JSON_BUF_SIZE, 0,
         "{\"method\":\"stream_verify\",\"params\":{\"funcName\":\"TA_%s\","
         "\"gen_shape\":%d,\"gen_seed\":%d,\"gen_n\":%d,"
-        "\"unstablePeriod\":%d,\"compatibility\":%d",
-        fi->name, shape, seed, n, unstablePeriod, compat);
+        "\"unstablePeriod\":%d",
+        fi->name, shape, seed, n, unstablePeriod);
     /* Candle functions: ask the server for the settings-variation rounds
      * (avgPeriods bumped, then zeroed) on top of the default-settings legs. */
     if( fi->flags & TA_FUNC_FLG_CANDLESTICK )
@@ -3362,9 +3300,8 @@ static void stream_build_request(char *buf, const TA_FuncInfo *fi,
  * defaults: dispatch streams (MA) select their sub-stream by these values,
  * so every arm gets its own bit-exact legs; arms without a sub-stream are
  * verified as documented Open rejects server-side ("unsupportedArm").
- * vecIsEnum marks the sweep vectors so the variant loop can add K and
- * Metastock legs (the selected arm may be unstable — EMA/KAMA/T3 — or
- * compatibility-seeded — EMA). */
+ * vecIsEnum marks the sweep vectors so the variant loop can add K legs (the
+ * selected arm may be unstable — EMA/KAMA/T3). */
 static int stream_build_vectors(const TA_FuncInfo *fi,
                                 double vec[STREAM_MAX_VEC][STREAM_MAX_OPT],
                                 int vecIsEnum[STREAM_MAX_VEC],
@@ -3684,13 +3621,13 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
     for( v = 0; v < nvec; v++ )
     {
         /* Variants: ambient defaults; plus (defaults vector only) one
-         * unstable-period leg, one Metastock-compatibility leg, and the
-         * remaining data shapes so ALL fuzz shapes (incl. CONSTANT, TIE_HEAVY,
-         * and FUZZ_CANDLE — the pattern-rich inside-bar shape that makes the
-         * candlestick streams non-vacuous) are exercised every run. */
+         * unstable-period leg and the remaining data shapes so ALL fuzz
+         * shapes (incl. CONSTANT, TIE_HEAVY, and FUZZ_CANDLE — the
+         * pattern-rich inside-bar shape that makes the candlestick streams
+         * non-vacuous) are exercised every run. */
         for( variant = 0; variant < STREAM_NVARIANT; variant++ )
         {
-            int K = 0, compat = 0, shape;
+            int K = 0, shape;
             ErrorNumber pipeErr;
             if( variant == 1 )
             {
@@ -3705,21 +3642,7 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                        || (vecIsMin[v] && isUnstable) ) ) continue;
                 K = 3;
             }
-            else if( variant == 2 )
-            {
-                /* Metastock leg: defaults vector + enum-sweep vectors (an
-                 * EMA-family arm seeds differently under Metastock). Skipped
-                 * where the language cannot switch mode — the server would
-                 * otherwise just re-verify the Default leg. */
-                if( v != 0 && !vecIsEnum[v] ) continue;
-                if( !codegen_lang_has_compatibility_api(ctx->lang->name) )
-                {
-                    note_compat_skip(ctx->lang->name, "stream Metastock leg");
-                    continue;
-                }
-                compat = 1;
-            }
-            else if( variant >= 3 )
+            else if( variant >= 2 )
             {
                 /* Extra shapes: defaults vector, plus the below-default
                  * boundary vectors (range.min and min+1).
@@ -3739,25 +3662,25 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                  * choice. Costs <= 2 extra vectors x 8 shapes per function. */
                 if( v != 0 && !vecIsMin[v] ) continue;
             }
-            /* Variants 3.. walk the shape list from MONO_UP up, so every shape
+            /* Variants 2.. walk the shape list from MONO_UP up, so every shape
              * but RANDWALK (which variant 0 already runs at the defaults) is
-             * reached here — in EVERY language and at ambient K and
-             * compatibility.
+             * reached here — in EVERY language and at ambient K.
              *
              * The rotation alone does not reach them (#240). A function with
              * ONE parameter vector — every candlestick — has only v == 0, so
              * `(v + variant) % 7` yields shape 1 solely at variant 1, the
-             * unstable-period leg, which a non-unstable function skips; and
-             * shape 2 solely at variant 2, the Metastock leg, which the
-             * languages without a compatibility API skip. So MONO_UP was run
-             * by nobody and MONO_DOWN by C alone. Not academic: 58 of
+             * unstable-period leg, which a non-unstable function skips. So
+             * MONO_UP was run by nobody. Not academic: 58 of
              * CDLCOUNTERATTACK's 66 firing bars in this corpus are on
              * MONO_DOWN, and the MONO_DOWN leg is the one that caught a
-             * one-bar ring rotation for it. */
-            shape = (variant >= 3) ? (variant - 2) : (v + variant) % 7;
+             * one-bar ring rotation for it. g_streamShapeSeen is the standing
+             * floor on that: the mapping below must reach every shape. */
+            shape = (variant >= 2) ? (variant - 1) : (v + variant) % 7;
+            if( shape >= 0 && shape < FUZZ_NSHAPES )
+                g_streamShapeSeen[shape] = 1;
             stream_build_request(ctx->requestBuf, funcInfo, vec[v],
                                  shape, 1234 + v * 7 + variant, STREAM_N,
-                                 K, compat);
+                                 K);
             pipeErr = codegen_pipe_call(ctx->cp, ctx->requestBuf,
                                         ctx->responseBuf, JSON_BUF_SIZE);
             if( pipeErr != TA_TEST_PASS )
@@ -3806,10 +3729,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     ctx->streamFillBars = (ctx->streamFillBars < 0 ? 0 : ctx->streamFillBars) + bars;
                 if( stream_flag(ctx->responseBuf, "\"fill_ok\":") != 1 )
                 {
-                    printf("STREAM FILL MISMATCH [TA_%s] vector=%d K=%d compat=%d "
+                    printf("STREAM FILL MISMATCH [TA_%s] vector=%d K=%d shape=%d "
                            "(OpenAndFill array != batch(0,n-1))\n"
                            "  request:  %s\n  response: %s\n",
-                           funcInfo->name, v, K, compat,
+                           funcInfo->name, v, K, shape,
                            ctx->requestBuf, ctx->responseBuf);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3832,10 +3755,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 stateOfLegs += stream_flag(ctx->responseBuf, "\"legs\":");
                 if( stream_flag(ctx->responseBuf, "\"state_ok\":") != 1 )
                 {
-                    printf("STREAM STATE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                    printf("STREAM STATE MISMATCH [TA_%s] vector=%d K=%d shape=%d\n"
                            "  Open(P)+updates and Open(n) left different handles\n"
                            "  request:  %s\n  response: %s\n",
-                           funcInfo->name, v, K, compat,
+                           funcInfo->name, v, K, shape,
                            ctx->requestBuf, ctx->responseBuf);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3867,10 +3790,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 }
                 if( stream_flag(ctx->responseBuf, "\"range_ok\":") != 1 )
                 {
-                    printf("STREAM RANGE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                    printf("STREAM RANGE MISMATCH [TA_%s] vector=%d K=%d shape=%d\n"
                            "  a handle's OutRange != the batch range over the same bars\n"
                            "  request:  %s\n  response: %s\n",
-                           funcInfo->name, v, K, compat,
+                           funcInfo->name, v, K, shape,
                            ctx->requestBuf, ctx->responseBuf);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3900,10 +3823,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                  * has stopped measuring and its `peek_rep_ok` is vacuous. */
                 if( pj > 0 && pj > pr )
                 {
-                    printf("STREAM PEEK REJECT FLOOD [TA_%s] vector=%d K=%d compat=%d\n"
+                    printf("STREAM PEEK REJECT FLOOD [TA_%s] vector=%d K=%d shape=%d\n"
                            "  %d peek refusal(s) against %d completed repeat probe(s)\n"
                            "  request:  %s\n  response: %s\n",
-                           funcInfo->name, v, K, compat, pj, pr,
+                           funcInfo->name, v, K, shape, pj, pr,
                            ctx->requestBuf, ctx->responseBuf);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3911,10 +3834,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 }
                 if( stream_flag(ctx->responseBuf, "\"peek_rep_ok\":") == 0 )
                 {
-                    printf("STREAM PEEK REPEAT MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                    printf("STREAM PEEK REPEAT MISMATCH [TA_%s] vector=%d K=%d shape=%d\n"
                            "  peek(t), peek(t-1), peek(t) did not answer the same bits twice\n"
                            "  request:  %s\n  response: %s\n",
-                           funcInfo->name, v, K, compat,
+                           funcInfo->name, v, K, shape,
                            ctx->requestBuf, ctx->responseBuf);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3936,10 +3859,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                     if( vl > 0 ) valueLegs += vl;
                     if( stream_flag(ctx->responseBuf, "\"value_ok\":") == 0 )
                     {
-                        printf("STREAM VALUE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                        printf("STREAM VALUE MISMATCH [TA_%s] vector=%d K=%d shape=%d\n"
                                "  the Value accessor did not report the bar the stream is on\n"
                                "  request:  %s\n  response: %s\n",
-                               funcInfo->name, v, K, compat,
+                               funcInfo->name, v, K, shape,
                                ctx->requestBuf, ctx->responseBuf);
                         ctx->failed++;
                         ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3948,10 +3871,10 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                 }
                 if( stream_flag(ctx->responseBuf, "\"clone_ok\":") == 0 )
                 {
-                    printf("STREAM CLONE MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                    printf("STREAM CLONE MISMATCH [TA_%s] vector=%d K=%d shape=%d\n"
                            "  a forked stream did not stay independent of its original\n"
                            "  request:  %s\n  response: %s\n",
-                           funcInfo->name, v, K, compat,
+                           funcInfo->name, v, K, shape,
                            ctx->requestBuf, ctx->responseBuf);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -3961,9 +3884,9 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             if( stream_flag(ctx->responseBuf, "\"ok\":") != 1 ||
                 stream_flag(ctx->responseBuf, "\"peek_ok\":") != 1 )
             {
-                printf("STREAM MISMATCH [TA_%s] vector=%d K=%d compat=%d\n"
+                printf("STREAM MISMATCH [TA_%s] vector=%d K=%d shape=%d\n"
                        "  request:  %s\n  response: %s\n",
-                       funcInfo->name, v, K, compat,
+                       funcInfo->name, v, K, shape,
                        ctx->requestBuf, ctx->responseBuf);
                 ctx->failed++;
                 ctx->error = TA_CODEGEN_STREAM_MISMATCH;
@@ -4835,7 +4758,7 @@ static ErrorNumber test_codegen_for_language(
         ErrorNumber probeErr;
         codegen_appendf(requestBuf, JSON_BUF_SIZE, 0,
                 "{\"method\":\"stream_verify\",\"params\":{\"funcName\":\"TA_STREAM_PROBE\","
-                "\"gen_shape\":0,\"gen_seed\":1,\"gen_n\":2,\"unstablePeriod\":0,\"compatibility\":0}}");
+                "\"gen_shape\":0,\"gen_seed\":1,\"gen_n\":2,\"unstablePeriod\":0}}");
         probeErr = codegen_pipe_call(&cp, requestBuf, responseBuf, JSON_BUF_SIZE);
         if( probeErr == TA_TEST_PASS && strstr(responseBuf, "not_streamable") )
         {
@@ -4878,6 +4801,28 @@ static ErrorNumber test_codegen_for_language(
                        "gate-verify its fill array\n",
                        ctx.streamFillFunctions, ctx.streamFunctions);
                 ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+            }
+            /* Shape floor: the variant->shape mapping is three coupled
+             * literals (STREAM_NVARIANT, the `variant >= N` leg, the `variant
+             * - N` offset), and #240 was a drift in exactly those that left
+             * MONO_UP requested by nobody with every gate green. Nothing else
+             * observes a shape that is never asked for. Filtered runs cover
+             * fewer functions but the mapping is per-variant, so this holds
+             * there too. */
+            if( ctx.error == TA_TEST_PASS && ctx.streamFunctions > 0 )
+            {
+                int sh;
+                for( sh = 0; sh < FUZZ_NSHAPES; sh++ )
+                {
+                    if( !g_streamShapeSeen[sh] )
+                    {
+                        printf("STREAM SHAPE VACUOUS: fuzz shape %d of %d was "
+                               "never requested — the variant->shape mapping "
+                               "no longer covers every shape\n",
+                               sh, (int)FUZZ_NSHAPES);
+                        ctx.error = TA_CODEGEN_STREAM_MISMATCH;
+                    }
+                }
             }
             /* A leg that RAN is not a leg that COMPARED. `fill_checked` is set
              * before the comparison loop, so an emitter that walks the loop zero
@@ -5487,7 +5432,7 @@ typedef struct {
     double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
     long long    mfiSkipped;      /* MFI cases skipped: v0.6.4 categorically wrong there (issue #244) */
-    long long    kamaSkipped;     /* KAMA (and KAMA-smoothed STOCH/STOCHF): v0.6.4 divides residue (issue #253) */
+    long long    kamaSkipped;     /* KAMA (and KAMA-smoothed STOCH/STOCHF): v0.6.4 divides residue (#253, #390) */
     long long    ultoscSkipped;   /* ULTOSC: same (issue #253) */
     long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
     long long    xySkipped;      /* CORREL/BETA cases skipped: same re-baseline over two series (issue #242) */
@@ -6114,31 +6059,52 @@ static int fuzz_mfi_064_blind( const double *h, const double *l,
  * answers it exactly by counting flat bars, so the two differ there and only
  * there.
  *
- * A case is not compared when any window KAMA evaluates is exactly flat, or
- * when the true sum is inside v0.6.4's band. Two-pass on purpose, like
- * fuzz_mfi_064_blind: the predicate must not re-run the algorithm under test.
- * The scan starts at the first bar with a full window rather than at the call's
- * startIdx, because a divergence at one bar is carried forward by prevKAMA. */
+ * That residue drives a second divergence, which is #390 rather than #253. Once
+ * it is comparable to the window's own true sum the accumulator can report a
+ * total below the window's net move, and v0.6.4 then divides out a ratio above
+ * 1 -- its mathematical maximum -- and smooths with a constant outside the
+ * adaptive range. On the EXTREME shape that reaches an output outside the hull
+ * of an all-positive input, from an OVERLAP-flagged function. The fix clamps
+ * the ratio, so the two differ exactly where v0.6.4's ratio left [0,1].
+ *
+ * A case is not compared when any window KAMA evaluates is exactly flat, when
+ * the true sum is inside v0.6.4's band, or when absorption can put the residue
+ * at the scale of the true sum. Two-pass on purpose, like fuzz_mfi_064_blind:
+ * the predicate must not re-run the algorithm under test -- it recomputes each
+ * window's sum fresh and tracks the running maximum, neither of which is what
+ * the library does. The scan starts at the first bar with a full window rather
+ * than at the call's startIdx, because a divergence at one bar is carried
+ * forward by prevKAMA. */
 static int fuzz_kama_064_blind( const double *x, int n, int period, int s, int e )
 {
     int t, j;
+    double everSeen = 0.0;             /* largest |1-bar change| so far */
 
     (void)s;
     if( period < 2 ) return 0;         /* period 1 is a copy of the input */
     if( e >= n ) e = n - 1;
 
+    for( t = 1; t < period && t < n; t++ )
+    {
+        double d = fabs( x[t] - x[t-1] );
+        if( d > everSeen ) everSeen = d;
+    }
+
     for( t = period; t <= e; t++ )
     {
-        double sum = 0.0;
+        double sum = 0.0, d;
         int flat = 1;
+        d = fabs( x[t] - x[t-1] );
+        if( d > everSeen ) everSeen = d;
         for( j = t - period + 1; j <= t; j++ )
         {
-            double d = x[j] - x[j-1];
-            if( d != 0.0 ) flat = 0;
-            sum += fabs(d);
+            double c = x[j] - x[j-1];
+            if( c != 0.0 ) flat = 0;
+            sum += fabs(c);
         }
         if( flat ) return 1;
         if( sum < 1e-14 ) return 1;    /* v0.6.4's band, on the true sum */
+        if( everSeen * DBL_EPSILON >= sum ) return 1;   /* absorption (#390) */
     }
     return 0;
 }
@@ -6809,7 +6775,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                ctx.stochRsiSkipped);
     if( ctx.kamaSkipped > 0 )
         printf("kama-skipped: %lld case(s) where v0.6.4's efficiency ratio is decided by"
-               " accumulator residue on a flat window (issue #253) -- KAMA itself, and the"
+               " accumulator residue rather than by the window -- on a flat window (issue"
+               " #253), or where absorption puts the residue at the scale of the window's"
+               " own sum and v0.6.4's ratio leaves [0,1] (issue #390). KAMA itself, and the"
                " STOCH/STOCHF vectors that smooth with MAType=KAMA, whose series this gate"
                " cannot examine. Every other case was compared bit-exact\n",
                ctx.kamaSkipped);

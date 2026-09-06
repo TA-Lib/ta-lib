@@ -100,7 +100,6 @@ impl MathFn {
 #[derive(Clone, Copy)]
 pub enum SpecialBuiltin {
     UnstablePeriod,
-    Compatibility,
     IsZero,
     IsZeroScaled,
     IsZeroOrNeg,
@@ -114,7 +113,6 @@ impl SpecialBuiltin {
     pub fn from_name(name: &str) -> Option<Self> {
         Some(match name {
             "UNSTABLE_PERIOD" => Self::UnstablePeriod,
-            "COMPATIBILITY" => Self::Compatibility,
             "IS_ZERO" => Self::IsZero,
             "IS_ZERO_SCALED" => Self::IsZeroScaled,
             "IS_ZERO_OR_NEG" => Self::IsZeroOrNeg,

@@ -258,20 +258,6 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     s.push_str("   #include \"ta_defs.h\"\n");
     s.push_str("#endif\n\n");
 
-    // The range head every generated stream struct leads with (issue #241).
-    // TA_StreamOutRange reads a handle through this type, which is what lets ONE
-    // public accessor serve every stream instead of one typed accessor per
-    // function. Rendered from the same field list the structs are, so the two
-    // cannot drift.
-    s.push_str("/* The leading members of every struct TA_<N>_Stream, in order: the range of\n");
-    s.push_str(" * bars the handle has an output for. TA_StreamOutRange (ta_utility.c)\n");
-    s.push_str(" * copies a handle's head out through this type. */\n");
-    s.push_str("typedef struct\n{\n");
-    for decl in crate::backends::c_stream::RANGE_HEAD_FIELDS {
-        s.push_str(&format!("   {decl}\n"));
-    }
-    s.push_str("} TA_StreamRangeHead;\n\n");
-
     // TA_<N>_OpenInternal is the startIdx-aware worker behind the public
     // TA_<N>_Open (a thin wrapper passing startIdx=0). Only generated code — a
     // composed function opening a sub-stream — calls it, and it does so cross-TU,
@@ -778,13 +764,11 @@ fn emit_sv_batch_fail_tail(s: &mut String, candle: bool) {
     if candle {
         s.push_str("            if( !openRejects ) allOk = 0;\n");
         s.push_str("            if( rd + 1 < rounds ) continue;\n");
-        s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            TA_RestoreCandleDefaultSettings( TA_AllCandleSettings );\n");
         // Reachable after earlier candle rounds already compared, so the benign
         // count travels with it — otherwise those cases vanish from the summary.
         s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"rrc\\\":%d,\\\"legs\\\":%d,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"benign\\\":%d}\", (int)rc, lgi, svNb, openRejects, allOk ? 1 : 0, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, svZsign);\n");
     } else {
-        s.push_str("            TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         s.push_str("            snprintf(resp, resp_size, \"{\\\"retCode\\\":%d,\\\"legs\\\":0,\\\"nb\\\":%d,\\\"openRejects\\\":%d,\\\"ok\\\":%d,\\\"peek_ok\\\":1}\", (int)rc, svNb, openRejects, openRejects);\n");
     }
     s.push_str("            return;\n");
@@ -892,7 +876,7 @@ fn emit_sv_dispatch_precheck(
         )
     };
     s.push_str(&format!(
-        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n{fill_block}            TA_SetCompatibility((TA_Compatibility)savedCompat);\n            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
+        "        if( {guard} )\n        {{\n            TA_{name}_Stream *st = NULL; {decls} TA_RetCode orc;\n            int rejected;\n            orc = TA_{name}_Open( &st, {pre_in_args}svN, {pre_opt_args}{addrs} );\n            rejected = ( orc != TA_SUCCESS && !st ) ? 1 : 0;\n            if( st ) TA_{name}_Close( st );\n{fill_block}            snprintf(resp, resp_size, \"{{\\\"retCode\\\":0,\\\"legs\\\":0,\\\"unsupportedArm\\\":1,\\\"ok\\\":%d,\\\"peek_ok\\\":1}}\", rejected);\n            return;\n        }}\n"
     ));
 }
 
@@ -933,50 +917,6 @@ fn collect_pin_ids(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, En
         }
     }
     pin_ids
-}
-
-/// True when `func`'s stream honestly rejects Open at exactly `lookback+1`
-/// under Metastock — a seed boundary — either directly (RSI/CMO emit a seed
-/// output then rewind, so no bit-exact continuation exists from the seed exit)
-/// or through composition: a composed/dispatch function that consumes a
-/// seed-boundary callee inherits the boundary (STOCHRSI's `rsi` sub-stream
-/// cannot open at its own seed boundary, so STOCHRSI's Open rejects one bar
-/// longer). The closure is the same `<base>_lookback` transitive walk
-/// [`collect_pin_ids`] uses — every stream-composed callee appears there — so
-/// the verifier shifts the boundary leg for exactly the functions whose stream
-/// rejects it.
-fn func_has_seed_boundary(func: &FuncDef, funcs: &[FuncDef]) -> bool {
-    let mut visited: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    let mut queue: Vec<String> = vec![func.name.to_uppercase()];
-    while let Some(cur) = queue.pop() {
-        if !visited.insert(cur.clone()) {
-            continue;
-        }
-        let Some(fd) = funcs.iter().find(|f| f.name.eq_ignore_ascii_case(&cur)) else {
-            continue;
-        };
-        // Direct (loop-tier) seed boundary. `analyze` is Err for composed /
-        // dispatch bodies — those inherit the boundary through their callees.
-        if let Ok(m) = crate::streaming::analyze(fd) {
-            if m.seed_boundary {
-                return true;
-            }
-        }
-        if let Some(crate::ir::LookbackExpr::Code(stmts)) = &fd.lookback {
-            for st in stmts {
-                crate::streaming::walk_stmt_exprs(st, &mut |e| {
-                    crate::streaming::walk_expr(e, &mut |x| {
-                        if let crate::ir::Expr::FuncCall(fname, _) = x {
-                            if let Some(base) = fname.strip_suffix("_lookback") {
-                                queue.push(base.to_uppercase());
-                            }
-                        }
-                    });
-                });
-            }
-        }
-    }
-    false
 }
 
 /// The C condition under which a function's stream Open HONESTLY rejects a
@@ -1689,7 +1629,7 @@ enum SvRangeSite {
     /// driven to the end (#287). Every server, C included since it gained
     /// `TA_<N>_Clone`.
     Copy = 3,
-    /// The prefix handle after one `TA_StreamAdvance` (#384) — the only call
+    /// The prefix handle after one `TA_<N>_Advance` (#384) — the only call
     /// that moves the range without a bar, and the one place its cross-language
     /// contract is stated: exactly +1, in every backend. Runs everywhere.
     Advance = 4,
@@ -1743,7 +1683,7 @@ const SV_RANGE_MASK_RUST: u32 =
 /// for the same bars. `guard` is the leg's own success condition — a leg that
 /// already failed has a handle short of the bars it was supposed to consume.
 fn emit_sv_range_check(
-    s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str,
+    s: &mut String, name: &str, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str,
     site: SvRangeSite,
 ) {
     let _ = writeln!(s, "{indent}if( {guard} )");
@@ -1756,7 +1696,7 @@ fn emit_sv_range_check(
     let _ = writeln!(s, "{indent}    rB = -1; rN = -1;");
     let _ = writeln!(
         s,
-        "{indent}    if( TA_StreamOutRange( {handle}, &rB, &rN ) != TA_SUCCESS || rB != {beg} || rN != {nb} ) rangeOk = 0;"
+        "{indent}    if( TA_{name}_OutRange( {handle}, &rB, &rN ) != TA_SUCCESS || rB != {beg} || rN != {nb} ) rangeOk = 0;"
     );
     let _ = writeln!(s, "{indent}}}");
 }
@@ -2024,7 +1964,6 @@ fn emit_sv_clone_leg(
     opt_args: &str,
     out_is_int: &[bool],
     bbuf: &[String],
-    seed_shift: bool,
 ) {
     let n = out_is_int.len();
     let decl_a: String = out_is_int
@@ -2056,15 +1995,8 @@ fn emit_sv_clone_leg(
     s.push_str("        {\n");
     let _ = writeln!(s, "            TA_{name}_Stream *cA = NULL, *cB = NULL;");
     let _ = writeln!(s, "            {decl_a} {decl_b} {decl_v}");
-    // The earliest prefix the opener accepts — the same one the prefix leg
-    // uses. METASTOCK rewinds past the state at exactly lookback+1, so a
-    // seed-boundary function starts one bar later there or the open is
-    // legitimately rejected and the leg would read as a clone failure.
-    if seed_shift {
-        s.push_str("            int cp0 = lb + 1 + ((svCompat == 1) ? 1 : 0), cmid, t, cOk = 1;\n");
-    } else {
-        s.push_str("            int cp0 = lb + 1, cmid, t, cOk = 1;\n");
-    }
+    // The earliest prefix the opener accepts — the same one the prefix leg uses.
+    s.push_str("            int cp0 = lb + 1, cmid, t, cOk = 1;\n");
     s.push_str("            if( cp0 <= svN - 1 )\n            {\n");
     let _ = writeln!(
         s,
@@ -2122,8 +2054,8 @@ fn emit_sv_clone_leg(
         "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};",
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_C)
     );
-    s.push_str("                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = \"the original's range moved\"; }\n");
-    s.push_str("                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = \"the fork's range is not the batch range\"; }\n");
+    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) {{ rangeOk = 0; cloneBad = \"the original's range moved\"; }}");
+    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) {{ rangeOk = 0; cloneBad = \"the fork's range is not the batch range\"; }}");
     s.push_str("                }\n");
     let _ = writeln!(s, "                if( cA ) TA_{name}_Close(cA);");
     let _ = writeln!(s, "                if( cB ) TA_{name}_Close(cB);");
@@ -2243,16 +2175,13 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    int svSeed   = json_find_int(json, \"gen_seed\");\n");
     s.push_str("    int svN      = json_find_int(json, \"gen_n\");\n");
     s.push_str("    int svK      = json_find_int(json, \"unstablePeriod\");\n");
-    s.push_str("    int svCompat = json_find_int(json, \"compatibility\");\n");
     s.push_str("    int svCandle = json_find_int(json, \"candleLegs\");\n");
     s.push_str("    (void)svCandle;\n");
-    s.push_str("    int savedCompat = (int)TA_GetCompatibility();\n");
     s.push_str("    (void)svK;\n");
     s.push_str("    if( !fn ) { snprintf(resp, resp_size, \"{\\\"error\\\":\\\"missing funcName\\\"}\"); return; }\n");
     s.push_str("    if( svN < 2 ) svN = 2;\n");
     s.push_str("    if( svN > SV_MAXN ) svN = SV_MAXN;\n");
-    s.push_str("    fuzz_gen(svShape, svSeed, svN, sv_o, sv_h, sv_l, sv_c, sv_v, sv_oi);\n");
-    s.push_str("    TA_SetCompatibility((TA_Compatibility)svCompat);\n\n");
+    s.push_str("    fuzz_gen(svShape, svSeed, svN, sv_o, sv_h, sv_l, sv_c, sv_v, sv_oi);\n\n");
 
     let mut first = true;
     for func in funcs.iter().filter(|f| f.streaming) {
@@ -2326,6 +2255,11 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        int valueChecked = 0, valueOk = 1, valueLegs = 0;\n");
         s.push_str("        const char *valueBad = \"-\";\n");
         s.push_str("        const char *cloneBad = \"-\";\n");
+        // Short-history reject leg. Rust, Java and C# have carried this since
+        // the streaming tier landed; C never emitted it, so `ok` could not fall
+        // for an Open that accepts a history no output is defined over.
+        s.push_str("        int shortHistChecked = 0, shortHistOk = 1;\n");
+        s.push_str("        const char *shortHistBad = \"-\";\n");
         s.push_str("        const char *peekBad = \"-\";\n");
         s.push_str("        int fillOk = 1, fillChecked = 0, fillBars = 0;\n");
         emit_sv_state_decls(&mut s, name, steq);
@@ -2434,7 +2368,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // same algorithm => same bits — an INVARIANT check (batch's numeric
         // correctness is owned by the reference-oracle tests, not re-checked
         // here). Runs where bbuf still holds batch(0,svN-1) at the current
-        // K/compat/(candle round) settings. Every streamable function has an
+        // K/(candle round) settings. Every streamable function has an
         // OpenAndFill, so the leg is unconditional (the driver's fill-coverage
         // floor asserts every streaming function reaches here).
         let fbuf_names: Vec<String> = {
@@ -2515,7 +2449,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // buffer at full history and reads only [0, nb), so a write past
             // `nb` lands in `lookback` elements of unread space.
             s.push_str(&c_canary_check(&fbuf, &out_is_int));
-            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", SvRangeSite::Fill);
+            emit_sv_range_check(&mut s, name, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", SvRangeSite::Fill);
             s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
             s.push_str("        }\n");
 
@@ -2579,16 +2513,8 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         }
 
         // Prefix sweep candidates (dedup, clamped to [lb+1, svN-1]).
-        // Seed-boundary functions (RSI/CMO under Metastock) honestly reject
-        // Open at exactly lookback+1 — the batch would rewind past that
-        // state — so the boundary leg starts one bar later there.
-        let seed_shift = func_has_seed_boundary(func, funcs);
         s.push_str("        npref = 0;\n");
-        if seed_shift {
-            s.push_str("        pc[0] = lb + 1 + ((svCompat == 1) ? 1 : 0); pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
-        } else {
-            s.push_str("        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
-        }
+        s.push_str("        pc[0] = lb + 1; pc[1] = lb + 13; pc[2] = svN / 2; pc[3] = svN - 1;\n");
         s.push_str("        for( li = 0; li < 4; li++ ) {\n");
         s.push_str("            int P = pc[li]; int seen = 0, k;\n");
         s.push_str("            if( P < lb + 1 ) P = lb + 1;\n");
@@ -2685,12 +2611,12 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_compare(&mut s, name, steq);
         // Open(P) + (svN - P) updates: whatever P was, the handle has consumed
         // svN bars and must report exactly what batch(0, svN-1) did.
-        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb", SvRangeSite::Prefix);
-        // One TA_StreamAdvance, LAST on this handle: it deliberately leaves the
+        emit_sv_range_check(&mut s, name, "            ", "st", "ok && st", "svBeg", "svNb", SvRangeSite::Prefix);
+        // One TA_<N>_Advance, LAST on this handle: it deliberately leaves the
         // batch range behind, so anything reading `st` after this reads a range
         // that is one ahead on purpose.
-        s.push_str("            if( ok && st && TA_StreamAdvance( st ) != TA_SUCCESS ) rangeOk = 0;\n");
-        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb + 1", SvRangeSite::Advance);
+        s.push_str(&format!("            if( ok && st && TA_{name}_Advance( st ) != TA_SUCCESS ) rangeOk = 0;\n"));
+        emit_sv_range_check(&mut s, name, "            ", "st", "ok && st", "svBeg", "svNb + 1", SvRangeSite::Advance);
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
@@ -2705,7 +2631,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("        }\n");
         }
         emit_sv_peek_noncommit(&mut s, name, steq, &out_is_int, &in_args, &opt_args, &input_arrays);
-        emit_sv_clone_leg(&mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf, seed_shift);
+        emit_sv_clone_leg(&mut s, name, &input_arrays, &in_args, &opt_args, &out_is_int, &bbuf);
         emit_sv_state_close(&mut s, name, steq);
         if candle {
             s.push_str("        }\n");
@@ -2715,7 +2641,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         // startIdx>0 coverage: the anchored internal open (OpenInternal at a
         // non-zero startIdx over the FULL history from bar 0) must equal
         // batch(S). This exercises the extra anchor parameter for EVERY stream
-        // function — not just composed sub-callees — under the same K/compat.
+        // function — not just composed sub-callees — under the same K.
         // (Reuses the bbuf batch buffers, recomputed at startIdx=S; the prefix
         // sweep above is done with them.)
         {
@@ -2739,7 +2665,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
             emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");
-            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS", SvRangeSite::Anchored);
+            emit_sv_range_check(&mut s, name, "                    ", "stA", "ok && stA", "svBegS", "svNbS", SvRangeSite::Anchored);
 
             s.push_str(&format!("                    if( stA ) TA_{name}_Close(stA);\n"));
             s.push_str("                    if( !ok ) allOk = 0;\n");
@@ -2749,10 +2675,36 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("        }\n");
         }
 
+        // At exactly `lb` bars no output is defined for ANY configuration, so
+        // Open must reject -- and with TA_INSUFFICIENT_HISTORY specifically, the
+        // one routine data-dependent failure a caller separates from a
+        // programming error. Accepting is the defect; rejecting with the wrong
+        // code is a second, distinguishable one, matching the typed-exception
+        // arms Java and C# already carry.
+        s.push_str("        if( lb >= 1 && lb < svN ) {\n");
+        s.push_str("            shortHistChecked = 1;\n");
+        let _ = writeln!(
+            s,
+            "            {{ TA_{name}_Stream *stSH = NULL; {} TA_RetCode shrc = TA_{name}_Open(&stSH, {in_args}lb, {opt_args}{});",
+            out_is_int
+                .iter()
+                .enumerate()
+                .map(|(i, is_int)| if *is_int { format!("int sh{i} = 0;") } else { format!("double sh{i} = 0.0;") })
+                .collect::<Vec<_>>()
+                .join(" "),
+            (0..n_outs).map(|i| format!("&sh{i}")).collect::<Vec<_>>().join(", ")
+        );
+        let _ = writeln!(
+            s,
+            "              if( shrc == TA_SUCCESS ) {{ shortHistOk = 0; shortHistBad = \"open accepted a history shorter than one output\"; TA_{name}_Close(stSH); }}"
+        );
+        s.push_str("              else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = \"open rejected with the wrong retCode\"; }\n");
+        s.push_str("              (void)stSH; }\n");
+        s.push_str("        }\n");
+        s.push_str("        if( shortHistChecked && !shortHistOk ) allOk = 0;\n");
         for id in &pin_ids {
             s.push_str(&format!("        TA_SetUnstablePeriod({id}, 0);\n"));
         }
-        s.push_str("        TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
         // Fold fill into ok as a safety net (the driver also checks fill_ok
         // explicitly for a clearer message), so a fill regression fails the run
         // even if the driver's fill check ever regresses.
@@ -2760,16 +2712,15 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");
     }
 
     // Unknown / non-streamable function.
-    s.push_str("    TA_SetCompatibility((TA_Compatibility)savedCompat);\n");
     s.push_str("    snprintf(resp, resp_size, \"{\\\"error\\\":\\\"not_streamable\\\"}\");\n");
     s.push_str("}\n");
     s.push_str("#else /* TA_REF_SERVE: frozen libs have no stream symbols */\n");
@@ -3293,13 +3244,6 @@ fn generate_c_dispatch(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>) -> S
     s.push_str("        }\n");
     s.push_str("    }\n");
 
-    // set_compatibility method — {"method":"set_compatibility","params":{"mode":1}}
-    s.push_str("    else if ( methodLen == 17 && strncmp(method, \"set_compatibility\", 17) == 0 ) {\n");
-    s.push_str("        int mode = json_find_int(json, \"mode\");\n");
-    s.push_str("        TA_SetCompatibility((TA_Compatibility)mode);\n");
-    s.push_str("        snprintf(resp, resp_size, \"{\\\"status\\\":\\\"ok\\\"}\");\n");
-    s.push_str("    }\n");
-
     // set_candle_settings method (#215) —
     // {"method":"set_candle_settings","params":{"settingType":6,"rangeType":2,"avgPeriod":10,"factorBits":"3ff0000000000000"}}
     //
@@ -3462,7 +3406,7 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("    boolean isEmpty() { return count == 0; }\n");
     s.push_str("}\n\n");
 
-    // FuncUnstId and Compatibility enums (referenced by generated Core methods).
+    // FuncUnstId enum (referenced by generated Core methods).
     // FuncUnstId is emitted from enums.yaml (source of truth), 6 names per line,
     // plus the `All` wildcard carrying C's pinned TA_FUNC_UNST_ALL value. The
     // ordinal cannot express that value, so the constants declare theirs and
@@ -3484,10 +3428,6 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str(&format!("    static final int COUNT = {};\n", func_unst_variant_names(enums).len()));
     s.push_str("    int value() { return this == ALL ? 65535 : ordinal(); }\n");
     s.push_str("}\n\n");
-
-    // No Compatibility enum: the Java backend constant-folds the Metastock arms
-    // out of the generated indicator code (the shipped Core has no such setting),
-    // so nothing spliced in here can reference one.
 
     // MAType — ordinal == the C enum value (enums.yaml rows are ascending).
     s.push_str("enum MAType {\n");
@@ -3875,19 +3815,6 @@ pub fn generate_java_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\"; \n");
     s.push_str("            }\n");
     s.push_str("            return \"{\\\"error\\\":\\\"Invalid id\\\"}\"; \n");
-    s.push_str("        }\n");
-
-    // set_compatibility method. The Java library exposes no way to select a
-    // compatibility variant (the Metastock arms are constant-folded out of the
-    // generated code), so mode 0 is a no-op and any other mode is an explicit
-    // error — the driver skips that leg rather than silently comparing a Default
-    // run against a Metastock reference. Mirrors the Rust server.
-    s.push_str("        else if (json.contains(\"\\\"set_compatibility\\\"\")) {\n");
-    s.push_str("            int mode = jsonInt(json, \"mode\");\n");
-    s.push_str("            if (mode == 0) {\n");
-    s.push_str("                return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
-    s.push_str("            }\n");
-    s.push_str("            return \"{\\\"error\\\":\\\"java has no compatibility API (pinned to Default)\\\"}\";\n");
     s.push_str("        }\n");
 
     // set_candle_settings (#215). The C server delegates to the library and just
@@ -4749,18 +4676,6 @@ pub fn generate_csharp_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef
     s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
     s.push_str("                }\n");
     s.push_str("                return \"{\\\"error\\\":\\\"Invalid id\\\"}\";\n");
-    s.push_str("            }\n");
-
-    // set_compatibility — the C# library exposes no compatibility selector
-    // (the Metastock arms are constant-folded out of the generated code), so
-    // mode 0 is a no-op and any other mode is an explicit error. Mirrors the
-    // Rust and Java servers.
-    s.push_str("            else if (method == \"set_compatibility\") {\n");
-    s.push_str("                int mode = GetInt(p, \"mode\", 0);\n");
-    s.push_str("                if (mode == 0) {\n");
-    s.push_str("                    return \"{\\\"status\\\":\\\"ok\\\"}\";\n");
-    s.push_str("                }\n");
-    s.push_str("                return \"{\\\"error\\\":\\\"csharp has no compatibility API (pinned to Default)\\\"}\";\n");
     s.push_str("            }\n");
 
     // set_candle_settings (#215). Unlike the unstable period above, this does NOT
@@ -6035,25 +5950,6 @@ pub fn generate_rust_server(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
     s.push_str("            }\n");
     s.push_str("        }\n");
 
-    // set_compatibility method. The Rust crate exposes no way to select a
-    // compatibility variant (it is pinned to Default), so mode 0 is a no-op and
-    // any other mode is an explicit error — the driver skips that leg rather
-    // than silently comparing a Default run against a Metastock reference.
-    s.push_str("        \"set_compatibility\" => {\n");
-    s.push_str(
-        "            let mode = params[\"mode\"].as_u64().unwrap_or(0);\n",
-    );
-    s.push_str("            if mode == 0 {\n");
-    s.push_str(
-        "                \"{\\\"status\\\":\\\"ok\\\"}\".to_string()\n",
-    );
-    s.push_str("            } else {\n");
-    s.push_str(
-        "                \"{\\\"error\\\":\\\"rust has no compatibility API (pinned to Default)\\\"}\".to_string()\n",
-    );
-    s.push_str("            }\n");
-    s.push_str("        }\n");
-
     // set_candle_settings method (#215).
     s.push_str("        \"set_candle_settings\" => {\n");
     s.push_str("            let st = params[\"settingType\"].as_i64().unwrap_or(-1);\n");
@@ -6632,12 +6528,6 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        Ok(v) => v,\n");
     s.push_str("        Err(_) => return \"{\\\"error\\\":\\\"negative unstablePeriod\\\"}\".to_string(),\n");
     s.push_str("    };\n");
-    s.push_str("    let svCompat = params[\"compatibility\"].as_i64().unwrap_or(0) as i32;\n");
-    // Compatibility is pinned to Default in the Rust crate; a Metastock leg would
-    // silently re-run the Default one, so refuse it instead of passing vacuously.
-    s.push_str("    if svCompat != 0 {\n");
-    s.push_str("        return \"{\\\"error\\\":\\\"rust has no compatibility API (pinned to Default)\\\"}\".to_string();\n");
-    s.push_str("    }\n");
     if candle {
         s.push_str("    let candleLegs = params[\"candleLegs\"].as_i64().unwrap_or(0);\n");
     }
@@ -6767,8 +6657,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("    for rd in 0..rounds {\n        let _ = rd;\n");
 
     // Pinned + configured core for this round. `mut` only when something below
-    // actually reassigns it (no compatibility leg any more — the Rust crate
-    // pins the mode to Default), otherwise rustc warns on every such function.
+    // actually reassigns it, otherwise rustc warns on every such function.
     let pin_ids = collect_pin_ids(func, funcs, enums);
     let cb_mut = if pin_ids.is_empty() && !candle { "" } else { "mut " };
     let _ = writeln!(s, "        let {cb_mut}cb = core.to_builder();");
@@ -6854,15 +6743,11 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str(&rust_canary_check(&out_is_int));
     s.push_str("                }\n            }\n        }\n        }\n");
 
-    let seed_boundary = func_has_seed_boundary(func, funcs);
-    emit_rust_sv_prefix_sweep(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int, seed_boundary);
+    emit_rust_sv_prefix_sweep(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
     emit_rust_sv_clone_leg(&mut s, fname, &arrays, &pfx_ins, &opts_tail, &out_is_int);
 
     // Short-history reject leg: at `lb` bars no output is defined for ANY
-    // configuration, so open must reject. (The seed-boundary bar `lb+1` is NOT
-    // asserted either way — under an unstable period the skip can absorb the
-    // Metastock seed, making it legitimately acceptable; the C gate only
-    // shifts its first prefix.)
+    // configuration, so open must reject.
     s.push_str("        if lb >= 1 && lb < svN {\n");
     let short_ins = arrays
         .iter()
@@ -6883,7 +6768,7 @@ fn emit_rust_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s
 }
 
-/// The sweep over `pcs` (the seed-boundary / mid-corpus / tail prefixes): open at
+/// The sweep over `pcs` (the earliest / mid-corpus / tail prefixes): open at
 /// each, compare the open value, then walk `update`/`peek` to the end of the
 /// corpus and compare every bar against the batch arrays.
 fn emit_rust_sv_prefix_sweep(
@@ -6893,17 +6778,10 @@ fn emit_rust_sv_prefix_sweep(
     pfx_ins: &str,
     opts_tail: &str,
     out_is_int: &[bool],
-    seed_boundary: bool,
 ) {
     let n_out = out_is_int.len();
-    let shift = if seed_boundary {
-        "        let seed_shift: usize = if svCompat == 1 { 1 } else { 0 };\n"
-    } else {
-        "        let seed_shift: usize = 0;\n"
-    };
-    s.push_str(shift);
-    s.push_str("        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];\n");
-    s.push_str("        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);\n");
+    s.push_str("        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];\n");
+    s.push_str("        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);\n");
     s.push_str("        pcs.sort_unstable();\n        pcs.dedup();\n");
     s.push_str("        for &p in &pcs {\n");
     let fname_snake = crate::backends::common::snake_words(fname);
@@ -7227,13 +7105,6 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("        int svN = jsonInt(json, \"gen_n\");\n");
     s.push_str("        if (svN < 2) svN = 2;\n        if (svN > 256) svN = 256;\n");
     s.push_str("        int svK = jsonInt(json, \"unstablePeriod\");\n");
-    s.push_str("        int svCompat = jsonInt(json, \"compatibility\");\n");
-    // Compatibility is pinned to Default in the Java library (the Metastock arms
-    // are constant-folded out of the generated code), so a Metastock leg would
-    // silently re-run the Default one — refuse it instead of passing vacuously.
-    s.push_str("        if (svCompat != 0) {\n");
-    s.push_str("            return \"{\\\"error\\\":\\\"java has no compatibility API (pinned to Default)\\\"}\";\n");
-    s.push_str("        }\n");
     if candle {
         s.push_str("        int candleLegs = jsonInt(json, \"candleLegs\");\n");
     }
@@ -7486,17 +7357,12 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     s.push_str("            } catch (IllegalArgumentException _e) { fillOk = false; }\n");
 
     // Prefix sweep.
-    if func_has_seed_boundary(func, funcs) {
-        s.push_str("            int seedShift = (svCompat == 1) ? 1 : 0;\n");
-    } else {
-        s.push_str("            int seedShift = 0;\n");
-    }
-    s.push_str("            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };\n");
+    s.push_str("            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };\n");
     s.push_str("            java.util.Arrays.sort(pcs);\n");
     s.push_str("            int prevP = -1;\n");
     s.push_str("            for (int pi = 0; pi < pcs.length; pi++) {\n");
     s.push_str("                int p = pcs[pi];\n");
-    s.push_str("                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;\n");
+    s.push_str("                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;\n");
     s.push_str("                prevP = p;\n");
     let _ = writeln!(s, "                Core.{class} st;");
     let _ = writeln!(
@@ -7658,7 +7524,7 @@ fn emit_java_sv_func(func: &FuncDef, funcs: &[FuncDef], enums: &HashMap<String, 
     // range (#287: a copy that carries every numeric field but drops the range
     // pair produced identical values and was invisible here).
     s.push_str("            {\n");
-    s.push_str("                int p0 = lb + 1 + seedShift;\n");
+    s.push_str("                int p0 = lb + 1;\n");
     s.push_str("                if (p0 <= svN - 1) {\n");
     s.push_str("                    try {\n");
     let _ = writeln!(
@@ -8337,15 +8203,6 @@ fn emit_csharp_sv_func(
     s.push_str("        int svN = GetInt(req, \"gen_n\", 0);\n");
     s.push_str("        if (svN < 2) svN = 2;\n        if (svN > 256) svN = 256;\n");
     s.push_str("        int svK = GetInt(req, \"unstablePeriod\", 0);\n");
-    s.push_str("        int svCompat = GetInt(req, \"compatibility\", 0);\n");
-    // RULE 6 -- compatibility != 0 is EXPLICITLY REFUSED, never a silent Default
-    // re-run. The C# library has no compatibility selector (the Metastock arms
-    // are constant-folded out of the generated code, and `COMPATIBILITY()`
-    // panics the C# renderer), so a Metastock leg would re-run the Default one
-    // and report a pass for a mode nothing executed.
-    s.push_str("        if (svCompat != 0) {\n");
-    s.push_str("            return \"{\\\"error\\\":\\\"csharp has no compatibility API (pinned to Default)\\\"}\";\n");
-    s.push_str("        }\n");
     if candle {
         s.push_str("        int candleLegs = GetInt(req, \"candleLegs\", 0);\n");
     }
@@ -8851,22 +8708,12 @@ fn emit_csharp_sv_func(
     s.push_str("            } catch (ArgumentException) { fillOk = false; }\n");
 
     // ---- prefix sweep: the trajectory, bit-exact against batch ----
-    if func_has_seed_boundary(func, funcs) {
-        // The Metastock seed boundary shifts the earliest openable prefix by
-        // one. svCompat != 0 is refused above (R6), so this is 0 in every
-        // request the driver sends today -- kept COMPUTED, and derived from the
-        // same helper the C, Rust and Java gates use, so the leg is already
-        // right if C# ever grows a compatibility selector.
-        s.push_str("            int seedShift = (svCompat == 1) ? 1 : 0;\n");
-    } else {
-        s.push_str("            int seedShift = 0;\n");
-    }
-    s.push_str("            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };\n");
+    s.push_str("            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };\n");
     s.push_str("            Array.Sort(pcs);\n");
     s.push_str("            int prevP = -1;\n");
     s.push_str("            for (int pi = 0; pi < pcs.Length; pi++) {\n");
     s.push_str("                int p = pcs[pi];\n");
-    s.push_str("                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;\n");
+    s.push_str("                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;\n");
     s.push_str("                prevP = p;\n");
     let _ = writeln!(s, "                Core.{class} st;");
     let _ = writeln!(
@@ -8992,7 +8839,7 @@ fn emit_csharp_sv_func(
     // identical values and was invisible here).
     // `Clone()` is C#'s spelling of Java's `copy()`.
     s.push_str("            {\n");
-    s.push_str("                int p0 = lb + 1 + seedShift;\n");
+    s.push_str("                int p0 = lb + 1;\n");
     s.push_str("                if (p0 <= svN - 1) {\n");
     s.push_str("                    try {\n");
     let _ = writeln!(
@@ -9059,7 +8906,7 @@ fn emit_csharp_sv_func(
     let sink_ty = if out_is_int[0] { "long" } else { "double" };
     let sink_zero = if out_is_int[0] { "0L" } else { "0.0" };
     s.push_str("            {\n");
-    s.push_str("                int pa = lb + 1 + seedShift;\n");
+    s.push_str("                int pa = lb + 1;\n");
     s.push_str("                if (pa <= svN - 1) {\n");
     s.push_str("                    try {\n");
     let _ = writeln!(
@@ -9098,7 +8945,7 @@ fn emit_csharp_sv_func(
     // whatever happens here -- which is what keeps this leg order-independent.
     if candle {
         s.push_str("            {\n");
-        s.push_str("                int pc = lb + 1 + seedShift;\n");
+        s.push_str("                int pc = lb + 1;\n");
         s.push_str("                if (pc <= svN - 1) {\n");
         s.push_str("                    CandleSetting[] svSaved = (CandleSetting[])c2.candleSettings.Clone();\n");
         s.push_str(&mdecls);

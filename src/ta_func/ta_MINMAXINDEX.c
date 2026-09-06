@@ -310,8 +310,7 @@ TA_RetCode TA_S_MINMAXINDEX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MINMAXINDEX_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_MINMAXINDEX_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_MINMAXINDEX_Value). */
@@ -708,6 +707,21 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Value( const TA_MINMAXINDEX_Stream *stream,
    if( !stream || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
    *outMinIdx = stream->cur_outMinIdx;
    *outMaxIdx = stream->cur_outMaxIdx;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MINMAXINDEX_OutRange( const TA_MINMAXINDEX_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MINMAXINDEX_Advance( TA_MINMAXINDEX_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

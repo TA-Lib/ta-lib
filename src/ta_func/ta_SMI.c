@@ -195,12 +195,6 @@ TA_LIB_API TA_RetCode TA_SMI( int    startIdx,
     * from the values its predecessor would have published, exactly as the
     * composed form does. The seed sums accumulate from 0.0 in production
     * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-    *
-    * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-    * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-    * preserved for the functions that already shipped with it and dropped from
-    * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-    * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
     */
    kSlow = 2.0 / (double)(optInSlowPeriod + 1);
    kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -727,8 +721,7 @@ TA_RetCode TA_S_SMI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_SMI_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_SMI_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_SMI_Value). */
@@ -964,12 +957,6 @@ static TA_RetCode TA_SMI_OpenImpl( struct TA_SMI_Stream **stream, const double i
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-       * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
        */
       kSlow = 2.0 / (double)(optInSlowPeriod + 1);
       kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -1450,6 +1437,21 @@ TA_LIB_API TA_RetCode TA_SMI_Value( const TA_SMI_Stream *stream, double *outSMI,
    if( !stream || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    *outSMI = stream->cur_outSMI;
    *outSMISignal = stream->cur_outSMISignal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_SMI_OutRange( const TA_SMI_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_SMI_Advance( TA_SMI_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

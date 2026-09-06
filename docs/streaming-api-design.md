@@ -32,15 +32,13 @@ checkpoint story is retaining history and re-opening, which is bit-identical by
 contract.
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
-it has an output for, in the input series' coordinates: `TA_StreamOutRange` in C
-(one accessor for any handle, since every stream struct leads with the same two
-ints), `out_range()`, `outRange()`, `OutRange`. Which calls move it is
+it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
+`out_range()`, `outRange()`, `OutRange`. Which calls move it is
 `docs/error-handling-spec.md` §2.4's business.
 
-**`TA_StreamAdvance` counts a bar the handle was not fed** — `advance()`,
-`advance()`, `Advance()`. C's is one function over any handle, reading the same
-shared range head `TA_StreamOutRange` does; the other three emit it per handle
-class, as they do `out_range`. It moves the count by one and nothing else, so
+**`Advance` counts a bar the handle was not fed** — `TA_<N>_Advance`,
+`advance()`, `advance()`, `Advance()`, emitted per handle class in all four
+backends as `OutRange` is. It moves the count by one and nothing else, so
 the skipped bar's output is the previous one, held. It exists because a rejected
 `update` changes nothing: a caller with a corrected value re-feeds the bar, and
 one without says so here rather than letting two handles on one feed drift a bar
@@ -122,7 +120,7 @@ throughput.
 For every function F, parameters p and series `x[0..t]`: after `open(x[0..k], p)`
 for any `k+1 >= lookback + 1`, then `update(x[k+1]) … update(x[t])`, the stream
 value at every bar where batch reports an output is **bit-identical** to
-`batch_F(0, t, x[0..t])` at that bar — under the same compatibility and candle
+`batch_F(0, t, x[0..t])` at that bar — under the same candle
 settings, which must not change over the stream's lifetime, and the unstable
 period in effect at open.
 
@@ -130,8 +128,7 @@ period in effect at open.
   fed `N` bars by an opener and `update`, its `OutRange` is what the batch call
   over those same bars reports.
 - **The history given to `open` defines bar 0.** For seedings that depend on the
-  whole history (EMA under Metastock compatibility), that is the definition, by
-  design.
+  whole history, that is the definition, by design.
 - **State is carried forward, never re-seeded.** Every update continues the
   computation batch would run from bar 0, which is what makes bit-exactness
   possible at all.
@@ -193,11 +190,11 @@ TA_LIB_API TA_RetCode TA_SMA_OpenAndFill( TA_SMA_Stream **stream, const double i
 TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream, double inReal, double *outReal );
 TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream, double inReal, double *outReal );
 TA_LIB_API TA_RetCode TA_SMA_Value( const TA_SMA_Stream *stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_OutRange( const TA_SMA_Stream *stream, int *outBegIdx,
+                                       int *outNBElement );
+TA_LIB_API TA_RetCode TA_SMA_Advance( TA_SMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_SMA_Clone( const TA_SMA_Stream *stream, TA_SMA_Stream **clone );
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
-
-TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream, int *outBegIdx, int *outNBElement );
-TA_LIB_API TA_RetCode TA_StreamAdvance( void *stream );
 ```
 
 Multi-input functions take the price scalars in batch order; multi-output ones
@@ -283,8 +280,7 @@ Shape rules that are not visible in those lines:
 
 One rule holds in every language, each enforcing it its own way:
 
-> **A stream's value-affecting settings (compatibility, candle settings) must not
-> change over its lifetime.**
+> **A stream's candle settings must not change over its lifetime.**
 
 - **Rust** enforces it by construction: settings live in the immutable `Core` the
   stream was opened from, so a violation is not expressible. `Core` is
@@ -294,7 +290,7 @@ One rule holds in every language, each enforcing it its own way:
   handles free of lifetimes). A handle is `Send` but single-writer, because
   `update(&mut self)` makes concurrent updates on one handle a compile error.
 - **C** documents it, as an extension of the existing batch-tier caveat: calling
-  `TA_SetCompatibility` / `TA_SetCandleSettings` while streams are open is
+  `TA_SetCandleSettings` while streams are open is
   undefined, warm-up and ring sizes being derived from the settings in effect at
   open. Where a candle range is BUFFERED — every trailing ring, and the
   rescan-window reads routed into one — its value is the one the range type
@@ -344,14 +340,12 @@ One rule holds in every language, each enforcing it its own way:
    - `open` transcribes the ENTIRE batch body at `startIdx = 0` with output
      writes redirected to last-value scalars, then captures the still-live locals
      and ring fills into the state struct. Batch-equal state by construction;
-     compatibility-branched seeding and unstable-period skip logic come along
-     verbatim.
+     seeding and unstable-period skip logic come along verbatim.
    - `update` is the steady-loop body with the variable remapping, emitted once
      as the transition; `peek` is the second frame of that same transition.
-   - Generation-time invariant checks: no global writes and no compatibility
-     reads outside `open` (candle-settings reads in CDL update bodies mirror
-     batch's own), no index-variable leakage, and the plan must match the
-     analyzed shape.
+   - Generation-time invariant checks: no global writes outside `open`
+     (candle-settings reads in CDL update bodies mirror batch's own), no
+     index-variable leakage, and the plan must match the analyzed shape.
 5. **Composition goes through public stream handles**, never cross-TU internals,
    and its bit-exactness composes by induction: each sub-stream is bit-exact
    against its own batch over the full intermediate series, which is exactly what
@@ -397,7 +391,7 @@ Bit-identical comparison cannot ride the ordinary JSON path: inputs cross it at
 different numbers. `stream_verify` therefore runs entirely in-process, in each
 language's own server.
 
-- Given `(funcName, params, gen_shape/seed/n, unstablePeriod, compatibility)` the
+- Given `(funcName, params, gen_shape/seed/n, unstablePeriod)` the
   server generates the series from the seed (`fuzz_data.h`) and runs both
   `batch(0, n-1)` and, for each warm-up prefix in
   `{lookback+1, lookback+13, n/2, n-1}`, the stream trajectory — the prefixes are
@@ -405,14 +399,14 @@ language's own server.
   an open-side seeding bug would hide. Comparison is bitwise per bar, and the
   first divergence comes back inline as `%a` hex with its bar and output index;
   the driver never parses a float.
-- Unstable period and compatibility are request parameters, pinned for both legs
-  and restored afterwards, so neither leg can contaminate the next request.
+- The unstable period is a request parameter, pinned for both legs and restored
+  afterwards, so neither leg can contaminate the next request.
 - `ta_regtest`'s stream pass drives it per function with three parameter vectors
   — defaults, every integer parameter at its true minimum, and min+1 — plus a
-  K>0 leg for unstable functions and a Metastock leg. Enum parameters get one
-  vector per non-default value, each with its own K and Metastock legs, since the
-  selected arm may be unstable or compatibility-seeded where the dispatcher is
-  not. An unsupported arm is verified LOUDLY through a generated expect-reject
+  K>0 leg for unstable functions and one leg per fuzz data shape. Enum
+  parameters get one vector per non-default value, each with its own K leg,
+  since the selected arm may be unstable where the dispatcher is not. An
+  unsupported arm is verified LOUDLY through a generated expect-reject
   precheck, which composes recursively with the caller's argument expressions
   substituted, so a callee's stream landing later narrows every dependent
   precheck on regenerate.
@@ -432,9 +426,3 @@ language's own server.
   the MAMA line is wanted, and FAMA is a nullable output the dispatcher passes
   NULL for — a supported trailing-NULL delegation, verified bit-exact against
   batch.
-- **RSI and CMO under Metastock have a seed boundary**: batch emits a seed output
-  and then REWINDS and rebuilds state, so no bit-exact continuation exists from
-  the seed exit. `open` requires one bar more than `lookback + 1` in that mode,
-  and the verifier knows statically which functions have a seed boundary and
-  shifts its boundary leg. STOCHRSI inherits it transitively through its `rsi`
-  sub-stream.

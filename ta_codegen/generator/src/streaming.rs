@@ -726,10 +726,6 @@ pub struct StreamModel<'a> {
     pub steady_stmts: Vec<Statement>,
     /// Variable indexing the inputs at the current bar.
     pub cursor: String,
-    /// True when a guarded mid-body success return follows an output write
-    /// (Metastock seed boundary): Open rejects at exactly lookback+1 there,
-    /// so verification shifts its boundary leg by one bar.
-    pub seed_boundary: bool,
     /// Output-index variables (dropped in the transition).
     pub out_index_vars: BTreeSet<String>,
     /// Outputs whose PREVIOUS value the steady loop reads (`out[idx-1]`,
@@ -1313,11 +1309,6 @@ fn detect_identity_path(
     (None, None)
 }
 
-/// Validates all return paths and reports whether any guarded success return
-/// occurs AFTER an output write (a "seed boundary", e.g. RSI/CMO under
-/// Metastock). Such an exit carries state the batch would rewind and rebuild
-/// before continuing, so Open rejects there (min-history is one bar stricter)
-/// and the verify harness shifts its boundary leg accordingly.
 /// Match `memmove(&out[0] | out, &in[startIdx], n)` as an identity copy.
 fn identity_memmove_pair(
     args: &[Expr],
@@ -1441,7 +1432,7 @@ fn detect_empty_range_guard(func: &FuncDef, body: &[Statement]) -> Option<usize>
     })
 }
 
-fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<bool, StreamError> {
+fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<(), StreamError> {
     fn is_no_data_guard(cond: &Expr) -> bool {
         // `startIdx > endIdx`, or the post-clamp cursor form `<var> > endIdx`
         // (AVGDEV clamps startIdx into a local first). Either way a taken
@@ -1468,30 +1459,11 @@ fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<boo
             _ => false,
         }
     }
-    struct WalkState {
-        /// An output-array write was seen before the current point.
-        wrote_output: bool,
-        /// A guarded success return was seen after an output write.
-        seed_boundary: bool,
-    }
-    fn saw_output_write(s: &Statement, st: &mut WalkState) {
-        if st.wrote_output {
-            return;
-        }
-        walk_stmt_exprs(s, &mut |e| {
-            if let Expr::ArrayAccess(n, _) = e {
-                if n.starts_with("out") {
-                    st.wrote_output = true;
-                }
-            }
-        });
-    }
     fn walk(
         stmts: &[Statement],
         in_guard: bool,
         is_top: bool,
         skip_idx: Option<usize>,
-        st: &mut WalkState,
     ) -> Result<(), StreamError> {
         for (i, s) in stmts.iter().enumerate() {
             if is_top && Some(i) == skip_idx {
@@ -1507,9 +1479,6 @@ fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<boo
                                 .into(),
                         ));
                     }
-                    if !last_top && in_guard && st.wrote_output {
-                        st.seed_boundary = true;
-                    }
                 }
                 Statement::If {
                     condition,
@@ -1518,36 +1487,30 @@ fn check_return_paths(body: &[Statement], skip_idx: Option<usize>) -> Result<boo
                     ..
                 } => {
                     let guard = in_guard || is_no_data_guard(condition);
-                    walk(then_body, guard, false, None, st)?;
-                    walk(else_body, in_guard, false, None, st)?;
+                    walk(then_body, guard, false, None)?;
+                    walk(else_body, in_guard, false, None)?;
                 }
                 Statement::While { body, .. }
                 | Statement::DoWhile { body, .. }
                 | Statement::For { body, .. }
-                | Statement::Block { body } => walk(body, in_guard, false, None, st)?,
+                | Statement::Block { body } => walk(body, in_guard, false, None)?,
                 Statement::Switch { cases, default, .. } => {
                     for (_, sts) in cases {
-                        walk(sts, in_guard, false, None, st)?;
+                        walk(sts, in_guard, false, None)?;
                     }
-                    walk(default, in_guard, false, None, st)?;
+                    walk(default, in_guard, false, None)?;
                 }
                 Statement::ForC { init, update, body, .. } => {
-                    walk(std::slice::from_ref(init), in_guard, false, None, st)?;
-                    walk(std::slice::from_ref(update), in_guard, false, None, st)?;
-                    walk(body, in_guard, false, None, st)?;
+                    walk(std::slice::from_ref(init), in_guard, false, None)?;
+                    walk(std::slice::from_ref(update), in_guard, false, None)?;
+                    walk(body, in_guard, false, None)?;
                 }
                 _ => {}
             }
-            saw_output_write(s, st);
         }
         Ok(())
     }
-    let mut st = WalkState {
-        wrote_output: false,
-        seed_boundary: false,
-    };
-    walk(body, false, true, skip_idx, &mut st)?;
-    Ok(st.seed_boundary)
+    walk(body, false, true, skip_idx)
 }
 
 struct SteadyLoop<'a> {
@@ -1659,7 +1622,6 @@ fn is_stateful_call(name: &str) -> bool {
     // settings arrive as hoisted-local arguments (the settings-stability
     // rule: streams read settings exactly where batch reads them).
     lower.contains("lookback")
-        || lower.contains("compatibility")
         || lower.contains("unstable")
         || lower.starts_with("array_")
         || lower.starts_with("circbuf")
@@ -1748,7 +1710,7 @@ pub fn analyze_region_scoped<'a>(
         func.optional_inputs.iter().map(|p| p.name.clone()).collect();
     let (identity, identity_idx) =
         detect_identity_path(body, &bar_inputs, &outputs, &param_name_list);
-    let seed_boundary = check_return_paths(body, identity_idx)?;
+    check_return_paths(body, identity_idx)?;
 
     let (loop_form, steady_stmts, cursor, counter) = extract_steady(body, &bar_inputs)?;
     // Normalize `in[cond ? a : b]` into `cond ? in[a] : in[b]` so index
@@ -1914,7 +1876,6 @@ pub fn analyze_region_scoped<'a>(
 
     let model = StreamModel {
         func,
-        seed_boundary,
         out_feedback,
         body,
         tier,
@@ -9182,7 +9143,7 @@ mod tests {
                 body: vec![
                     assign(
                         acc("outReal", var("outIdx")),
-                        Expr::FuncCall("TA_GetCompatibility".into(), vec![]),
+                        Expr::FuncCall("TA_GetUnstablePeriod".into(), vec![]),
                     ),
                     assign(var("i"), add(var("i"), Expr::IntLiteral(1))),
                 ],

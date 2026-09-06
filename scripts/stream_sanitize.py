@@ -98,7 +98,7 @@ def requests_for(func):
     def build(which, seed, unst, shape=0):
         params = {
             "funcName": f"TA_{name}", "gen_shape": shape, "gen_seed": seed,
-            "gen_n": 320, "unstablePeriod": unst, "compatibility": 0,
+            "gen_n": 320, "unstablePeriod": unst,
         }
         for oi in opts:
             params[oi["name"]] = opt_value(oi, which)

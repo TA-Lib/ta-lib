@@ -47,17 +47,12 @@
  *  071926 MF,CC  Remove dead .NET/Java preprocessor branches (plain C only)
  *  072726 MF,CC  Bound TA_Set/GetUnstablePeriod below as well as above (#144)
  *  072826 MF,CC  Range-check against TA_FUNC_UNST_COUNT; ALL is now INT_MAX
- *  082126 MF,CC  TA_StreamOutRange: the range every stream handle carries (#241)
- *  090526 MF,CC  TA_StreamAdvance: count a bar the handle was not fed (#384)
  *
  */
-
-#include <string.h>
 
 #include "ta_utility.h"
 #include "ta_func.h"
 #include "ta_memory.h"
-#include "ta_func_stream_private.h"
 
 TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod )
@@ -66,8 +61,7 @@ TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 
    /* The wildcard is INT_MAX, far above every id, so it is tested by value and
     * everything else must land inside the table. The unsigned compare wraps a
-    * negative id past the count instead of indexing behind the array -- an
-    * out-of-bounds write onto the adjacent TA_Globals->compatibility (#144) --
+    * negative id past the count instead of indexing behind the array (#144),
     * and stays correct whether the compiler gives the enum a signed or unsigned
     * underlying type (any width up to unsigned int).
     */
@@ -114,59 +108,20 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
    return TA_Globals->unstablePeriod[id];
 }
 
+/* DEPRECATED and inert since 0.8.1: there is no compatibility state left to
+ * set. The pair is kept so existing sources still compile and link -- the
+ * setter accepts any value and changes nothing, and the getter reports the only
+ * behaviour the library has. TA_LibcPriv carries no field for this on purpose:
+ * a body that tried to store the value would not compile.
+ */
 TA_RetCode TA_SetCompatibility( TA_Compatibility value )
 {
-   /* Reject a value outside the enum rather than latching it. Without this the
-    * setter accepted anything and the getter echoed it back, so a caller had no
-    * way to tell a typo from a setting (open item 10 of
-    * docs/error-handling-spec.md). The function is deprecated; this is the whole
-    * fix, not a step toward a larger one.
-    */
-   if( value != TA_COMPATIBILITY_DEFAULT && value != TA_COMPATIBILITY_METASTOCK )
-      return TA_BAD_PARAM;
-
-   TA_GLOBALS_COMPATIBILITY = value;
+   (void)value;
    return TA_SUCCESS;
 }
 
 TA_Compatibility TA_GetCompatibility( void )
 {
-   return TA_GLOBALS_COMPATIBILITY;
+   return TA_COMPATIBILITY_DEFAULT;
 }
 
-TA_RetCode TA_StreamOutRange( const void *stream,
-                              int *outBegIdx,
-                              int *outNBElement )
-{
-   /* Every generated TA_<N>_Stream leads with TA_StreamRangeHead's two members,
-    * in its order — the C stream backend emits both from one field list. The
-    * structs themselves are private to the translation unit that defines them,
-    * so this reads the head out by object representation rather than through a
-    * type the caller could not name anyway.
-    */
-   TA_StreamRangeHead head;
-
-   if( !stream || !outBegIdx || !outNBElement )
-      return TA_BAD_PARAM;
-
-   memcpy( &head, stream, sizeof(head) );
-   *outBegIdx = head.outRangeBegIdx;
-   *outNBElement = head.outRangeCount;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_StreamAdvance( void *stream )
-{
-   TA_StreamRangeHead head;
-
-   if( !stream )
-      return TA_BAD_PARAM;
-
-   memcpy( &head, stream, sizeof(head) );
-   if( head.outRangeCount < TA_MAX_INDEX )
-   {
-      head.outRangeCount++;
-      memcpy( stream, &head, sizeof(head) );
-   }
-   return TA_SUCCESS;
-}

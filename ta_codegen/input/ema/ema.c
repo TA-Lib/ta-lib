@@ -73,41 +73,13 @@ TA_RetCode ema(int startIdx, int endIdx,
 
    /* Do the EMA calculation using tight loops. */
 
-   /* The first EMA is calculated differently. It
-    * then become the seed for subsequent EMA.
-    *
-    * The algorithm for this seed vary widely.
-    * Only 3 are implemented here:
-    *
-    * TA_MA_CLASSIC:
-    *    Use a simple MA of the first 'period'.
-    *    This is the approach most widely documented.
-    *
-    * TA_MA_METASTOCK:
-    *    Use first price bar value as a seed
-    *    from the begining of all the available
-    *    data.
-    *
-    * TA_MA_TRADESTATION:
-    *    Use 4th price bar as a seed, except when
-    *    period is 1 who use 2th price bar or something
-    *    like that... (not an obvious one...).
-    */
-   if( TA_GetCompatibility() == TA_COMPATIBILITY_DEFAULT )
-   {
-      today = startIdx-lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-         tempReal += inReal[today++];
+   today = startIdx-lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
+      tempReal += inReal[today++];
 
-      prevMA = tempReal / optInTimePeriod;
-   }
-   else
-   {
-      prevMA = inReal[0];
-      today = 1;
-   }
+   prevMA = tempReal / optInTimePeriod;
 
    while( today <= startIdx )
       prevMA = ((inReal[today++]-prevMA)*optInK_1) + prevMA;

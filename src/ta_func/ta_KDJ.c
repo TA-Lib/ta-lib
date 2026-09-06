@@ -257,8 +257,7 @@ TA_RetCode TA_S_KDJ( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_KDJ_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_KDJ_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_KDJ_Value). */
@@ -531,6 +530,21 @@ TA_LIB_API TA_RetCode TA_KDJ_Value( const TA_KDJ_Stream *stream, double *outK, d
    *outK = stream->cur_outK;
    *outD = stream->cur_outD;
    *outJ = stream->cur_outJ;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_KDJ_OutRange( const TA_KDJ_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_KDJ_Advance( TA_KDJ_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

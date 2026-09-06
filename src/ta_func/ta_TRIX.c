@@ -134,51 +134,36 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
     * inReal[startIdx+outIdx] was read.
     */
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   /* Seed EMA1 with a simple average of the first
+    * 'period' price bars.
+    */
+   today = startIdx - lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
    {
-      /* Seed EMA1 with a simple average of the first
-       * 'period' price bars.
-       */
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      /* Advance EMA1 alone through its unstable period, up to
-       * the bar where EMA2 seeding begins.
-       */
-      while( today <= startIdx - (lookbackEMA * 2 + 1) )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      /* Seed EMA2 with a simple average of the first 'period'
-       * EMA1 values, accumulated as EMA1 produces them.
-       */
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-   } else 
-   {
-      /* Metastock/Tradestation: seed EMA1 from the first price
-       * bar, EMA2 from the first EMA1 value.
-       */
-      prevEMA1 = inReal[0];
-      today = 1;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      prevEMA2 = prevEMA1;
+      tempReal += inReal[today++];
    }
+   prevEMA1 = tempReal / optInTimePeriod;
+   /* Advance EMA1 alone through its unstable period, up to
+    * the bar where EMA2 seeding begins.
+    */
+   while( today <= startIdx - (lookbackEMA * 2 + 1) )
+   {
+      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+   }
+   /* Seed EMA2 with a simple average of the first 'period'
+    * EMA1 values, accumulated as EMA1 produces them.
+    */
+   tempReal = 0.0;
+   tempReal += prevEMA1;
+   i = optInTimePeriod - 1;
+   while( i-- > 0 )
+   {
+      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      tempReal += prevEMA1;
+   }
+   prevEMA2 = tempReal / optInTimePeriod;
    /* Advance EMA1 and EMA2 in lockstep through the unstable
     * period of EMA2, up to the bar where EMA3 seeding begins.
     */
@@ -187,28 +172,19 @@ TA_LIB_API TA_RetCode TA_TRIX( int    startIdx,
       prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
       prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
    }
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   /* Seed EMA3 with a simple average of the first 'period'
+    * EMA2 values, accumulated as EMA2 produces them.
+    */
+   tempReal = 0.0;
+   tempReal += prevEMA2;
+   i = optInTimePeriod - 1;
+   while( i-- > 0 )
    {
-      /* Seed EMA3 with a simple average of the first 'period'
-       * EMA2 values, accumulated as EMA2 produces them.
-       */
-      tempReal = 0.0;
+      prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
-   } else 
-   {
-      /* Metastock/Tradestation: seed EMA3 from the first EMA2
-       * value.
-       */
-      prevEMA3 = prevEMA2;
    }
+   prevEMA3 = tempReal / optInTimePeriod;
    /* Advance all three EMA in lockstep through the unstable
     * period of EMA3, up to the bar before the first output.
     */
@@ -293,60 +269,42 @@ TA_RetCode TA_S_TRIX( int    startIdx,
       return TA_SUCCESS;
    }
    optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   today = startIdx - lookbackTotal;
+   i = optInTimePeriod;
+   tempReal = 0.0;
+   while( i-- > 0 )
    {
-      today = startIdx - lookbackTotal;
-      i = optInTimePeriod;
-      tempReal = 0.0;
-      while( i-- > 0 )
-      {
-         tempReal += (double)inReal[today++];
-      }
-      prevEMA1 = tempReal / optInTimePeriod;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      tempReal = 0.0;
-      tempReal += prevEMA1;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         tempReal += prevEMA1;
-      }
-      prevEMA2 = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevEMA1 = (double)inReal[0];
-      today = 1;
-      while( today <= startIdx - (lookbackEMA * 2 + 1) )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-      }
-      prevEMA2 = prevEMA1;
+      tempReal += (double)inReal[today++];
    }
+   prevEMA1 = tempReal / optInTimePeriod;
+   while( today <= startIdx - (lookbackEMA * 2 + 1) )
+   {
+      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+   }
+   tempReal = 0.0;
+   tempReal += prevEMA1;
+   i = optInTimePeriod - 1;
+   while( i-- > 0 )
+   {
+      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      tempReal += prevEMA1;
+   }
+   prevEMA2 = tempReal / optInTimePeriod;
    while( today <= startIdx - (lookbackEMA + 1) )
    {
       prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
       prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
    }
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+   tempReal = 0.0;
+   tempReal += prevEMA2;
+   i = optInTimePeriod - 1;
+   while( i-- > 0 )
    {
-      tempReal = 0.0;
+      prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       tempReal += prevEMA2;
-      i = optInTimePeriod - 1;
-      while( i-- > 0 )
-      {
-         prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-         tempReal += prevEMA2;
-      }
-      prevEMA3 = tempReal / optInTimePeriod;
-   } else 
-   {
-      prevEMA3 = prevEMA2;
    }
+   prevEMA3 = tempReal / optInTimePeriod;
    while( today <= startIdx - 1 )
    {
       prevEMA1 = fma((double)inReal[today++] - prevEMA1, optInK_1, prevEMA1);
@@ -376,8 +334,7 @@ TA_RetCode TA_S_TRIX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_TRIX_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_TRIX_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_TRIX_Value). */
@@ -467,51 +424,36 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
        * inReal[startIdx+outIdx] was read.
        */
       optInK_1 = 2.0 / (double)(optInTimePeriod + 1);
-      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+      /* Seed EMA1 with a simple average of the first
+       * 'period' price bars.
+       */
+      today = startIdx - lookbackTotal;
+      i = optInTimePeriod;
+      tempReal = 0.0;
+      while( i-- > 0 )
       {
-         /* Seed EMA1 with a simple average of the first
-          * 'period' price bars.
-          */
-         today = startIdx - lookbackTotal;
-         i = optInTimePeriod;
-         tempReal = 0.0;
-         while( i-- > 0 )
-         {
-            tempReal += inReal[today++];
-         }
-         prevEMA1 = tempReal / optInTimePeriod;
-         /* Advance EMA1 alone through its unstable period, up to
-          * the bar where EMA2 seeding begins.
-          */
-         while( today <= startIdx - (lookbackEMA * 2 + 1) )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         }
-         /* Seed EMA2 with a simple average of the first 'period'
-          * EMA1 values, accumulated as EMA1 produces them.
-          */
-         tempReal = 0.0;
-         tempReal += prevEMA1;
-         i = optInTimePeriod - 1;
-         while( i-- > 0 )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-            tempReal += prevEMA1;
-         }
-         prevEMA2 = tempReal / optInTimePeriod;
-      } else 
-      {
-         /* Metastock/Tradestation: seed EMA1 from the first price
-          * bar, EMA2 from the first EMA1 value.
-          */
-         prevEMA1 = inReal[0];
-         today = 1;
-         while( today <= startIdx - (lookbackEMA * 2 + 1) )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-         }
-         prevEMA2 = prevEMA1;
+         tempReal += inReal[today++];
       }
+      prevEMA1 = tempReal / optInTimePeriod;
+      /* Advance EMA1 alone through its unstable period, up to
+       * the bar where EMA2 seeding begins.
+       */
+      while( today <= startIdx - (lookbackEMA * 2 + 1) )
+      {
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+      }
+      /* Seed EMA2 with a simple average of the first 'period'
+       * EMA1 values, accumulated as EMA1 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA1;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
+      {
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         tempReal += prevEMA1;
+      }
+      prevEMA2 = tempReal / optInTimePeriod;
       /* Advance EMA1 and EMA2 in lockstep through the unstable
        * period of EMA2, up to the bar where EMA3 seeding begins.
        */
@@ -520,28 +462,19 @@ static TA_RetCode TA_TRIX_OpenImpl( struct TA_TRIX_Stream **stream, const double
          prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
          prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
       }
-      if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_DEFAULT )
+      /* Seed EMA3 with a simple average of the first 'period'
+       * EMA2 values, accumulated as EMA2 produces them.
+       */
+      tempReal = 0.0;
+      tempReal += prevEMA2;
+      i = optInTimePeriod - 1;
+      while( i-- > 0 )
       {
-         /* Seed EMA3 with a simple average of the first 'period'
-          * EMA2 values, accumulated as EMA2 produces them.
-          */
-         tempReal = 0.0;
+         prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
+         prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
          tempReal += prevEMA2;
-         i = optInTimePeriod - 1;
-         while( i-- > 0 )
-         {
-            prevEMA1 = fma(inReal[today++] - prevEMA1, optInK_1, prevEMA1);
-            prevEMA2 = fma(prevEMA1 - prevEMA2, optInK_1, prevEMA2);
-            tempReal += prevEMA2;
-         }
-         prevEMA3 = tempReal / optInTimePeriod;
-      } else 
-      {
-         /* Metastock/Tradestation: seed EMA3 from the first EMA2
-          * value.
-          */
-         prevEMA3 = prevEMA2;
       }
+      prevEMA3 = tempReal / optInTimePeriod;
       /* Advance all three EMA in lockstep through the unstable
        * period of EMA3, up to the bar before the first output.
        */
@@ -681,6 +614,21 @@ TA_LIB_API TA_RetCode TA_TRIX_Value( const TA_TRIX_Stream *stream, double *outRe
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRIX_OutRange( const TA_TRIX_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TRIX_Advance( TA_TRIX_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

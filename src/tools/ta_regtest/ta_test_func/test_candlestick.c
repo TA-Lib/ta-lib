@@ -11598,8 +11598,8 @@ ErrorNumber test_candlestick( TA_History *history )
    unsigned int i;
    ErrorNumber retValue;
 
-   /* DO_TEST resets compatibility between groups but not candle settings, and
-    * earlier groups change them. Establish the state this group needs rather
+   /* DO_TEST does not reset candle settings, and earlier groups change them.
+    * Establish the state this group needs rather
     * than inherit it -- ta_test_legacy.c does the same. Without this the MC/DC
     * gates fail with messages blaming pattern logic for a threshold someone
     * else moved. */

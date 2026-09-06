@@ -63,11 +63,6 @@ TA_RetCode massi(int startIdx, int endIdx,
     * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
     * is warmed. The seed sums accumulate from 0.0 in production order; do not
     * reorder or fuse them (0.0+x is not x for x=-0.0).
-    *
-    * Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-    * unreachable from the Rust, Java and C# APIs, so consulting
-    * TA_GetCompatibility() here would make C diverge from three backends for a
-    * setting they cannot read.
     */
    optInK_1 = 2.0 / ((double)(optInFastPeriod + 1));
 

@@ -308,7 +308,6 @@ fn c_macd_lockstep_stays_fused() {
 fn c_var_name_mappings() {
     // Test that special variable names are mapped correctly
     let stmts = vec![
-        ("COMPATIBILITY", "TA_GLOBALS_COMPATIBILITY"),
         ("SUCCESS", "TA_SUCCESS"),
         ("BAD_PARAM", "TA_BAD_PARAM"),
         ("ALLOC_ERR", "TA_ALLOC_ERR"),
@@ -635,10 +634,7 @@ fn stochrsi_lookback_cross_calls() {
 
 #[test]
 fn java_var_name_mappings() {
-    // Fixed (non-enum) constant renderings. COMPATIBILITY/METASTOCK/DEFAULT are
-    // deliberately absent: Java pins the mode to Default and the branches are
-    // constant-folded away before rendering, so those names never reach `var`
-    // (reaching it panics — see `java_compatibility_is_folded_away`).
+    // Fixed (non-enum) constant renderings.
     let mut cases: Vec<(String, String)> = [
         ("BAD_PARAM", "RetCode.BadParam"),
         ("SUCCESS", "RetCode.Success"),
@@ -843,35 +839,6 @@ fn java_var_double_address_of_renders_bracket_zero() {
     assert!(
         rendered.contains("tempBuf[0]"),
         "Java Var in double_address_of_vars should render as name[0]: {rendered}"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// C: Enum/Compatibility variable rendering
-// ---------------------------------------------------------------------------
-
-#[test]
-fn c_metastock_and_default_var_rendering() {
-    let stmt1 = ir::Statement::Assign {
-        target: ir::Expr::Var("x".to_string()),
-        value: ir::Expr::Var("METASTOCK".to_string()),
-        compound: false,
-    };
-    let rendered1 = render_c_stmt(&stmt1);
-    assert!(
-        rendered1.contains("TA_COMPATIBILITY_METASTOCK"),
-        "C METASTOCK should render as the plain enumerator: {rendered1}"
-    );
-
-    let stmt2 = ir::Statement::Assign {
-        target: ir::Expr::Var("x".to_string()),
-        value: ir::Expr::Var("DEFAULT".to_string()),
-        compound: false,
-    };
-    let rendered2 = render_c_stmt(&stmt2);
-    assert!(
-        rendered2.contains("TA_COMPATIBILITY_DEFAULT"),
-        "C DEFAULT should render as the plain enumerator: {rendered2}"
     );
 }
 

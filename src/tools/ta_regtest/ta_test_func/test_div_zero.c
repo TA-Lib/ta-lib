@@ -416,7 +416,7 @@ static ErrorNumber dz_stream( void )
     * thing no value comparison can see. Rust, Java and C# assert it too. */
    g_dzChecked++;
    outBegIdx = outNbElement = -1;
-   retCode = TA_StreamOutRange( stream, &outBegIdx, &outNbElement );
+   retCode = TA_DIV_OutRange( stream, &outBegIdx, &outNbElement );
    if( retCode != TA_SUCCESS || outBegIdx != 0 || outNbElement != DZ_N )
    {
       printf( "\nTA_DIV stream OutRange: retCode=%d begIdx=%d count=%d, expected 0/%d\n",

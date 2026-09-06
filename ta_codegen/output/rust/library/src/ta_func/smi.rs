@@ -266,12 +266,6 @@ impl Core {
         // from the values its predecessor would have published, exactly as the
         // composed form does. The seed sums accumulate from 0.0 in production
         // order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-        //
-        // TA_GetCompatibility() is deliberately NOT consulted, for the reason
-        // spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-        // preserved for the functions that already shipped with it and dropped from
-        // new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-        // The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
         kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
         kFast = 2.0 / ((optInFastPeriod + 1) as f64);
         kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
@@ -843,12 +837,6 @@ impl Core {
         // from the values its predecessor would have published, exactly as the
         // composed form does. The seed sums accumulate from 0.0 in production
         // order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-        //
-        // TA_GetCompatibility() is deliberately NOT consulted, for the reason
-        // spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-        // preserved for the functions that already shipped with it and dropped from
-        // new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-        // The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
         kSlow = 2.0 / ((optInSlowPeriod + 1) as f64);
         kFast = 2.0 / ((optInFastPeriod + 1) as f64);
         kSignal = 2.0 / ((optInSignalPeriod + 1) as f64);
@@ -1397,7 +1385,7 @@ impl SmiStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_SMI_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -1409,7 +1397,7 @@ impl SmiStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_SMI_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

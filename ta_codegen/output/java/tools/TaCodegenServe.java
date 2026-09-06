@@ -69641,16 +69641,12 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
-          int unstablePeriod = 0;
           int i = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
-          double savePrevValue = 0;
           double tempValue1 = 0;
           double tempValue2 = 0;
-          double tempValue3 = 0;
-          double tempValue4 = 0;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -69708,18 +69704,6 @@ class Core {
            */
           today = startIdx - lookbackTotal;
           prevValue = inReal[today];
-          unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-          /* If there is no unstable period,
-           * calculate the 'additional' initial
-           * price bar who is particuliar to
-           * metastock.
-           * If there is an unstable period,
-           * no need to calculate since this
-           * first value will be surely skip.
-           */
-          /* Remaining of the processing is identical
-           * for both Classic calculation and Metastock.
-           */
           prevGain = 0.0;
           prevLoss = 0.0;
           today += 1;
@@ -69748,6 +69732,12 @@ class Core {
            *    RSI = 100 * (prevGain/(prevGain+prevLoss))
            *
            * The second equation is used here for speed optimization.
+           *
+           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+           * when every change since the seed was exactly zero -- test it exactly, never
+           * against a fixed band. A gain carries the quote unit, so a constant put
+           * against it zeroes a healthy oscillator for an instrument quoted below it
+           * (issue #253).
            */
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
@@ -69814,16 +69804,12 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
-          int unstablePeriod = 0;
           int i = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
-          double savePrevValue = 0;
           double tempValue1 = 0;
           double tempValue2 = 0;
-          double tempValue3 = 0;
-          double tempValue4 = 0;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
              return RetCode.OutOfRangeStartIndex ;
           }
@@ -69857,7 +69843,6 @@ class Core {
           }
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
-          unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
           prevGain = 0.0;
           prevLoss = 0.0;
           today += 1;
@@ -70235,16 +70220,12 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
-          int unstablePeriod = 0;
           int i = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
-          double savePrevValue = 0;
           double tempValue1 = 0;
           double tempValue2 = 0;
-          double tempValue3 = 0;
-          double tempValue4 = 0;
           int historyLen = inReal.length;
           int endIdx = historyLen - 1;
           if( historyLen < 1 ) {
@@ -70313,18 +70294,6 @@ class Core {
            */
           today = startIdx - lookbackTotal;
           prevValue = inReal[today];
-          unstablePeriod = this.unstablePeriod[FuncUnstId.CMO.ordinal()];
-          /* If there is no unstable period,
-           * calculate the 'additional' initial
-           * price bar who is particuliar to
-           * metastock.
-           * If there is an unstable period,
-           * no need to calculate since this
-           * first value will be surely skip.
-           */
-          /* Remaining of the processing is identical
-           * for both Classic calculation and Metastock.
-           */
           prevGain = 0.0;
           prevLoss = 0.0;
           today += 1;
@@ -70353,6 +70322,12 @@ class Core {
            *    RSI = 100 * (prevGain/(prevGain+prevLoss))
            *
            * The second equation is used here for speed optimization.
+           *
+           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+           * when every change since the seed was exactly zero -- test it exactly, never
+           * against a fixed band. A gain carries the quote unit, so a constant put
+           * against it zeroes a healthy oscillator for an instrument quoted below it
+           * (issue #253).
            */
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
@@ -70535,9 +70510,8 @@ class Core {
           /* CMOU needs optInTimePeriod price changes -> optInTimePeriod+1 prices ->
            * the first output is at index optInTimePeriod.
            *
-           * Unlike the shipped CMO, there is NO unstable period and NO Metastock
-           * "extra initial bar" adjustment: CMOU is a plain moving-window sum, so its
-           * lookback is exactly the period.
+           * Unlike the shipped CMO, there is NO unstable period: CMOU is a plain
+           * moving-window sum, so its lookback is exactly the period.
            */
           return optInTimePeriod ;
 
@@ -76356,14 +76330,9 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum
-           *    of its first 'period' inputs, accumulated from 0.0 in
-           *    input order (0.0+x is not x for x=-0.0), divided by
-           *    the period.
-           *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-           *    EMA2 from the first EMA1 value.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order (0.0+x is
+           *    not x for x=-0.0), divided by the period.
            *
            * In-place (inReal == outReal) is supported: outReal[outIdx]
            * is written only after inReal[startIdx+outIdx] was read.
@@ -76870,14 +76839,9 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum
-           *    of its first 'period' inputs, accumulated from 0.0 in
-           *    input order (0.0+x is not x for x=-0.0), divided by
-           *    the period.
-           *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-           *    EMA2 from the first EMA1 value.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order (0.0+x is
+           *    not x for x=-0.0), divided by the period.
            *
            * In-place (inReal == outReal) is supported: outReal[outIdx]
            * is written only after inReal[startIdx+outIdx] was read.
@@ -80614,16 +80578,8 @@ class Core {
           }
           outBegIdx.value = startIdx;
           /* The first EMA value is a simple average of the first 'period' force
-           * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-           * applied to the force series rather than to the input array.
-           *
-           * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-           * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-           * deprecated: it is preserved for the functions that already shipped with
-           * it and dropped from new ones, and it is not reachable at all from the
-           * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-           * here would make EFI's C output diverge from the other three backends for
-           * a setting they cannot even read.
+           * values; it then seeds the recursion. This is ema.c's seeding applied
+           * to the force series rather than to the input array.
            */
           today = startIdx - lookbackTotal + 1;
           prevClose = inClose[today - 1];
@@ -81210,16 +81166,8 @@ class Core {
               */
              outBegIdx.value = startIdx;
              /* The first EMA value is a simple average of the first 'period' force
-              * values; it then seeds the recursion. This is ema.c's CLASSIC seeding
-              * applied to the force series rather than to the input array.
-              *
-              * TA_GetCompatibility() is deliberately NOT consulted. ema.c still carries
-              * a TA_COMPATIBILITY_METASTOCK seeding arm, but that capability is being
-              * deprecated: it is preserved for the functions that already shipped with
-              * it and dropped from new ones, and it is not reachable at all from the
-              * Rust, Java and C# APIs, which expose no TA_SetCompatibility. Honouring it
-              * here would make EFI's C output diverge from the other three backends for
-              * a setting they cannot even read.
+              * values; it then seeds the recursion. This is ema.c's seeding applied
+              * to the force series rather than to the input array.
               */
              today = startIdx - lookbackTotal + 1;
              prevClose = inClose[today - 1];
@@ -81449,26 +81397,6 @@ class Core {
           }
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
-          /* The first EMA is calculated differently. It
-           * then become the seed for subsequent EMA.
-           *
-           * The algorithm for this seed vary widely.
-           * Only 3 are implemented here:
-           *
-           * TA_MA_CLASSIC:
-           *    Use a simple MA of the first 'period'.
-           *    This is the approach most widely documented.
-           *
-           * TA_MA_METASTOCK:
-           *    Use first price bar value as a seed
-           *    from the begining of all the available
-           *    data.
-           *
-           * TA_MA_TRADESTATION:
-           *    Use 4th price bar as a seed, except when
-           *    period is 1 who use 2th price bar or something
-           *    like that... (not an obvious one...).
-           */
           today = startIdx - lookbackTotal;
           i = optInTimePeriod;
           tempReal = 0.0;
@@ -81902,26 +81830,6 @@ class Core {
           }
           outBegIdx.value = startIdx;
           /* Do the EMA calculation using tight loops. */
-          /* The first EMA is calculated differently. It
-           * then become the seed for subsequent EMA.
-           *
-           * The algorithm for this seed vary widely.
-           * Only 3 are implemented here:
-           *
-           * TA_MA_CLASSIC:
-           *    Use a simple MA of the first 'period'.
-           *    This is the approach most widely documented.
-           *
-           * TA_MA_METASTOCK:
-           *    Use first price bar value as a seed
-           *    from the begining of all the available
-           *    data.
-           *
-           * TA_MA_TRADESTATION:
-           *    Use 4th price bar as a seed, except when
-           *    period is 1 who use 2th price bar or something
-           *    like that... (not an obvious one...).
-           */
           today = startIdx - lookbackTotal;
           i = optInTimePeriod;
           tempReal = 0.0;
@@ -82101,16 +82009,19 @@ class Core {
            *
            *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
            *
+           * The ratio is in [0,1] in exact arithmetic, but sumROC1 drifts, so the
+           * clamp to 1.0 is what makes the declared range a bound rather than a
+           * hope -- and in kama.c what keeps its recurrence a convex combination.
+           *
            * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
            * two stay bit-identical -- the KAMA-reconstruction differential in
-           * test_composite2.c exists to keep it that way. Two guards are
+           * test_composite2.c exists to keep it that way. Three more guards are
            * load-bearing and shared with kama.c:
            *
            *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
-           *     would give 1.0000000000000002. The comparison is against the
-           *     SIGNED numerator, so it only fires on up-moves; on sustained
-           *     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
-           *     "fix" this with fabs -- it changes TA_KAMA's output.
+           *     would give 1.0000000000000002, on up-moves. It compares against
+           *     the SIGNED numerator, so it is false for every down move: it
+           *     bounds nothing on its own, which is what the clamp is for.
            *   - a genuinely flat window is recognized by COUNTING exactly-zero
            *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
            *     running sum's rounding residue), after which `0 <= 0` pins the
@@ -82119,13 +82030,10 @@ class Core {
            *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
            *     price-carrying sum).
            *
-           * A third guard is the denominator test: the division runs only where
-           * sumROC1 is exactly positive. The clamp above cannot serve as it,
-           * because it compares against the SIGNED numerator and so is false for
-           * every down move -- and a subtract-then-add sum can reach 0.0, or
-           * below it, on a window that is not flat, when a term absorbed on the
-           * way in is subtracted later at full precision. Without the guard those
-           * bars divide by zero.
+           * The third is the denominator test (#385): a subtract-then-add sum can
+           * reach 0.0, or below it, on a window that is not flat. The clamp
+           * subsumes it numerically, so it is held by the structural sweep over
+           * divisors, not by any value test.
            *
            * The subtract-then-add update order matches TA_SUM's recurrence,
            * which is what makes the composite differential bit-exact. The
@@ -82174,7 +82082,11 @@ class Core {
           if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
              outReal[0] = 1.0;
           } else {
-             outReal[0] = Math.abs(periodROC / sumROC1);
+             tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
+             outReal[0] = tempReal;
           }
           outIdx = 1;
           today += 1;
@@ -82206,7 +82118,11 @@ class Core {
              if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
                 outReal[outIdx++] = 1.0;
              } else {
-                outReal[outIdx++] = Math.abs(periodROC / sumROC1);
+                tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
+                outReal[outIdx++] = tempReal;
              }
              today += 1;
           }
@@ -82275,7 +82191,11 @@ class Core {
           if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
              outReal[0] = 1.0;
           } else {
-             outReal[0] = Math.abs(periodROC / sumROC1);
+             tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
+             outReal[0] = tempReal;
           }
           outIdx = 1;
           today += 1;
@@ -82298,7 +82218,11 @@ class Core {
              if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
                 outReal[outIdx++] = 1.0;
              } else {
-                outReal[outIdx++] = Math.abs(periodROC / sumROC1);
+                tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
+                outReal[outIdx++] = tempReal;
              }
              today += 1;
           }
@@ -82318,7 +82242,7 @@ class Core {
         * <pre>{@code
         * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
         * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-        * The clamp compares against the *signed* net move, so it only fires on advances: on sustained declines the output may exceed 1.0 by a few ULP. The range is "0..1, may exceed 1 by a few ULP on sustained declines", not a hard bound.
+        * The output is a hard 0..1 — the net move can never exceed the path travelled.
         * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
         * }</pre>
         * <p><b>Notes</b>
@@ -82391,7 +82315,7 @@ class Core {
         * <pre>{@code
         * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
         * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-        * The clamp compares against the *signed* net move, so it only fires on advances: on sustained declines the output may exceed 1.0 by a few ULP. The range is "0..1, may exceed 1 by a few ULP on sustained declines", not a hard bound.
+        * The output is a hard 0..1 — the net move can never exceed the path travelled.
         * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
         * }</pre>
         * <p><b>Notes</b>
@@ -82601,7 +82525,11 @@ class Core {
              if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
                 cur_outReal = 1.0;
              } else {
-                cur_outReal = Math.abs(periodROC / sumROC1);
+                tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
+                cur_outReal = tempReal;
              }
              return cur_outReal;
           }
@@ -82667,7 +82595,11 @@ class Core {
           if( sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC ) {
              sp.cur_outReal = 1.0;
           } else {
-             sp.cur_outReal = Math.abs(periodROC / sp.sumROC1);
+             tempReal = Math.abs(periodROC / sp.sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
+             sp.cur_outReal = tempReal;
           }
           sp.lag1_inReal = inReal;
           sp.ring_trailingIdx_inReal[sp.ringPos_trailingIdx] = inReal;
@@ -82713,16 +82645,19 @@ class Core {
            *
            *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
            *
+           * The ratio is in [0,1] in exact arithmetic, but sumROC1 drifts, so the
+           * clamp to 1.0 is what makes the declared range a bound rather than a
+           * hope -- and in kama.c what keeps its recurrence a convex combination.
+           *
            * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
            * two stay bit-identical -- the KAMA-reconstruction differential in
-           * test_composite2.c exists to keep it that way. Two guards are
+           * test_composite2.c exists to keep it that way. Three more guards are
            * load-bearing and shared with kama.c:
            *
            *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
-           *     would give 1.0000000000000002. The comparison is against the
-           *     SIGNED numerator, so it only fires on up-moves; on sustained
-           *     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
-           *     "fix" this with fabs -- it changes TA_KAMA's output.
+           *     would give 1.0000000000000002, on up-moves. It compares against
+           *     the SIGNED numerator, so it is false for every down move: it
+           *     bounds nothing on its own, which is what the clamp is for.
            *   - a genuinely flat window is recognized by COUNTING exactly-zero
            *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
            *     running sum's rounding residue), after which `0 <= 0` pins the
@@ -82731,13 +82666,10 @@ class Core {
            *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
            *     price-carrying sum).
            *
-           * A third guard is the denominator test: the division runs only where
-           * sumROC1 is exactly positive. The clamp above cannot serve as it,
-           * because it compares against the SIGNED numerator and so is false for
-           * every down move -- and a subtract-then-add sum can reach 0.0, or
-           * below it, on a window that is not flat, when a term absorbed on the
-           * way in is subtracted later at full precision. Without the guard those
-           * bars divide by zero.
+           * The third is the denominator test (#385): a subtract-then-add sum can
+           * reach 0.0, or below it, on a window that is not flat. The clamp
+           * subsumes it numerically, so it is held by the structural sweep over
+           * divisors, not by any value test.
            *
            * The subtract-then-add update order matches TA_SUM's recurrence,
            * which is what makes the composite differential bit-exact. The
@@ -82786,7 +82718,11 @@ class Core {
           if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
              outReal[0 * outStride] = 1.0;
           } else {
-             outReal[0 * outStride] = Math.abs(periodROC / sumROC1);
+             tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
+             outReal[0 * outStride] = tempReal;
           }
           outIdx = 1;
           today += 1;
@@ -82818,7 +82754,11 @@ class Core {
              if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
                 outReal[outIdx++ * outStride] = 1.0;
              } else {
-                outReal[outIdx++ * outStride] = Math.abs(periodROC / sumROC1);
+                tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
+                outReal[outIdx++ * outStride] = tempReal;
              }
              today += 1;
           }
@@ -83004,13 +82944,10 @@ class Core {
            *
            * One fused loop, not ema() + a combine map: a composed form cannot
            * stream (raw bar inputs are outside check_map_step's provenance), which
-           * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-           * op for op -- sequential seed sum from 0.0 then one divide, the
-           * unstable-period warm-up consumed bar by bar -- so the differential
-           * against shipped TA_EMA holds bitwise. No compatibility branch: the
-           * Metastock arm is unreachable from three of the four backends, and a
-           * new function honouring it would make C diverge from them (EFI/SMI
-           * precedent).
+           * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+           * sequential seed sum from 0.0 then one divide, the unstable-period
+           * warm-up consumed bar by bar -- so the differential against shipped
+           * TA_EMA holds bitwise.
            *
            * No division in the per-bar map: no 0/0, no NaN path (#112 by
            * construction). Bull >= Bear on every bar since high >= low.
@@ -83562,13 +83499,10 @@ class Core {
               *
               * One fused loop, not ema() + a combine map: a composed form cannot
               * stream (raw bar inputs are outside check_map_step's provenance), which
-              * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-              * op for op -- sequential seed sum from 0.0 then one divide, the
-              * unstable-period warm-up consumed bar by bar -- so the differential
-              * against shipped TA_EMA holds bitwise. No compatibility branch: the
-              * Metastock arm is unreachable from three of the four backends, and a
-              * new function honouring it would make C diverge from them (EFI/SMI
-              * precedent).
+              * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+              * sequential seed sum from 0.0 then one divide, the unstable-period
+              * warm-up consumed bar by bar -- so the differential against shipped
+              * TA_EMA holds bitwise.
               *
               * No division in the per-bar map: no 0/0, no NaN path (#112 by
               * construction). Bull >= Bear on every bar since high >= low.
@@ -83628,13 +83562,10 @@ class Core {
               *
               * One fused loop, not ema() + a combine map: a composed form cannot
               * stream (raw bar inputs are outside check_map_step's provenance), which
-              * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-              * op for op -- sequential seed sum from 0.0 then one divide, the
-              * unstable-period warm-up consumed bar by bar -- so the differential
-              * against shipped TA_EMA holds bitwise. No compatibility branch: the
-              * Metastock arm is unreachable from three of the four backends, and a
-              * new function honouring it would make C diverge from them (EFI/SMI
-              * precedent).
+              * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+              * sequential seed sum from 0.0 then one divide, the unstable-period
+              * warm-up consumed bar by bar -- so the differential against shipped
+              * TA_EMA holds bitwise.
               *
               * No division in the per-bar map: no 0/0, no NaN path (#112 by
               * construction). Bull >= Bear on every bar since high >= low.
@@ -102471,6 +102402,9 @@ class Core {
      *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
      *                forced the fastest adaptation on any instrument quoted small
      *                enough to fall under it.
+     *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
+     *                let it exceed its own mathematical maximum, and the squared
+     *                smoothing constant then amplified instead of averaging.
      */
 
        /**
@@ -102616,26 +102550,22 @@ class Core {
           trailingValue = tempReal2;
           /* Calculate the efficiency ratio.
            *
-           * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-           * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-           * sit beside it was not -- it declared the window flat, and forced the
-           * fastest adaptation, for every window of an instrument quoted below it
-           * (issue #253). A genuinely flat window is now recognized by the exact bar
-           * count above instead.
+           * The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+           * clamp it: past 1 the squared smoothing constant amplifies instead of
+           * averaging and the recurrence below stops being a convex combination.
            *
-           * `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-           * beside it compares against the SIGNED numerator, so it is false whenever
-           * periodROC < 0 and cannot stand in for one. sumROC1 is a running
-           * add/subtract of fabs terms, so an addend absorbed on the way in and
-           * subtracted later at full precision drives it to exactly 0.0 on a window
-           * that is not flat; without this clause that bar divides by zero and the
-           * +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-           * carried until #350).
+           * `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+           * +Inf onto the same 1.0 -- so a value test written against it would pass
+           * with it deleted. Keep it anyway: the divisor sweep requires a division to
+           * be dominated by a test of its own divisor against a literal zero.
            */
           if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
              tempReal = 1.0;
           } else {
              tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
           }
           /* Calculate the smoothing constant */
           tempReal = Math.fma(tempReal, constDiff, constMax);
@@ -102684,6 +102614,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              /* Calculate the smoothing constant */
              tempReal = Math.fma(tempReal, constDiff, constMax);
@@ -102732,6 +102665,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              /* Calculate the smoothing constant */
              tempReal = Math.fma(tempReal, constDiff, constMax);
@@ -102832,6 +102768,9 @@ class Core {
              tempReal = 1.0;
           } else {
              tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
           }
           tempReal = Math.fma(tempReal, constDiff, constMax);
           tempReal *= tempReal;
@@ -102856,6 +102795,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              tempReal = Math.fma(tempReal, constDiff, constMax);
              tempReal *= tempReal;
@@ -102884,6 +102826,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              tempReal = Math.fma(tempReal, constDiff, constMax);
              tempReal *= tempReal;
@@ -102908,6 +102853,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
+        * <li>The output never leaves the range of the prices it has seen.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -102975,6 +102921,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
+        * <li>The output never leaves the range of the prices it has seen.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -103193,6 +103140,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              /* Calculate the smoothing constant */
              tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
@@ -103276,6 +103226,9 @@ class Core {
              tempReal = 1.0;
           } else {
              tempReal = Math.abs(periodROC / sp.sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
           }
           /* Calculate the smoothing constant */
           tempReal = Math.fma(tempReal, sp.constDiff, sp.constMax);
@@ -103417,26 +103370,22 @@ class Core {
           trailingValue = tempReal2;
           /* Calculate the efficiency ratio.
            *
-           * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-           * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-           * sit beside it was not -- it declared the window flat, and forced the
-           * fastest adaptation, for every window of an instrument quoted below it
-           * (issue #253). A genuinely flat window is now recognized by the exact bar
-           * count above instead.
+           * The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+           * clamp it: past 1 the squared smoothing constant amplifies instead of
+           * averaging and the recurrence below stops being a convex combination.
            *
-           * `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-           * beside it compares against the SIGNED numerator, so it is false whenever
-           * periodROC < 0 and cannot stand in for one. sumROC1 is a running
-           * add/subtract of fabs terms, so an addend absorbed on the way in and
-           * subtracted later at full precision drives it to exactly 0.0 on a window
-           * that is not flat; without this clause that bar divides by zero and the
-           * +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-           * carried until #350).
+           * `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+           * +Inf onto the same 1.0 -- so a value test written against it would pass
+           * with it deleted. Keep it anyway: the divisor sweep requires a division to
+           * be dominated by a test of its own divisor against a literal zero.
            */
           if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
              tempReal = 1.0;
           } else {
              tempReal = Math.abs(periodROC / sumROC1);
+             if( tempReal > 1.0 ) {
+                tempReal = 1.0;
+             }
           }
           /* Calculate the smoothing constant */
           tempReal = Math.fma(tempReal, constDiff, constMax);
@@ -103485,6 +103434,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              /* Calculate the smoothing constant */
              tempReal = Math.fma(tempReal, constDiff, constMax);
@@ -103533,6 +103485,9 @@ class Core {
                 tempReal = 1.0;
              } else {
                 tempReal = Math.abs(periodROC / sumROC1);
+                if( tempReal > 1.0 ) {
+                   tempReal = 1.0;
+                }
              }
              /* Calculate the smoothing constant */
              tempReal = Math.fma(tempReal, constDiff, constMax);
@@ -112115,16 +112070,11 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum of
-           *    its first 'period' inputs, accumulated from 0.0 in input
-           *    order, divided by the period. The fast and slow seed
-           *    windows end on the same bar. The signal EMA is seeded the
-           *    same way from the first 'signal period' MACD-line values.
-           *  - Metastock compatibility: the fast and slow EMA are seeded
-           *    from inReal[0], the signal EMA from the first MACD-line
-           *    value.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order, divided by
+           *    the period. The fast and slow seed windows end on the
+           *    same bar. The signal EMA is seeded the same way from the
+           *    first 'signal period' MACD-line values.
            *
            * In-place (an output == inReal) is supported: outputs at
            * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -112833,16 +112783,11 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum of
-           *    its first 'period' inputs, accumulated from 0.0 in input
-           *    order, divided by the period. The fast and slow seed
-           *    windows end on the same bar. The signal EMA is seeded the
-           *    same way from the first 'signal period' MACD-line values.
-           *  - Metastock compatibility: the fast and slow EMA are seeded
-           *    from inReal[0], the signal EMA from the first MACD-line
-           *    value.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order, divided by
+           *    the period. The fast and slow seed windows end on the
+           *    same bar. The signal EMA is seeded the same way from the
+           *    first 'signal period' MACD-line values.
            *
            * In-place (an output == inReal) is supported: outputs at
            * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -114191,16 +114136,11 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum of
-           *    its first 'period' inputs, accumulated from 0.0 in input
-           *    order, divided by the period. The fast and slow seed
-           *    windows end on the same bar. The signal EMA is seeded the
-           *    same way from the first 'signal period' MACD-line values.
-           *  - Metastock compatibility: the fast and slow EMA are seeded
-           *    from inReal[0], the signal EMA from the first MACD-line
-           *    value.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order, divided by
+           *    the period. The fast and slow seed windows end on the
+           *    same bar. The signal EMA is seeded the same way from the
+           *    first 'signal period' MACD-line values.
            *
            * In-place (an output == inReal) is supported: outputs at
            * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -114846,16 +114786,11 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum of
-           *    its first 'period' inputs, accumulated from 0.0 in input
-           *    order, divided by the period. The fast and slow seed
-           *    windows end on the same bar. The signal EMA is seeded the
-           *    same way from the first 'signal period' MACD-line values.
-           *  - Metastock compatibility: the fast and slow EMA are seeded
-           *    from inReal[0], the signal EMA from the first MACD-line
-           *    value.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order, divided by
+           *    the period. The fast and slow seed windows end on the
+           *    same bar. The signal EMA is seeded the same way from the
+           *    first 'signal period' MACD-line values.
            *
            * In-place (an output == inReal) is supported: outputs at
            * [outIdx] are written only after inReal[startIdx+outIdx] was
@@ -117800,11 +117735,6 @@ class Core {
            * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
            * is warmed. The seed sums accumulate from 0.0 in production order; do not
            * reorder or fuse them (0.0+x is not x for x=-0.0).
-           *
-           * Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-           * unreachable from the Rust, Java and C# APIs, so consulting
-           * TA_GetCompatibility() here would make C diverge from three backends for a
-           * setting they cannot read.
            */
           optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
           ema1 = 0.0;
@@ -118475,11 +118405,6 @@ class Core {
            * confusing them is invisible until TA_SetUnstablePeriod(TA_FUNC_UNST_EMA)
            * is warmed. The seed sums accumulate from 0.0 in production order; do not
            * reorder or fuse them (0.0+x is not x for x=-0.0).
-           *
-           * Seed from the SMA arm only: ema.c's TA_COMPATIBILITY_METASTOCK arm is
-           * unreachable from the Rust, Java and C# APIs, so consulting
-           * TA_GetCompatibility() here would make C diverge from three backends for a
-           * setting they cannot read.
            */
           optInK_1 = 2.0 / (double)(optInFastPeriod + 1);
           ema1 = 0.0;
@@ -144721,12 +144646,10 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
-          int unstablePeriod = 0;
           int i = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
-          double savePrevValue = 0;
           double tempValue1 = 0;
           double tempValue2 = 0;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -144743,11 +144666,6 @@ class Core {
           /* The following algorithm is base on the original
            * work from Wilder's and shall represent the
            * original idea behind the classic RSI.
-           *
-           * Metastock is starting the calculation one price
-           * bar earlier. To make this possible, they assume
-           * that the very first bar will be identical to the
-           * previous one (no gain or loss).
            */
           /* If changing this function, please check also CMO
            * which is mostly identical (just different in one step
@@ -144789,18 +144707,6 @@ class Core {
            */
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
-          unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-          /* If there is no unstable period,
-           * calculate the 'additional' initial
-           * price bar who is particuliar to
-           * metastock.
-           * If there is an unstable period,
-           * no need to calculate since this
-           * first value will be surely skip.
-           */
-          /* Remaining of the processing is identical
-           * for both Classic calculation and Metastock.
-           */
           prevGain = 0.0;
           prevLoss = 0.0;
           today = today + 1;
@@ -144830,6 +144736,12 @@ class Core {
            *    RSI = 100 * (prevGain/(prevGain+prevLoss))
            *
            * The second equation is used here for speed optimization.
+           *
+           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+           * when every change since the seed was exactly zero -- test it exactly, never
+           * against a fixed band. A gain carries the quote unit, so a constant put
+           * against it zeroes a healthy oscillator for an instrument quoted below it
+           * (issue #253).
            */
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
@@ -144901,12 +144813,10 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
-          int unstablePeriod = 0;
           int i = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
-          double savePrevValue = 0;
           double tempValue1 = 0;
           double tempValue2 = 0;
           if( (startIdx < 0) || (startIdx > MAX_INDEX) ) {
@@ -144942,7 +144852,6 @@ class Core {
           }
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
-          unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
           prevGain = 0.0;
           prevLoss = 0.0;
           today = today + 1;
@@ -145350,12 +145259,10 @@ class Core {
           int outIdx = 0;
           int today = 0;
           int lookbackTotal = 0;
-          int unstablePeriod = 0;
           int i = 0;
           double prevGain = 0;
           double prevLoss = 0;
           double prevValue = 0;
-          double savePrevValue = 0;
           double tempValue1 = 0;
           double tempValue2 = 0;
           int historyLen = inReal.length;
@@ -145401,11 +145308,6 @@ class Core {
           /* The following algorithm is base on the original
            * work from Wilder's and shall represent the
            * original idea behind the classic RSI.
-           *
-           * Metastock is starting the calculation one price
-           * bar earlier. To make this possible, they assume
-           * that the very first bar will be identical to the
-           * previous one (no gain or loss).
            */
           /* If changing this function, please check also CMO
            * which is mostly identical (just different in one step
@@ -145429,18 +145331,6 @@ class Core {
            */
           today = startIdx - lookbackTotal;
           prevValue = (double)inReal[today];
-          unstablePeriod = this.unstablePeriod[FuncUnstId.RSI.ordinal()];
-          /* If there is no unstable period,
-           * calculate the 'additional' initial
-           * price bar who is particuliar to
-           * metastock.
-           * If there is an unstable period,
-           * no need to calculate since this
-           * first value will be surely skip.
-           */
-          /* Remaining of the processing is identical
-           * for both Classic calculation and Metastock.
-           */
           prevGain = 0.0;
           prevLoss = 0.0;
           today = today + 1;
@@ -145470,6 +145360,12 @@ class Core {
            *    RSI = 100 * (prevGain/(prevGain+prevLoss))
            *
            * The second equation is used here for speed optimization.
+           *
+           * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+           * when every change since the seed was exactly zero -- test it exactly, never
+           * against a fixed band. A gain carries the quote unit, so a constant put
+           * against it zeroes a healthy oscillator for an instrument quoted below it
+           * (issue #253).
            */
           if( today > startIdx ) {
              tempValue1 = prevGain + prevLoss;
@@ -152311,12 +152207,6 @@ class Core {
            * from the values its predecessor would have published, exactly as the
            * composed form does. The seed sums accumulate from 0.0 in production
            * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-           *
-           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-           * preserved for the functions that already shipped with it and dropped from
-           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-           * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
            */
           kSlow = 2.0 / (double)(optInSlowPeriod + 1);
           kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -153426,12 +153316,6 @@ class Core {
            * from the values its predecessor would have published, exactly as the
            * composed form does. The seed sums accumulate from 0.0 in production
            * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-           *
-           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-           * preserved for the functions that already shipped with it and dropped from
-           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-           * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
            */
           kSlow = 2.0 / (double)(optInSlowPeriod + 1);
           kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -154813,6 +154697,9 @@ class Core {
      *               small enough to fall under it.
      *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
      *               the stale *outNBElement overran outSlowK by lookbackDSlow.
+     *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
+     *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
+     *               range that the guard still called "not flat".
      */
 
        /**
@@ -154893,7 +154780,6 @@ class Core {
           double lowest = 0;
           double highest = 0;
           double tmp = 0;
-          double diff = 0;
           double[] tempBuffer;
           int outIdx = 0;
           int lowestIdx = 0;
@@ -155009,7 +154895,6 @@ class Core {
           lowestIdx = highestIdx;
           lowest = 0.0;
           highest = lowest;
-          diff = highest;
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
@@ -155041,11 +154926,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              /* Set the highest high */
              tmp = inHigh[today];
@@ -155060,22 +154943,22 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
-             /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-              * machine-flat window leaves a sub-epsilon residue that an exact check
-              * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-              * range against ITS OWN two extremes, not against a fixed band: the range
-              * carries the quote unit, so a constant put against it answers "flat" for
-              * every window of an instrument quoted below it and zeroed the whole
-              * output (issue #253).
+             /* Divide by the range itself and scale after: the guard has to test the
+              * very expression the division uses, or a scaling step can carry a
+              * guarded-non-zero into a zero divisor.
+              *
+              * The band is the range against ITS OWN two extremes, not a fixed
+              * constant: the range carries the quote unit, so a constant answers
+              * "flat" for every window of an instrument quoted below it (issue #253).
+              * It absorbs the machine-flat window an exact test would divide into
+              * [0,100] noise (issue #107 / STOCHRSI).
               */
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+                tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
              } else {
                 tempBuffer[outIdx++] = 0.0;
              }
@@ -155138,7 +155021,6 @@ class Core {
           double lowest = 0;
           double highest = 0;
           double tmp = 0;
-          double diff = 0;
           double[] tempBuffer;
           int outIdx = 0;
           int lowestIdx = 0;
@@ -155201,7 +155083,6 @@ class Core {
           lowestIdx = highestIdx;
           lowest = 0.0;
           highest = lowest;
-          diff = highest;
           bufferIsAllocated = 0;
           if( false || false || false ) {
              tempBuffer = outSlowK;
@@ -155222,11 +155103,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              tmp = (double)inHigh[today];
              if( highestIdx < trailingIdx ) {
@@ -155240,14 +155119,12 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
+                tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
              } else {
                 tempBuffer[outIdx++] = 0.0;
              }
@@ -155493,7 +155370,6 @@ class Core {
           MAType optInSlowD_MAType;
           double lowest;
           double highest;
-          double diff;
           int lowestIdx;
           int highestIdx;
           int trailingIdx;
@@ -155544,7 +155420,6 @@ class Core {
              this.optInSlowD_MAType = other.optInSlowD_MAType;
              this.lowest = other.lowest;
              this.highest = other.highest;
-             this.diff = other.diff;
              this.lowestIdx = other.lowestIdx;
              this.highestIdx = other.highestIdx;
              this.trailingIdx = other.trailingIdx;
@@ -155605,7 +155480,6 @@ class Core {
              double cur_outSlowD = 0.0;
              double cur_outSlowK = 0.0;
              double tmp = 0.0;
-             double diff = sp.diff;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -155646,11 +155520,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              /* Set the highest high */
              tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
@@ -155665,22 +155537,22 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
-             /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-              * machine-flat window leaves a sub-epsilon residue that an exact check
-              * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-              * range against ITS OWN two extremes, not against a fixed band: the range
-              * carries the quote unit, so a constant put against it answers "flat" for
-              * every window of an instrument quoted below it and zeroed the whole
-              * output (issue #253).
+             /* Divide by the range itself and scale after: the guard has to test the
+              * very expression the division uses, or a scaling step can carry a
+              * guarded-non-zero into a zero divisor.
+              *
+              * The band is the range against ITS OWN two extremes, not a fixed
+              * constant: the range carries the quote unit, so a constant answers
+              * "flat" for every window of an instrument quoted below it (issue #253).
+              * It absorbs the machine-flat window an exact test would divide into
+              * [0,100] noise (issue #107 / STOCHRSI).
               */
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / diff;
+                cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / (highest - lowest) * 100.0;
              } else {
                 cur_tempBuffer = 0.0;
              }
@@ -155771,11 +155643,9 @@ class Core {
                    sp.lowest = tmp;
                 }
              }
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           } else if( tmp <= sp.lowest ) {
              sp.lowestIdx = sp.today;
              sp.lowest = tmp;
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           }
           /* Set the highest high */
           tmp = sp.x_inHigh[sp.today & sp.xMask];
@@ -155790,22 +155660,22 @@ class Core {
                    sp.highest = tmp;
                 }
              }
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           } else if( tmp >= sp.highest ) {
              sp.highestIdx = sp.today;
              sp.highest = tmp;
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           }
-          /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-           * machine-flat window leaves a sub-epsilon residue that an exact check
-           * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-           * range against ITS OWN two extremes, not against a fixed band: the range
-           * carries the quote unit, so a constant put against it answers "flat" for
-           * every window of an instrument quoted below it and zeroed the whole
-           * output (issue #253).
+          /* Divide by the range itself and scale after: the guard has to test the
+           * very expression the division uses, or a scaling step can carry a
+           * guarded-non-zero into a zero divisor.
+           *
+           * The band is the range against ITS OWN two extremes, not a fixed
+           * constant: the range carries the quote unit, so a constant answers
+           * "flat" for every window of an instrument quoted below it (issue #253).
+           * It absorbs the machine-flat window an exact test would divide into
+           * [0,100] noise (issue #107 / STOCHRSI).
            */
           if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
-             cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
+             cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / (sp.highest - sp.lowest) * 100.0;
           } else {
              cur_tempBuffer = 0.0;
           }
@@ -155823,7 +155693,6 @@ class Core {
           double lowest = 0;
           double highest = 0;
           double tmp = 0;
-          double diff = 0;
           double[] tempBuffer;
           int outIdx = 0;
           int lowestIdx = 0;
@@ -155951,7 +155820,6 @@ class Core {
           lowestIdx = highestIdx;
           lowest = 0.0;
           highest = lowest;
-          diff = highest;
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
@@ -155983,11 +155851,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              /* Set the highest high */
              tmp = inHigh[today];
@@ -156002,22 +155868,22 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
-             /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-              * machine-flat window leaves a sub-epsilon residue that an exact check
-              * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-              * range against ITS OWN two extremes, not against a fixed band: the range
-              * carries the quote unit, so a constant put against it answers "flat" for
-              * every window of an instrument quoted below it and zeroed the whole
-              * output (issue #253).
+             /* Divide by the range itself and scale after: the guard has to test the
+              * very expression the division uses, or a scaling step can carry a
+              * guarded-non-zero into a zero divisor.
+              *
+              * The band is the range against ITS OWN two extremes, not a fixed
+              * constant: the range carries the quote unit, so a constant answers
+              * "flat" for every window of an instrument quoted below it (issue #253).
+              * It absorbs the machine-flat window an exact test would divide into
+              * [0,100] noise (issue #107 / STOCHRSI).
               */
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+                tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
              } else {
                 tempBuffer[outIdx++] = 0.0;
              }
@@ -156090,7 +155956,6 @@ class Core {
           sp.optInSlowD_MAType = optInSlowD_MAType;
           sp.lowest = lowest;
           sp.highest = highest;
-          sp.diff = diff;
           sp.lowestIdx = lowestIdx;
           sp.highestIdx = highestIdx;
           sp.trailingIdx = trailingIdx;
@@ -156227,6 +156092,9 @@ class Core {
      *               small enough to fall under it.
      *  082726 MF,CC Drop the dead retCode block after the copy: the rejection is
      *               already answered above it, and the shape reads like #269.
+     *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
+     *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
+     *               range that the guard still called "not flat".
      */
 
        /**
@@ -156287,7 +156155,6 @@ class Core {
           double lowest = 0;
           double highest = 0;
           double tmp = 0;
-          double diff = 0;
           double[] tempBuffer;
           int outIdx = 0;
           int lowestIdx = 0;
@@ -156393,7 +156260,6 @@ class Core {
           lowestIdx = highestIdx;
           lowest = 0.0;
           highest = lowest;
-          diff = highest;
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
@@ -156425,11 +156291,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              /* Set the highest high */
              tmp = inHigh[today];
@@ -156444,22 +156308,22 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
-             /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-              * machine-flat window leaves a sub-epsilon residue that an exact check
-              * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-              * range against ITS OWN two extremes, not against a fixed band: the range
-              * carries the quote unit, so a constant put against it answers "flat" for
-              * every window of an instrument quoted below it and zeroed the whole
-              * output (issue #253).
+             /* Divide by the range itself and scale after: the guard has to test the
+              * very expression the division uses, or a scaling step can carry a
+              * guarded-non-zero into a zero divisor.
+              *
+              * The band is the range against ITS OWN two extremes, not a fixed
+              * constant: the range carries the quote unit, so a constant answers
+              * "flat" for every window of an instrument quoted below it (issue #253).
+              * It absorbs the machine-flat window an exact test would divide into
+              * [0,100] noise (issue #107 / STOCHRSI).
               */
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+                tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
              } else {
                 tempBuffer[outIdx++] = 0.0;
              }
@@ -156511,7 +156375,6 @@ class Core {
           double lowest = 0;
           double highest = 0;
           double tmp = 0;
-          double diff = 0;
           double[] tempBuffer;
           int outIdx = 0;
           int lowestIdx = 0;
@@ -156564,7 +156427,6 @@ class Core {
           lowestIdx = highestIdx;
           lowest = 0.0;
           highest = lowest;
-          diff = highest;
           bufferIsAllocated = 0;
           if( false || false || false ) {
              tempBuffer = outFastK;
@@ -156585,11 +156447,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              tmp = (double)inHigh[today];
              if( highestIdx < trailingIdx ) {
@@ -156603,14 +156463,12 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
+                tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
              } else {
                 tempBuffer[outIdx++] = 0.0;
              }
@@ -156826,7 +156684,6 @@ class Core {
           MAType optInFastD_MAType;
           double lowest;
           double highest;
-          double diff;
           int lowestIdx;
           int highestIdx;
           int trailingIdx;
@@ -156874,7 +156731,6 @@ class Core {
              this.optInFastD_MAType = other.optInFastD_MAType;
              this.lowest = other.lowest;
              this.highest = other.highest;
-             this.diff = other.diff;
              this.lowestIdx = other.lowestIdx;
              this.highestIdx = other.highestIdx;
              this.trailingIdx = other.trailingIdx;
@@ -156934,7 +156790,6 @@ class Core {
              double cur_outFastD = 0.0;
              double cur_outFastK = 0.0;
              double tmp = 0.0;
-             double diff = sp.diff;
              double highest = sp.highest;
              int highestIdx = sp.highestIdx;
              int i = sp.i;
@@ -156975,11 +156830,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              /* Set the highest high */
              tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
@@ -156994,22 +156847,22 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
-             /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-              * machine-flat window leaves a sub-epsilon residue that an exact check
-              * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-              * range against ITS OWN two extremes, not against a fixed band: the range
-              * carries the quote unit, so a constant put against it answers "flat" for
-              * every window of an instrument quoted below it and zeroed the whole
-              * output (issue #253).
+             /* Divide by the range itself and scale after: the guard has to test the
+              * very expression the division uses, or a scaling step can carry a
+              * guarded-non-zero into a zero divisor.
+              *
+              * The band is the range against ITS OWN two extremes, not a fixed
+              * constant: the range carries the quote unit, so a constant answers
+              * "flat" for every window of an instrument quoted below it (issue #253).
+              * It absorbs the machine-flat window an exact test would divide into
+              * [0,100] noise (issue #107 / STOCHRSI).
               */
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / diff;
+                cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / (highest - lowest) * 100.0;
              } else {
                 cur_tempBuffer = 0.0;
              }
@@ -157099,11 +156952,9 @@ class Core {
                    sp.lowest = tmp;
                 }
              }
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           } else if( tmp <= sp.lowest ) {
              sp.lowestIdx = sp.today;
              sp.lowest = tmp;
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           }
           /* Set the highest high */
           tmp = sp.x_inHigh[sp.today & sp.xMask];
@@ -157118,22 +156969,22 @@ class Core {
                    sp.highest = tmp;
                 }
              }
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           } else if( tmp >= sp.highest ) {
              sp.highestIdx = sp.today;
              sp.highest = tmp;
-             sp.diff = (sp.highest - sp.lowest) / 100.0;
           }
-          /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-           * machine-flat window leaves a sub-epsilon residue that an exact check
-           * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-           * range against ITS OWN two extremes, not against a fixed band: the range
-           * carries the quote unit, so a constant put against it answers "flat" for
-           * every window of an instrument quoted below it and zeroed the whole
-           * output (issue #253).
+          /* Divide by the range itself and scale after: the guard has to test the
+           * very expression the division uses, or a scaling step can carry a
+           * guarded-non-zero into a zero divisor.
+           *
+           * The band is the range against ITS OWN two extremes, not a fixed
+           * constant: the range carries the quote unit, so a constant answers
+           * "flat" for every window of an instrument quoted below it (issue #253).
+           * It absorbs the machine-flat window an exact test would divide into
+           * [0,100] noise (issue #107 / STOCHRSI).
            */
           if( !(Math.abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.abs(sp.highest) + Math.abs(sp.lowest))) ) {
-             cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
+             cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / (sp.highest - sp.lowest) * 100.0;
           } else {
              cur_tempBuffer = 0.0;
           }
@@ -157150,7 +157001,6 @@ class Core {
           double lowest = 0;
           double highest = 0;
           double tmp = 0;
-          double diff = 0;
           double[] tempBuffer;
           int outIdx = 0;
           int lowestIdx = 0;
@@ -157268,7 +157118,6 @@ class Core {
           lowestIdx = highestIdx;
           lowest = 0.0;
           highest = lowest;
-          diff = highest;
           /* Allocate a temporary buffer large enough to
            * store the K.
            *
@@ -157300,11 +157149,9 @@ class Core {
                       lowest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp <= lowest ) {
                 lowestIdx = today;
                 lowest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
              /* Set the highest high */
              tmp = inHigh[today];
@@ -157319,22 +157166,22 @@ class Core {
                       highest = tmp;
                    }
                 }
-                diff = (highest - lowest) / 100.0;
              } else if( tmp >= highest ) {
                 highestIdx = today;
                 highest = tmp;
-                diff = (highest - lowest) / 100.0;
              }
-             /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-              * machine-flat window leaves a sub-epsilon residue that an exact check
-              * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-              * range against ITS OWN two extremes, not against a fixed band: the range
-              * carries the quote unit, so a constant put against it answers "flat" for
-              * every window of an instrument quoted below it and zeroed the whole
-              * output (issue #253).
+             /* Divide by the range itself and scale after: the guard has to test the
+              * very expression the division uses, or a scaling step can carry a
+              * guarded-non-zero into a zero divisor.
+              *
+              * The band is the range against ITS OWN two extremes, not a fixed
+              * constant: the range carries the quote unit, so a constant answers
+              * "flat" for every window of an instrument quoted below it (issue #253).
+              * It absorbs the machine-flat window an exact test would divide into
+              * [0,100] noise (issue #107 / STOCHRSI).
               */
              if( !(Math.abs(highest - lowest) <= 0.00000000000001 * (Math.abs(highest) + Math.abs(lowest))) ) {
-                tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+                tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
              } else {
                 tempBuffer[outIdx++] = 0.0;
              }
@@ -157393,7 +157240,6 @@ class Core {
           sp.optInFastD_MAType = optInFastD_MAType;
           sp.lowest = lowest;
           sp.highest = highest;
-          sp.diff = diff;
           sp.lowestIdx = lowestIdx;
           sp.highestIdx = highestIdx;
           sp.trailingIdx = trailingIdx;
@@ -162485,17 +162331,11 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum
-           *    of its first 'period' inputs, accumulated from 0.0 in
-           *    input order (0.0+x is not x for x=-0.0), divided by
-           *    the period.
-           *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-           *    EMA2 from the first EMA1 value, EMA3 from the first EMA2
-           *    value.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order (0.0+x is
+           *    not x for x=-0.0), divided by the period.
            *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
            *    added to EMA3 on the left.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
            *
            * In-place (inReal == outReal) is supported: outReal[outIdx]
            * is written only after inReal[startIdx+outIdx] was read.
@@ -163047,17 +162887,11 @@ class Core {
            * The arithmetic order below is the bit-exactness contract
            * (do not reorder or fuse operations):
            *  - EMA recursion: ((x-prev)*k)+prev.
-           *  - Default compatibility: each EMA is seeded with the sum
-           *    of its first 'period' inputs, accumulated from 0.0 in
-           *    input order (0.0+x is not x for x=-0.0), divided by
-           *    the period.
-           *  - Metastock compatibility: EMA1 is seeded from inReal[0],
-           *    EMA2 from the first EMA1 value, EMA3 from the first EMA2
-           *    value.
+           *  - Each EMA is seeded with the sum of its first 'period'
+           *    inputs, accumulated from 0.0 in input order (0.0+x is
+           *    not x for x=-0.0), divided by the period.
            *  - The combine keeps the (3.0*EMA1)-(3.0*EMA2) grouping,
            *    added to EMA3 on the left.
-           * Output alignment is identical for all compatibility modes;
-           * only the seed values differ.
            *
            * In-place (inReal == outReal) is supported: outReal[outIdx]
            * is written only after inReal[startIdx+outIdx] was read.
@@ -167248,11 +167082,6 @@ class Core {
            * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
            * bit-exactness contract against the composed reference.
            *
-           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-           * preserved for the functions that already shipped with it and dropped from
-           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-           *
            * prevClose is carried in a scalar rather than re-read from inReal[t-1]
            * because outReal may alias inReal: the slot holding close[t-1] may already
            * hold an output written a bar earlier.
@@ -167901,11 +167730,6 @@ class Core {
            * ((x-prev)*k)+prev rather than the algebraically equal k*x+(1-k)*prev; do
            * not reorder or fuse them (0.0+x is not x for x=-0.0). That order IS the
            * bit-exactness contract against the composed reference.
-           *
-           * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-           * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-           * preserved for the functions that already shipped with it and dropped from
-           * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
            *
            * prevClose is carried in a scalar rather than re-read from inReal[t-1]
            * because outReal may alias inReal: the slot holding close[t-1] may already
@@ -179011,7 +178835,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "d762214e84a18d9a";
+    static final String SPLICED_GENCODE_DIGEST = "c2a152583edc67f0";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
@@ -180732,13 +180556,6 @@ public class TaCodegenServe {
                 return "{\"status\":\"ok\"}"; 
             }
             return "{\"error\":\"Invalid id\"}"; 
-        }
-        else if (json.contains("\"set_compatibility\"")) {
-            int mode = jsonInt(json, "mode");
-            if (mode == 0) {
-                return "{\"status\":\"ok\"}";
-            }
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
         }
         else if (json.contains("\"set_candle_settings\"")) {
             int settingType = jsonInt(json, "settingType");
@@ -211624,10 +211441,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 5;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 34;
         int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 5;
@@ -211682,13 +211495,12 @@ public class TaCodegenServe {
                 }
                 try { c2.acOpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AcStream st;
                 try { st = c2.acOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
@@ -211724,7 +211536,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AcStream sA = c2.acOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -211782,10 +211594,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -211849,13 +211657,12 @@ public class TaCodegenServe {
                 try { c2.accbandsOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.accbandsOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AccbandsStream st;
                 try { st = c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -211905,7 +211712,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AccbandsStream sA = c2.accbandsOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -211971,10 +211778,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -212026,13 +211829,12 @@ public class TaCodegenServe {
                 }
                 try { c2.acosOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AcosStream st;
                 try { st = c2.acosOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -212068,7 +211870,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AcosStream sA = c2.acosOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -212121,10 +211923,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -212176,13 +211974,12 @@ public class TaCodegenServe {
                 }
                 try { c2.adOpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdStream st;
                 try { st = c2.adOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -212218,7 +212015,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdStream sA = c2.adOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -212271,10 +212068,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -212326,13 +212119,12 @@ public class TaCodegenServe {
                 }
                 try { c2.addOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AddStream st;
                 try { st = c2.addOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -212368,7 +212160,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AddStream sA = c2.addOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -212421,10 +212213,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 3;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 10;
         double[] fz_o = new double[svN];
@@ -212479,13 +212267,12 @@ public class TaCodegenServe {
                 }
                 try { c2.adoscOpenAndFill(fz_h, fz_l, fz_c, fz_v, optInFastPeriod, optInSlowPeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdoscStream st;
                 try { st = c2.adoscOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInFastPeriod, optInSlowPeriod); }
@@ -212521,7 +212308,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdoscStream sA = c2.adoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod);
@@ -212579,10 +212366,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -212635,13 +212418,12 @@ public class TaCodegenServe {
                 }
                 try { c2.adrOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdrStream st;
                 try { st = c2.adrOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -212677,7 +212459,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdrStream sA = c2.adrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -212735,10 +212517,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -212792,13 +212570,12 @@ public class TaCodegenServe {
                 }
                 try { c2.adxOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdxStream st;
                 try { st = c2.adxOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -212834,7 +212611,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdxStream sA = c2.adxOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -212892,10 +212669,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -212949,13 +212722,12 @@ public class TaCodegenServe {
                 }
                 try { c2.adxrOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AdxrStream st;
                 try { st = c2.adxrOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -212991,7 +212763,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AdxrStream sA = c2.adxrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -213049,10 +212821,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 5;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 34;
         double[] fz_o = new double[svN];
@@ -213106,13 +212874,12 @@ public class TaCodegenServe {
                 }
                 try { c2.aoOpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AoStream st;
                 try { st = c2.aoOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInFastPeriod, optInSlowPeriod); }
@@ -213148,7 +212915,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AoStream sA = c2.aoOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod);
@@ -213206,10 +212973,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
@@ -213275,13 +213038,12 @@ public class TaCodegenServe {
                 }
                 try { c2.apoOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ApoStream st;
                 try { st = c2.apoOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInSlowPeriod, optInMAType); }
@@ -213317,7 +213079,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ApoStream sA = c2.apoOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -213375,10 +213137,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -213437,13 +213195,12 @@ public class TaCodegenServe {
                 try { c2.aroonOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.aroonOpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AroonStream st;
                 try { st = c2.aroonOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -213488,7 +213245,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AroonStream sA = c2.aroonOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -213552,10 +213309,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -213608,13 +213361,12 @@ public class TaCodegenServe {
                 }
                 try { c2.aroonoscOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AroonoscStream st;
                 try { st = c2.aroonoscOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -213650,7 +213402,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AroonoscStream sA = c2.aroonoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -213708,10 +213460,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -213763,13 +213511,12 @@ public class TaCodegenServe {
                 }
                 try { c2.asinOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AsinStream st;
                 try { st = c2.asinOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -213805,7 +213552,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AsinStream sA = c2.asinOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -213858,10 +213605,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -213913,13 +213656,12 @@ public class TaCodegenServe {
                 }
                 try { c2.atanOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AtanStream st;
                 try { st = c2.atanOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -213955,7 +213697,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AtanStream sA = c2.atanOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -214008,10 +213750,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -214065,13 +213803,12 @@ public class TaCodegenServe {
                 }
                 try { c2.atrOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AtrStream st;
                 try { st = c2.atrOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -214107,7 +213844,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AtrStream sA = c2.atrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -214165,10 +213902,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -214221,13 +213954,12 @@ public class TaCodegenServe {
                 }
                 try { c2.avgdevOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AvgdevStream st;
                 try { st = c2.avgdevOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -214263,7 +213995,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AvgdevStream sA = c2.avgdevOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -214321,10 +214053,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -214376,13 +214104,12 @@ public class TaCodegenServe {
                 }
                 try { c2.avgpriceOpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.AvgpriceStream st;
                 try { st = c2.avgpriceOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -214418,7 +214145,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.AvgpriceStream sA = c2.avgpriceOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -214471,10 +214198,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double optInNbDevUp = json.contains("\"optInNbDevUp\"") ? jsonDouble(json, "optInNbDevUp") : 2e0;
         double optInNbDevDn = json.contains("\"optInNbDevDn\"") ? jsonDouble(json, "optInNbDevDn") : 2e0;
@@ -214552,13 +214275,12 @@ public class TaCodegenServe {
                 try { c2.bbandsOpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.bbandsOpenAndFill(fz_c, optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.BbandsStream st;
                 try { st = c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType); }
@@ -214608,7 +214330,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.BbandsStream sA = c2.bbandsOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDevUp, optInNbDevDn, optInMAType);
@@ -214674,10 +214396,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -214730,13 +214448,12 @@ public class TaCodegenServe {
                 }
                 try { c2.betaOpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.BetaStream st;
                 try { st = c2.betaOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -214772,7 +214489,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.BetaStream sA = c2.betaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -214830,10 +214547,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -214885,13 +214598,12 @@ public class TaCodegenServe {
                 }
                 try { c2.bopOpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.BopStream st;
                 try { st = c2.bopOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -214927,7 +214639,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.BopStream sA = c2.bopOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -214980,10 +214692,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215036,13 +214744,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cciOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CciStream st;
                 try { st = c2.cciOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -215078,7 +214785,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CciStream sA = c2.cciOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -215136,10 +214843,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215194,13 +214897,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl2crowsStream st;
                 try { st = c2.cdl2crowsOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -215236,7 +214938,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl2crowsStream sA = c2.cdl2crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -215289,10 +214991,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215347,13 +215045,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3blackcrowsStream st;
                 try { st = c2.cdl3blackcrowsOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -215389,7 +215086,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3blackcrowsStream sA = c2.cdl3blackcrowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -215442,10 +215139,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215500,13 +215193,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3insideStream st;
                 try { st = c2.cdl3insideOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -215542,7 +215234,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3insideStream sA = c2.cdl3insideOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -215595,10 +215287,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215653,13 +215341,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3linestrikeStream st;
                 try { st = c2.cdl3linestrikeOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -215695,7 +215382,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3linestrikeStream sA = c2.cdl3linestrikeOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -215748,10 +215435,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215806,13 +215489,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3outsideStream st;
                 try { st = c2.cdl3outsideOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -215848,7 +215530,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3outsideStream sA = c2.cdl3outsideOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -215901,10 +215583,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -215959,13 +215637,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3starsinsouthStream st;
                 try { st = c2.cdl3starsinsouthOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -216001,7 +215678,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3starsinsouthStream sA = c2.cdl3starsinsouthOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -216054,10 +215731,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -216112,13 +215785,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdl3whitesoldiersStream st;
                 try { st = c2.cdl3whitesoldiersOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -216154,7 +215826,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdl3whitesoldiersStream sA = c2.cdl3whitesoldiersOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -216207,10 +215879,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -216266,13 +215934,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlabandonedbabyStream st;
                 try { st = c2.cdlabandonedbabyOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -216308,7 +215975,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlabandonedbabyStream sA = c2.cdlabandonedbabyOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -216361,10 +216028,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -216419,13 +216082,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdladvanceblockStream st;
                 try { st = c2.cdladvanceblockOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -216461,7 +216123,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdladvanceblockStream sA = c2.cdladvanceblockOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -216514,10 +216176,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -216572,13 +216230,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlbeltholdStream st;
                 try { st = c2.cdlbeltholdOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -216614,7 +216271,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlbeltholdStream sA = c2.cdlbeltholdOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -216667,10 +216324,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -216725,13 +216378,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlbreakawayStream st;
                 try { st = c2.cdlbreakawayOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -216767,7 +216419,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlbreakawayStream sA = c2.cdlbreakawayOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -216820,10 +216472,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -216878,13 +216526,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlclosingmarubozuStream st;
                 try { st = c2.cdlclosingmarubozuOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -216920,7 +216567,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlclosingmarubozuStream sA = c2.cdlclosingmarubozuOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -216973,10 +216620,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -217031,13 +216674,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlconcealbabyswallStream st;
                 try { st = c2.cdlconcealbabyswallOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -217073,7 +216715,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlconcealbabyswallStream sA = c2.cdlconcealbabyswallOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -217126,10 +216768,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -217184,13 +216822,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlcounterattackStream st;
                 try { st = c2.cdlcounterattackOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -217226,7 +216863,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlcounterattackStream sA = c2.cdlcounterattackOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -217279,10 +216916,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 5e-1;
         double[] fz_o = new double[svN];
@@ -217338,13 +216971,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldarkcloudcoverStream st;
                 try { st = c2.cdldarkcloudcoverOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -217380,7 +217012,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldarkcloudcoverStream sA = c2.cdldarkcloudcoverOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -217433,10 +217065,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -217491,13 +217119,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldojiStream st;
                 try { st = c2.cdldojiOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -217533,7 +217160,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldojiStream sA = c2.cdldojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -217586,10 +217213,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -217644,13 +217267,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldojistarStream st;
                 try { st = c2.cdldojistarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -217686,7 +217308,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldojistarStream sA = c2.cdldojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -217739,10 +217361,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -217797,13 +217415,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdldragonflydojiStream st;
                 try { st = c2.cdldragonflydojiOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -217839,7 +217456,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdldragonflydojiStream sA = c2.cdldragonflydojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -217892,10 +217509,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -217950,13 +217563,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlengulfingStream st;
                 try { st = c2.cdlengulfingOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -217992,7 +217604,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlengulfingStream sA = c2.cdlengulfingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -218045,10 +217657,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -218104,13 +217712,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdleveningdojistarStream st;
                 try { st = c2.cdleveningdojistarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -218146,7 +217753,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdleveningdojistarStream sA = c2.cdleveningdojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -218199,10 +217806,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -218258,13 +217861,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdleveningstarStream st;
                 try { st = c2.cdleveningstarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -218300,7 +217902,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdleveningstarStream sA = c2.cdleveningstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -218353,10 +217955,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -218411,13 +218009,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlgapsidesidewhiteStream st;
                 try { st = c2.cdlgapsidesidewhiteOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -218453,7 +218050,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlgapsidesidewhiteStream sA = c2.cdlgapsidesidewhiteOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -218506,10 +218103,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -218564,13 +218157,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlgravestonedojiStream st;
                 try { st = c2.cdlgravestonedojiOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -218606,7 +218198,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlgravestonedojiStream sA = c2.cdlgravestonedojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -218659,10 +218251,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -218717,13 +218305,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhammerStream st;
                 try { st = c2.cdlhammerOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -218759,7 +218346,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhammerStream sA = c2.cdlhammerOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -218812,10 +218399,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -218870,13 +218453,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhangingmanStream st;
                 try { st = c2.cdlhangingmanOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -218912,7 +218494,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhangingmanStream sA = c2.cdlhangingmanOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -218965,10 +218547,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219023,13 +218601,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlharamiStream st;
                 try { st = c2.cdlharamiOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219065,7 +218642,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlharamiStream sA = c2.cdlharamiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -219118,10 +218695,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219176,13 +218749,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlharamicrossStream st;
                 try { st = c2.cdlharamicrossOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219218,7 +218790,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlharamicrossStream sA = c2.cdlharamicrossOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -219271,10 +218843,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219329,13 +218897,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhighwaveStream st;
                 try { st = c2.cdlhighwaveOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219371,7 +218938,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhighwaveStream sA = c2.cdlhighwaveOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -219424,10 +218991,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219482,13 +219045,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhikkakeStream st;
                 try { st = c2.cdlhikkakeOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219524,7 +219086,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhikkakeStream sA = c2.cdlhikkakeOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -219577,10 +219139,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219635,13 +219193,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhikkakemodStream st;
                 try { st = c2.cdlhikkakemodOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219677,7 +219234,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhikkakemodStream sA = c2.cdlhikkakemodOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -219730,10 +219287,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219788,13 +219341,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlhomingpigeonStream st;
                 try { st = c2.cdlhomingpigeonOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219830,7 +219382,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlhomingpigeonStream sA = c2.cdlhomingpigeonOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -219883,10 +219435,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -219941,13 +219489,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlidentical3crowsStream st;
                 try { st = c2.cdlidentical3crowsOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -219983,7 +219530,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlidentical3crowsStream sA = c2.cdlidentical3crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220036,10 +219583,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -220094,13 +219637,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlinneckStream st;
                 try { st = c2.cdlinneckOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -220136,7 +219678,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlinneckStream sA = c2.cdlinneckOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220189,10 +219731,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -220247,13 +219785,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlinvertedhammerStream st;
                 try { st = c2.cdlinvertedhammerOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -220289,7 +219826,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlinvertedhammerStream sA = c2.cdlinvertedhammerOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220342,10 +219879,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -220400,13 +219933,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlkickingStream st;
                 try { st = c2.cdlkickingOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -220442,7 +219974,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlkickingStream sA = c2.cdlkickingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220495,10 +220027,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -220553,13 +220081,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlkickingbylengthStream st;
                 try { st = c2.cdlkickingbylengthOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -220595,7 +220122,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlkickingbylengthStream sA = c2.cdlkickingbylengthOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220648,10 +220175,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -220706,13 +220229,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlladderbottomStream st;
                 try { st = c2.cdlladderbottomOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -220748,7 +220270,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlladderbottomStream sA = c2.cdlladderbottomOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220801,10 +220323,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -220859,13 +220377,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdllongleggeddojiStream st;
                 try { st = c2.cdllongleggeddojiOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -220901,7 +220418,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdllongleggeddojiStream sA = c2.cdllongleggeddojiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -220954,10 +220471,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -221012,13 +220525,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdllonglineStream st;
                 try { st = c2.cdllonglineOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -221054,7 +220566,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdllonglineStream sA = c2.cdllonglineOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -221107,10 +220619,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -221165,13 +220673,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmarubozuStream st;
                 try { st = c2.cdlmarubozuOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -221207,7 +220714,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmarubozuStream sA = c2.cdlmarubozuOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -221260,10 +220767,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -221318,13 +220821,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmatchinglowStream st;
                 try { st = c2.cdlmatchinglowOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -221360,7 +220862,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmatchinglowStream sA = c2.cdlmatchinglowOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -221413,10 +220915,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 5e-1;
         double[] fz_o = new double[svN];
@@ -221472,13 +220970,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmatholdStream st;
                 try { st = c2.cdlmatholdOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -221514,7 +221011,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmatholdStream sA = c2.cdlmatholdOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -221567,10 +221064,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -221626,13 +221119,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmorningdojistarStream st;
                 try { st = c2.cdlmorningdojistarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -221668,7 +221160,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmorningdojistarStream sA = c2.cdlmorningdojistarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -221721,10 +221213,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double optInPenetration = json.contains("\"optInPenetration\"") ? jsonDouble(json, "optInPenetration") : 3e-1;
         double[] fz_o = new double[svN];
@@ -221780,13 +221268,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlmorningstarStream st;
                 try { st = c2.cdlmorningstarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInPenetration); }
@@ -221822,7 +221309,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlmorningstarStream sA = c2.cdlmorningstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInPenetration);
@@ -221875,10 +221362,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -221933,13 +221416,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlonneckStream st;
                 try { st = c2.cdlonneckOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -221975,7 +221457,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlonneckStream sA = c2.cdlonneckOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222028,10 +221510,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -222086,13 +221564,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlpiercingStream st;
                 try { st = c2.cdlpiercingOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -222128,7 +221605,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlpiercingStream sA = c2.cdlpiercingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222181,10 +221658,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -222239,13 +221712,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlrickshawmanStream st;
                 try { st = c2.cdlrickshawmanOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -222281,7 +221753,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlrickshawmanStream sA = c2.cdlrickshawmanOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222334,10 +221806,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -222392,13 +221860,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlrisefall3methodsStream st;
                 try { st = c2.cdlrisefall3methodsOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -222434,7 +221901,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlrisefall3methodsStream sA = c2.cdlrisefall3methodsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222487,10 +221954,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -222545,13 +222008,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlseparatinglinesStream st;
                 try { st = c2.cdlseparatinglinesOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -222587,7 +222049,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlseparatinglinesStream sA = c2.cdlseparatinglinesOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222640,10 +222102,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -222698,13 +222156,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlshootingstarStream st;
                 try { st = c2.cdlshootingstarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -222740,7 +222197,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlshootingstarStream sA = c2.cdlshootingstarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222793,10 +222250,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -222851,13 +222304,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlshortlineStream st;
                 try { st = c2.cdlshortlineOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -222893,7 +222345,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlshortlineStream sA = c2.cdlshortlineOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -222946,10 +222398,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223004,13 +222452,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlspinningtopStream st;
                 try { st = c2.cdlspinningtopOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223046,7 +222493,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlspinningtopStream sA = c2.cdlspinningtopOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -223099,10 +222546,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223157,13 +222600,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlstalledpatternStream st;
                 try { st = c2.cdlstalledpatternOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223199,7 +222641,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlstalledpatternStream sA = c2.cdlstalledpatternOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -223252,10 +222694,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223310,13 +222748,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlsticksandwichStream st;
                 try { st = c2.cdlsticksandwichOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223352,7 +222789,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlsticksandwichStream sA = c2.cdlsticksandwichOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -223405,10 +222842,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223463,13 +222896,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdltakuriStream st;
                 try { st = c2.cdltakuriOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223505,7 +222937,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdltakuriStream sA = c2.cdltakuriOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -223558,10 +222990,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223616,13 +223044,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdltasukigapStream st;
                 try { st = c2.cdltasukigapOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223658,7 +223085,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdltasukigapStream sA = c2.cdltasukigapOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -223711,10 +223138,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223769,13 +223192,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdlthrustingStream st;
                 try { st = c2.cdlthrustingOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223811,7 +223233,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdlthrustingStream sA = c2.cdlthrustingOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -223864,10 +223286,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -223922,13 +223340,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CdltristarStream st;
                 try { st = c2.cdltristarOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -223964,7 +223381,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CdltristarStream sA = c2.cdltristarOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -224017,10 +223434,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -224075,13 +223488,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlunique3riverStream st;
                 try { st = c2.cdlunique3riverOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -224117,7 +223529,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlunique3riverStream sA = c2.cdlunique3riverOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -224170,10 +223582,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -224228,13 +223636,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlupsidegap2crowsStream st;
                 try { st = c2.cdlupsidegap2crowsOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -224270,7 +223677,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlupsidegap2crowsStream sA = c2.cdlupsidegap2crowsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -224323,10 +223730,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int candleLegs = jsonInt(json, "candleLegs");
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -224381,13 +223784,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Cdlxsidegap3methodsStream st;
                 try { st = c2.cdlxsidegap3methodsOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -224423,7 +223825,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Cdlxsidegap3methodsStream sA = c2.cdlxsidegap3methodsOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -224476,10 +223878,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -224531,13 +223929,12 @@ public class TaCodegenServe {
                 }
                 try { c2.ceilOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CeilStream st;
                 try { st = c2.ceilOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -224573,7 +223970,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CeilStream sA = c2.ceilOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -224626,10 +224023,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -224682,13 +224075,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cmfOpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CmfStream st;
                 try { st = c2.cmfOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -224724,7 +224116,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CmfStream sA = c2.cmfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -224782,10 +224174,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -224839,13 +224227,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cmoOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = (svCompat == 1) ? 1 : 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CmoStream st;
                 try { st = c2.cmoOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -224881,7 +224268,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CmoStream sA = c2.cmoOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -224939,10 +224326,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -224995,13 +224378,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cmouOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CmouStream st;
                 try { st = c2.cmouOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -225037,7 +224419,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CmouStream sA = c2.cmouOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -225095,10 +224477,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInWMAPeriod = json.contains("\"optInWMAPeriod\"") ? jsonInt(json, "optInWMAPeriod") : 10;
         int optInROC1Period = json.contains("\"optInROC1Period\"") ? jsonInt(json, "optInROC1Period") : 11;
         int optInROC2Period = json.contains("\"optInROC2Period\"") ? jsonInt(json, "optInROC2Period") : 14;
@@ -225153,13 +224531,12 @@ public class TaCodegenServe {
                 }
                 try { c2.coppockOpenAndFill(fz_c, optInWMAPeriod, optInROC1Period, optInROC2Period, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CoppockStream st;
                 try { st = c2.coppockOpen(java.util.Arrays.copyOf(fz_c, p), optInWMAPeriod, optInROC1Period, optInROC2Period); }
@@ -225195,7 +224572,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CoppockStream sA = c2.coppockOpen(java.util.Arrays.copyOf(fz_c, p0), optInWMAPeriod, optInROC1Period, optInROC2Period);
@@ -225253,10 +224630,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -225309,13 +224682,12 @@ public class TaCodegenServe {
                 }
                 try { c2.correlOpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CorrelStream st;
                 try { st = c2.correlOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -225351,7 +224723,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CorrelStream sA = c2.correlOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -225409,10 +224781,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -225464,13 +224832,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cosOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CosStream st;
                 try { st = c2.cosOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -225506,7 +224873,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CosStream sA = c2.cosOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -225559,10 +224926,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -225614,13 +224977,12 @@ public class TaCodegenServe {
                 }
                 try { c2.coshOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CoshStream st;
                 try { st = c2.coshOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -225656,7 +225018,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CoshStream sA = c2.coshOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -225709,10 +225071,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -225764,13 +225122,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cumsumOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CumsumStream st;
                 try { st = c2.cumsumOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -225806,7 +225163,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CumsumStream sA = c2.cumsumOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -225859,10 +225216,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         int optInROCPeriod = json.contains("\"optInROCPeriod\"") ? jsonInt(json, "optInROCPeriod") : 10;
         double[] fz_o = new double[svN];
@@ -225917,13 +225270,12 @@ public class TaCodegenServe {
                 }
                 try { c2.cviOpenAndFill(fz_h, fz_l, optInTimePeriod, optInROCPeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.CviStream st;
                 try { st = c2.cviOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod, optInROCPeriod); }
@@ -225959,7 +225311,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.CviStream sA = c2.cviOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod, optInROCPeriod);
@@ -226017,10 +225369,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -226074,13 +225422,12 @@ public class TaCodegenServe {
                 }
                 try { c2.demaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DemaStream st;
                 try { st = c2.demaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -226116,7 +225463,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DemaStream sA = c2.demaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -226174,10 +225521,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -226229,13 +225572,12 @@ public class TaCodegenServe {
                 }
                 try { c2.divOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DivStream st;
                 try { st = c2.divOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -226271,7 +225613,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DivStream sA = c2.divOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -226324,10 +225666,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -226391,13 +225729,12 @@ public class TaCodegenServe {
                 try { c2.donchianOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.donchianOpenAndFill(fz_h, fz_l, optInTimePeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DonchianStream st;
                 try { st = c2.donchianOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -226447,7 +225784,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DonchianStream sA = c2.donchianOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -226513,10 +225850,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -226569,13 +225902,12 @@ public class TaCodegenServe {
                 }
                 try { c2.dpoOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DpoStream st;
                 try { st = c2.dpoOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -226611,7 +225943,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DpoStream sA = c2.dpoOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -226669,10 +226001,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -226726,13 +226054,12 @@ public class TaCodegenServe {
                 }
                 try { c2.dxOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.DxStream st;
                 try { st = c2.dxOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -226768,7 +226095,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.DxStream sA = c2.dxOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -226826,10 +226153,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 13;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -226882,13 +226205,12 @@ public class TaCodegenServe {
                 }
                 try { c2.efiOpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.EfiStream st;
                 try { st = c2.efiOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -226924,7 +226246,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.EfiStream sA = c2.efiOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -226982,10 +226304,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -227039,13 +226357,12 @@ public class TaCodegenServe {
                 }
                 try { c2.emaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.EmaStream st;
                 try { st = c2.emaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -227081,7 +226398,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.EmaStream sA = c2.emaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -227139,10 +226456,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -227195,13 +226508,12 @@ public class TaCodegenServe {
                 }
                 try { c2.erOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ErStream st;
                 try { st = c2.erOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -227237,7 +226549,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ErStream sA = c2.erOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -227295,10 +226607,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 13;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -227358,13 +226666,12 @@ public class TaCodegenServe {
                 try { c2.eriOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.eriOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.EriStream st;
                 try { st = c2.eriOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -227409,7 +226716,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.EriStream sA = c2.eriOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -227473,10 +226780,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -227528,13 +226831,12 @@ public class TaCodegenServe {
                 }
                 try { c2.expOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ExpStream st;
                 try { st = c2.expOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -227570,7 +226872,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ExpStream sA = c2.expOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -227623,10 +226925,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -227678,13 +226976,12 @@ public class TaCodegenServe {
                 }
                 try { c2.floorOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.FloorStream st;
                 try { st = c2.floorOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -227720,7 +227017,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.FloorStream sA = c2.floorOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -227773,10 +227070,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -227829,13 +227122,12 @@ public class TaCodegenServe {
                 }
                 try { c2.foscOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.FoscStream st;
                 try { st = c2.foscOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -227871,7 +227163,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.FoscStream sA = c2.foscOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -227929,10 +227221,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInLeftBars = json.contains("\"optInLeftBars\"") ? jsonInt(json, "optInLeftBars") : 2;
         int optInRightBars = json.contains("\"optInRightBars\"") ? jsonInt(json, "optInRightBars") : 2;
         double[] fz_o = new double[svN];
@@ -227990,13 +227278,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.FractalStream st;
                 try { st = c2.fractalOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInLeftBars, optInRightBars); }
@@ -228041,7 +227328,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.FractalStream sA = c2.fractalOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInLeftBars, optInRightBars);
@@ -228105,10 +227392,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -228177,13 +227460,12 @@ public class TaCodegenServe {
                 try { c2.haOpenAndFill(fz_o, fz_h, fz_l, fz_c, fz_o, f1, f2, f3); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.haOpenAndFill(fz_o, fz_h, fz_l, fz_c, f0, f0, f2, f3); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HaStream st;
                 try { st = c2.haOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -228238,7 +227520,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HaStream sA = c2.haOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -228296,10 +227578,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -228352,13 +227630,12 @@ public class TaCodegenServe {
                 }
                 try { c2.hmaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HmaStream st;
                 try { st = c2.hmaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -228394,7 +227671,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HmaStream sA = c2.hmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -228452,10 +227729,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -228508,13 +227781,12 @@ public class TaCodegenServe {
                 }
                 try { c2.htDcperiodOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtDcperiodStream st;
                 try { st = c2.htDcperiodOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -228550,7 +227822,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtDcperiodStream sA = c2.htDcperiodOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -228603,10 +227875,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -228659,13 +227927,12 @@ public class TaCodegenServe {
                 }
                 try { c2.htDcphaseOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtDcphaseStream st;
                 try { st = c2.htDcphaseOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -228701,7 +227968,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtDcphaseStream sA = c2.htDcphaseOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -228754,10 +228021,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -228816,13 +228079,12 @@ public class TaCodegenServe {
                 try { c2.htPhasorOpenAndFill(fz_c, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.htPhasorOpenAndFill(fz_c, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtPhasorStream st;
                 try { st = c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -228867,7 +228129,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtPhasorStream sA = c2.htPhasorOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -228923,10 +228185,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -228985,13 +228243,12 @@ public class TaCodegenServe {
                 try { c2.htSineOpenAndFill(fz_c, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.htSineOpenAndFill(fz_c, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtSineStream st;
                 try { st = c2.htSineOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -229036,7 +228293,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtSineStream sA = c2.htSineOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -229092,10 +228349,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -229148,13 +228401,12 @@ public class TaCodegenServe {
                 }
                 try { c2.htTrendlineOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtTrendlineStream st;
                 try { st = c2.htTrendlineOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -229190,7 +228442,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtTrendlineStream sA = c2.htTrendlineOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -229243,10 +228495,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -229298,13 +228546,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.HtTrendmodeStream st;
                 try { st = c2.htTrendmodeOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -229340,7 +228587,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.HtTrendmodeStream sA = c2.htTrendmodeOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -229393,10 +228640,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -229449,13 +228692,12 @@ public class TaCodegenServe {
                 }
                 try { c2.imiOpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ImiStream st;
                 try { st = c2.imiOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -229491,7 +228733,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ImiStream sA = c2.imiOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -229549,10 +228791,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -229606,13 +228844,12 @@ public class TaCodegenServe {
                 }
                 try { c2.kamaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.KamaStream st;
                 try { st = c2.kamaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -229648,7 +228885,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.KamaStream sA = c2.kamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -229706,10 +228943,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         int optInATRPeriod = json.contains("\"optInATRPeriod\"") ? jsonInt(json, "optInATRPeriod") : 10;
         double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 2e0;
@@ -229777,13 +229010,12 @@ public class TaCodegenServe {
                 try { c2.kcOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.kcOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInATRPeriod, optInNbDev, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.KcStream st;
                 try { st = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInATRPeriod, optInNbDev); }
@@ -229833,7 +229065,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.KcStream sA = c2.kcOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInATRPeriod, optInNbDev);
@@ -229899,10 +229131,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 9;
         int optInSlowK_Period = json.contains("\"optInSlowK_Period\"") ? jsonInt(json, "optInSlowK_Period") : 3;
         int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : 13;
@@ -229987,13 +229215,12 @@ public class TaCodegenServe {
                 try { c2.kdjOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fz_h, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.kdjOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.KdjStream st;
                 try { st = c2.kdjOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
@@ -230043,7 +229270,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.KdjStream sA = c2.kdjOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -230109,10 +229336,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -230165,13 +229388,12 @@ public class TaCodegenServe {
                 }
                 try { c2.linearregOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregStream st;
                 try { st = c2.linearregOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -230207,7 +229429,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregStream sA = c2.linearregOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -230265,10 +229487,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -230321,13 +229539,12 @@ public class TaCodegenServe {
                 }
                 try { c2.linearregAngleOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregAngleStream st;
                 try { st = c2.linearregAngleOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -230363,7 +229580,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregAngleStream sA = c2.linearregAngleOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -230421,10 +229638,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -230477,13 +229690,12 @@ public class TaCodegenServe {
                 }
                 try { c2.linearregInterceptOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregInterceptStream st;
                 try { st = c2.linearregInterceptOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -230519,7 +229731,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregInterceptStream sA = c2.linearregInterceptOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -230577,10 +229789,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -230633,13 +229841,12 @@ public class TaCodegenServe {
                 }
                 try { c2.linearregSlopeOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LinearregSlopeStream st;
                 try { st = c2.linearregSlopeOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -230675,7 +229882,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LinearregSlopeStream sA = c2.linearregSlopeOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -230733,10 +229940,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -230788,13 +229991,12 @@ public class TaCodegenServe {
                 }
                 try { c2.lnOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.LnStream st;
                 try { st = c2.lnOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -230830,7 +230032,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.LnStream sA = c2.lnOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -230883,10 +230085,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -230938,13 +230136,12 @@ public class TaCodegenServe {
                 }
                 try { c2.log10OpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Log10Stream st;
                 try { st = c2.log10Open(java.util.Arrays.copyOf(fz_c, p)); }
@@ -230980,7 +230177,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Log10Stream sA = c2.log10Open(java.util.Arrays.copyOf(fz_c, p0));
@@ -231033,10 +230230,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
         if (_raw_optInMAType < 0 || _raw_optInMAType >= MAType.values().length) {
@@ -231101,13 +230294,12 @@ public class TaCodegenServe {
                 }
                 try { c2.maOpenAndFill(fz_c, optInTimePeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MaStream st;
                 try { st = c2.maOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInMAType); }
@@ -231143,7 +230335,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MaStream sA = c2.maOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMAType);
@@ -231201,10 +230393,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
@@ -231271,13 +230459,12 @@ public class TaCodegenServe {
                 try { c2.macdOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.macdOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MacdStream st;
                 try { st = c2.macdOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
@@ -231327,7 +230514,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MacdStream sA = c2.macdOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -231393,10 +230580,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int _raw_optInFastMAType = json.contains("\"optInFastMAType\"") ? jsonInt(json, "optInFastMAType") : 0;
         if (_raw_optInFastMAType < 0 || _raw_optInFastMAType >= MAType.values().length) {
@@ -231488,13 +230671,12 @@ public class TaCodegenServe {
                 try { c2.macdextOpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.macdextOpenAndFill(fz_c, optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MacdextStream st;
                 try { st = c2.macdextOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType); }
@@ -231544,7 +230726,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MacdextStream sA = c2.macdextOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInFastMAType, optInSlowPeriod, optInSlowMAType, optInSignalPeriod, optInSignalMAType);
@@ -231610,10 +230792,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInSignalPeriod = json.contains("\"optInSignalPeriod\"") ? jsonInt(json, "optInSignalPeriod") : 9;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -231678,13 +230856,12 @@ public class TaCodegenServe {
                 try { c2.macdfixOpenAndFill(fz_c, optInSignalPeriod, fz_c, f1, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.macdfixOpenAndFill(fz_c, optInSignalPeriod, f0, f0, f2); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MacdfixStream st;
                 try { st = c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, p), optInSignalPeriod); }
@@ -231734,7 +230911,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MacdfixStream sA = c2.macdfixOpen(java.util.Arrays.copyOf(fz_c, p0), optInSignalPeriod);
@@ -231800,10 +230977,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double optInFastLimit = json.contains("\"optInFastLimit\"") ? jsonDouble(json, "optInFastLimit") : 5e-1;
         double optInSlowLimit = json.contains("\"optInSlowLimit\"") ? jsonDouble(json, "optInSlowLimit") : 5e-2;
         double[] fz_o = new double[svN];
@@ -231864,13 +231037,12 @@ public class TaCodegenServe {
                 try { c2.mamaOpenAndFill(fz_c, optInFastLimit, optInSlowLimit, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.mamaOpenAndFill(fz_c, optInFastLimit, optInSlowLimit, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MamaStream st;
                 try { st = c2.mamaOpen(java.util.Arrays.copyOf(fz_c, p), optInFastLimit, optInSlowLimit); }
@@ -231915,7 +231087,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MamaStream sA = c2.mamaOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastLimit, optInSlowLimit);
@@ -231971,10 +231143,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -232026,13 +231194,12 @@ public class TaCodegenServe {
                 }
                 try { c2.marketfiOpenAndFill(fz_h, fz_l, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MarketfiStream st;
                 try { st = c2.marketfiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -232068,7 +231235,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MarketfiStream sA = c2.marketfiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -232121,10 +231288,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 9;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 25;
         double[] fz_o = new double[svN];
@@ -232179,13 +231342,12 @@ public class TaCodegenServe {
                 }
                 try { c2.massiOpenAndFill(fz_h, fz_l, optInFastPeriod, optInSlowPeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MassiStream st;
                 try { st = c2.massiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInFastPeriod, optInSlowPeriod); }
@@ -232221,7 +231383,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MassiStream sA = c2.massiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInFastPeriod, optInSlowPeriod);
@@ -232279,10 +231441,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInMinPeriod = json.contains("\"optInMinPeriod\"") ? jsonInt(json, "optInMinPeriod") : 2;
         int optInMaxPeriod = json.contains("\"optInMaxPeriod\"") ? jsonInt(json, "optInMaxPeriod") : 30;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 0;
@@ -232349,13 +231507,12 @@ public class TaCodegenServe {
                 }
                 try { c2.mavpOpenAndFill(fz_c, fz_v, optInMinPeriod, optInMaxPeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MavpStream st;
                 try { st = c2.mavpOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInMinPeriod, optInMaxPeriod, optInMAType); }
@@ -232391,7 +231548,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MavpStream sA = c2.mavpOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInMinPeriod, optInMaxPeriod, optInMAType);
@@ -232449,10 +231606,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -232505,13 +231658,12 @@ public class TaCodegenServe {
                 }
                 try { c2.maxOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MaxStream st;
                 try { st = c2.maxOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -232547,7 +231699,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MaxStream sA = c2.maxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -232605,10 +231757,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -232660,13 +231808,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MaxindexStream st;
                 try { st = c2.maxindexOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -232702,7 +231849,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MaxindexStream sA = c2.maxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -232760,10 +231907,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -232815,13 +231958,12 @@ public class TaCodegenServe {
                 }
                 try { c2.medpriceOpenAndFill(fz_h, fz_l, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MedpriceStream st;
                 try { st = c2.medpriceOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p)); }
@@ -232857,7 +231999,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MedpriceStream sA = c2.medpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0));
@@ -232910,10 +232052,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -232966,13 +232104,12 @@ public class TaCodegenServe {
                 }
                 try { c2.mfiOpenAndFill(fz_h, fz_l, fz_c, fz_v, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MfiStream st;
                 try { st = c2.mfiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -233008,7 +232145,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MfiStream sA = c2.mfiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -233066,10 +232203,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -233122,13 +232255,12 @@ public class TaCodegenServe {
                 }
                 try { c2.midpointOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MidpointStream st;
                 try { st = c2.midpointOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -233164,7 +232296,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MidpointStream sA = c2.midpointOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -233222,10 +232354,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -233278,13 +232406,12 @@ public class TaCodegenServe {
                 }
                 try { c2.midpriceOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MidpriceStream st;
                 try { st = c2.midpriceOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -233320,7 +232447,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MidpriceStream sA = c2.midpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -233378,10 +232505,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -233434,13 +232557,12 @@ public class TaCodegenServe {
                 }
                 try { c2.minOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinStream st;
                 try { st = c2.minOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -233476,7 +232598,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinStream sA = c2.minOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -233534,10 +232656,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -233589,13 +232707,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f0[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinindexStream st;
                 try { st = c2.minindexOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -233631,7 +232748,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinindexStream sA = c2.minindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -233689,10 +232806,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -233751,13 +232864,12 @@ public class TaCodegenServe {
                 try { c2.minmaxOpenAndFill(fz_c, optInTimePeriod, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.minmaxOpenAndFill(fz_c, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinmaxStream st;
                 try { st = c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -233802,7 +232914,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinmaxStream sA = c2.minmaxOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -233866,10 +232978,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -233926,13 +233034,12 @@ public class TaCodegenServe {
                     for (int i = nb.value; i < svN; i++) if (f1[i] != (int)-987654321) fillOk = false;
                 }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinmaxindexStream st;
                 try { st = c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -233977,7 +233084,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinmaxindexStream sA = c2.minmaxindexOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -234041,10 +233148,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -234098,13 +233201,12 @@ public class TaCodegenServe {
                 }
                 try { c2.minusDiOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinusDiStream st;
                 try { st = c2.minusDiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -234140,7 +233242,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinusDiStream sA = c2.minusDiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -234198,10 +233300,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -234255,13 +233353,12 @@ public class TaCodegenServe {
                 }
                 try { c2.minusDmOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MinusDmStream st;
                 try { st = c2.minusDmOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -234297,7 +233394,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MinusDmStream sA = c2.minusDmOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -234355,10 +233452,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -234411,13 +233504,12 @@ public class TaCodegenServe {
                 }
                 try { c2.momOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MomStream st;
                 try { st = c2.momOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -234453,7 +233545,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MomStream sA = c2.momOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -234511,10 +233603,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -234566,13 +233654,12 @@ public class TaCodegenServe {
                 }
                 try { c2.multOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.MultStream st;
                 try { st = c2.multOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -234608,7 +233695,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.MultStream sA = c2.multOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -234661,10 +233748,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -234718,13 +233801,12 @@ public class TaCodegenServe {
                 }
                 try { c2.natrOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.NatrStream st;
                 try { st = c2.natrOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -234760,7 +233842,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.NatrStream sA = c2.natrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -234818,10 +233900,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -234873,13 +233951,12 @@ public class TaCodegenServe {
                 }
                 try { c2.nviOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.NviStream st;
                 try { st = c2.nviOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -234915,7 +233992,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.NviStream sA = c2.nviOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -234968,10 +234045,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -235023,13 +234096,12 @@ public class TaCodegenServe {
                 }
                 try { c2.obvOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ObvStream st;
                 try { st = c2.obvOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -235065,7 +234137,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ObvStream sA = c2.obvOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -235118,10 +234190,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double optInPercentile = json.contains("\"optInPercentile\"") ? jsonDouble(json, "optInPercentile") : 5e1;
         double[] fz_o = new double[svN];
@@ -235175,13 +234243,12 @@ public class TaCodegenServe {
                 }
                 try { c2.percentileOpenAndFill(fz_c, optInTimePeriod, optInPercentile, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PercentileStream st;
                 try { st = c2.percentileOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInPercentile); }
@@ -235217,7 +234284,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PercentileStream sA = c2.percentileOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInPercentile);
@@ -235275,10 +234342,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 100;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -235331,13 +234394,12 @@ public class TaCodegenServe {
                 }
                 try { c2.percentrankOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PercentrankStream st;
                 try { st = c2.percentrankOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -235373,7 +234435,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PercentrankStream sA = c2.percentrankOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -235431,10 +234493,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -235488,13 +234546,12 @@ public class TaCodegenServe {
                 }
                 try { c2.plusDiOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PlusDiStream st;
                 try { st = c2.plusDiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -235530,7 +234587,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PlusDiStream sA = c2.plusDiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -235588,10 +234645,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -235645,13 +234698,12 @@ public class TaCodegenServe {
                 }
                 try { c2.plusDmOpenAndFill(fz_h, fz_l, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PlusDmStream st;
                 try { st = c2.plusDmOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInTimePeriod); }
@@ -235687,7 +234739,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PlusDmStream sA = c2.plusDmOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInTimePeriod);
@@ -235745,10 +234797,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
@@ -235814,13 +234862,12 @@ public class TaCodegenServe {
                 }
                 try { c2.ppoOpenAndFill(fz_c, optInFastPeriod, optInSlowPeriod, optInMAType, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PpoStream st;
                 try { st = c2.ppoOpen(java.util.Arrays.copyOf(fz_c, p), optInFastPeriod, optInSlowPeriod, optInMAType); }
@@ -235856,7 +234903,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PpoStream sA = c2.ppoOpen(java.util.Arrays.copyOf(fz_c, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -235914,10 +234961,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -235969,13 +235012,12 @@ public class TaCodegenServe {
                 }
                 try { c2.pviOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PviStream st;
                 try { st = c2.pviOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -236011,7 +235053,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PviStream sA = c2.pviOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -236064,10 +235106,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 12;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 26;
         int _raw_optInMAType = json.contains("\"optInMAType\"") ? jsonInt(json, "optInMAType") : 1;
@@ -236133,13 +235171,12 @@ public class TaCodegenServe {
                 }
                 try { c2.pvoOpenAndFill(fz_v, optInFastPeriod, optInSlowPeriod, optInMAType, fz_v); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PvoStream st;
                 try { st = c2.pvoOpen(java.util.Arrays.copyOf(fz_v, p), optInFastPeriod, optInSlowPeriod, optInMAType); }
@@ -236175,7 +235212,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PvoStream sA = c2.pvoOpen(java.util.Arrays.copyOf(fz_v, p0), optInFastPeriod, optInSlowPeriod, optInMAType);
@@ -236233,10 +235270,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -236288,13 +235321,12 @@ public class TaCodegenServe {
                 }
                 try { c2.pvtOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.PvtStream st;
                 try { st = c2.pvtOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -236330,7 +235362,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.PvtStream sA = c2.pvtOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -236383,10 +235415,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -236439,13 +235467,12 @@ public class TaCodegenServe {
                 }
                 try { c2.qstickOpenAndFill(fz_o, fz_c, optInTimePeriod, fz_o); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.QstickStream st;
                 try { st = c2.qstickOpen(java.util.Arrays.copyOf(fz_o, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -236481,7 +235508,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.QstickStream sA = c2.qstickOpen(java.util.Arrays.copyOf(fz_o, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -236539,10 +235566,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -236596,13 +235619,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rmaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RmaStream st;
                 try { st = c2.rmaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -236638,7 +235660,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RmaStream sA = c2.rmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -236696,10 +235718,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -236752,13 +235770,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rocOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RocStream st;
                 try { st = c2.rocOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -236794,7 +235811,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RocStream sA = c2.rocOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -236852,10 +235869,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -236908,13 +235921,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rocpOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RocpStream st;
                 try { st = c2.rocpOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -236950,7 +235962,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RocpStream sA = c2.rocpOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -237008,10 +236020,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -237064,13 +236072,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rocrOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RocrStream st;
                 try { st = c2.rocrOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -237106,7 +236113,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RocrStream sA = c2.rocrOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -237164,10 +236171,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -237220,13 +236223,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rocr100OpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.Rocr100Stream st;
                 try { st = c2.rocr100Open(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -237262,7 +236264,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.Rocr100Stream sA = c2.rocr100Open(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -237320,10 +236322,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -237377,13 +236375,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rsiOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = (svCompat == 1) ? 1 : 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RsiStream st;
                 try { st = c2.rsiOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -237419,7 +236416,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RsiStream sA = c2.rsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -237477,10 +236474,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         int optInStdDevPeriod = json.contains("\"optInStdDevPeriod\"") ? jsonInt(json, "optInStdDevPeriod") : 10;
         double[] fz_o = new double[svN];
@@ -237535,13 +236528,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rviOpenAndFill(fz_c, optInTimePeriod, optInStdDevPeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RviStream st;
                 try { st = c2.rviOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInStdDevPeriod); }
@@ -237577,7 +236569,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RviStream sA = c2.rviOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInStdDevPeriod);
@@ -237635,10 +236627,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 20;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -237691,13 +236679,12 @@ public class TaCodegenServe {
                 }
                 try { c2.rvolOpenAndFill(fz_v, optInTimePeriod, fz_v); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.RvolStream st;
                 try { st = c2.rvolOpen(java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -237733,7 +236720,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.RvolStream sA = c2.rvolOpen(java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -237791,10 +236778,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double optInAcceleration = json.contains("\"optInAcceleration\"") ? jsonDouble(json, "optInAcceleration") : 2e-2;
         double optInMaximum = json.contains("\"optInMaximum\"") ? jsonDouble(json, "optInMaximum") : 2e-1;
         double[] fz_o = new double[svN];
@@ -237848,13 +236831,12 @@ public class TaCodegenServe {
                 }
                 try { c2.sarOpenAndFill(fz_h, fz_l, optInAcceleration, optInMaximum, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SarStream st;
                 try { st = c2.sarOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInAcceleration, optInMaximum); }
@@ -237890,7 +236872,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SarStream sA = c2.sarOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInAcceleration, optInMaximum);
@@ -237943,10 +236925,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double optInStartValue = json.contains("\"optInStartValue\"") ? jsonDouble(json, "optInStartValue") : 0e0;
         double optInOffsetOnReverse = json.contains("\"optInOffsetOnReverse\"") ? jsonDouble(json, "optInOffsetOnReverse") : 0e0;
         double optInAccelerationInitLong = json.contains("\"optInAccelerationInitLong\"") ? jsonDouble(json, "optInAccelerationInitLong") : 2e-2;
@@ -238006,13 +236984,12 @@ public class TaCodegenServe {
                 }
                 try { c2.sarextOpenAndFill(fz_h, fz_l, optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SarextStream st;
                 try { st = c2.sarextOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort); }
@@ -238048,7 +237025,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SarextStream sA = c2.sarextOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), optInStartValue, optInOffsetOnReverse, optInAccelerationInitLong, optInAccelerationLong, optInAccelerationMaxLong, optInAccelerationInitShort, optInAccelerationShort, optInAccelerationMaxShort);
@@ -238101,10 +237078,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -238156,13 +237129,12 @@ public class TaCodegenServe {
                 }
                 try { c2.sinOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SinStream st;
                 try { st = c2.sinOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -238198,7 +237170,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SinStream sA = c2.sinOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -238251,10 +237223,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -238306,13 +237274,12 @@ public class TaCodegenServe {
                 }
                 try { c2.sinhOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SinhStream st;
                 try { st = c2.sinhOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -238348,7 +237315,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SinhStream sA = c2.sinhOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -238401,10 +237368,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -238457,13 +237420,12 @@ public class TaCodegenServe {
                 }
                 try { c2.smaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SmaStream st;
                 try { st = c2.smaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -238499,7 +237461,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SmaStream sA = c2.smaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -238557,10 +237519,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 13;
         int optInFastPeriod = json.contains("\"optInFastPeriod\"") ? jsonInt(json, "optInFastPeriod") : 2;
         int optInSlowPeriod = json.contains("\"optInSlowPeriod\"") ? jsonInt(json, "optInSlowPeriod") : 25;
@@ -238623,13 +237581,12 @@ public class TaCodegenServe {
                 try { c2.smiOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.smiOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SmiStream st;
                 try { st = c2.smiOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod); }
@@ -238674,7 +237631,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SmiStream sA = c2.smiOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastPeriod, optInSlowPeriod, optInSignalPeriod);
@@ -238738,10 +237695,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -238793,13 +237746,12 @@ public class TaCodegenServe {
                 }
                 try { c2.sqrtOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SqrtStream st;
                 try { st = c2.sqrtOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -238835,7 +237787,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SqrtStream sA = c2.sqrtOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -238888,10 +237840,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 1e0;
         double[] fz_o = new double[svN];
@@ -238945,13 +237893,12 @@ public class TaCodegenServe {
                 }
                 try { c2.stddevOpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StddevStream st;
                 try { st = c2.stddevOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInNbDev); }
@@ -238987,7 +237934,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StddevStream sA = c2.stddevOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev);
@@ -239045,10 +237992,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInSlowK_Period = json.contains("\"optInSlowK_Period\"") ? jsonInt(json, "optInSlowK_Period") : 3;
         int _raw_optInSlowK_MAType = json.contains("\"optInSlowK_MAType\"") ? jsonInt(json, "optInSlowK_MAType") : 0;
@@ -239128,13 +238071,12 @@ public class TaCodegenServe {
                 try { c2.stochOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.stochOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StochStream st;
                 try { st = c2.stochOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType); }
@@ -239179,7 +238121,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StochStream sA = c2.stochOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
@@ -239243,10 +238185,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInFastD_Period = json.contains("\"optInFastD_Period\"") ? jsonInt(json, "optInFastD_Period") : 3;
         int _raw_optInFastD_MAType = json.contains("\"optInFastD_MAType\"") ? jsonInt(json, "optInFastD_MAType") : 0;
@@ -239318,13 +238256,12 @@ public class TaCodegenServe {
                 try { c2.stochfOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.stochfOpenAndFill(fz_h, fz_l, fz_c, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StochfStream st;
                 try { st = c2.stochfOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
@@ -239369,7 +238306,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StochfStream sA = c2.stochfOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -239433,10 +238370,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         int optInFastK_Period = json.contains("\"optInFastK_Period\"") ? jsonInt(json, "optInFastK_Period") : 5;
         int optInFastD_Period = json.contains("\"optInFastD_Period\"") ? jsonInt(json, "optInFastD_Period") : 3;
@@ -239510,13 +238443,12 @@ public class TaCodegenServe {
                 try { c2.stochrsiOpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, fz_c, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.stochrsiOpenAndFill(fz_c, optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = (svCompat == 1) ? 1 : 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.StochrsiStream st;
                 try { st = c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType); }
@@ -239561,7 +238493,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.StochrsiStream sA = c2.stochrsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInFastK_Period, optInFastD_Period, optInFastD_MAType);
@@ -239625,10 +238557,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -239680,13 +238608,12 @@ public class TaCodegenServe {
                 }
                 try { c2.subOpenAndFill(fz_c, fz_v, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SubStream st;
                 try { st = c2.subOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -239722,7 +238649,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SubStream sA = c2.subOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -239775,10 +238702,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -239831,13 +238754,12 @@ public class TaCodegenServe {
                 }
                 try { c2.sumOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SumStream st;
                 try { st = c2.sumOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -239873,7 +238795,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SumStream sA = c2.sumOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -239931,10 +238853,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 10;
         double optInMultiplier = json.contains("\"optInMultiplier\"") ? jsonDouble(json, "optInMultiplier") : 3e0;
         double[] fz_o = new double[svN];
@@ -239994,13 +238912,12 @@ public class TaCodegenServe {
                 }
                 try { c2.supertrendOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, optInMultiplier, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.SupertrendStream st;
                 try { st = c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInMultiplier); }
@@ -240045,7 +238962,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.SupertrendStream sA = c2.supertrendOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInMultiplier);
@@ -240109,10 +239026,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double optInVFactor = json.contains("\"optInVFactor\"") ? jsonDouble(json, "optInVFactor") : 7e-1;
         double[] fz_o = new double[svN];
@@ -240167,13 +239080,12 @@ public class TaCodegenServe {
                 }
                 try { c2.t3OpenAndFill(fz_c, optInTimePeriod, optInVFactor, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.T3Stream st;
                 try { st = c2.t3Open(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInVFactor); }
@@ -240209,7 +239121,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.T3Stream sA = c2.t3Open(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInVFactor);
@@ -240267,10 +239179,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -240322,13 +239230,12 @@ public class TaCodegenServe {
                 }
                 try { c2.tanOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TanStream st;
                 try { st = c2.tanOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -240364,7 +239271,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TanStream sA = c2.tanOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -240417,10 +239324,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -240472,13 +239375,12 @@ public class TaCodegenServe {
                 }
                 try { c2.tanhOpenAndFill(fz_c, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TanhStream st;
                 try { st = c2.tanhOpen(java.util.Arrays.copyOf(fz_c, p)); }
@@ -240514,7 +239416,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TanhStream sA = c2.tanhOpen(java.util.Arrays.copyOf(fz_c, p0));
@@ -240567,10 +239469,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -240624,13 +239522,12 @@ public class TaCodegenServe {
                 }
                 try { c2.temaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TemaStream st;
                 try { st = c2.temaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -240666,7 +239563,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TemaStream sA = c2.temaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -240724,10 +239621,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -240779,13 +239672,12 @@ public class TaCodegenServe {
                 }
                 try { c2.trangeOpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TrangeStream st;
                 try { st = c2.trangeOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -240821,7 +239713,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TrangeStream sA = c2.trangeOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -240874,10 +239766,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -240930,13 +239818,12 @@ public class TaCodegenServe {
                 }
                 try { c2.trimaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TrimaStream st;
                 try { st = c2.trimaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -240972,7 +239859,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TrimaStream sA = c2.trimaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -241030,10 +239917,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -241087,13 +239970,12 @@ public class TaCodegenServe {
                 }
                 try { c2.trixOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TrixStream st;
                 try { st = c2.trixOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -241129,7 +240011,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TrixStream sA = c2.trixOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -241187,10 +240069,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -241243,13 +240121,12 @@ public class TaCodegenServe {
                 }
                 try { c2.tsfOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TsfStream st;
                 try { st = c2.tsfOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -241285,7 +240162,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TsfStream sA = c2.tsfOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -241343,10 +240220,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInFirstPeriod = json.contains("\"optInFirstPeriod\"") ? jsonInt(json, "optInFirstPeriod") : 25;
         int optInSecondPeriod = json.contains("\"optInSecondPeriod\"") ? jsonInt(json, "optInSecondPeriod") : 13;
         double[] fz_o = new double[svN];
@@ -241401,13 +240274,12 @@ public class TaCodegenServe {
                 }
                 try { c2.tsiOpenAndFill(fz_c, optInFirstPeriod, optInSecondPeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TsiStream st;
                 try { st = c2.tsiOpen(java.util.Arrays.copyOf(fz_c, p), optInFirstPeriod, optInSecondPeriod); }
@@ -241443,7 +240315,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TsiStream sA = c2.tsiOpen(java.util.Arrays.copyOf(fz_c, p0), optInFirstPeriod, optInSecondPeriod);
@@ -241501,10 +240373,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -241556,13 +240424,12 @@ public class TaCodegenServe {
                 }
                 try { c2.typpriceOpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.TyppriceStream st;
                 try { st = c2.typpriceOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -241598,7 +240465,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.TyppriceStream sA = c2.typpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -241651,10 +240518,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod1 = json.contains("\"optInTimePeriod1\"") ? jsonInt(json, "optInTimePeriod1") : 7;
         int optInTimePeriod2 = json.contains("\"optInTimePeriod2\"") ? jsonInt(json, "optInTimePeriod2") : 14;
         int optInTimePeriod3 = json.contains("\"optInTimePeriod3\"") ? jsonInt(json, "optInTimePeriod3") : 28;
@@ -241709,13 +240572,12 @@ public class TaCodegenServe {
                 }
                 try { c2.ultoscOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod1, optInTimePeriod2, optInTimePeriod3, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.UltoscStream st;
                 try { st = c2.ultoscOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3); }
@@ -241751,7 +240613,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.UltoscStream sA = c2.ultoscOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod1, optInTimePeriod2, optInTimePeriod3);
@@ -241809,10 +240671,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 5;
         double optInNbDev = json.contains("\"optInNbDev\"") ? jsonDouble(json, "optInNbDev") : 1e0;
         double[] fz_o = new double[svN];
@@ -241866,13 +240724,12 @@ public class TaCodegenServe {
                 }
                 try { c2.varOpenAndFill(fz_c, optInTimePeriod, optInNbDev, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VarStream st;
                 try { st = c2.varOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod, optInNbDev); }
@@ -241908,7 +240765,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VarStream sA = c2.varOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod, optInNbDev);
@@ -241966,10 +240823,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 28;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -242022,13 +240875,12 @@ public class TaCodegenServe {
                 }
                 try { c2.vhfOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VhfStream st;
                 try { st = c2.vhfOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -242064,7 +240916,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VhfStream sA = c2.vhfOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -242122,10 +240974,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -242184,13 +241032,12 @@ public class TaCodegenServe {
                 try { c2.vortexOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h, f1); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
                 try { c2.vortexOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, f0, f0); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases output */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VortexStream st;
                 try { st = c2.vortexOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -242235,7 +241082,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VortexStream sA = c2.vortexOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -242299,10 +241146,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -242354,13 +241197,12 @@ public class TaCodegenServe {
                 }
                 try { c2.vwapOpenAndFill(fz_h, fz_l, fz_c, fz_v, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VwapStream st;
                 try { st = c2.vwapOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p)); }
@@ -242396,7 +241238,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VwapStream sA = c2.vwapOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0));
@@ -242449,10 +241291,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -242505,13 +241343,12 @@ public class TaCodegenServe {
                 }
                 try { c2.vwmaOpenAndFill(fz_c, fz_v, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.VwmaStream st;
                 try { st = c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, p), java.util.Arrays.copyOf(fz_v, p), optInTimePeriod); }
@@ -242547,7 +241384,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.VwmaStream sA = c2.vwmaOpen(java.util.Arrays.copyOf(fz_c, p0), java.util.Arrays.copyOf(fz_v, p0), optInTimePeriod);
@@ -242605,10 +241442,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -242660,13 +241493,12 @@ public class TaCodegenServe {
                 }
                 try { c2.wadOpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WadStream st;
                 try { st = c2.wadOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -242702,7 +241534,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WadStream sA = c2.wadOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -242755,10 +241587,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
         double[] fz_l = new double[svN];
@@ -242810,13 +241638,12 @@ public class TaCodegenServe {
                 }
                 try { c2.wclpriceOpenAndFill(fz_h, fz_l, fz_c, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WclpriceStream st;
                 try { st = c2.wclpriceOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p)); }
@@ -242852,7 +241679,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WclpriceStream sA = c2.wclpriceOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0));
@@ -242905,10 +241732,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 14;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -242961,13 +241784,12 @@ public class TaCodegenServe {
                 }
                 try { c2.willrOpenAndFill(fz_h, fz_l, fz_c, optInTimePeriod, fz_h); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WillrStream st;
                 try { st = c2.willrOpen(java.util.Arrays.copyOf(fz_h, p), java.util.Arrays.copyOf(fz_l, p), java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -243003,7 +241825,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WillrStream sA = c2.willrOpen(java.util.Arrays.copyOf(fz_h, p0), java.util.Arrays.copyOf(fz_l, p0), java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -243061,10 +241883,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -243117,13 +241935,12 @@ public class TaCodegenServe {
                 }
                 try { c2.wmaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.WmaStream st;
                 try { st = c2.wmaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -243159,7 +241976,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.WmaStream sA = c2.wmaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);
@@ -243217,10 +242034,6 @@ public class TaCodegenServe {
         if (svN < 2) svN = 2;
         if (svN > 256) svN = 256;
         int svK = jsonInt(json, "unstablePeriod");
-        int svCompat = jsonInt(json, "compatibility");
-        if (svCompat != 0) {
-            return "{\"error\":\"java has no compatibility API (pinned to Default)\"}";
-        }
         int optInTimePeriod = json.contains("\"optInTimePeriod\"") ? jsonInt(json, "optInTimePeriod") : 30;
         double[] fz_o = new double[svN];
         double[] fz_h = new double[svN];
@@ -243274,13 +242087,12 @@ public class TaCodegenServe {
                 }
                 try { c2.zlemaOpenAndFill(fz_c, optInTimePeriod, fz_c); fillOk = false; } catch (IllegalArgumentException _e) { /* expected: output aliases input */ }
             } catch (IllegalArgumentException _e) { fillOk = false; }
-            int seedShift = 0;
-            int[] pcs = { lb + 1 + seedShift, lb + 13, svN / 2, svN - 1 };
+            int[] pcs = { lb + 1, lb + 13, svN / 2, svN - 1 };
             java.util.Arrays.sort(pcs);
             int prevP = -1;
             for (int pi = 0; pi < pcs.length; pi++) {
                 int p = pcs[pi];
-                if (p < lb + 1 + seedShift || p > svN - 1 || p == prevP) continue;
+                if (p < lb + 1 || p > svN - 1 || p == prevP) continue;
                 prevP = p;
                 Core.ZlemaStream st;
                 try { st = c2.zlemaOpen(java.util.Arrays.copyOf(fz_c, p), optInTimePeriod); }
@@ -243316,7 +242128,7 @@ public class TaCodegenServe {
                 }
             }
             {
-                int p0 = lb + 1 + seedShift;
+                int p0 = lb + 1;
                 if (p0 <= svN - 1) {
                     try {
                         Core.ZlemaStream sA = c2.zlemaOpen(java.util.Arrays.copyOf(fz_c, p0), optInTimePeriod);

@@ -2,8 +2,9 @@
 //!
 //! `Update` refuses a non-finite bar, writes no state, and moves no count: the
 //! rejection costs the caller nothing but the call. Counting a bar the caller
-//! decided not to feed is `TA_StreamAdvance`'s job — `advance()`, `advance()`,
-//! `Advance()` — which is what leaves the retry expressible.
+//! decided not to feed is the `advance` call's job — `TA_<N>_Advance`,
+//! `advance()`, `advance()`, `Advance()` — which is what leaves the retry
+//! expressible.
 //!
 //! `stream_verify` never feeds a non-finite bar, so it cannot see this at all.
 //! The per-backend stream suites in C, Java and C# can. What this suite adds
@@ -20,11 +21,10 @@
 //!    peek that wrote the handle, which is the whole guarantee of the receiver
 //!    being `const`/`&self`.
 //!
-//! The three managed backends' `advance` is emitted per handle and swept here
-//! too. C's is one hand-written function in `ta_utility.c` reached through the
-//! shared range head, so nothing per-function can see it: its gate is
-//! `regen-check` over the emitted prototype, and `test_stream_finite.c` leg (d),
-//! which does not compile without it.
+//! `advance` is emitted per handle in all four backends (#387) and swept here
+//! in all four. `every_c_handle_answers_its_own_range` below covers what only C
+//! has: a range READER whose two out-parameters can be paired the wrong way
+//! round.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -220,21 +220,24 @@ fn no_advance_on_any_reject(
             0,
             "{what}: the refused bar is counted. A rejection changes nothing at all \
              (#384) — counting a bar the caller declined to feed is what \
-             TA_StreamAdvance is for:\n{body}"
+             the advance call is for:\n{body}"
         );
     }
     sites.len()
 }
 
-/// The per-handle `advance`, in the three backends that emit one. Matched on its
-/// signature and on the saturating guard in its body, so an accessor that lost
-/// the `MAX_INDEX` bound (#180) does not read as present.
-fn advance_entry_sig(lang: &str) -> Option<&'static str> {
+/// The per-handle `advance`, in every backend. Matched on its signature and on
+/// the saturating guard in its body, so an accessor that lost the `MAX_INDEX`
+/// bound (#180) does not read as present.
+fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
     match lang {
-        "c" => None, // one hand-written TA_StreamAdvance, not per function
-        "rust" => Some("pub fn advance(&mut self) {"),
-        "java" => Some("public void advance() {"),
-        "csharp" => Some("public void Advance()"),
+        "c" => {
+            let c = format!("TA_RetCode TA_{upper}_Advance( ");
+            Box::new(move |l: &str| l.starts_with("TA_LIB_API ") && l.contains(&c))
+        }
+        "rust" => Box::new(|l: &str| l.starts_with("pub fn advance(&mut self) {")),
+        "java" => Box::new(|l: &str| l.starts_with("public void advance() {")),
+        "csharp" => Box::new(|l: &str| l.starts_with("public void Advance()")),
         other => panic!("unknown backend {other}"),
     }
 }
@@ -289,15 +292,13 @@ fn only_an_accepted_bar_advances_the_range() {
 
             // The call that DOES count a skipped bar, and the only one left that
             // moves the range without a bar.
-            if let Some(sig) = advance_entry_sig(lang) {
-                let adv = body_of(&s, |l: &str| l.trim_start().starts_with(sig));
-                assert!(
-                    adv.contains(guard),
-                    "{name}: {lang} advance() does not move the count under the \
-                     MAX_INDEX guard:\n{adv}"
-                );
-                advancers += 1;
-            }
+            let adv = body_of(&s, advance_entry_sig(lang, &upper));
+            assert!(
+                adv.contains(guard),
+                "{name}: {lang} advance() does not move the count under the \
+                 MAX_INDEX guard:\n{adv}"
+            );
+            advancers += 1;
 
             let peek = body_of(&s, entry_sig(lang, &upper, "peek"));
             assert!(
@@ -320,12 +321,62 @@ fn only_an_accepted_bar_advances_the_range() {
     assert!(updates >= 700, "only {updates} Update reject sites were checked");
     assert!(peeks >= 700, "only {peeks} Peek bodies were checked");
     assert!(guards >= 700, "only {guards} non-advancing guard checks were made");
-    // Its own counter, not a share of the others: `advance` is emitted by three
-    // backends, so a sweep that stopped reaching it would still saturate theirs.
-    assert!(advancers >= 600, "only {advancers} advance() bodies were checked");
+    // Its own counter, not a share of the others: a sweep that stopped reaching
+    // `advance` would still saturate the Update and Peek ones.
+    assert!(advancers >= 800, "only {advancers} advance() bodies were checked");
     println!(
         "checked {updates} Update reject sites, {peeks} peeks, {guards} guards, \
          {advancers} advance() bodies across {} backends",
         LANGS.len()
     );
+}
+
+/// C's range READER, which the sweep above has no counterpart for in the other
+/// three backends: `out_range()` hands back one value, while `TA_<N>_OutRange`
+/// fills two out-parameters that a swapped pair would populate silently — the
+/// count would read as a begIdx and every comparison would still be an int.
+///
+/// The whole prototype and the whole guard are matched, not a prefix and a bare
+/// `return`: a body with only `if( !stream )` still returns `TA_BAD_PARAM` and
+/// still assigns both fields, so a narrowed guard reads green against anything
+/// weaker — and writing through a NULL out-parameter is the class the typed
+/// accessors exist to make unreachable. `OUT_META` in `indicator_variants_suite`
+/// pins the batch tier's pair the same way, for the same bug.
+#[test]
+fn every_c_handle_answers_its_own_range() {
+    let mut readers = 0usize;
+    for name in streaming_funcs() {
+        let upper = name.to_uppercase();
+        let s = section(&name, "c");
+        assert!(
+            !s.contains("TA_StreamOutRange") && !s.contains("TA_StreamAdvance"),
+            "{name}: the void * accessor is still emitted"
+        );
+
+        let want = format!(
+            "TA_LIB_API TA_RetCode TA_{upper}_OutRange( const TA_{upper}_Stream *stream, \
+             int *outBegIdx, int *outNBElement )"
+        );
+        let body = body_of(&s, move |l: &str| l == want);
+        assert!(
+            body.contains("*outBegIdx = stream->outRangeBegIdx;")
+                && body.contains("*outNBElement = stream->outRangeCount;"),
+            "{name}: OutRange does not answer the head in its declared order:\n{body}"
+        );
+        assert!(
+            body.contains("if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;"),
+            "{name}: OutRange does not reject all three NULLs:\n{body}"
+        );
+
+        let adv = body_of(&s, advance_entry_sig("c", &upper));
+        assert!(
+            adv.contains("if( !stream ) return TA_BAD_PARAM;"),
+            "{name}: Advance takes a NULL handle:\n{adv}"
+        );
+        readers += 1;
+    }
+    // Its own counter, not a share of the sweep's: that one saturates on the
+    // three backends this test cannot see.
+    assert!(readers >= 200, "only {readers} C range accessor pairs were checked");
+    println!("checked {readers} C OutRange/Advance pairs");
 }

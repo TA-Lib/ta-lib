@@ -2953,45 +2953,7 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
         emit_func_h_block(&mut o, func, &ref_lookup);
     }
 
-    // The one accessor shared by every stream handle (issue #241). It is not
-    // per-function on purpose: the range is two ints at a fixed offset in every
-    // TA_<N>_Stream, so 172 typed accessors would add 172 public entry points
-    // for the same pair.
-    o.push_str(
-        "/* The range of bars a live stream has an output for, in the\n\
-         \x20* input series' coordinates: [*outBegIdx, *outBegIdx + *outNBElement).\n\
-         \x20*\n\
-         \x20* It is what the batch call over the same bars reports. A handle opened\n\
-         \x20* over `historyLen` bars starts at (lookback, historyLen - lookback) and\n\
-         \x20* each accepted Update adds one; a rejected Update changes nothing, and\n\
-         \x20* neither does Peek. So after a handle has been carried over nbBar bars,\n\
-         \x20* by any mix of Open, Update and TA_StreamAdvance, this reports what the\n\
-         \x20* batch call over ( 0, nbBar-1 ) does. The count saturates at\n\
-         \x20* TA_MAX_INDEX.\n\
-         \x20*\n\
-         \x20* Takes any TA_<N>_Stream *; there is one accessor, not one per\n\
-         \x20* function. Returns TA_BAD_PARAM on a NULL argument.\n\
-         \x20*/\n\
-         TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream,\n\
-         \x20                                int *outBegIdx,\n\
-         \x20                                int *outNBElement );\n\
-         \n\
-         /* Count one bar the handle was not fed: the range advances by one and\n\
-         \x20* nothing else moves — TA_<N>_Value keeps answering the previous\n\
-         \x20* output, which is this bar's output too.\n\
-         \x20*\n\
-         \x20* For a bar the caller leaves out: one an Update rejected and that will\n\
-         \x20* not be re-fed, or a session with no print. Without it two handles on\n\
-         \x20* one feed drift a bar apart when only one of them skips.\n\
-         \x20*\n\
-         \x20* Takes any TA_<N>_Stream *; there is one call, not one per function.\n\
-         \x20* Returns TA_BAD_PARAM on a NULL argument.\n\
-         \x20*/\n\
-         TA_LIB_API TA_RetCode TA_StreamAdvance( void *stream );\n\
-         \n",
-    );
-
-    // Utility function section (unstable period, compatibility, candle settings).
+    // Utility function section (unstable period, candle settings).
     o.push_str(
         "/* Some TA functions takes a certain amount of input data\n\
          \x20* before stabilizing and outputing meaningful data. This is\n\
@@ -3017,12 +2979,17 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \n\
          TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );\n\
          \n\
-         /* DEPRECATED: TA_SetCompatibility is deprecated and may be removed in\n\
-         \x20* a future release. Avoid it in new code and rely on TA-Lib's default\n\
-         \x20* behavior. See ta_defs.h for the enumeration TA_Compatibility.\n\
+         /* DEPRECATED: the MetaStock variant was removed in 0.8.1, so\n\
+         \x20* TA_SetCompatibility does nothing and TA_GetCompatibility always\n\
+         \x20* answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing\n\
+         \x20* sources still compile and link; avoid them in new code.\n\
+         \x20*\n\
+         \x20* Deliberately NOT TA_LIB_API: no released version ever exported\n\
+         \x20* them from the Windows DLL, and a retired setting is not the one\n\
+         \x20* to start. Adding it back would widen the shipped surface.\n\
          \x20*/\n\
-         TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
-         TA_LIB_API TA_Compatibility TA_GetCompatibility( void );\n\
+         TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
+         TA_Compatibility TA_GetCompatibility( void );\n\
          \n\
          /* Candlesticks struct and functions\n\
          \x20* Because candlestick patterns are subjective, it is necessary \n\

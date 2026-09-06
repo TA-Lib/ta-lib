@@ -96,19 +96,6 @@ impl std::fmt::Display for RetCode {
 /// the abstraction layer.
 impl std::error::Error for RetCode {}
 
-/// Compatibility mode for technical analysis calculations.
-///
-/// Crate-internal and pinned to [`Compatibility::Default`]: the variant notion is
-/// not maintained, so the Rust API never exposes a way to select one. The variant
-/// branches in the generated indicators are dead code pending their removal.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Compatibility {
-    /// Default TA-Lib compatibility mode.
-    Default,
-    /// Metastock-compatible calculation mode.
-    Metastock,
-}
-
 /// Identifies functions that have an unstable period.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
@@ -329,17 +316,15 @@ pub enum CandleSettingType {
 /// ```
 ///
 /// To change a setting, build a new `Core` — cloning it copies bytes and never
-/// allocates, but there are 280 of them on x86-64 (an `[i32; N]` array, eleven
-/// `CandleSetting`s and the compatibility mode), so it is a memcpy rather than
-/// a free operation. [`Core::to_builder`] seeds a builder from an existing
-/// `Core` for clone-and-modify. Stream handles do not hold one: each carries
-/// only the `CandleSetting`s its own step reads.
+/// allocates, but there are enough of them (an `[i32; N]` array and eleven
+/// `CandleSetting`s) that it is a memcpy rather than a free operation.
+/// [`Core::to_builder`] seeds a builder from an existing `Core` for
+/// clone-and-modify. Stream handles do not hold one: each carries only the
+/// `CandleSetting`s its own step reads.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Core {
     /// Unstable period for each function identified by [`FuncUnstId`].
     pub(crate) unstable_period: [i32; FuncUnstId::COUNT],
-    /// Compatibility mode (default: `Compatibility::Default`).
-    pub(crate) compatibility: Compatibility,
     /// Candlestick pattern settings.
     pub(crate) candle_settings: CandleSettings,
 }
@@ -383,7 +368,6 @@ impl Core {
     pub fn new() -> Self {
         Self {
             unstable_period: [0; FuncUnstId::COUNT],
-            compatibility: Compatibility::Default,
             candle_settings: CandleSettings::default_settings(),
         }
     }
@@ -405,7 +389,6 @@ impl Core {
     pub fn to_builder(&self) -> CoreBuilder {
         CoreBuilder {
             unstable_period: self.unstable_period,
-            compatibility: self.compatibility,
             candle_settings: self.candle_settings,
             err: None,
         }
@@ -461,7 +444,6 @@ impl Default for Core {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CoreBuilder {
     unstable_period: [i32; FuncUnstId::COUNT],
-    compatibility: Compatibility,
     candle_settings: CandleSettings,
     /// The first rejection seen by any setter, surfaced by [`CoreBuilder::build`].
     ///
@@ -478,7 +460,6 @@ impl CoreBuilder {
     pub fn new() -> Self {
         Self {
             unstable_period: [0; FuncUnstId::COUNT],
-            compatibility: Compatibility::Default,
             candle_settings: CandleSettings::default_settings(),
             err: None,
         }
@@ -666,7 +647,6 @@ impl CoreBuilder {
         }
         Ok(Core {
             unstable_period: self.unstable_period,
-            compatibility: self.compatibility,
             candle_settings: self.candle_settings,
         })
     }
@@ -720,29 +700,12 @@ mod tests {
     #[test]
     fn new_default_and_empty_builder_are_all_defaults() {
         for core in [Core::new(), Core::default(), Core::builder().build().unwrap()] {
-            assert_eq!(core.compatibility, Compatibility::Default);
             assert!(core.unstable_period.iter().all(|&p| p == 0));
             // A representative candle default (BodyDoji: HighLow range, 10, 0.1).
             assert_eq!(core.candle_settings.body_doji.range_type, RangeType::HighLow);
             assert_eq!(core.candle_settings.body_doji.avg_period, 10);
             assert_eq!(core.candle_settings.body_doji.factor, 0.1);
         }
-    }
-
-    #[test]
-    fn compatibility_is_pinned_to_default() {
-        // There is no public setter: every construction path — including the
-        // clone-and-modify one — must leave the mode at Default, so the variant
-        // branches in the generated indicators stay unreachable.
-        let derived = Core::builder()
-            .unstable_period(FuncUnstId::EMA, 10)
-            .build()
-            .unwrap()
-            .to_builder()
-            .unstable_period(FuncUnstId::RSI, 5)
-            .build()
-            .unwrap();
-        assert_eq!(derived.compatibility, Compatibility::Default);
     }
 
     #[test]

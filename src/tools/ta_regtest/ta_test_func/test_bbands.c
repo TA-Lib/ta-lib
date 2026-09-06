@@ -83,7 +83,6 @@ typedef struct
    TA_Real       optInNbDevUp;
    TA_Real       optInNbDevDn;
    TA_Integer    optInMethod_3;
-   TA_Integer    compatibility;
 
    TA_RetCode expectedRetCode;
 
@@ -120,147 +119,109 @@ static ErrorNumber test_bbands_reference_datasets( void );
 static TA_Test tableTest[] =
 {
 
-   /****************************/
-   /*   BBANDS - CLASSIC - EMA */
-   /****************************/
+   /******************/
+   /*   BBANDS - EMA */
+   /******************/
 
    /* No multiplier */
-   /* With upper band multiplier only. */
-   /* With lower band multiplier only. */
-   /* With identical upper/lower multiplier. */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+   { 1, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     13, 93.674,   /* Upper */
-     13, 87.679,   /* Middle */
-     13, 81.685 }, /* Lower */
-
-   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
-     19, 252-19,
-     0, 98.0734,   /* Upper */
+     0, 95.4822,   /* Upper  */
      0, 92.8910,   /* Middle */
-     0, 87.7086 }, /* Lower */
-   /* With distinctive upper/lower multiplier. */
-
-   /****************************/
-   /*   BBANDS - CLASSIC - SMA */
-   /****************************/
-   /* No multiplier */
-   /* With upper band multiplier only. */
-   /* With lower band multiplier only. */
-   /* With identical upper/lower multiplier. */
-   { 1, 0,  251, 20, 2.0, 2.0, TA_MAType_SMA, TA_COMPATIBILITY_DEFAULT, TA_SUCCESS,
+     0, 90.2998 }, /* Lower  */
+   { 0, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     0, 98.0734,   /* Upper */
-     0, 92.8910,   /* Middle */
-     0, 87.7086 }, /* Lower */
-   /* With distinctive upper/lower multiplier. */
-
-
-   /******************************/
-   /*   BBANDS - METASTOCK - SMA */
-   /******************************/
-
-   /* No multiplier */
-   /* With upper band multiplier only. */
-   /* With lower band multiplier only. */
-
-   /* With identical upper/lower multiplier. */
-   { 1, 0,  251, 20, 2.0, 2.0, TA_MAType_SMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
-     19, 252-19,
-     0, 98.0734,    /* Upper */
-     0, 92.8910,    /* Middle */
-     0, 87.7086  }, /* Lower */
-
-   /* With distinctive upper/lower multiplier. */
-
-   /******************************/
-   /*   BBANDS - METASTOCK - EMA */
-   /******************************/
-
-   /* No multiplier */
-   { 1, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
-     19, 252-19,
-     0, 94.6914,   /* Upper  */
-     0, 92.1002,   /* Middle */
-     0, 89.5090 }, /* Lower  */
-   { 0, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
-     19, 252-19,
-     3, 94.0477,   /* Upper  */
-     3, 90.7270,   /* Middle */
-     3, 87.4063 }, /* Lower  */
-   { 0, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     3, 94.6334,   /* Upper  */
+     3, 91.3127,   /* Middle */
+     3, 87.9920 }, /* Lower  */
+   { 0, 0,  251, 20, 1.0, 1.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
      252-20, 111.5415,   /* Upper  */
      252-20, 108.5265,   /* Middle */
      252-20, 105.5115 }, /* Lower  */
 
    /* With upper band multiplier only. */
-   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     0, 95.9870,   /* Upper */
-     0, 92.1002,   /* Middle */
-     0, 89.5090},  /* Lower */
-   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     0, 96.7778,   /* Upper */
+     0, 92.8910,   /* Middle */
+     0, 90.2998},  /* Lower */
+   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     3, 95.7080,  /* Upper */
-     3, 90.7270,  /* Middle */
-     3, 87.4063}, /* Lower */
-   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     3, 96.2937,  /* Upper */
+     3, 91.3127,  /* Middle */
+     3, 87.9920}, /* Lower */
+   { 0, 0,  251, 20, 1.5, 1.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
      252-20, 113.0490,   /* Upper */
      252-20, 108.5265,   /* Middle */
      252-20, 105.5115 }, /* Lower */
 
    /* With lower band multiplier only. */
-   { 1, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 1, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     0, 94.6914,   /* Upper */
-     0, 92.1002,   /* Middle */
-     0, 88.2134 }, /* Lower */
-   { 0, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     0, 95.4822,   /* Upper */
+     0, 92.8910,   /* Middle */
+     0, 89.0042 }, /* Lower */
+   { 0, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     3, 94.0477,  /* Upper */
-     3, 90.7270,  /* Middle */
-     3, 85.7460}, /* Lower */
-   { 0, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     3, 94.6334,  /* Upper */
+     3, 91.3127,  /* Middle */
+     3, 86.3317}, /* Lower */
+   { 0, 0,  251, 20, 1.0, 1.5, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
      252-20, 111.5415,   /* Upper */
      252-20, 108.5265,   /* Middle */
      252-20, 104.0040},  /* Lower */
 
    /* With identical upper/lower multiplier. */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     0, 97.2826,  /* Upper */
-     0, 92.1002,  /* Middle */
-     0, 86.9178}, /* Lower */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     0, 98.0734,  /* Upper */
+     0, 92.8910,  /* Middle */
+     0, 87.7086}, /* Lower */
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     1, 97.2637,    /* Upper */
-     1, 91.7454,    /* Middle */
-     1, 86.2271}, /* Lower */
-   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     1, 97.9792,    /* Upper */
+     1, 92.4609,    /* Middle */
+     1, 86.9426}, /* Lower */
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     252-20, 114.5564,  /* Upper */
+     13, 93.674,   /* Upper */
+     13, 87.679,   /* Middle */
+     13, 81.685 }, /* Lower */
+   { 0, 0,  251, 20, 2.0, 2.0, TA_MAType_EMA, TA_SUCCESS,
+     19, 252-19,
+     252-20, 114.5565,  /* Upper */
      252-20, 108.5265,  /* Middle */
      252-20, 102.4965}, /* Lower */
 
    /* With distinctive upper/lower multiplier. */
-   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     0, 97.2826,   /* Upper */
-     0, 92.1002,   /* Middle */
-     0, 88.2134 }, /* Lower */
-   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     0, 98.0734,   /* Upper */
+     0, 92.8910,   /* Middle */
+     0, 89.0042 }, /* Lower */
+   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     3, 97.3684,    /* Upper */
-     3, 90.7270,    /* Middle */
-     3, 85.7460}, /* Lower */
-   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_COMPATIBILITY_METASTOCK, TA_SUCCESS,
+     3, 97.9541,    /* Upper */
+     3, 91.3127,    /* Middle */
+     3, 86.3317}, /* Lower */
+   { 0, 0,  251, 20, 2.0, 1.5, TA_MAType_EMA, TA_SUCCESS,
      19, 252-19,
-     252-20, 114.5564, /* Upper */
+     252-20, 114.5565, /* Upper */
      252-20, 108.5265, /* Middle */
-     252-20, 104.0040} /* Lower */
+     252-20, 104.0040}, /* Lower */
+
+   /******************/
+   /*   BBANDS - SMA */
+   /******************/
+   /* With identical upper/lower multiplier. */
+   { 1, 0,  251, 20, 2.0, 2.0, TA_MAType_SMA, TA_SUCCESS,
+     19, 252-19,
+     0, 98.0734,   /* Upper */
+     0, 92.8910,   /* Middle */
+     0, 87.7086 } /* Lower */
 
 };
 
@@ -448,8 +409,6 @@ static ErrorNumber do_test( const TA_History *history,
    setInputBuffer( 2, history->close, history->nbBars );
    setInputBuffer( 3, history->close, history->nbBars );
 
-   TA_SetCompatibility( (TA_Compatibility)test->compatibility );
-
    /* Make a simple first call. */
    retCode = TA_BBANDS( test->startIdx,
                         test->endIdx,
@@ -636,7 +595,6 @@ static ErrorNumber test_bbands_mama_alignment( const TA_History *history )
    double *mama, *fama, *sd, *up, *mid, *low;
 
    TA_SetUnstablePeriod( TA_FUNC_UNST_MAMA, 0 );
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
 
    mama = (double *)TA_Malloc( history->nbBars * sizeof(double) );
    fama = (double *)TA_Malloc( history->nbBars * sizeof(double) );
@@ -837,8 +795,6 @@ static ErrorNumber test_bbands_sma_fastpath_equivalence( const TA_History *histo
 
    double *sma, *sd, *up, *mid, *low;
 
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
-
    sma = (double *)TA_Malloc( history->nbBars * sizeof(double) );
    sd  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
    up  = (double *)TA_Malloc( history->nbBars * sizeof(double) );
@@ -1001,7 +957,6 @@ static ErrorNumber test_bbands_sma_stable_variance( void )
    for( i = 0; i < NB; i++ ) sumSq += in[i] * in[i];
    oldVar = sumSq / (double)period - meanRef * meanRef;
 
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
    rc = TA_BBANDS( 0, NB - 1, in, period, nbDev, nbDev, TA_MAType_SMA,
                    &begIdx, &nbElt, up, mid, low );
    if( rc != TA_SUCCESS || nbElt != 1 )

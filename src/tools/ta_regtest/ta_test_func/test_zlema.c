@@ -202,9 +202,8 @@ ErrorNumber test_func_zlema( TA_History *history )
 {
    ErrorNumber retValue;
 
-   /* DO_TEST resets the compatibility mode between groups but NOT the unstable
-    * periods, and earlier groups set them. Every leg below except (5) assumes
-    * TA_FUNC_UNST_EMA is 0. */
+   /* DO_TEST does not reset the unstable periods and earlier groups set them.
+    * Every leg below except (5) assumes TA_FUNC_UNST_EMA is 0. */
    TA_SetUnstablePeriod( TA_FUNC_UNST_ALL, 0 );
 
    retValue = test_zlema_oracle( history );

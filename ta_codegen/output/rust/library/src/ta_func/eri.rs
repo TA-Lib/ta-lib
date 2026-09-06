@@ -177,13 +177,10 @@ impl Core {
         //
         // One fused loop, not ema() + a combine map: a composed form cannot
         // stream (raw bar inputs are outside check_map_step's provenance), which
-        // is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-        // op for op -- sequential seed sum from 0.0 then one divide, the
-        // unstable-period warm-up consumed bar by bar -- so the differential
-        // against shipped TA_EMA holds bitwise. No compatibility branch: the
-        // Metastock arm is unreachable from three of the four backends, and a
-        // new function honouring it would make C diverge from them (EFI/SMI
-        // precedent).
+        // is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+        // sequential seed sum from 0.0 then one divide, the unstable-period
+        // warm-up consumed bar by bar -- so the differential against shipped
+        // TA_EMA holds bitwise.
         //
         // No division in the per-bar map: no 0/0, no NaN path (#112 by
         // construction). Bull >= Bear on every bar since high >= low.
@@ -485,13 +482,10 @@ impl Core {
             //
             // One fused loop, not ema() + a combine map: a composed form cannot
             // stream (raw bar inputs are outside check_map_step's provenance), which
-            // is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-            // op for op -- sequential seed sum from 0.0 then one divide, the
-            // unstable-period warm-up consumed bar by bar -- so the differential
-            // against shipped TA_EMA holds bitwise. No compatibility branch: the
-            // Metastock arm is unreachable from three of the four backends, and a
-            // new function honouring it would make C diverge from them (EFI/SMI
-            // precedent).
+            // is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+            // sequential seed sum from 0.0 then one divide, the unstable-period
+            // warm-up consumed bar by bar -- so the differential against shipped
+            // TA_EMA holds bitwise.
             //
             // No division in the per-bar map: no 0/0, no NaN path (#112 by
             // construction). Bull >= Bear on every bar since high >= low.
@@ -552,13 +546,10 @@ impl Core {
             //
             // One fused loop, not ema() + a combine map: a composed form cannot
             // stream (raw bar inputs are outside check_map_step's provenance), which
-            // is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-            // op for op -- sequential seed sum from 0.0 then one divide, the
-            // unstable-period warm-up consumed bar by bar -- so the differential
-            // against shipped TA_EMA holds bitwise. No compatibility branch: the
-            // Metastock arm is unreachable from three of the four backends, and a
-            // new function honouring it would make C diverge from them (EFI/SMI
-            // precedent).
+            // is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+            // sequential seed sum from 0.0 then one divide, the unstable-period
+            // warm-up consumed bar by bar -- so the differential against shipped
+            // TA_EMA holds bitwise.
             //
             // No division in the per-bar map: no 0/0, no NaN path (#112 by
             // construction). Bull >= Bear on every bar since high >= low.
@@ -852,7 +843,7 @@ impl EriStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_ERI_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -864,7 +855,7 @@ impl EriStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_ERI_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

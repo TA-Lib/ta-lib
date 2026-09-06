@@ -65,6 +65,9 @@
  *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
  *                forced the fastest adaptation on any instrument quoted small
  *                enough to fall under it.
+ *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
+ *                let it exceed its own mathematical maximum, and the squared
+ *                smoothing constant then amplified instead of averaging.
  */
 
 // Import types from parent module
@@ -252,25 +255,21 @@ impl Core {
         trailingValue = tempReal2;
         // Calculate the efficiency ratio.
         //
-        // The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-        // both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-        // sit beside it was not -- it declared the window flat, and forced the
-        // fastest adaptation, for every window of an instrument quoted below it
-        // (issue #253). A genuinely flat window is now recognized by the exact bar
-        // count above instead.
+        // The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+        // clamp it: past 1 the squared smoothing constant amplifies instead of
+        // averaging and the recurrence below stops being a convex combination.
         //
-        // `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-        // beside it compares against the SIGNED numerator, so it is false whenever
-        // periodROC < 0 and cannot stand in for one. sumROC1 is a running
-        // add/subtract of fabs terms, so an addend absorbed on the way in and
-        // subtracted later at full precision drives it to exactly 0.0 on a window
-        // that is not flat; without this clause that bar divides by zero and the
-        // +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-        // carried until #350).
+        // `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+        // +Inf onto the same 1.0 -- so a value test written against it would pass
+        // with it deleted. Keep it anyway: the divisor sweep requires a division to
+        // be dominated by a test of its own divisor against a literal zero.
         if sumROC1 <= 0.0 || sumROC1 <= periodROC {
             tempReal = 1.0;
         } else {
             tempReal = (periodROC / sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
         }
         // Calculate the smoothing constant
         tempReal = (tempReal as f64).mul_add(constDiff, constMax);
@@ -313,6 +312,9 @@ impl Core {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
             }
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
@@ -357,6 +359,9 @@ impl Core {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
             }
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
@@ -555,6 +560,9 @@ impl Core {
             tempReal = 1.0;
         } else {
             tempReal = (periodROC / sp.sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
         }
         // Calculate the smoothing constant
         tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
@@ -701,25 +709,21 @@ impl Core {
         trailingValue = tempReal2;
         // Calculate the efficiency ratio.
         //
-        // The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-        // both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-        // sit beside it was not -- it declared the window flat, and forced the
-        // fastest adaptation, for every window of an instrument quoted below it
-        // (issue #253). A genuinely flat window is now recognized by the exact bar
-        // count above instead.
+        // The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+        // clamp it: past 1 the squared smoothing constant amplifies instead of
+        // averaging and the recurrence below stops being a convex combination.
         //
-        // `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-        // beside it compares against the SIGNED numerator, so it is false whenever
-        // periodROC < 0 and cannot stand in for one. sumROC1 is a running
-        // add/subtract of fabs terms, so an addend absorbed on the way in and
-        // subtracted later at full precision drives it to exactly 0.0 on a window
-        // that is not flat; without this clause that bar divides by zero and the
-        // +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-        // carried until #350).
+        // `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+        // +Inf onto the same 1.0 -- so a value test written against it would pass
+        // with it deleted. Keep it anyway: the divisor sweep requires a division to
+        // be dominated by a test of its own divisor against a literal zero.
         if sumROC1 <= 0.0 || sumROC1 <= periodROC {
             tempReal = 1.0;
         } else {
             tempReal = (periodROC / sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
         }
         // Calculate the smoothing constant
         tempReal = (tempReal as f64).mul_add(constDiff, constMax);
@@ -762,6 +766,9 @@ impl Core {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
             }
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
@@ -806,6 +813,9 @@ impl Core {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
             }
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(constDiff, constMax);
@@ -1047,6 +1057,9 @@ impl KamaStream {
                 tempReal = 1.0;
             } else {
                 tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
             }
             // Calculate the smoothing constant
             tempReal = (tempReal as f64).mul_add(sp.constDiff, sp.constMax);
@@ -1081,7 +1094,7 @@ impl KamaStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_KAMA_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -1093,7 +1106,7 @@ impl KamaStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_KAMA_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

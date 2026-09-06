@@ -2002,9 +2002,6 @@ struct CExpr<'a> {
 impl ExprEmitter for CExpr<'_> {
     fn var(&self, name: &str) -> String {
         match name {
-            "COMPATIBILITY" => "TA_GLOBALS_COMPATIBILITY".to_string(),
-            "METASTOCK" => "TA_COMPATIBILITY_METASTOCK".to_string(),
-            "DEFAULT" => "TA_COMPATIBILITY_DEFAULT".to_string(),
             "BAD_PARAM" => "TA_BAD_PARAM".to_string(),
             "INSUFFICIENT_HISTORY" => "TA_INSUFFICIENT_HISTORY".to_string(),
             "SUCCESS" => "TA_SUCCESS".to_string(),
@@ -2470,10 +2467,6 @@ fn render_func_call(
                     return format!("TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_{upper},{pascal})");
                 }
                 "TA_GLOBALS_UNSTABLE_PERIOD(0,0)".to_string()
-            }
-            SpecialBuiltin::Compatibility => {
-                // COMPATIBILITY() -> TA_GLOBALS_COMPATIBILITY
-                "TA_GLOBALS_COMPATIBILITY".to_string()
             }
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled

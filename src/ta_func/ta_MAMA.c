@@ -879,8 +879,7 @@ TA_RetCode TA_S_MAMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MAMA_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_MAMA_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_MAMA_Value). */
@@ -1895,6 +1894,21 @@ TA_LIB_API TA_RetCode TA_MAMA_Value( const TA_MAMA_Stream *stream, double *outMA
    *outMAMA = stream->cur_outMAMA;
    if( outFAMA != NULL )
       *outFAMA = stream->cur_outFAMA;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAMA_OutRange( const TA_MAMA_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MAMA_Advance( TA_MAMA_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
