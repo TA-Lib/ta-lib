@@ -1240,14 +1240,14 @@ static int build_json_request(CodegenRangeTestParam *p,
 
 /* Functions whose OUTPUT VALUES intentionally diverge from the frozen pre-cutover
  * reference (ta_ref_serve) and are pinned by hand-written tests instead.
- * STOCHRSI (issue #107): its internal STOCHF now guards the divide with
- * TA_IS_ZERO where the reference divided a sub-epsilon flat-RSI-window residue
- * into full-scale [0,100] noise — so ta_ref_serve is the wrong value oracle for
- * it (same reason it is excluded from --fuzz-064). STOCHRSI's structural parity
+ * STOCHRSI (issue #107): its internal STOCHF now answers a machine-flat window
+ * with 0 where the reference divided a sub-epsilon flat-RSI-window residue into
+ * full-scale [0,100] noise — so ta_ref_serve is the wrong value oracle for it
+ * (same reason it is excluded from --fuzz-064). STOCHRSI's structural parity
  * (retCode/outBegIdx/outNBElement) stays strict on every backend, and its values
  * are pinned by test_stoch.c (test_stochrsi_epsilon_issue107). Standalone STOCH/
  * STOCHF keep the same guard but do NOT diverge from the reference on raw OHLC
- * (a flat raw window has highest==lowest exactly, diff==0), so they stay strictly
+ * (a flat raw window has highest==lowest exactly), so they stay strictly
  * value-compared.
  *
  * CORREL (issue #242): the reference carries the one-pass
@@ -5898,6 +5898,13 @@ static const TA_Fuzz064Tol FUZZ_064_TOL[] = {
      * it is a percentage and output-relative. */
     { "ATR",                 TOL_REL_IN,  2e-15, 0.0 }, /* #338  measured 5.19e-16 */
     { "NATR",                TOL_REL_OUT, 4e-15, 0.0 }, /* #338  measured 1.29e-15 */
+    /* #395 %R divides by the window range and scales after, rather than by a
+     * copy pre-scaled by 1/-100. Named for the reason #338 gives above: the FMA
+     * bucket's output-relative 1e-9 is five orders looser than this needs and
+     * would swallow a real WILLR regression. Absolute, because %R is a bounded
+     * dimensionless oscillator -- its error floor is a ULP of 100 whatever the
+     * input magnitude, so neither input- nor output-relative is its dimension. */
+    { "WILLR",               TOL_ABS,     5e-14, 0.0 }, /* #395  measured 1.42e-14 */
     { "IMI",                 TOL_NAN_TO, 50.0, 0.0 },  /* #112 all-flat window 0/0 -> NaN, now 50.0 */
 };
 

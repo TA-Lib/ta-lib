@@ -6,7 +6,7 @@ Williams' %R momentum oscillator over a rolling period, bounded in [-100, 0]. Me
 
 ## Formula
 
-%R = -100 * (highestHigh - close) / (highestHigh - lowestLow) over the trailing optInTimePeriod bars; if highestHigh == lowestLow, output 0.
+%R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
 
 ## Inputs
 

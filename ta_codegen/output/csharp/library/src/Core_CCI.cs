@@ -67,6 +67,9 @@ public partial class Core
     *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
     *                level: the fixed band zeroed the whole output for any
     *                instrument quoted small enough to fall under it.
+    *  090626 MF,CC  Fix #395. Divide by the mean deviation, scale after: the
+    *                pre-scaled `0.015*tempReal2` underflowed to 0.0 on a
+    *                denormal price that the guard still called "not flat".
     */
    /// <summary>
    /// Number of leading input bars <c>CCI</c> consumes before it can produce its
@@ -191,7 +194,13 @@ public partial class Core
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* Divide by the mean deviation itself and scale after: the guard has to
+          * test the very expression the division uses, or a scaling step can
+          * carry a guarded-non-zero into a zero divisor. The band is relative and
+          * the underflow of the 0.015 product is absolute, so no band on the
+          * deviation can cover the product.
+          *
+          * Both tests are relative to the window's own price level (issue #253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -202,7 +211,7 @@ public partial class Core
           */
          tempReal3 = Math.Abs(theAverage);
          if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * tempReal2);
+            outReal[outIdx++] = tempReal / tempReal2 / 0.015;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -291,7 +300,7 @@ public partial class Core
          tempReal = lastValue - theAverage;
          tempReal3 = Math.Abs(theAverage);
          if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
-            outReal[outIdx++] = tempReal / (0.015 * tempReal2);
+            outReal[outIdx++] = tempReal / tempReal2 / 0.015;
          } else {
             outReal[outIdx++] = 0.0;
          }
@@ -589,7 +598,13 @@ public partial class Core
          tempReal2 /= sp.optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* Divide by the mean deviation itself and scale after: the guard has to
+          * test the very expression the division uses, or a scaling step can
+          * carry a guarded-non-zero into a zero divisor. The band is relative and
+          * the underflow of the 0.015 product is absolute, so no band on the
+          * deviation can cover the product.
+          *
+          * Both tests are relative to the window's own price level (issue #253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -600,7 +615,7 @@ public partial class Core
           */
          tempReal3 = Math.Abs(theAverage);
          if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
-            cur_outReal = tempReal / (0.015 * tempReal2);
+            cur_outReal = tempReal / tempReal2 / 0.015;
          } else {
             cur_outReal = 0.0;
          }
@@ -650,7 +665,13 @@ public partial class Core
       tempReal2 /= sp.optInTimePeriod;
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      /* Both tests are relative to the window's own price level (issue #253).
+      /* Divide by the mean deviation itself and scale after: the guard has to
+       * test the very expression the division uses, or a scaling step can
+       * carry a guarded-non-zero into a zero divisor. The band is relative and
+       * the underflow of the 0.015 product is absolute, so no band on the
+       * deviation can cover the product.
+       *
+       * Both tests are relative to the window's own price level (issue #253).
        * They ask "is this window flat?", and flatness is a property of the
        * prices relative to each other -- but a deviation carries the quote
        * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -661,7 +682,7 @@ public partial class Core
        */
       tempReal3 = Math.Abs(theAverage);
       if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
-         sp.cur_outReal = tempReal / (0.015 * tempReal2);
+         sp.cur_outReal = tempReal / tempReal2 / 0.015;
       } else {
          sp.cur_outReal = 0.0;
       }
@@ -772,7 +793,13 @@ public partial class Core
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* Divide by the mean deviation itself and scale after: the guard has to
+          * test the very expression the division uses, or a scaling step can
+          * carry a guarded-non-zero into a zero divisor. The band is relative and
+          * the underflow of the 0.015 product is absolute, so no band on the
+          * deviation can cover the product.
+          *
+          * Both tests are relative to the window's own price level (issue #253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -783,7 +810,7 @@ public partial class Core
           */
          tempReal3 = Math.Abs(theAverage);
          if( !(Math.Abs(tempReal) <= 0.00000000000001 * (tempReal3)) && !(Math.Abs(tempReal2) <= 0.00000000000001 * (tempReal3)) ) {
-            outReal[outIdx++ * outStride] = tempReal / (0.015 * tempReal2);
+            outReal[outIdx++ * outStride] = tempReal / tempReal2 / 0.015;
          } else {
             outReal[outIdx++ * outStride] = 0.0;
          }

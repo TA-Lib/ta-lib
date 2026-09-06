@@ -125,30 +125,34 @@ const ANNOTATED: &[(&str, &str, &str, &str)] = &[
     // does not reach it.
     ("VWMA", "tempV", "unguarded by decision: stateless per bar", "nan_inf_output"),
 
-    // OPEN, reported by the inline arm, and MEASURED on the released library in
-    // #395: both return TA_SUCCESS with inf/NaN. CCI guards `tempReal2` and divides
-    // by `0.015*tempReal2` (cci.c:127,129) -- the scaling underflows while the guard
-    // passes. CORREL guards `ssX` and `ssY` separately and divides by
-    // `sqrt(ssX*ssY)` (correl.c:234,236) -- the product underflows independently of
-    // either factor, and where `spXY` is zero the result is NaN, which the [-1,1]
-    // clamp does not catch because `NaN > 1.0` is false.
-    ("CCI", "0.015*tempReal2", "OPEN: inline scaling of a guarded operand; see #395", ""),
-    ("CORREL", "sqrt(ssX*ssY)", "OPEN: product underflows independently; see #395", ""),
+    // Reported by the inline arm and CLEARED by the range of the operation, which is
+    // what makes it the answer to #395 rather than another instance of it. `sqrt` maps
+    // any finite positive double into [2.3e-162, 1.4e154], so a product of two of them
+    // is representable at both ends -- it cannot underflow to 0.0 the way `sqrt(a*b)`
+    // does while `a` and `b` are still normals, and cannot overflow to +Inf either.
+    //
+    // The row is also the only structural hold on that fix: revert `correl.c:236` to
+    // one root and this key goes stale AND the new divisor arrives unannotated.
+    ("CORREL", "sqrt(ssX)*sqrt(ssY)", "a root of each factor stays in range", ""),
 
-    // OPEN, same shape, REACHABILITY NOT DEMONSTRATED -- by me or by #395, which does
-    // not mention them. The Hilbert family guards `Im != 0.0 && Re != 0.0` and then
-    // divides by `atan(Im/Re)*rad2Deg` (ht_dcperiod.c:318-319 and its six twins).
-    // Both operands being non-zero does not make the quotient representable: a small
-    // enough `Im/Re` underflows to 0.0 and `atan(0.0)` is exactly 0.0. That is the
-    // structural argument; I did not construct an input that reaches it, so these
-    // rows say "shape matches" and nothing stronger.
-    ("HT_DCPERIOD", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
-    ("HT_DCPHASE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
-    ("HT_PHASOR", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
-    ("HT_SINE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
-    ("HT_TRENDLINE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
-    ("HT_TRENDMODE", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
-    ("MAMA", "atan(Im/Re)*rad2Deg", "OPEN: shape matches, reachability unproven", ""),
+    // The Hilbert family divides by `atan(Im/Re)*rad2Deg` under `Im != 0.0 && Re != 0.0`
+    // (`ht_dcperiod.c:318-319` and its six twins), which bounds neither operand enough
+    // to establish the quotient. It does not have to: the very next statements
+    // clamp `period` into `[0.67*prev, 1.5*prev]` and then into `[6, 50]`, and a
+    // comparison against a non-NaN bound absorbs either infinity on the same bar --
+    // the first bar included, where `prev` is 0.0. `rad2Deg` is ~57.3 and scales the
+    // other way, so the arm fires on the tree shape rather than on a mechanism.
+    //
+    // Reasoned from the clamp, like the `smoothPeriod` rows above, and recorded so that
+    // removing it has something to contradict. What the clamp does NOT absorb is a NaN
+    // from both operands overflowing, which no test here claims to cover.
+    ("HT_DCPERIOD", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
+    ("HT_DCPHASE", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
+    ("HT_PHASOR", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
+    ("HT_SINE", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
+    ("HT_TRENDLINE", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
+    ("HT_TRENDMODE", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
+    ("MAMA", "atan(Im/Re)*rad2Deg", "period clamped to [6,50] on the next statement", ""),
 ];
 
 /// Variables assigned, inside a loop, from an expression that MULTIPLIES OR DIVIDES
@@ -304,7 +308,7 @@ fn bounded_below(cond: &Expr, var: &str) -> bool {
             names(r).contains(var) && !names(l).contains(var)
         }
         Expr::BinOp(l, BinOp::NotEq | BinOp::Eq, r) => {
-            names(l).contains(var) || names(r).contains(var)
+            names(l).contains(var) != names(r).contains(var)
         }
         Expr::Not(i) => bounded_below(i, var),
         Expr::FuncCall(n, args) if n.contains("IS_ZERO") => {
@@ -321,7 +325,7 @@ fn bounded_below(cond: &Expr, var: &str) -> bool {
 fn inline_scaling(e: &Expr) -> bool {
     match e {
         Expr::BinOp(_, BinOp::Mul | BinOp::Div, _) => true,
-        Expr::FuncCall(n, args) if n == "sqrt" || n == "fabs" || n == "std_fabs" => {
+        Expr::FuncCall(n, args) if n == "sqrt" || n == "fabs" => {
             args.first().map(inline_scaling).unwrap_or(false)
         }
         Expr::Cast(_, i) => inline_scaling(i),
@@ -331,17 +335,23 @@ fn inline_scaling(e: &Expr) -> bool {
 
 /// A guard naming the whole expression, not just one of its operands.
 fn tests_expr_against_zero(cond: &Expr, den: &Expr) -> bool {
-    fn same(a: &Expr, b: &Expr) -> bool {
-        format!("{a:?}") == format!("{b:?}")
-    }
     match cond {
         Expr::BinOp(l, BinOp::And | BinOp::Or, r) => {
             tests_expr_against_zero(l, den) || tests_expr_against_zero(r, den)
         }
-        Expr::BinOp(l, _, r) => same(l, den) || same(r, den),
+        Expr::BinOp(
+            l,
+            BinOp::Greater
+            | BinOp::GreaterEq
+            | BinOp::Less
+            | BinOp::LessEq
+            | BinOp::NotEq
+            | BinOp::Eq,
+            r,
+        ) => **l == *den || **r == *den,
         Expr::Not(i) => tests_expr_against_zero(i, den),
         Expr::FuncCall(n, args) if n.contains("IS_ZERO") => {
-            args.first().map(|a| same(a, den)).unwrap_or(false)
+            args.first().map(|a| a == den).unwrap_or(false)
         }
         _ => false,
     }
@@ -565,12 +575,12 @@ fn scan_expr(
     out: &mut Vec<Finding>,
 ) {
     if let Expr::BinOp(num, BinOp::Div, den) = e {
-        // Third shape: the divisor is an inline product or quotient. A guard on an
-        // OPERAND does not establish the value: `0.015*tempReal2` underflows to
-        // exactly 0.0 while `tempReal2` is still non-zero (cci.c:127,129), and
-        // `sqrt(ssX*ssY)` underflows independently of either factor guarded
-        // separately (correl.c:234,236). Only a guard naming the divisor as a whole
-        // -- which for an inline expression cannot exist -- would settle it.
+        // Third shape: the divisor is an inline product or quotient, and a guard on
+        // an OPERAND does not establish it. `k*d` underflows to exactly 0.0 while `d`
+        // is still non-zero, and `sqrt(a*b)` leaves the double range at both ends
+        // while `a` and `b` are still ordinary normals -- the two defects #395 fixed
+        // in CCI and CORREL. Only a guard naming the divisor as a whole settles it;
+        // the usual answer is to divide by the guarded value and scale after.
         if inline_scaling(den) && !guards.iter().any(|g| tests_expr_against_zero(g, den)) {
             // Deliberately looser than `tests_var_against_zero`: the question here is
             // only whether someone TRIED to bound an operand, not whether that bound
@@ -1149,30 +1159,132 @@ fn divide_by_a_scaled_copy(body: &mut [Statement]) {
     }
 }
 
-/// The inline arm must go quiet when the guard names the whole divisor.
+/// The inline arm fires on an inline product, and not otherwise.
 ///
-/// Third self-test, same requirement as the other two: a check that flagged every
-/// inline product unconditionally would pass the "it found CCI" bar and be worthless.
-/// Rewriting CCI's guard to test `0.015*tempReal2` — the divisor itself — must clear
-/// the finding.
+/// Third self-test, and the three halves the scaled arm next to it pins: it fires, it
+/// clears when the guard names the divisor, and it stays out of the other arms' way
+/// when nothing bounds an operand at all. #395 removed the last shipped instance of
+/// this shape, so the fixture reconstructs CCI's own pre-#395 divisor rather than
+/// reading a live defect — an arm anchored to a defect the tree is meant to lose goes
+/// red the day it is fixed.
 #[test]
-fn the_inline_arm_clears_when_the_guard_names_the_divisor() {
+fn the_inline_arm_fires_on_an_inline_product_and_not_otherwise() {
     let funcs = load();
     let cci = funcs.iter().find(|f| f.name == "CCI").expect("CCI is in the tree");
 
+    // Sanity: as shipped since #395, CCI divides by the value its guard tests.
     assert!(
-        findings_for(cci).iter().any(|f| f.kind == FindingKind::InlineScaled),
-        "CCI ships guarding `tempReal2` while dividing by `0.015*tempReal2`"
+        !findings_for(cci).iter().any(|f| f.kind == FindingKind::InlineScaled),
+        "CCI ships dividing by `tempReal2` and scaling after; the inline arm should be \
+         silent on it"
     );
 
-    let mut fixed = cci.clone();
-    guard_the_whole_divisor(&mut fixed.body);
-    guard_the_whole_divisor(&mut fixed.private_body);
+    // Put the pre-#395 divisor back: `tempReal/(0.015*tempReal2)`, still guarded on
+    // `tempReal2` alone.
+    let mut broken = cci.clone();
+    divide_by_an_inline_product(&mut broken.body);
+    divide_by_an_inline_product(&mut broken.private_body);
     assert!(
-        !findings_for(&fixed).iter().any(|f| f.kind == FindingKind::InlineScaled),
-        "the inline arm still flags CCI after the guard was moved onto the divisor \
-         itself — it is not reading the guard, it is flagging every inline product"
+        findings_for(&broken).iter().any(|f| f.divisor == "0.015*tempReal2"),
+        "the sweep did not flag CCI once its divisor was pre-scaled again — it cannot \
+         see the class this arm exists for"
     );
+
+    // Moving the guard onto the whole divisor must clear it, or the arm is flagging
+    // every inline product rather than reading the guard.
+    let mut guarded = broken.clone();
+    guard_the_whole_divisor(&mut guarded.body);
+    guard_the_whole_divisor(&mut guarded.private_body);
+    assert!(
+        !findings_for(&guarded).iter().any(|f| f.kind == FindingKind::InlineScaled),
+        "the inline arm still flags the divisor after the guard was moved onto it — it \
+         is not reading the guard, it is flagging every inline product"
+    );
+
+    // And with nothing bounding an operand it must stay silent: an untested divisor is
+    // the first arm's finding, and reporting it twice buries the rows that differ.
+    let mut unguarded = broken.clone();
+    drop_the_deviation_guard(&mut unguarded.body);
+    drop_the_deviation_guard(&mut unguarded.private_body);
+    assert!(
+        !findings_for(&unguarded).iter().any(|f| f.kind == FindingKind::InlineScaled),
+        "the inline arm fired on an inline product no guard mentions at all"
+    );
+}
+
+/// Rewrite `(tempReal/tempReal2)/0.015` back into `tempReal/(0.015*tempReal2)`.
+fn divide_by_an_inline_product(body: &mut [Statement]) {
+    fn fix(e: &Expr) -> Expr {
+        if let Expr::BinOp(l, BinOp::Div, r) = e {
+            if let (Expr::BinOp(num, BinOp::Div, den), Expr::Literal(k)) = (&**l, &**r) {
+                return Expr::BinOp(
+                    num.clone(),
+                    BinOp::Div,
+                    Box::new(Expr::BinOp(
+                        Box::new(Expr::Literal(*k)),
+                        BinOp::Mul,
+                        den.clone(),
+                    )),
+                );
+            }
+        }
+        e.clone()
+    }
+    for st in body.iter_mut() {
+        match st {
+            Statement::Assign { value, .. } => *value = fix(value),
+            Statement::If { then_body, else_body, .. } => {
+                divide_by_an_inline_product(then_body);
+                divide_by_an_inline_product(else_body);
+            }
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::ForC { body, .. }
+            | Statement::Block { body } => divide_by_an_inline_product(body),
+            _ => {}
+        }
+    }
+}
+
+/// Drop the `!TA_IS_ZERO_SCALED(tempReal2, ...)` conjunct, leaving the divisor's one
+/// operand mentioned by no guard.
+fn drop_the_deviation_guard(body: &mut [Statement]) {
+    fn about_the_deviation(e: &Expr) -> bool {
+        match e {
+            Expr::Not(i) => about_the_deviation(i),
+            Expr::FuncCall(n, args) => {
+                n.contains("IS_ZERO") && args.iter().any(|a| names(a).contains("tempReal2"))
+            }
+            _ => false,
+        }
+    }
+    fn fix(e: &Expr) -> Expr {
+        if let Expr::BinOp(l, BinOp::And, r) = e {
+            if about_the_deviation(l) {
+                return (**r).clone();
+            }
+            if about_the_deviation(r) {
+                return (**l).clone();
+            }
+        }
+        e.clone()
+    }
+    for st in body.iter_mut() {
+        match st {
+            Statement::If { condition, then_body, else_body, .. } => {
+                *condition = fix(condition);
+                drop_the_deviation_guard(then_body);
+                drop_the_deviation_guard(else_body);
+            }
+            Statement::While { body, .. }
+            | Statement::DoWhile { body, .. }
+            | Statement::For { body, .. }
+            | Statement::ForC { body, .. }
+            | Statement::Block { body } => drop_the_deviation_guard(body),
+            _ => {}
+        }
+    }
 }
 
 /// Replace CCI's `TA_IS_ZERO_SCALED(tempReal2, ...)` with a test on `0.015*tempReal2`.
