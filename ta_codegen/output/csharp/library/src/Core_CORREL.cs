@@ -47,18 +47,24 @@ public partial class Core
     *  Initial  Name/description
     *  -------------------------------------------------------------------
     *  MF       Mario Fortier
+    *  CC       Claude Code (AI assistant)
     *
     *
     * Change history:
     *
-    *  MMDDYY BY   Description
+    *  MMDDYY BY    Description
     *  -------------------------------------------------------------------
-    *  120802 MF   Template creation.
-    *  101003 MF   Initial Coding
-    *  062804 MF   Resolve div by zero bug on limit case.
-    *  082326 MF   Fix #242. Cancellation-free sums (shifted data + reseed, as
-    *              TA_VAR does since #118), per-factor degeneracy test and a
-    *              range clamp.
+    *  120802 MF    Template creation.
+    *  101003 MF    Initial Coding
+    *  062804 MF    Resolve div by zero bug on limit case.
+    *  082326 MF    Fix #242. Cancellation-free sums (shifted data + reseed, as
+    *               TA_VAR does since #118), per-factor degeneracy test and a
+    *               range clamp.
+    *  090626 MF,CC Fix #395. A root of each guarded factor, not a root of their
+    *               product: sqrt(ssX*ssY) left the double range at both ends
+    *               while ssX and ssY were still ordinary normals, returning NaN
+    *               under TA_SUCCESS and a perfect correlation from a degenerate
+    *               window.
     */
    /// <summary>
    /// Number of leading input bars <c>CORREL</c> consumes before it can produce
@@ -295,24 +301,12 @@ public partial class Core
           * is also the cheaper test: the two fabs() cost ~7% of this function's
           * runtime, and buy a wrong answer.
           *
-          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
-          * established both are positive, so the product needs no protection from
-          * a negative operand, and the second square root is worth ~25% of the
-          * runtime.
-          *
-          * The product CAN overflow to +Inf, and the one-root form is chosen with
-          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-          * arrays are not range-checked, so ssX and ssY are bounded only by the
-          * double range and their product exceeds it once |x| passes ~1e154. The
-          * two-root form would not overflow there -- but the form this replaces
-          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-          * correlation. Trading a quarter of the runtime for a case that already
-          * behaved this way, on inputs 117 orders past any price, is not a trade
-          * worth making. Revisit only if input range-checking is ever added.
+          * A root of each guarded factor, never a root of their product: that
+          * product leaves the double range at BOTH ends while ssX and ssY are
+          * still ordinary normals, which no test of the factors can see (#395).
           */
          if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
              */
@@ -469,7 +463,7 @@ public partial class Core
          trailingY = (double)inReal1[trailingIdx] - shiftY;
          trailingIdx += 1;
          if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
             if( tempReal > 1.0 ) {
                tempReal = 1.0;
             } else if( tempReal < 0 - 1.0 ) {
@@ -908,24 +902,12 @@ public partial class Core
           * is also the cheaper test: the two fabs() cost ~7% of this function's
           * runtime, and buy a wrong answer.
           *
-          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
-          * established both are positive, so the product needs no protection from
-          * a negative operand, and the second square root is worth ~25% of the
-          * runtime.
-          *
-          * The product CAN overflow to +Inf, and the one-root form is chosen with
-          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-          * arrays are not range-checked, so ssX and ssY are bounded only by the
-          * double range and their product exceeds it once |x| passes ~1e154. The
-          * two-root form would not overflow there -- but the form this replaces
-          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-          * correlation. Trading a quarter of the runtime for a case that already
-          * behaved this way, on inputs 117 orders past any price, is not a trade
-          * worth making. Revisit only if input range-checking is ever added.
+          * A root of each guarded factor, never a root of their product: that
+          * product leaves the double range at BOTH ends while ssX and ssY are
+          * still ordinary normals, which no test of the factors can see (#395).
           */
          if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
              */
@@ -1085,24 +1067,12 @@ public partial class Core
        * is also the cheaper test: the two fabs() cost ~7% of this function's
        * runtime, and buy a wrong answer.
        *
-       * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
-       * established both are positive, so the product needs no protection from
-       * a negative operand, and the second square root is worth ~25% of the
-       * runtime.
-       *
-       * The product CAN overflow to +Inf, and the one-root form is chosen with
-       * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-       * arrays are not range-checked, so ssX and ssY are bounded only by the
-       * double range and their product exceeds it once |x| passes ~1e154. The
-       * two-root form would not overflow there -- but the form this replaces
-       * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-       * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-       * correlation. Trading a quarter of the runtime for a case that already
-       * behaved this way, on inputs 117 orders past any price, is not a trade
-       * worth making. Revisit only if input range-checking is ever added.
+       * A root of each guarded factor, never a root of their product: that
+       * product leaves the double range at BOTH ends while ssX and ssY are
+       * still ordinary normals, which no test of the factors can see (#395).
        */
       if( ssX > 0.00000000000001 * sp.sumX2 && ssY > 0.00000000000001 * sp.sumY2 ) {
-         tempReal = spXY / Math.Sqrt(ssX * ssY);
+         tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
          /* A correlation coefficient cannot leave [-1,1]; rounding in the
           * three sums can still put it a few ulp outside.
           */
@@ -1339,24 +1309,12 @@ public partial class Core
           * is also the cheaper test: the two fabs() cost ~7% of this function's
           * runtime, and buy a wrong answer.
           *
-          * sqrt(ssX*ssY) rather than sqrt(ssX)*sqrt(ssY): the guard has already
-          * established both are positive, so the product needs no protection from
-          * a negative operand, and the second square root is worth ~25% of the
-          * runtime.
-          *
-          * The product CAN overflow to +Inf, and the one-root form is chosen with
-          * that known. TA_REAL_MAX bounds optional PARAMETERS; a batch call's input
-          * arrays are not range-checked, so ssX and ssY are bounded only by the
-          * double range and their product exceeds it once |x| passes ~1e154. The
-          * two-root form would not overflow there -- but the form this replaces
-          * built exactly the same product (it tested ssX*ssY against TA_EPSILON), so
-          * the exposure is unchanged, and an Inf here yields 0.0 rather than a wrong
-          * correlation. Trading a quarter of the runtime for a case that already
-          * behaved this way, on inputs 117 orders past any price, is not a trade
-          * worth making. Revisit only if input range-checking is ever added.
+          * A root of each guarded factor, never a root of their product: that
+          * product leaves the double range at BOTH ends while ssX and ssY are
+          * still ordinary normals, which no test of the factors can see (#395).
           */
          if( ssX > 0.00000000000001 * sumX2 && ssY > 0.00000000000001 * sumY2 ) {
-            tempReal = spXY / Math.Sqrt(ssX * ssY);
+            tempReal = spXY / (Math.Sqrt(ssX) * Math.Sqrt(ssY));
             /* A correlation coefficient cannot leave [-1,1]; rounding in the
              * three sums can still put it a few ulp outside.
              */

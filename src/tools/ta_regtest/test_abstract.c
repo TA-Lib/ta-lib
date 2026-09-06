@@ -2352,8 +2352,8 @@ static ErrorNumber callWithDefaults( const char *funcName, const double *input, 
     * into a *discrete* output difference at a degenerate boundary:
     *   - the Hilbert-Transform family (HT_*) — chaotic phase/trend-mode transforms
     *     that phase-wrap or flip their integer trend mode; and
-    *   - CCI — whose `(lastValue-theAverage) != 0` guard flips between the 0.015
-    *     division and a hard 0 when the mean and last value cancel to the last bit.
+    *   - CCI — whose flatness guard flips between the division and a hard 0
+    *     when the mean and the last value cancel to the last bit.
     * These only surface on the NON-deterministic inputs (random ]0,1[ values, and
     * the two random-sign epsilon sets), where the data is noise rather than a
     * price series, so exact value parity is not meaningful. Structural parity

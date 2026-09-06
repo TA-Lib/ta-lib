@@ -67,6 +67,9 @@
  *  082326 MF,CC  Fix #253. Scale that flatness test to the window's own price
  *                level: the fixed band zeroed the whole output for any
  *                instrument quoted small enough to fall under it.
+ *  090626 MF,CC  Fix #395. Divide by the mean deviation, scale after: the
+ *                pre-scaled `0.015*tempReal2` underflowed to 0.0 on a
+ *                denormal price that the guard still called "not flat".
  */
 
 TA_LIB_API int TA_CCI_Lookback( int optInTimePeriod )
@@ -203,7 +206,13 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
       tempReal2 /= optInTimePeriod;
       /* And finally, the CCI... */
       tempReal = lastValue - theAverage;
-      /* Both tests are relative to the window's own price level (issue #253).
+      /* Divide by the mean deviation itself and scale after: the guard has to
+       * test the very expression the division uses, or a scaling step can
+       * carry a guarded-non-zero into a zero divisor. The band is relative and
+       * the underflow of the 0.015 product is absolute, so no band on the
+       * deviation can cover the product.
+       *
+       * Both tests are relative to the window's own price level (issue #253).
        * They ask "is this window flat?", and flatness is a property of the
        * prices relative to each other -- but a deviation carries the quote
        * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -215,7 +224,7 @@ TA_LIB_API TA_RetCode TA_CCI( int    startIdx,
       tempReal3 = fabs(theAverage);
       if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
       {
-         outReal[outIdx++] = tempReal / (0.015 * tempReal2);
+         outReal[outIdx++] = tempReal / tempReal2 / 0.015;
       } else 
       {
          outReal[outIdx++] = 0.0;
@@ -335,7 +344,7 @@ TA_RetCode TA_S_CCI( int    startIdx,
       tempReal3 = fabs(theAverage);
       if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
       {
-         outReal[outIdx++] = tempReal / (0.015 * tempReal2);
+         outReal[outIdx++] = tempReal / tempReal2 / 0.015;
       } else 
       {
          outReal[outIdx++] = 0.0;
@@ -403,7 +412,13 @@ static void TA_CCI_StepImpl( struct TA_CCI_Stream *sp, double inHigh, double inL
    tempReal2 /= sp->optInTimePeriod;
    /* And finally, the CCI... */
    tempReal = lastValue - theAverage;
-   /* Both tests are relative to the window's own price level (issue #253).
+   /* Divide by the mean deviation itself and scale after: the guard has to
+    * test the very expression the division uses, or a scaling step can
+    * carry a guarded-non-zero into a zero divisor. The band is relative and
+    * the underflow of the 0.015 product is absolute, so no band on the
+    * deviation can cover the product.
+    *
+    * Both tests are relative to the window's own price level (issue #253).
     * They ask "is this window flat?", and flatness is a property of the
     * prices relative to each other -- but a deviation carries the quote
     * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -415,7 +430,7 @@ static void TA_CCI_StepImpl( struct TA_CCI_Stream *sp, double inHigh, double inL
    tempReal3 = fabs(theAverage);
    if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
    {
-      *outReal= tempReal / (0.015 * tempReal2);
+      *outReal= tempReal / tempReal2 / 0.015;
    } else 
    {
       *outReal= 0.0;
@@ -547,7 +562,13 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
          tempReal2 /= optInTimePeriod;
          /* And finally, the CCI... */
          tempReal = lastValue - theAverage;
-         /* Both tests are relative to the window's own price level (issue #253).
+         /* Divide by the mean deviation itself and scale after: the guard has to
+          * test the very expression the division uses, or a scaling step can
+          * carry a guarded-non-zero into a zero divisor. The band is relative and
+          * the underflow of the 0.015 product is absolute, so no band on the
+          * deviation can cover the product.
+          *
+          * Both tests are relative to the window's own price level (issue #253).
           * They ask "is this window flat?", and flatness is a property of the
           * prices relative to each other -- but a deviation carries the quote
           * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -559,7 +580,7 @@ static TA_RetCode TA_CCI_OpenImpl( struct TA_CCI_Stream **stream, const double i
          tempReal3 = fabs(theAverage);
          if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
          {
-            outReal[outIdx++ * outStride] = tempReal / (0.015 * tempReal2);
+            outReal[outIdx++ * outStride] = tempReal / tempReal2 / 0.015;
          } else 
          {
             outReal[outIdx++ * outStride] = 0.0;
@@ -683,7 +704,13 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    tempReal2 /= sp->optInTimePeriod;
    /* And finally, the CCI... */
    tempReal = lastValue - theAverage;
-   /* Both tests are relative to the window's own price level (issue #253).
+   /* Divide by the mean deviation itself and scale after: the guard has to
+    * test the very expression the division uses, or a scaling step can
+    * carry a guarded-non-zero into a zero divisor. The band is relative and
+    * the underflow of the 0.015 product is absolute, so no band on the
+    * deviation can cover the product.
+    *
+    * Both tests are relative to the window's own price level (issue #253).
     * They ask "is this window flat?", and flatness is a property of the
     * prices relative to each other -- but a deviation carries the quote
     * unit, so the fixed TA_IS_ZERO band these used to be answered "flat" for
@@ -695,7 +722,7 @@ TA_LIB_API TA_RetCode TA_CCI_Peek( const TA_CCI_Stream *stream, double inHigh, d
    tempReal3 = fabs(theAverage);
    if( !TA_IS_ZERO_SCALED(tempReal, tempReal3) && !TA_IS_ZERO_SCALED(tempReal2, tempReal3) )
    {
-      *outReal= tempReal / (0.015 * tempReal2);
+      *outReal= tempReal / tempReal2 / 0.015;
    } else 
    {
       *outReal= 0.0;

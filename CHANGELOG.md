@@ -114,6 +114,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#253) Fix many TA_IS_ZERO vs TA_IS_ZERO_SCALED choices. Numerically better for edge cases, like very small inputs (<10e-8) or mostly flat input prices.
 - (#390) STOCH and STOCHF returned `inf` or `NaN` while reporting success, for prices near the bottom of the double range. A close sitting on the window high now comes out as exactly 100.
 - (#390) KAMA could return values outside the range of the prices it was smoothing, and ER values above 1. Both come from the same efficiency ratio exceeding its own maximum when floating-point drift left the running sum of price movement below the net move it bounds. The ratio is now clamped, making ER a hard 0..1.
+- (#395) CCI returned `+/-Inf` while reporting success, and CORREL returned `NaN` or a perfect +/-1 correlation from a window that had none, for prices near the bottom of the double range. Both now divide by the value their guard actually tests, so they stay accurate to the last bits at every price scale.
+- (#395) WILLR could return values outside its documented [-100, 0] range, and answered 0 - the value meaning a close at the period high - for a close sitting on the period low whenever the window's high-low range was very small. A close on the period low now comes out as exactly -100, the range is guaranteed even for a close outside its own bar, and a window flat to within rounding of its own prices answers 0, as STOCH and STOCHF already did.
 
 ## [0.7.1] 2026-07-03
 ### Added

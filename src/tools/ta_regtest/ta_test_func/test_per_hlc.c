@@ -66,6 +66,7 @@
 /**** Headers ****/
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "ta_test_priv.h"
 #include "ta_test_func.h"
@@ -317,6 +318,225 @@ static ErrorNumber test_cci_uniform_zero( void )
 }
 
 
+/* Issue #395: CCI divided by `0.015*meanDeviation`, a value its guard never
+ * tested. The guard's band is RELATIVE (TA_EPSILON*|average|) and the product's
+ * underflow is ABSOLUTE, so below |average| ~ 1.6e-308 the band admits a
+ * deviation whose scaled copy is exactly 0.0, and the division returned +/-Inf
+ * under TA_SUCCESS.
+ *
+ * The fixture is exact, not approximate. At period 2 both deviations are
+ * |p1-p2|/2, so the mean deviation EQUALS |numerator| and CCI is exactly
+ * +/-(1/0.015) for any non-flat window. Even multiples of 2^-1074 keep every
+ * intermediate on the subnormal grid, so nothing rounds. Keep all four
+ * conditions -- period 2, H==L==C, even multiples, consecutive bars distinct --
+ * or the equality becomes an approximation and the leg stops discriminating.
+ *
+ * Pre-fix this returned +/-Inf on every bar. */
+static ErrorNumber test_cci_subnormal_finite( void )
+{
+   const int nbBars = 40;
+   TA_Real high[40], low[40], close[40], out[40];
+   TA_Integer outBegIdx, outNbElement;
+   TA_RetCode retCode;
+   double ulp, base, expected;
+   int i;
+
+   ulp = ldexp( 1.0, -1074 );
+   if( !( ulp > 0.0 ) || !( ulp * 2.0 > 0.0 ) )
+   {
+      /* A host flushing subnormals to zero cannot construct the case at all.
+       * Say so rather than passing silently. */
+      printf( "Skipped: CCI subnormal test (this host flushes subnormals)\n" );
+      return TA_TEST_PASS;
+   }
+
+   base     = 1000.0 * ulp;
+   expected = 1.0 / 0.015;
+   for( i = 0; i < nbBars; i++ )
+      high[i] = low[i] = close[i] = (i & 1) ? base + 2.0*ulp : base;
+
+   retCode = TA_CCI( 0, nbBars-1, high, low, close, 2,
+                     &outBegIdx, &outNbElement, out );
+   if( retCode != TA_SUCCESS || outNbElement != nbBars-1 )
+   {
+      printf( "Fail: CCI subnormal input retCode=%d nbElement=%d\n",
+              (int)retCode, (int)outNbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+
+   for( i = 0; i < outNbElement; i++ )
+   {
+      if( out[i] != expected && out[i] != -expected )
+      {
+         printf( "Fail: CCI subnormal out[%d]=%.17g, expected +/-%.17g (#395)\n",
+                 i, out[i], expected );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+
+/* Issue #395: WILLR hoisted `(highest-lowest)/-100.0` and guarded that, so the
+ * guard tested a scaled copy of the divisor rather than the divisor, and the
+ * pre-scaling cost the endpoint exactness that keeps %R inside its documented
+ * range. Three independent consequences, one per group of legs below.
+ *
+ * Each leg names what reintroducing the defect does to it, because none of them
+ * is reachable from the reference corpus alone: legs 1-2 fail on the hoist,
+ * leg 3 on the hoist's underflow, leg 4 on removing the clamp, leg 5 on going
+ * back to an exact `!= 0.0` band. */
+static ErrorNumber test_willr_bound( const TA_History *history )
+{
+   TA_Real out[300], high[8], low[8], close[8];
+   TA_Integer outBegIdx, outNbElement;
+   TA_RetCode retCode;
+   double tiny;
+   int period, i;
+
+   /* 1: a close sitting on the window low is exactly -100, not one ulp past it.
+    * Bar 47 closes on its own low under bar 46's high, so period 2 puts it
+    * there. Pre-fix: -100.00000000000001. */
+   retCode = TA_WILLR( 0, 251, history->high, history->low, history->close, 2,
+                       &outBegIdx, &outNbElement, out );
+   if( retCode != TA_SUCCESS || outNbElement != 251 )
+   {
+      printf( "Fail: WILLR(2) retCode=%d nbElement=%d\n",
+              (int)retCode, (int)outNbElement );
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   }
+   if( out[46] != -100.0 )
+   {
+      printf( "Fail: WILLR close on the window low is %.17g, expected exactly "
+              "-100 (#395)\n", out[46] );
+      return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+   }
+
+   /* 2: and the whole output stays inside the documented range. */
+   for( period = 2; period <= 30; period++ )
+   {
+      retCode = TA_WILLR( 0, 251, history->high, history->low, history->close,
+                          period, &outBegIdx, &outNbElement, out );
+      if( retCode != TA_SUCCESS )
+      {
+         printf( "Fail: WILLR(%d) retCode=%d\n", period, (int)retCode );
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      }
+      for( i = 0; i < outNbElement; i++ )
+      {
+         if( !( out[i] >= -100.0 && out[i] <= 0.0 ) )
+         {
+            printf( "Fail: WILLR(%d) out[%d]=%.17g outside [-100,0] (#395)\n",
+                    period, i, out[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+
+   /* 3: a denormal range. The pre-scaled divisor underflowed to -0.0, so the
+    * window read as flat and a close on the period LOW came back 0 -- the value
+    * that means the period HIGH, the opposite end of the scale. */
+   tiny = 1e-322;
+   if( tiny > 0.0 )
+   {
+      for( i = 0; i < 8; i++ ) { high[i] = tiny; low[i] = 0.0; close[i] = 0.0; }
+      retCode = TA_WILLR( 0, 7, high, low, close, 3,
+                          &outBegIdx, &outNbElement, out );
+      if( retCode != TA_SUCCESS )
+         return TA_TESTUTIL_TFRR_BAD_RETCODE;
+      for( i = 0; i < outNbElement; i++ )
+      {
+         if( out[i] != -100.0 )
+         {
+            printf( "Fail: WILLR denormal range out[%d]=%.17g, expected -100 "
+                    "(#395)\n", i, out[i] );
+            return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+         }
+      }
+   }
+   else
+      printf( "Skipped: WILLR denormal leg (this host flushes subnormals)\n" );
+
+   /* 4: the clamp's only reachable domain. A close outside its own bar is the
+    * one input the arithmetic cannot bound, and TA-Lib does not validate
+    * low <= close <= high -- so the clamp is what makes [-100,0] a guarantee
+    * rather than a property of well-formed input. Pre-fix: +/-10000. */
+   for( i = 0; i < 8; i++ ) { high[i] = 100.0; low[i] = 99.0; close[i] = 200.0; }
+   retCode = TA_WILLR( 0, 7, high, low, close, 3, &outBegIdx, &outNbElement, out );
+   if( retCode != TA_SUCCESS )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < outNbElement; i++ )
+   {
+      if( out[i] != 0.0 )
+      {
+         printf( "Fail: WILLR close above the window high out[%d]=%.17g, "
+                 "expected 0 (#395)\n", i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber errNb = server_verify( "WILLR", 0, 7, 8,
+                             retCode, outBegIdx, outNbElement,
+                             (const TA_Real*[]){ high, low, close, NULL },
+                             (double[]){ 3.0 }, 1,
+                             (const TA_Real*[]){ out, NULL }, NULL );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+   }
+
+   for( i = 0; i < 8; i++ ) close[i] = 0.0;
+   retCode = TA_WILLR( 0, 7, high, low, close, 3, &outBegIdx, &outNbElement, out );
+   if( retCode != TA_SUCCESS )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < outNbElement; i++ )
+   {
+      if( out[i] != -100.0 )
+      {
+         printf( "Fail: WILLR close below the window low out[%d]=%.17g, "
+                 "expected -100 (#395)\n", i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+   if( server_verify_active() )
+   {
+      ErrorNumber errNb = server_verify( "WILLR", 0, 7, 8,
+                             retCode, outBegIdx, outNbElement,
+                             (const TA_Real*[]){ high, low, close, NULL },
+                             (double[]){ 3.0 }, 1,
+                             (const TA_Real*[]){ out, NULL }, NULL );
+      if( errNb != TA_TEST_PASS )
+         return errNb;
+   }
+
+   /* 5: one ulp of 100.0 is a flat window. 1.4210854715202004e-14 is 2^-46, so
+    * both operands and their difference are exact -- this is the relative band
+    * doing work an exact `!= 0.0` cannot, and the only leg that sees it
+    * (issue #107, and what STOCH/STOCHF have answered since #390). */
+   for( i = 0; i < 8; i++ )
+   {
+      high[i]  = 100.0;
+      low[i]   = 100.0 - 1.4210854715202004e-14;
+      close[i] = low[i];
+   }
+   retCode = TA_WILLR( 0, 7, high, low, close, 3, &outBegIdx, &outNbElement, out );
+   if( retCode != TA_SUCCESS )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < outNbElement; i++ )
+   {
+      if( out[i] != 0.0 )
+      {
+         printf( "Fail: WILLR machine-flat window out[%d]=%.17g, expected 0 "
+                 "(#395)\n", i, out[i] );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   return TA_TEST_PASS;
+}
+
+
 /* WAD external vectors. The pinned corpus values above were recomputed from
  * test_data.c, so they anchor the implementation to arithmetic but not to any
  * published source. These two do.
@@ -441,6 +661,22 @@ ErrorNumber test_func_per_hlc( TA_History *history )
    if( retValue != TA_TEST_PASS )
    {
       printf( "Failed CCI uniform-input test (Code=%d)\n", retValue );
+      return retValue;
+   }
+
+   /* CCI on subnormal prices: finite, and exact (#395). */
+   retValue = test_cci_subnormal_finite();
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed CCI subnormal test (Code=%d)\n", retValue );
+      return retValue;
+   }
+
+   /* WILLR's [-100,0] bound and its degenerate windows (#395). */
+   retValue = test_willr_bound( history );
+   if( retValue != TA_TEST_PASS )
+   {
+      printf( "Failed WILLR bound test (Code=%d)\n", retValue );
       return retValue;
    }
 

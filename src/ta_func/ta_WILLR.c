@@ -47,14 +47,19 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  *
  * Change history:
  *
- *  MMDDYY BY   Description
+ *  MMDDYY BY    Description
  *  -------------------------------------------------------------------
- *  010802 MF   Template creation.
- *  052603 MF   Adapt code to compile with .NET Managed C++
+ *  010802 MF    Template creation.
+ *  052603 MF    Adapt code to compile with .NET Managed C++
+ *  090626 MF,CC Fix #395. Divide by the range, scale after, then clamp: the
+ *               hoisted `(highest-lowest)/-100.0` underflowed to 0.0 on a
+ *               denormal range that the guard still called "not flat", and
+ *               the pre-scaled divisor left the documented [-100,0] bound.
  */
 
 TA_LIB_API int TA_WILLR_Lookback( int optInTimePeriod )
@@ -87,7 +92,7 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
    double lowest;
    double highest;
    double tmp;
-   double diff;
+   double tempReal;
    int outIdx;
    int nbInitialElementNeeded;
    int trailingIdx;
@@ -137,8 +142,6 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   /* Initialize 'diff', just to avoid warning. */
-   diff = 0.0;
    /* Proceed with the calculation for the requested range.
     * Note that this algorithm allows the input and
     * output to be the same buffer.
@@ -251,10 +254,32 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
       }
       highest = sufHighest[0];
       lowest = sufLowest[0];
-      diff = (highest - lowest) / (0 - 100.0);
-      if( diff != 0.0 )
+      /* Divide by the range itself and scale after: the guard has to test the
+       * very expression the division uses, or a scaling step can carry a
+       * guarded-non-zero into a zero divisor. It is also what puts a close on
+       * the period low at exactly -100.
+       *
+       * The band is the range against ITS OWN two extremes, not a fixed
+       * constant: the range carries the quote unit, so a constant answers
+       * "flat" for every window of an instrument quoted below it (issue #253).
+       * It absorbs the machine-flat window an exact test would divide into
+       * [-100,0] noise (issue #107 / STOCH).
+       *
+       * The clamp is unreachable while lowest <= close <= highest -- the
+       * quotient is <= 1 under any rounding mode. Its domain is the close
+       * outside its own bar, which nothing here validates.
+       */
+      if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
-         outReal[outIdx++] = (highest - inClose[today]) / diff;
+         tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+         if( tempReal > 0.0 )
+         {
+            tempReal = 0.0;
+         } else if( tempReal < 0 - 100.0 )
+         {
+            tempReal = 0 - 100.0;
+         }
+         outReal[outIdx++] = tempReal;
       } else 
       {
          outReal[outIdx++] = 0.0;
@@ -315,10 +340,17 @@ TA_LIB_API TA_RetCode TA_WILLR( int    startIdx,
             {
                lowest = preLowest[m - 1];
             }
-            diff = (highest - lowest) / (0 - 100.0);
-            if( diff != 0.0 )
+            if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
             {
-               outReal[outIdx++] = (highest - inClose[today + m - 1]) / diff;
+               tempReal = (highest - inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+               if( tempReal > 0.0 )
+               {
+                  tempReal = 0.0;
+               } else if( tempReal < 0 - 100.0 )
+               {
+                  tempReal = 0 - 100.0;
+               }
+               outReal[outIdx++] = tempReal;
             } else 
             {
                outReal[outIdx++] = 0.0;
@@ -363,7 +395,7 @@ TA_RetCode TA_S_WILLR( int    startIdx,
    double lowest;
    double highest;
    double tmp;
-   double diff;
+   double tempReal;
    int outIdx;
    int nbInitialElementNeeded;
    int trailingIdx;
@@ -405,7 +437,6 @@ TA_RetCode TA_S_WILLR( int    startIdx,
       *outNBElement= 0;
       return TA_SUCCESS;
    }
-   diff = 0.0;
    outIdx = 0;
    today = startIdx;
    trailingIdx = startIdx - nbInitialElementNeeded;
@@ -494,10 +525,17 @@ TA_RetCode TA_S_WILLR( int    startIdx,
       }
       highest = sufHighest[0];
       lowest = sufLowest[0];
-      diff = (highest - lowest) / (0 - 100.0);
-      if( diff != 0.0 )
+      if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
       {
-         outReal[outIdx++] = (highest - (double)inClose[today]) / diff;
+         tempReal = (highest - (double)inClose[today]) / (highest - lowest) * (0 - 100.0);
+         if( tempReal > 0.0 )
+         {
+            tempReal = 0.0;
+         } else if( tempReal < 0 - 100.0 )
+         {
+            tempReal = 0 - 100.0;
+         }
+         outReal[outIdx++] = tempReal;
       } else 
       {
          outReal[outIdx++] = 0.0;
@@ -550,10 +588,17 @@ TA_RetCode TA_S_WILLR( int    startIdx,
             {
                lowest = preLowest[m - 1];
             }
-            diff = (highest - lowest) / (0 - 100.0);
-            if( diff != 0.0 )
+            if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
             {
-               outReal[outIdx++] = (highest - (double)inClose[today + m - 1]) / diff;
+               tempReal = (highest - (double)inClose[today + m - 1]) / (highest - lowest) * (0 - 100.0);
+               if( tempReal > 0.0 )
+               {
+                  tempReal = 0.0;
+               } else if( tempReal < 0 - 100.0 )
+               {
+                  tempReal = 0 - 100.0;
+               }
+               outReal[outIdx++] = tempReal;
             } else 
             {
                outReal[outIdx++] = 0.0;
@@ -587,7 +632,6 @@ struct TA_WILLR_Stream {
    int optInTimePeriod;
    double lowest;
    double highest;
-   double diff;
    int trailingIdx;
    int lowestIdx;
    int highestIdx;
@@ -615,6 +659,7 @@ static void TA_WILLR_ReleaseImpl( struct TA_WILLR_Stream *sp )
 static void TA_WILLR_StepImpl( struct TA_WILLR_Stream *sp, double inHigh, double inLow, double inClose, double *outReal )
 {
    double tmp;
+   double tempReal;
 
    if( sp->today >= 1073741824 )
    {
@@ -645,12 +690,10 @@ static void TA_WILLR_StepImpl( struct TA_WILLR_Stream *sp, double inHigh, double
             sp->lowest = tmp;
          }
       }
-      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
    } else if( tmp <= sp->lowest )
    {
       sp->lowestIdx = sp->today;
       sp->lowest = tmp;
-      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
    }
    /* Set the highest high */
    tmp = sp->x_inHigh[sp->today & sp->xMask];
@@ -669,16 +712,23 @@ static void TA_WILLR_StepImpl( struct TA_WILLR_Stream *sp, double inHigh, double
             sp->highest = tmp;
          }
       }
-      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
    } else if( tmp >= sp->highest )
    {
       sp->highestIdx = sp->today;
       sp->highest = tmp;
-      sp->diff = (sp->highest - sp->lowest) / (0 - 100.0);
    }
-   if( sp->diff != 0.0 )
+   /* Same rule, band and clamp as the block scan above. */
+   if( !TA_IS_ZERO_SCALED(sp->highest - sp->lowest, fabs(sp->highest) + fabs(sp->lowest)) )
    {
-      *outReal= (sp->highest - sp->x_inClose[sp->today & sp->xMask]) / sp->diff;
+      tempReal = (sp->highest - sp->x_inClose[sp->today & sp->xMask]) / (sp->highest - sp->lowest) * (0 - 100.0);
+      if( tempReal > 0.0 )
+      {
+         tempReal = 0.0;
+      } else if( tempReal < 0 - 100.0 )
+      {
+         tempReal = 0 - 100.0;
+      }
+      *outReal= tempReal;
    } else 
    {
       *outReal= 0.0;
@@ -715,7 +765,7 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
       double lowest = 0.0;
       double highest = 0.0;
       double tmp;
-      double diff = 0.0;
+      double tempReal;
       int outIdx;
       int nbInitialElementNeeded;
       int trailingIdx = 0;
@@ -742,8 +792,6 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
          *outNBElement= 0;
          return TA_INSUFFICIENT_HISTORY;
       }
-      /* Initialize 'diff', just to avoid warning. */
-      diff = 0.0;
       /* Proceed with the calculation for the requested range.
        * Note that this algorithm allows the input and
        * output to be the same buffer.
@@ -772,7 +820,6 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       while( today <= endIdx )
       {
          /* Set the lowest low */
@@ -792,12 +839,10 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp <= lowest )
          {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -816,16 +861,23 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / (0 - 100.0);
          } else if( tmp >= highest )
          {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / (0 - 100.0);
          }
-         if( diff != 0.0 )
+         /* Same rule, band and clamp as the block scan above. */
+         if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
          {
-            outReal[outIdx++ * outStride] = (highest - inClose[today]) / diff;
+            tempReal = (highest - inClose[today]) / (highest - lowest) * (0 - 100.0);
+            if( tempReal > 0.0 )
+            {
+               tempReal = 0.0;
+            } else if( tempReal < 0 - 100.0 )
+            {
+               tempReal = 0 - 100.0;
+            }
+            outReal[outIdx++ * outStride] = tempReal;
          } else 
          {
             outReal[outIdx++ * outStride] = 0.0;
@@ -846,7 +898,6 @@ static TA_RetCode TA_WILLR_OpenImpl( struct TA_WILLR_Stream **stream, const doub
       sp->optInTimePeriod = optInTimePeriod;
       sp->lowest = lowest;
       sp->highest = highest;
-      sp->diff = diff;
       sp->trailingIdx = trailingIdx;
       sp->lowestIdx = lowestIdx;
       sp->highestIdx = highestIdx;
@@ -934,7 +985,7 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
 {
    const struct TA_WILLR_Stream *sp = stream;
    double tmp;
-   double diff;
+   double tempReal;
    double highest;
    int highestIdx;
    int i;
@@ -954,7 +1005,6 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
 
    if( !stream || !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   diff = sp->diff;
    highest = sp->highest;
    highestIdx = sp->highestIdx;
    i = sp->i;
@@ -997,12 +1047,10 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
             lowest = tmp;
          }
       }
-      diff = (highest - lowest) / (0 - 100.0);
    } else if( tmp <= lowest )
    {
       lowestIdx = today;
       lowest = tmp;
-      diff = (highest - lowest) / (0 - 100.0);
    }
    /* Set the highest high */
    tmp = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
@@ -1021,16 +1069,23 @@ TA_LIB_API TA_RetCode TA_WILLR_Peek( const TA_WILLR_Stream *stream, double inHig
             highest = tmp;
          }
       }
-      diff = (highest - lowest) / (0 - 100.0);
    } else if( tmp >= highest )
    {
       highestIdx = today;
       highest = tmp;
-      diff = (highest - lowest) / (0 - 100.0);
    }
-   if( diff != 0.0 )
+   /* Same rule, band and clamp as the block scan above. */
+   if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
    {
-      *outReal= (highest - (((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2)) / diff;
+      tempReal = (highest - (((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2)) / (highest - lowest) * (0 - 100.0);
+      if( tempReal > 0.0 )
+      {
+         tempReal = 0.0;
+      } else if( tempReal < 0 - 100.0 )
+      {
+         tempReal = 0 - 100.0;
+      }
+      *outReal= tempReal;
    } else 
    {
       *outReal= 0.0;
