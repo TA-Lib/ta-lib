@@ -478,8 +478,7 @@ TA_RetCode TA_S_MACDEXT( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MACDEXT_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_MACDEXT_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_MACDEXT_Value). */
@@ -920,6 +919,21 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Value( const TA_MACDEXT_Stream *stream, double 
    *outMACD = stream->cur_outMACD;
    *outMACDSignal = stream->cur_outMACDSignal;
    *outMACDHist = stream->cur_outMACDHist;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACDEXT_OutRange( const TA_MACDEXT_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MACDEXT_Advance( TA_MACDEXT_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

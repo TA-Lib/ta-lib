@@ -466,8 +466,7 @@ TA_RetCode TA_S_VORTEX( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_VORTEX_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_VORTEX_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_VORTEX_Value). */
@@ -1079,6 +1078,21 @@ TA_LIB_API TA_RetCode TA_VORTEX_Value( const TA_VORTEX_Stream *stream, double *o
    if( !stream || !outPlusVI || !outMinusVI ) return TA_BAD_PARAM;
    *outPlusVI = stream->cur_outPlusVI;
    *outMinusVI = stream->cur_outMinusVI;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VORTEX_OutRange( const TA_VORTEX_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VORTEX_Advance( TA_VORTEX_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

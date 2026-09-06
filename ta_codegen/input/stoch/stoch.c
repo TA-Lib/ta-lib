@@ -21,6 +21,9 @@
  *               small enough to fall under it.
  *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
  *               the stale *outNBElement overran outSlowK by lookbackDSlow.
+ *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
+ *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
+ *               range that the guard still called "not flat".
  *
  */
 
@@ -54,7 +57,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
    double outSlowD[])
 {
    TA_RetCode retCode;
-   double lowest, highest, tmp, diff;
+   double lowest, highest, tmp;
    double *tempBuffer;
    int outIdx, lowestIdx, highestIdx;
    int lookbackTotal, lookbackK, lookbackKSlow, lookbackDSlow;
@@ -136,7 +139,7 @@ TA_RetCode stoch(int startIdx, int endIdx,
    trailingIdx = startIdx-lookbackTotal;
    today       = trailingIdx+lookbackK;
    lowestIdx   = highestIdx = -1;
-   diff = highest = lowest  = 0.0;
+   highest = lowest = 0.0;
 
    /* Allocate a temporary buffer large enough to
     * store the K.
@@ -186,13 +189,11 @@ TA_RetCode stoch(int startIdx, int endIdx,
                lowest = tmp;
             }
          }
-         diff = (highest - lowest)/100.0;
       }
       else if( tmp <= lowest )
       {
          lowestIdx = today;
          lowest = tmp;
-         diff = (highest - lowest)/100.0;
       }
 
       /* Set the highest high */
@@ -211,24 +212,24 @@ TA_RetCode stoch(int startIdx, int endIdx,
                highest = tmp;
             }
          }
-         diff = (highest - lowest)/100.0;
       }
       else if( tmp >= highest )
       {
          highestIdx = today;
          highest = tmp;
-         diff = (highest - lowest)/100.0;
       }
 
-      /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-       * machine-flat window leaves a sub-epsilon residue that an exact check
-       * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-       * range against ITS OWN two extremes, not against a fixed band: the range
-       * carries the quote unit, so a constant put against it answers "flat" for
-       * every window of an instrument quoted below it and zeroed the whole
-       * output (issue #253). */
+      /* Divide by the range itself and scale after: the guard has to test the
+       * very expression the division uses, or a scaling step can carry a
+       * guarded-non-zero into a zero divisor.
+       *
+       * The band is the range against ITS OWN two extremes, not a fixed
+       * constant: the range carries the quote unit, so a constant answers
+       * "flat" for every window of an instrument quoted below it (issue #253).
+       * It absorbs the machine-flat window an exact test would divide into
+       * [0,100] noise (issue #107 / STOCHRSI). */
       if( !TA_IS_ZERO_SCALED(highest-lowest, fabs(highest)+fabs(lowest)) )
-         tempBuffer[outIdx++] = (inClose[today]-lowest)/diff;
+         tempBuffer[outIdx++] = ((inClose[today]-lowest)/(highest-lowest))*100.0;
       else
          tempBuffer[outIdx++] = 0.0;
 

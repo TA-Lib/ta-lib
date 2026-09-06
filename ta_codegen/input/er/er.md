@@ -12,7 +12,7 @@ This is exactly the efficiency ratio [`KAMA`](/functions/kama) computes internal
 
 Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
 
-The clamp compares against the *signed* net move, so it only fires on advances: on sustained declines the output may exceed 1.0 by a few ULP. The range is "0..1, may exceed 1 by a few ULP on sustained declines", not a hard bound.
+The output is a hard 0..1 — the net move can never exceed the path travelled.
 
 TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
 

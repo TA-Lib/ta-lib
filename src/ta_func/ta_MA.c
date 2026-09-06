@@ -352,8 +352,7 @@ TA_RetCode TA_S_MA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_MA_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_MA_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_MA_Value). */
@@ -411,6 +410,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_SMA_Stream *sub = NULL;
          retCode = TA_SMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_SMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_EMA:
@@ -418,6 +419,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_EMA_Stream *sub = NULL;
          retCode = TA_EMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_EMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_WMA:
@@ -425,6 +428,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_WMA_Stream *sub = NULL;
          retCode = TA_WMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_WMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_DEMA:
@@ -432,6 +437,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_DEMA_Stream *sub = NULL;
          retCode = TA_DEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_DEMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_TEMA:
@@ -439,6 +446,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_TEMA_Stream *sub = NULL;
          retCode = TA_TEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_TEMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_TRIMA:
@@ -446,6 +455,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_TRIMA_Stream *sub = NULL;
          retCode = TA_TRIMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_TRIMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_KAMA:
@@ -453,6 +464,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_KAMA_Stream *sub = NULL;
          retCode = TA_KAMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_KAMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_MAMA:
@@ -460,6 +473,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_MAMA_Stream *sub = NULL;
          retCode = TA_MAMA_OpenInternal( &sub, inReal, startIdx, historyLen, 0.5, 0.05, outReal, NULL );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_MAMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_T3:
@@ -467,6 +482,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_T3_Stream *sub = NULL;
          retCode = TA_T3_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, 0.7, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_T3_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_HMA:
@@ -474,6 +491,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_HMA_Stream *sub = NULL;
          retCode = TA_HMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_HMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_ZLEMA:
@@ -481,6 +500,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_ZLEMA_Stream *sub = NULL;
          retCode = TA_ZLEMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_ZLEMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    case TA_MAType_RMA:
@@ -488,6 +509,8 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
          TA_RMA_Stream *sub = NULL;
          retCode = TA_RMA_OpenInternal( &sub, inReal, startIdx, historyLen, optInTimePeriod, outReal );
          sp->sub = sub;
+         if( retCode == TA_SUCCESS )
+            TA_RMA_OutRange( sub, &sp->outRangeBegIdx, &sp->outRangeCount );
       }
       break;
    default:
@@ -500,7 +523,6 @@ TA_RetCode TA_MA_OpenInternal( struct TA_MA_Stream **stream, const double inReal
       TA_Free( sp );
       return retCode;
    }
-   TA_StreamOutRange( sp->sub, &sp->outRangeBegIdx, &sp->outRangeCount );
    sp->cur_outReal = *outReal;
    *stream = sp;
    return TA_SUCCESS;
@@ -971,6 +993,21 @@ TA_LIB_API TA_RetCode TA_MA_Value( const TA_MA_Stream *stream, double *outReal )
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MA_OutRange( const TA_MA_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_MA_Advance( TA_MA_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

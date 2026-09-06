@@ -133,16 +133,19 @@ impl Core {
         //
         //   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
         //
+        // The ratio is in [0,1] in exact arithmetic, but sumROC1 drifts, so the
+        // clamp to 1.0 is what makes the declared range a bound rather than a
+        // hope -- and in kama.c what keeps its recurrence a convex combination.
+        //
         // This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
         // two stay bit-identical -- the KAMA-reconstruction differential in
-        // test_composite2.c exists to keep it that way. Two guards are
+        // test_composite2.c exists to keep it that way. Three more guards are
         // load-bearing and shared with kama.c:
         //
         //   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
-        //     would give 1.0000000000000002. The comparison is against the
-        //     SIGNED numerator, so it only fires on up-moves; on sustained
-        //     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
-        //     "fix" this with fabs -- it changes TA_KAMA's output.
+        //     would give 1.0000000000000002, on up-moves. It compares against
+        //     the SIGNED numerator, so it is false for every down move: it
+        //     bounds nothing on its own, which is what the clamp is for.
         //   - a genuinely flat window is recognized by COUNTING exactly-zero
         //     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
         //     running sum's rounding residue), after which `0 <= 0` pins the
@@ -151,13 +154,10 @@ impl Core {
         //     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
         //     price-carrying sum).
         //
-        // A third guard is the denominator test: the division runs only where
-        // sumROC1 is exactly positive. The clamp above cannot serve as it,
-        // because it compares against the SIGNED numerator and so is false for
-        // every down move -- and a subtract-then-add sum can reach 0.0, or
-        // below it, on a window that is not flat, when a term absorbed on the
-        // way in is subtracted later at full precision. Without the guard those
-        // bars divide by zero.
+        // The third is the denominator test (#385): a subtract-then-add sum can
+        // reach 0.0, or below it, on a window that is not flat. The clamp
+        // subsumes it numerically, so it is held by the structural sweep over
+        // divisors, not by any value test.
         //
         // The subtract-then-add update order matches TA_SUM's recurrence,
         // which is what makes the composite differential bit-exact. The
@@ -203,7 +203,11 @@ impl Core {
         if sumROC1 <= 0.0 || sumROC1 <= periodROC {
             outReal[0] = 1.0;
         } else {
-            outReal[0] = (periodROC / sumROC1).abs();
+            tempReal = (periodROC / sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
+            outReal[0] = tempReal;
         }
         outIdx = 1;
         today += 1;
@@ -234,7 +238,11 @@ impl Core {
                 outReal[outIdx] = 1.0;
                 outIdx += 1;
             } else {
-                outReal[outIdx] = (periodROC / sumROC1).abs();
+                tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
+                outReal[outIdx] = tempReal;
                 outIdx += 1;
             }
             today += 1;
@@ -419,7 +427,11 @@ impl Core {
         if sp.sumROC1 <= 0.0 || sp.sumROC1 <= periodROC {
             (*outReal) = 1.0;
         } else {
-            (*outReal) = (periodROC / sp.sumROC1).abs();
+            tempReal = (periodROC / sp.sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
+            (*outReal) = tempReal;
         }
         sp.cur_outReal = (*outReal);
         sp.lag1_inReal = inReal;
@@ -473,16 +485,19 @@ impl Core {
         //
         //   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
         //
+        // The ratio is in [0,1] in exact arithmetic, but sumROC1 drifts, so the
+        // clamp to 1.0 is what makes the declared range a bound rather than a
+        // hope -- and in kama.c what keeps its recurrence a convex combination.
+        //
         // This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
         // two stay bit-identical -- the KAMA-reconstruction differential in
-        // test_composite2.c exists to keep it that way. Two guards are
+        // test_composite2.c exists to keep it that way. Three more guards are
         // load-bearing and shared with kama.c:
         //
         //   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
-        //     would give 1.0000000000000002. The comparison is against the
-        //     SIGNED numerator, so it only fires on up-moves; on sustained
-        //     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
-        //     "fix" this with fabs -- it changes TA_KAMA's output.
+        //     would give 1.0000000000000002, on up-moves. It compares against
+        //     the SIGNED numerator, so it is false for every down move: it
+        //     bounds nothing on its own, which is what the clamp is for.
         //   - a genuinely flat window is recognized by COUNTING exactly-zero
         //     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
         //     running sum's rounding residue), after which `0 <= 0` pins the
@@ -491,13 +506,10 @@ impl Core {
         //     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
         //     price-carrying sum).
         //
-        // A third guard is the denominator test: the division runs only where
-        // sumROC1 is exactly positive. The clamp above cannot serve as it,
-        // because it compares against the SIGNED numerator and so is false for
-        // every down move -- and a subtract-then-add sum can reach 0.0, or
-        // below it, on a window that is not flat, when a term absorbed on the
-        // way in is subtracted later at full precision. Without the guard those
-        // bars divide by zero.
+        // The third is the denominator test (#385): a subtract-then-add sum can
+        // reach 0.0, or below it, on a window that is not flat. The clamp
+        // subsumes it numerically, so it is held by the structural sweep over
+        // divisors, not by any value test.
         //
         // The subtract-then-add update order matches TA_SUM's recurrence,
         // which is what makes the composite differential bit-exact. The
@@ -543,7 +555,11 @@ impl Core {
         if sumROC1 <= 0.0 || sumROC1 <= periodROC {
             outReal[(0 * outStride) as usize] = 1.0;
         } else {
-            outReal[(0 * outStride) as usize] = (periodROC / sumROC1).abs();
+            tempReal = (periodROC / sumROC1).abs();
+            if tempReal > 1.0 {
+                tempReal = 1.0;
+            }
+            outReal[(0 * outStride) as usize] = tempReal;
         }
         outIdx = 1;
         today += 1;
@@ -573,7 +589,11 @@ impl Core {
             if sumROC1 <= 0.0 || sumROC1 <= periodROC {
                 outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = 1.0;
             } else {
-                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = (periodROC / sumROC1).abs();
+                tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
+                outReal[({ let _v = outIdx; outIdx += 1; _v } * outStride) as usize] = tempReal;
             }
             today += 1;
         }
@@ -797,7 +817,11 @@ impl ErStream {
             if sumROC1 <= 0.0 || sumROC1 <= periodROC {
                 (*outReal) = 1.0;
             } else {
-                (*outReal) = (periodROC / sumROC1).abs();
+                tempReal = (periodROC / sumROC1).abs();
+                if tempReal > 1.0 {
+                    tempReal = 1.0;
+                }
+                (*outReal) = tempReal;
             }
         }
         Ok(outReal)
@@ -825,7 +849,7 @@ impl ErStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_ER_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -837,7 +861,7 @@ impl ErStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_ER_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

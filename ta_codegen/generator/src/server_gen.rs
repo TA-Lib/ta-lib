@@ -258,20 +258,6 @@ pub fn generate_c_stream_private_header(funcs: &[FuncDef]) -> String {
     s.push_str("   #include \"ta_defs.h\"\n");
     s.push_str("#endif\n\n");
 
-    // The range head every generated stream struct leads with (issue #241).
-    // TA_StreamOutRange reads a handle through this type, which is what lets ONE
-    // public accessor serve every stream instead of one typed accessor per
-    // function. Rendered from the same field list the structs are, so the two
-    // cannot drift.
-    s.push_str("/* The leading members of every struct TA_<N>_Stream, in order: the range of\n");
-    s.push_str(" * bars the handle has an output for. TA_StreamOutRange (ta_utility.c)\n");
-    s.push_str(" * copies a handle's head out through this type. */\n");
-    s.push_str("typedef struct\n{\n");
-    for decl in crate::backends::c_stream::RANGE_HEAD_FIELDS {
-        s.push_str(&format!("   {decl}\n"));
-    }
-    s.push_str("} TA_StreamRangeHead;\n\n");
-
     // TA_<N>_OpenInternal is the startIdx-aware worker behind the public
     // TA_<N>_Open (a thin wrapper passing startIdx=0). Only generated code — a
     // composed function opening a sub-stream — calls it, and it does so cross-TU,
@@ -1643,7 +1629,7 @@ enum SvRangeSite {
     /// driven to the end (#287). Every server, C included since it gained
     /// `TA_<N>_Clone`.
     Copy = 3,
-    /// The prefix handle after one `TA_StreamAdvance` (#384) — the only call
+    /// The prefix handle after one `TA_<N>_Advance` (#384) — the only call
     /// that moves the range without a bar, and the one place its cross-language
     /// contract is stated: exactly +1, in every backend. Runs everywhere.
     Advance = 4,
@@ -1697,7 +1683,7 @@ const SV_RANGE_MASK_RUST: u32 =
 /// for the same bars. `guard` is the leg's own success condition — a leg that
 /// already failed has a handle short of the bars it was supposed to consume.
 fn emit_sv_range_check(
-    s: &mut String, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str,
+    s: &mut String, name: &str, indent: &str, handle: &str, guard: &str, beg: &str, nb: &str,
     site: SvRangeSite,
 ) {
     let _ = writeln!(s, "{indent}if( {guard} )");
@@ -1710,7 +1696,7 @@ fn emit_sv_range_check(
     let _ = writeln!(s, "{indent}    rB = -1; rN = -1;");
     let _ = writeln!(
         s,
-        "{indent}    if( TA_StreamOutRange( {handle}, &rB, &rN ) != TA_SUCCESS || rB != {beg} || rN != {nb} ) rangeOk = 0;"
+        "{indent}    if( TA_{name}_OutRange( {handle}, &rB, &rN ) != TA_SUCCESS || rB != {beg} || rN != {nb} ) rangeOk = 0;"
     );
     let _ = writeln!(s, "{indent}}}");
 }
@@ -2068,8 +2054,8 @@ fn emit_sv_clone_leg(
         "                    rangeChecked = 1; rangeLegs++; rangeSites |= {};",
         sv_range_bit(SvRangeSite::Copy, SV_RANGE_MASK_C)
     );
-    s.push_str("                    if( TA_StreamOutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) { rangeOk = 0; cloneBad = \"the original's range moved\"; }\n");
-    s.push_str("                    if( TA_StreamOutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) { rangeOk = 0; cloneBad = \"the fork's range is not the batch range\"; }\n");
+    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cA, &rbA, &rnA ) != TA_SUCCESS || rbA != svBeg || rnA != svNb ) {{ rangeOk = 0; cloneBad = \"the original's range moved\"; }}");
+    let _ = writeln!(s, "                    if( TA_{name}_OutRange( cB, &rbB, &rnB ) != TA_SUCCESS || rbB != svBeg || rnB != svNb ) {{ rangeOk = 0; cloneBad = \"the fork's range is not the batch range\"; }}");
     s.push_str("                }\n");
     let _ = writeln!(s, "                if( cA ) TA_{name}_Close(cA);");
     let _ = writeln!(s, "                if( cB ) TA_{name}_Close(cB);");
@@ -2269,6 +2255,11 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         s.push_str("        int valueChecked = 0, valueOk = 1, valueLegs = 0;\n");
         s.push_str("        const char *valueBad = \"-\";\n");
         s.push_str("        const char *cloneBad = \"-\";\n");
+        // Short-history reject leg. Rust, Java and C# have carried this since
+        // the streaming tier landed; C never emitted it, so `ok` could not fall
+        // for an Open that accepts a history no output is defined over.
+        s.push_str("        int shortHistChecked = 0, shortHistOk = 1;\n");
+        s.push_str("        const char *shortHistBad = \"-\";\n");
         s.push_str("        const char *peekBad = \"-\";\n");
         s.push_str("        int fillOk = 1, fillChecked = 0, fillBars = 0;\n");
         emit_sv_state_decls(&mut s, name, steq);
@@ -2458,7 +2449,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             // buffer at full history and reads only [0, nb), so a write past
             // `nb` lands in `lookback` elements of unread space.
             s.push_str(&c_canary_check(&fbuf, &out_is_int));
-            emit_sv_range_check(&mut s, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", SvRangeSite::Fill);
+            emit_sv_range_check(&mut s, name, "            ", "stf", "frc == TA_SUCCESS && stf", "svBeg", "svNb", SvRangeSite::Fill);
             s.push_str(&format!("            if( stf ) TA_{name}_Close(stf);\n"));
             s.push_str("        }\n");
 
@@ -2620,12 +2611,12 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_compare(&mut s, name, steq);
         // Open(P) + (svN - P) updates: whatever P was, the handle has consumed
         // svN bars and must report exactly what batch(0, svN-1) did.
-        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb", SvRangeSite::Prefix);
-        // One TA_StreamAdvance, LAST on this handle: it deliberately leaves the
+        emit_sv_range_check(&mut s, name, "            ", "st", "ok && st", "svBeg", "svNb", SvRangeSite::Prefix);
+        // One TA_<N>_Advance, LAST on this handle: it deliberately leaves the
         // batch range behind, so anything reading `st` after this reads a range
         // that is one ahead on purpose.
-        s.push_str("            if( ok && st && TA_StreamAdvance( st ) != TA_SUCCESS ) rangeOk = 0;\n");
-        emit_sv_range_check(&mut s, "            ", "st", "ok && st", "svBeg", "svNb + 1", SvRangeSite::Advance);
+        s.push_str(&format!("            if( ok && st && TA_{name}_Advance( st ) != TA_SUCCESS ) rangeOk = 0;\n"));
+        emit_sv_range_check(&mut s, name, "            ", "st", "ok && st", "svBeg", "svNb + 1", SvRangeSite::Advance);
         s.push_str(&format!("            if( st ) TA_{name}_Close(st);\n"));
         if candle {
             s.push_str("            pos = json_appendf(resp, resp_size, pos, \",\\\"p%d\\\":%d,\\\"match%d\\\":%d,\\\"peek%d\\\":%d\", lgi, P, lgi, ok, lgi, pkOk);\n");
@@ -2674,7 +2665,7 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             ));
             s.push_str("                    if( arc != TA_SUCCESS || !stA ) ok = 0;\n");
             emit_sv_compare(&mut s, &out_is_int, &bbuf, "                    ", "(svN - 1) - svBegS", "svN - 1", "ok &&");
-            emit_sv_range_check(&mut s, "                    ", "stA", "ok && stA", "svBegS", "svNbS", SvRangeSite::Anchored);
+            emit_sv_range_check(&mut s, name, "                    ", "stA", "ok && stA", "svBegS", "svNbS", SvRangeSite::Anchored);
 
             s.push_str(&format!("                    if( stA ) TA_{name}_Close(stA);\n"));
             s.push_str("                    if( !ok ) allOk = 0;\n");
@@ -2684,6 +2675,33 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
             s.push_str("        }\n");
         }
 
+        // At exactly `lb` bars no output is defined for ANY configuration, so
+        // Open must reject -- and with TA_INSUFFICIENT_HISTORY specifically, the
+        // one routine data-dependent failure a caller separates from a
+        // programming error. Accepting is the defect; rejecting with the wrong
+        // code is a second, distinguishable one, matching the typed-exception
+        // arms Java and C# already carry.
+        s.push_str("        if( lb >= 1 && lb < svN ) {\n");
+        s.push_str("            shortHistChecked = 1;\n");
+        let _ = writeln!(
+            s,
+            "            {{ TA_{name}_Stream *stSH = NULL; {} TA_RetCode shrc = TA_{name}_Open(&stSH, {in_args}lb, {opt_args}{});",
+            out_is_int
+                .iter()
+                .enumerate()
+                .map(|(i, is_int)| if *is_int { format!("int sh{i} = 0;") } else { format!("double sh{i} = 0.0;") })
+                .collect::<Vec<_>>()
+                .join(" "),
+            (0..n_outs).map(|i| format!("&sh{i}")).collect::<Vec<_>>().join(", ")
+        );
+        let _ = writeln!(
+            s,
+            "              if( shrc == TA_SUCCESS ) {{ shortHistOk = 0; shortHistBad = \"open accepted a history shorter than one output\"; TA_{name}_Close(stSH); }}"
+        );
+        s.push_str("              else if( shrc != TA_INSUFFICIENT_HISTORY ) { shortHistOk = 0; shortHistBad = \"open rejected with the wrong retCode\"; }\n");
+        s.push_str("              (void)stSH; }\n");
+        s.push_str("        }\n");
+        s.push_str("        if( shortHistChecked && !shortHistOk ) allOk = 0;\n");
         for id in &pin_ids {
             s.push_str(&format!("        TA_SetUnstablePeriod({id}, 0);\n"));
         }
@@ -2694,9 +2712,9 @@ fn generate_c_stream_verify(funcs: &[FuncDef], enums: &HashMap<String, EnumDef>)
         emit_sv_state_report(&mut s, steq);
         emit_sv_range_report(&mut s);
         if candle {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"beg\\\":%d,\\\"nb\\\":%d,\\\"legs\\\":%d,\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", svBeg, svNb, lgi, fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         } else {
-            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
+            s.push_str("        pos = json_appendf(resp, resp_size, pos, \",\\\"fill_checked\\\":%d,\\\"fill_ok\\\":%d,\\\"fill_bars\\\":%d,\\\"ok\\\":%d,\\\"peek_checked\\\":%d,\\\"peek_ok\\\":%d,\\\"peek_reps\\\":%d,\\\"peek_rep_ok\\\":%d,\\\"peek_rejects\\\":%d,\\\"short_history_checked\\\":%d,\\\"short_history_ok\\\":%d,\\\"short_history_bad\\\":\\\"%s\\\",\\\"clone_checked\\\":%d,\\\"clone_legs\\\":%d,\\\"clone_ok\\\":%d,\\\"clone_bad\\\":\\\"%s\\\",\\\"value_checked\\\":%d,\\\"value_legs\\\":%d,\\\"value_ok\\\":%d,\\\"value_bad\\\":\\\"%s\\\",\\\"benign\\\":%d}\", fillChecked, fillOk, fillBars, allOk, peekChecked, peekAll, peekReps, peekRepAll, peekRejects, shortHistChecked, shortHistOk, shortHistBad, cloneChecked, cloneLegs, cloneOk, cloneBad, valueChecked, valueLegs, valueOk, valueBad, svZsign);\n");
         }
         s.push_str("        return;\n");
         s.push_str("    }\n");

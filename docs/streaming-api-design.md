@@ -32,15 +32,13 @@ checkpoint story is retaining history and re-opening, which is bit-identical by
 contract.
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
-it has an output for, in the input series' coordinates: `TA_StreamOutRange` in C
-(one accessor for any handle, since every stream struct leads with the same two
-ints), `out_range()`, `outRange()`, `OutRange`. Which calls move it is
+it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
+`out_range()`, `outRange()`, `OutRange`. Which calls move it is
 `docs/error-handling-spec.md` §2.4's business.
 
-**`TA_StreamAdvance` counts a bar the handle was not fed** — `advance()`,
-`advance()`, `Advance()`. C's is one function over any handle, reading the same
-shared range head `TA_StreamOutRange` does; the other three emit it per handle
-class, as they do `out_range`. It moves the count by one and nothing else, so
+**`Advance` counts a bar the handle was not fed** — `TA_<N>_Advance`,
+`advance()`, `advance()`, `Advance()`, emitted per handle class in all four
+backends as `OutRange` is. It moves the count by one and nothing else, so
 the skipped bar's output is the previous one, held. It exists because a rejected
 `update` changes nothing: a caller with a corrected value re-feeds the bar, and
 one without says so here rather than letting two handles on one feed drift a bar
@@ -192,11 +190,11 @@ TA_LIB_API TA_RetCode TA_SMA_OpenAndFill( TA_SMA_Stream **stream, const double i
 TA_LIB_API TA_RetCode TA_SMA_Update( TA_SMA_Stream *stream, double inReal, double *outReal );
 TA_LIB_API TA_RetCode TA_SMA_Peek( const TA_SMA_Stream *stream, double inReal, double *outReal );
 TA_LIB_API TA_RetCode TA_SMA_Value( const TA_SMA_Stream *stream, double *outReal );
+TA_LIB_API TA_RetCode TA_SMA_OutRange( const TA_SMA_Stream *stream, int *outBegIdx,
+                                       int *outNBElement );
+TA_LIB_API TA_RetCode TA_SMA_Advance( TA_SMA_Stream *stream );
 TA_LIB_API TA_RetCode TA_SMA_Clone( const TA_SMA_Stream *stream, TA_SMA_Stream **clone );
 TA_LIB_API TA_RetCode TA_SMA_Close( TA_SMA_Stream *stream );
-
-TA_LIB_API TA_RetCode TA_StreamOutRange( const void *stream, int *outBegIdx, int *outNBElement );
-TA_LIB_API TA_RetCode TA_StreamAdvance( void *stream );
 ```
 
 Multi-input functions take the price scalars in batch order; multi-output ones

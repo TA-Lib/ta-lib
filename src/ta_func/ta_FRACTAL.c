@@ -302,8 +302,7 @@ TA_RetCode TA_S_FRACTAL( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_FRACTAL_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_FRACTAL_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_FRACTAL_Value). */
@@ -659,6 +658,21 @@ TA_LIB_API TA_RetCode TA_FRACTAL_Value( const TA_FRACTAL_Stream *stream, int *ou
    if( !stream || !outSwingHigh || !outSwingLow ) return TA_BAD_PARAM;
    *outSwingHigh = stream->cur_outSwingHigh;
    *outSwingLow = stream->cur_outSwingLow;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_FRACTAL_OutRange( const TA_FRACTAL_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_FRACTAL_Advance( TA_FRACTAL_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

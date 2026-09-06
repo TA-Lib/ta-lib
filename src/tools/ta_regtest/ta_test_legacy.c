@@ -85,13 +85,16 @@
  *       treatment in CORREL and BETA, the O(1) sliding-sum LINEARREG family,
  *       TA_WMA's re-anchored weighted totals -- which APO and PPO inherit
  *       through TA_MA(TA_MAType_WMA), the only two rows here that move for a
- *       change to a function they merely dispatch to -- and the two-coefficient
+ *       change to a function they merely dispatch to -- the two-coefficient
  *       Wilder step (ATR, NATR), which is (a) and (b) at once: the arithmetic
- *       form changed AND the result fuses.
+ *       form changed AND the result fuses -- and %K dividing by the window
+ *       range rather than by a copy pre-scaled by 1/100 (STOCH, STOCHF), which
+ *       is what makes a close on the window high exactly 100.0. STOCH's rows
+ *       cover its fma-inheriting alt case too; #390 is simply the larger.
  *
- * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD,
- * MACDEXT and STOCHF are all bit-exact against v0.6.4 on this series,
- * their divergences needing the fuzz corpus's extreme magnitudes to appear.
+ * A blanket contract bound would buy unearned slack: CCI, IMI, KAMA, MACD and
+ * MACDEXT are all bit-exact against v0.6.4 on this series, their divergences
+ * needing the fuzz corpus's extreme magnitudes to appear.
  *
  * ONE PRINCIPLED EXCEPTION TO "3x MEASURED": a function reaching a libm routine
  * that is not correctly rounded gets a floor of 8 ULP at its own output
@@ -135,6 +138,8 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "APO",                 1e-13 },  /* #255  measured 4.26e-14            */
    { "PPO",                 1e-13 },  /* #255  measured 3.90e-14            */
    { "LINEARREG_SLOPE",     2e-12 },  /* #103  measured 3.49e-13             */
+   { "STOCH",               3e-13 },  /* #390  measured 8.53e-14             */
+   { "STOCHF",              2e-13 },  /* #390  measured 4.26e-14             */
    /* Sized at the frozen periods (14 and 19) and only there: unlike the rows
     * above, this divergence is output-proportional and grows with the period,
     * so a re-freeze that adds a longer-period case has to re-measure. */
@@ -143,12 +148,9 @@ static const TA_LegacyTol LEGACY_TOL[] =
 
    /* --- (a) explicit fma() adoption, PR #96 ------------------------------
     * Verified per row: ADOSC, T3, TEMA, DEMA, SAREXT, EMA, SAR, TRIX, MACDFIX
-    * and MAMA contain fma() directly. MA, MAVP and STOCH contain none and
-    * inherit it one dispatch hop away -- MA through its EMA/DEMA/TEMA/T3/MAMA
-    * arms, MAVP through MA, STOCH through the MAType=EMA smoothing of its alt
-    * case (its all-SMA default is bit-exact against v0.6.4). Worth stating
-    * because "STOCH diverges from v0.6.4" looks unexplained until you notice
-    * the parameter set doing it. */
+    * and MAMA contain fma() directly. MA and MAVP contain none and inherit it
+    * one dispatch hop away -- MA through its EMA/DEMA/TEMA/T3/MAMA arms, MAVP
+    * through MA. */
    { "ADOSC",               3e-08 },  /* measured 7.45e-09, output ~4.3e6    */
    { "T3",                  4e-13 },  /* measured 1.28e-13                   */
    { "TEMA",                3e-13 },  /* measured 9.95e-14                   */
@@ -159,7 +161,6 @@ static const TA_LegacyTol LEGACY_TOL[] =
    { "MAVP",                5e-14 },  /* measured 1.42e-14, via MA->EMA      */
    { "SAR",                 5e-14 },  /* measured 1.42e-14                   */
    { "TRIX",                4e-14 },  /* measured 1.11e-14                   */
-   { "STOCH",               3e-14 },  /* measured 7.11e-15, alt/EMA arm only */
    { "MACDFIX",             4e-15 },  /* measured 1.33e-15                   */
 
    /* --- (a) plus the 8-ULP libm floor (atan-derived output) -------------- */

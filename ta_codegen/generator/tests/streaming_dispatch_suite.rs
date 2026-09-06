@@ -1199,15 +1199,18 @@ fn test_c_state_struct_text_is_the_emitted_struct() {
     assert!(checked >= 200, "expected the streaming corpus, saw {checked}");
 }
 
-/// The layout `TA_StreamOutRange` reads through (#241). One public accessor
-/// serves every stream only because the range sits at a fixed offset in EVERY
-/// `TA_<N>_Stream`, so this pins the emitted text: the two declarations, first,
-/// in that order, in every tier's struct. Nothing else can see it — the accessor
-/// takes a `const void *`, so a struct that leads with something else compiles
-/// and returns whatever those four bytes happened to be.
+/// Every stream tier is represented in the shipped corpus.
+///
+/// The suites that reason per tier — this one, `peek_suite`, the four backends'
+/// stream suites — each assume their tier is reachable, and a tier whose only
+/// function stopped streaming would leave those checks passing over nothing.
+///
+/// This was the corpus half of a layout gate that pinned the range head's
+/// position, back when a `const void *` accessor read it by object
+/// representation. `TA_<N>_OutRange` reads the members by name, so the position
+/// is the compiler's business now and only the census is worth keeping.
 #[test]
-fn c_stream_every_tier_leads_with_the_range_head() {
-    let head = backends::c_stream::RANGE_HEAD_FIELDS;
+fn c_stream_every_tier_is_in_the_corpus() {
     let mut checked = 0usize;
     let mut tiers: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     for name in discover_indicators() {
@@ -1216,28 +1219,6 @@ fn c_stream_every_tier_leads_with_the_range_head() {
             continue;
         }
         let registry = make_registry();
-        let text = backends::c_stream::state_struct_text(&func, &registry);
-        let open = format!("struct TA_{}_Stream {{", name.to_uppercase());
-        let body = text.split(&open).nth(1).unwrap_or_else(|| panic!("{name}: no struct"));
-        // The declarations, in order, ignoring comment and blank lines.
-        let decls: Vec<&str> = body
-            .lines()
-            .map(str::trim)
-            .filter(|l| !l.is_empty() && !l.starts_with("/*") && !l.starts_with('*'))
-            .collect();
-        assert!(
-            decls.len() >= 2 && decls[0] == head[0] && decls[1] == head[1],
-            "{name}: a stream struct must lead with the range head {head:?}, saw {:?}",
-            &decls[..decls.len().min(3)]
-        );
-        // Once each, so a tier cannot carry a second copy further down.
-        for d in head {
-            assert_eq!(
-                body.matches(d).count(),
-                1,
-                "{name}: `{d}` appears more than once in the stream struct"
-            );
-        }
         let resolved = func.resolved_for(ir::Lang::C);
         let plan = streaming::validate_streamable(&resolved, &registry).expect("streamable");
         tiers.insert(format!("{:?}", std::mem::discriminant(&plan)));

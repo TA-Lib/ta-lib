@@ -721,8 +721,7 @@ TA_RetCode TA_S_SMI( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_SMI_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_SMI_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_SMI_Value). */
@@ -1438,6 +1437,21 @@ TA_LIB_API TA_RetCode TA_SMI_Value( const TA_SMI_Stream *stream, double *outSMI,
    if( !stream || !outSMI || !outSMISignal ) return TA_BAD_PARAM;
    *outSMI = stream->cur_outSMI;
    *outSMISignal = stream->cur_outSMISignal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_SMI_OutRange( const TA_SMI_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_SMI_Advance( TA_SMI_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

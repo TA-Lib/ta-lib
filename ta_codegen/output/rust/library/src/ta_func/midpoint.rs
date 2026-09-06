@@ -892,7 +892,7 @@ impl MidpointStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
-    #[doc(alias = "TA_StreamOutRange")]
+    #[doc(alias = "TA_MIDPOINT_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
     }
@@ -904,7 +904,7 @@ impl MidpointStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
-    #[doc(alias = "TA_StreamAdvance")]
+    #[doc(alias = "TA_MIDPOINT_Advance")]
     pub fn advance(&mut self) {
         if self.out.count < Core::MAX_INDEX {
             self.out.count += 1;

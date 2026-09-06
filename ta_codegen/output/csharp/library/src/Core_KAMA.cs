@@ -67,6 +67,9 @@ public partial class Core
     *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
     *                forced the fastest adaptation on any instrument quoted small
     *                enough to fall under it.
+    *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
+    *                let it exceed its own mathematical maximum, and the squared
+    *                smoothing constant then amplified instead of averaging.
     */
    /// <summary>
    /// Number of leading input bars <c>KAMA</c> consumes before it can produce
@@ -218,26 +221,22 @@ public partial class Core
       trailingValue = tempReal2;
       /* Calculate the efficiency ratio.
        *
-       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-       * sit beside it was not -- it declared the window flat, and forced the
-       * fastest adaptation, for every window of an instrument quoted below it
-       * (issue #253). A genuinely flat window is now recognized by the exact bar
-       * count above instead.
+       * The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+       * clamp it: past 1 the squared smoothing constant amplifies instead of
+       * averaging and the recurrence below stops being a convex combination.
        *
-       * `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-       * beside it compares against the SIGNED numerator, so it is false whenever
-       * periodROC < 0 and cannot stand in for one. sumROC1 is a running
-       * add/subtract of fabs terms, so an addend absorbed on the way in and
-       * subtracted later at full precision drives it to exactly 0.0 on a window
-       * that is not flat; without this clause that bar divides by zero and the
-       * +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-       * carried until #350).
+       * `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+       * +Inf onto the same 1.0 -- so a value test written against it would pass
+       * with it deleted. Keep it anyway: the divisor sweep requires a division to
+       * be dominated by a test of its own divisor against a literal zero.
        */
       if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
+         if( tempReal > 1.0 ) {
+            tempReal = 1.0;
+         }
       }
       /* Calculate the smoothing constant */
       tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -286,6 +285,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -334,6 +336,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -436,6 +441,9 @@ public partial class Core
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
+         if( tempReal > 1.0 ) {
+            tempReal = 1.0;
+         }
       }
       tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
       tempReal *= tempReal;
@@ -460,6 +468,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -488,6 +499,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
          tempReal *= tempReal;
@@ -513,6 +527,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input, consistent with <c>MA(period=1)</c> for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</description></item>
+   /// <item><description>The output never leaves the range of the prices it has seen.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -580,6 +595,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input, consistent with <c>MA(period=1)</c> for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</description></item>
+   /// <item><description>The output never leaves the range of the prices it has seen.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
@@ -810,6 +826,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, sp.constDiff, sp.constMax);
@@ -884,6 +903,9 @@ public partial class Core
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sp.sumROC1);
+         if( tempReal > 1.0 ) {
+            tempReal = 1.0;
+         }
       }
       /* Calculate the smoothing constant */
       tempReal = Math.FusedMultiplyAdd(tempReal, sp.constDiff, sp.constMax);
@@ -1028,26 +1050,22 @@ public partial class Core
       trailingValue = tempReal2;
       /* Calculate the efficiency ratio.
        *
-       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-       * sit beside it was not -- it declared the window flat, and forced the
-       * fastest adaptation, for every window of an instrument quoted below it
-       * (issue #253). A genuinely flat window is now recognized by the exact bar
-       * count above instead.
+       * The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+       * clamp it: past 1 the squared smoothing constant amplifies instead of
+       * averaging and the recurrence below stops being a convex combination.
        *
-       * `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-       * beside it compares against the SIGNED numerator, so it is false whenever
-       * periodROC < 0 and cannot stand in for one. sumROC1 is a running
-       * add/subtract of fabs terms, so an addend absorbed on the way in and
-       * subtracted later at full precision drives it to exactly 0.0 on a window
-       * that is not flat; without this clause that bar divides by zero and the
-       * +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-       * carried until #350).
+       * `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+       * +Inf onto the same 1.0 -- so a value test written against it would pass
+       * with it deleted. Keep it anyway: the divisor sweep requires a division to
+       * be dominated by a test of its own divisor against a literal zero.
        */
       if( sumROC1 <= 0.0 || sumROC1 <= periodROC ) {
          tempReal = 1.0;
       } else {
          tempReal = Math.Abs(periodROC / sumROC1);
+         if( tempReal > 1.0 ) {
+            tempReal = 1.0;
+         }
       }
       /* Calculate the smoothing constant */
       tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -1096,6 +1114,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);
@@ -1144,6 +1165,9 @@ public partial class Core
             tempReal = 1.0;
          } else {
             tempReal = Math.Abs(periodROC / sumROC1);
+            if( tempReal > 1.0 ) {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = Math.FusedMultiplyAdd(tempReal, constDiff, constMax);

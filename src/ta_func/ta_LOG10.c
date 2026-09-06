@@ -125,8 +125,7 @@ TA_RetCode TA_S_LOG10( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_LOG10_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_LOG10_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_LOG10_Value). */
@@ -250,6 +249,21 @@ TA_LIB_API TA_RetCode TA_LOG10_Value( const TA_LOG10_Stream *stream, double *out
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LOG10_OutRange( const TA_LOG10_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_LOG10_Advance( TA_LOG10_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

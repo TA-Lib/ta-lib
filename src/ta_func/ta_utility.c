@@ -47,17 +47,12 @@
  *  071926 MF,CC  Remove dead .NET/Java preprocessor branches (plain C only)
  *  072726 MF,CC  Bound TA_Set/GetUnstablePeriod below as well as above (#144)
  *  072826 MF,CC  Range-check against TA_FUNC_UNST_COUNT; ALL is now INT_MAX
- *  082126 MF,CC  TA_StreamOutRange: the range every stream handle carries (#241)
- *  090526 MF,CC  TA_StreamAdvance: count a bar the handle was not fed (#384)
  *
  */
-
-#include <string.h>
 
 #include "ta_utility.h"
 #include "ta_func.h"
 #include "ta_memory.h"
-#include "ta_func_stream_private.h"
 
 TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
                                  unsigned int  unstablePeriod )
@@ -130,39 +125,3 @@ TA_Compatibility TA_GetCompatibility( void )
    return TA_COMPATIBILITY_DEFAULT;
 }
 
-TA_RetCode TA_StreamOutRange( const void *stream,
-                              int *outBegIdx,
-                              int *outNBElement )
-{
-   /* Every generated TA_<N>_Stream leads with TA_StreamRangeHead's two members,
-    * in its order — the C stream backend emits both from one field list. The
-    * structs themselves are private to the translation unit that defines them,
-    * so this reads the head out by object representation rather than through a
-    * type the caller could not name anyway.
-    */
-   TA_StreamRangeHead head;
-
-   if( !stream || !outBegIdx || !outNBElement )
-      return TA_BAD_PARAM;
-
-   memcpy( &head, stream, sizeof(head) );
-   *outBegIdx = head.outRangeBegIdx;
-   *outNBElement = head.outRangeCount;
-   return TA_SUCCESS;
-}
-
-TA_RetCode TA_StreamAdvance( void *stream )
-{
-   TA_StreamRangeHead head;
-
-   if( !stream )
-      return TA_BAD_PARAM;
-
-   memcpy( &head, stream, sizeof(head) );
-   if( head.outRangeCount < TA_MAX_INDEX )
-   {
-      head.outRangeCount++;
-      memcpy( stream, &head, sizeof(head) );
-   }
-   return TA_SUCCESS;
-}

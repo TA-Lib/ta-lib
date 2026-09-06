@@ -14,15 +14,6 @@
    #include "ta_defs.h"
 #endif
 
-/* The leading members of every struct TA_<N>_Stream, in order: the range of
- * bars the handle has an output for. TA_StreamOutRange (ta_utility.c)
- * copies a handle's head out through this type. */
-typedef struct
-{
-   int outRangeBegIdx;
-   int outRangeCount;
-} TA_StreamRangeHead;
-
 /* Internal stream-open declarations (startIdx-aware; behind the public Open) */
 struct TA_AC_Stream;
 struct TA_ACCBANDS_Stream;

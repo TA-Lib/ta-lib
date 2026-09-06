@@ -3043,7 +3043,7 @@ fn emit_update_and_peek(
          \x20   /// `peek` — and a clone carries it verbatim. A plain `Open` hands back\n\
          \x20   /// only the last value, a subset of this range, because the caller chose\n\
          \x20   /// not to take the fill.\n\
-         \x20   #[doc(alias = \"TA_StreamOutRange\")]\n\
+         \x20   #[doc(alias = \"TA_{n}_OutRange\")]\n\
          \x20   pub fn out_range(&self) -> OutRange {{\n\
          \x20       self.out\n\
          \x20   }}"
@@ -3057,7 +3057,7 @@ fn emit_update_and_peek(
          \x20   /// For a bar the caller leaves out: one an `update` rejected and that\n\
          \x20   /// will not be re-fed, or a session with no print. Without it two handles\n\
          \x20   /// on one feed drift a bar apart when only one of them skips.\n\
-         \x20   #[doc(alias = \"TA_StreamAdvance\")]\n\
+         \x20   #[doc(alias = \"TA_{n}_Advance\")]\n\
          \x20   pub fn advance(&mut self) {{\n\
          {}\
          \x20   }}",

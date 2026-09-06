@@ -367,8 +367,7 @@ TA_RetCode TA_S_ACCBANDS( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_ACCBANDS_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_ACCBANDS_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_ACCBANDS_Value). */
@@ -776,6 +775,21 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Value( const TA_ACCBANDS_Stream *stream, doubl
    *outRealUpperBand = stream->cur_outRealUpperBand;
    *outRealMiddleBand = stream->cur_outRealMiddleBand;
    *outRealLowerBand = stream->cur_outRealLowerBand;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ACCBANDS_OutRange( const TA_ACCBANDS_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_ACCBANDS_Advance( TA_ACCBANDS_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

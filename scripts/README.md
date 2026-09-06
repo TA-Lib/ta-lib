@@ -10,7 +10,7 @@ See `README-DEVS.md` at the repo root for the build/test/release walkthroughs.
 |---|---|
 | `build.py` | The developer build entry point: C library + C tools (CMake), and `ta_codegen` / `generate` / `servers` (cargo). CMake never invokes cargo. |
 | `regtest.py` | Full pipeline: generate → build → correctness → benchmark. The nightly drives it three ways. |
-| `python-dev.py` | Keeps `~/ta-lib-python` on **dev** in step with the C library in this worktree. `check` (default) builds the wrapper both ways — from `_ta_lib.pyx` and from the committed `_ta_lib.c` — runs its suite, verifies regenerating changes nothing, and diffs its hand-maintained enum/flag tables against `include/`. `sync` regenerates what drifted; `wheel` rehearses the release test command. Writes nothing to git, in either repo. Local counterpart to `test-dist.py`, which pairs the PUBLISHED wrapper with a release candidate. |
+| `python-dev.py` | Keeps `~/ta-lib-python` on **dev** in step with this worktree: builds the wrapper from both `_ta_lib.pyx` and the committed `_ta_lib.c`, runs its suite, checks that regenerating changes nothing, and diffs its enum/flag tables against `include/`. `sync` regenerates the drift. Commits nothing. |
 | `gen_test_reference.py` | Rebuilds `ta_regtest`'s baked numerical goldens (`src/tools/ta_regtest/ta_test_reference_golden.{h,c}`) from the datasets in `ta_test_reference.c`, in exact rational arithmetic. Run it when a dataset changes; `--check` verifies in place. Deliberately NOT on a gate — `ta_regtest --function=REFERENCE` catches a stale table at runtime, because the oracle stops reproducing it. |
 
 ## Verification gates

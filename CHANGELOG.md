@@ -112,6 +112,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#243) STDDEV and BBANDS returned exactly 0 for a standard deviation that was small but non-zero. In rare cases, was making the bands "collapse" on the middle line.
 - (#244) MFI returned 0 instead of the index whenever the window summed to less than 1.0. Also, no longer returns values slightly outside 0-100 (clamps the epsilon errors).
 - (#253) Fix many TA_IS_ZERO vs TA_IS_ZERO_SCALED choices. Numerically better for edge cases, like very small inputs (<10e-8) or mostly flat input prices.
+- (#390) STOCH and STOCHF returned `inf` or `NaN` while reporting success, for prices near the bottom of the double range. A close sitting on the window high now comes out as exactly 100.
+- (#390) KAMA could return values outside the range of the prices it was smoothing, and ER values above 1. Both come from the same efficiency ratio exceeding its own maximum when floating-point drift left the running sum of price movement below the net move it bounds. The ratio is now clamped, making ER a hard 0..1.
 
 ## [0.7.1] 2026-07-03
 ### Added

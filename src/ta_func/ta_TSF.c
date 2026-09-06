@@ -398,8 +398,7 @@ TA_RetCode TA_S_TSF( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_TSF_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_TSF_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_TSF_Value). */
@@ -971,6 +970,21 @@ TA_LIB_API TA_RetCode TA_TSF_Value( const TA_TSF_Stream *stream, double *outReal
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TSF_OutRange( const TA_TSF_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_TSF_Advance( TA_TSF_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

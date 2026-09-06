@@ -94,17 +94,14 @@ fn attrs_above(src: &str, sig: &str) -> Vec<String> {
 }
 
 /// Per function: the set of C symbols its generated Rust must name, and nothing
-/// else. `TA_StreamOutRange` and `TA_StreamAdvance` are the shared spellings —
-/// both are the same C entry point for every handle.
+/// else.
 fn expected(func: &ir::FuncDef) -> BTreeSet<String> {
     let n = &func.name;
     let mut want: BTreeSet<String> = [format!("TA_{n}"), format!("TA_{n}_Lookback")].into();
     if func.streaming {
-        for verb in ["Stream", "Open", "OpenAndFill", "Update", "Peek", "Value"] {
+        for verb in ["Stream", "Open", "OpenAndFill", "Update", "Peek", "Value", "OutRange", "Advance"] {
             want.insert(format!("TA_{n}_{verb}"));
         }
-        want.insert("TA_StreamOutRange".to_string());
-        want.insert("TA_StreamAdvance".to_string());
     }
     want
 }
@@ -156,5 +153,21 @@ fn the_batch_and_lookback_aliases_sit_on_the_functions_they_name() {
             lb.contains(&format!("#[doc(alias = \"TA_{n}_Lookback\")]")),
             "{name}: the lookback does not carry TA_{n}_Lookback; attrs were {lb:?}"
         );
+
+        // The two range accessors, per handle since #387. Set membership above
+        // cannot see which method an alias sits on.
+        if func.streaming {
+            let or = attrs_above(&src, "pub fn out_range(");
+            assert!(
+                or.contains(&format!("#[doc(alias = \"TA_{n}_OutRange\")]")),
+                "{name}: out_range does not carry TA_{n}_OutRange; attrs were {or:?}"
+            );
+
+            let adv = attrs_above(&src, "pub fn advance(");
+            assert!(
+                adv.contains(&format!("#[doc(alias = \"TA_{n}_Advance\")]")),
+                "{name}: advance does not carry TA_{n}_Advance; attrs were {adv:?}"
+            );
+        }
     }
 }

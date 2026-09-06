@@ -291,8 +291,7 @@ TA_RetCode TA_S_VWMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_VWMA_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_VWMA_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_VWMA_Value). */
@@ -643,6 +642,21 @@ TA_LIB_API TA_RetCode TA_VWMA_Value( const TA_VWMA_Stream *stream, double *outRe
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VWMA_OutRange( const TA_VWMA_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_VWMA_Advance( TA_VWMA_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

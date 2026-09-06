@@ -909,8 +909,7 @@ TA_RetCode TA_S_HT_SINE( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_HT_SINE_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_HT_SINE_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_HT_SINE_Value). */
@@ -2088,6 +2087,21 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Value( const TA_HT_SINE_Stream *stream, double 
    if( !stream || !outSine || !outLeadSine ) return TA_BAD_PARAM;
    *outSine = stream->cur_outSine;
    *outLeadSine = stream->cur_outLeadSine;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_SINE_OutRange( const TA_HT_SINE_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_HT_SINE_Advance( TA_HT_SINE_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

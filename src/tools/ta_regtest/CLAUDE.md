@@ -320,7 +320,7 @@ of floors: every streaming function must report a non-zero `peek_reps`, and
 refusals outnumbering completed probes on one request is a failure of its own.
 
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers |
-| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `TA_StreamAdvance` (which must report exactly one more) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
+| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `Advance` (which must report exactly one more) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
 
 Of the five value families, two delegate to the batch transcription — the
 `OpenAndFill` and anchored `OpenInternal` legs — leaving the prefix sweep's
@@ -545,7 +545,8 @@ Scope rules (deliberate):
 
 - **period == 1 is out of scope** — 0.6.4 rejects it or has period-1 OOB bugs —
   so periods are floored at 2 and period-1 is validated by the non-0.6.4
-  comparisons. At period ≥ 2 there are **no waivers**.
+  comparisons. At period ≥ 2 there is **no blanket slack**: every exemption is
+  a manifest tolerance or a named skip.
 - **Subset tolerance is 0.6.4-only:** post-0.6.4 functions are skipped via
   `ta_064_serve`'s `list_functions`. Any non-0.6.4 comparison must instead
   require an exact function-set match.
@@ -570,6 +571,16 @@ Scope rules (deliberate):
   index or it does not. The new behaviour is pinned separately by `test_mfi.c`
   against two external oracles plus a bit-identity sweep over power-of-two volume
   scales. Reported as `mfi-skipped:`.
+- **KAMA per-case skip:** v0.6.4's efficiency ratio is decided by its running
+  sum's residue rather than by the window — on a flat window (#253), and where
+  absorption puts that residue at the scale of the window's own sum, which sends
+  v0.6.4's ratio outside [0,1] (#390). Gated on `fuzz_kama_064_blind()`, whose
+  predicate is computed from the inputs alone; the mechanism is stated there.
+  KAMA has no manifest entry, so every other case is held to the blanket 1e-9
+  FMA re-baseline bound, which is what absorbs the ULP-scale ratio changes the
+  clamp introduces; the skip covers only what leaves that bound. The same skip
+  drops the STOCH/STOCHF vectors that smooth with `MAType=KAMA`, whose
+  Fast-K series this gate cannot examine. Reported as `kama-skipped:`.
 - The oracle is reopened and retried once if it dies, so one latent 0.6.4 crash
   cannot sink the run.
 

@@ -5,8 +5,11 @@
     scripts/python-dev.py sync      regenerate what drifted, into the wrapper tree
     scripts/python-dev.py wheel     build a wheel and run the release test command
 
-Assumes ~/ta-lib and ~/ta-lib-python are both on dev (--any-branch to override,
-TALIB_PYTHON to point elsewhere). Nothing is ever committed, in either repo.
+Run `check` after anything that moves ta-lib's public surface — a new
+indicator, a new TA_MAType or unstable-period id, a new flag — and `sync` when
+it reports drift. Assumes ~/ta-lib and ~/ta-lib-python are both on dev
+(--any-branch to override, TALIB_PYTHON and TALIB_PYTHON_DEV_CACHE to relocate).
+Nothing is ever committed, in either repo.
 
 Everything is idempotent: the C build, the pinned Cython, and the work copy all
 live under ~/.cache/talib-python-dev and are reused. `sync` regenerates from the
@@ -26,7 +29,8 @@ from pathlib import Path
 
 TA_LIB = Path(__file__).resolve().parent.parent
 WRAPPER = Path(os.environ.get("TALIB_PYTHON", Path.home() / "ta-lib-python"))
-CACHE = Path.home() / ".cache" / "talib-python-dev"
+CACHE = Path(os.environ.get("TALIB_PYTHON_DEV_CACHE",
+                            Path.home() / ".cache" / "talib-python-dev"))
 PREFIX, CBUILD, WORK, NOCYTHON = (CACHE / n for n in ("prefix", "cbuild", "work", "nocython"))
 
 FAILURES = []
@@ -120,8 +124,8 @@ def build_wrapper(work, hide_cython=False):
         cwd=work, env=env_for(work, hide_cython))
 
 
-def pytest(work, extra=()):
-    r = run([sys.executable, "-m", "pytest", "-q"] + list(extra),
+def pytest(work):
+    r = run([sys.executable, "-m", "pytest", "-q"],
             cwd=work, env=env_for(work), check=False)
     tail = (r.stdout or "").strip().splitlines()[-1:] or [""]
     return r.returncode == 0, tail[0]
@@ -147,27 +151,40 @@ def cython_pin():
 
 
 def regenerate(work, into):
-    """Two passes: the generators import talib, so pass 1 runs against whatever
-    the extension currently binds and pass 2 against the full set."""
+    """Regenerate until it settles, then mirror the result into `into`.
+
+    The generators import talib, so what they can see is what the extension
+    currently binds: over a wrapper missing a function, the first pass emits it
+    with no defaults and no docstring, and only a rebuild lets the next pass
+    see it. Writing straight to `into` would leave that first pass as the
+    answer."""
     env = env_for(work)
+    tools = (("generate_func.py", "_func.pxi"), ("generate_stream.py", "_stream.pxi"))
     for pass_no in (1, 2):
-        for tool, out in (("generate_func.py", "_func.pxi"),
-                          ("generate_stream.py", "_stream.pxi")):
+        changed = False
+        for tool, out in tools:
             r = subprocess.run([sys.executable, "tools/" + tool], cwd=work, env=env,
                                capture_output=True, text=True)
             if r.returncode:
                 print(r.stderr)
                 sys.exit("%s failed" % tool)
-            # write via a temp name: a truncating redirect loses the file on a crash
+            # a temp name, not a redirect: a truncating redirect loses the file on a crash
+            target = work / "talib" / out
+            changed = changed or target.read_text() != r.stdout
             tmp = work / (out + ".new")
             tmp.write_text(r.stdout)
-            tmp.replace(into / "talib" / out)
+            tmp.replace(target)
             if pass_no == 2 and r.stderr.strip():
                 fail("%s still reports missing defaults:\n%s" % (tool, r.stderr.strip()))
-        if pass_no == 1:
-            build_wrapper(work)
-    return run([sys.executable, "tools/generate_abstract_stub.py"], cwd=work,
-               env=env).stdout
+        if not changed:
+            break
+        build_wrapper(work)
+    stub = run([sys.executable, "tools/generate_abstract_stub.py"], cwd=work, env=env).stdout
+    if into != work:
+        for _, out in tools:
+            shutil.copy2(work / "talib" / out, into / "talib" / out)
+        (into / "talib" / "abstract.pyi").write_text(stub)
+    return stub
 
 
 def header_enum(path, pattern):
@@ -197,21 +214,26 @@ print(json.dumps({
     import json
     got = json.loads(run([sys.executable, "-c", probe], cwd=work, env=env).stdout)
 
-    if got["functions"] == got["grouped"] == got["bound"]:
-        ok("%d functions, and the group dict agrees with the extension" % len(got["bound"]))
+    c, bound, grouped = (set(got[k]) for k in ("functions", "grouped", "bound"))
+    if not c:
+        fail("the C library reported no functions at all")
+    elif c == bound == grouped:
+        ok("%d functions, and the group dict agrees with the extension" % len(c))
     else:
-        fail("function sets disagree: C=%d bound=%d grouped=%d; missing from the dict: %s"
-             % (len(got["functions"]), len(got["bound"]), len(got["grouped"]),
-                sorted(set(got["functions"]) - set(got["grouped"])) or "none"))
+        fail("function sets disagree: C=%d bound=%d grouped=%d | unbound: %s | "
+             "ungrouped: %s | in the wrapper but not in C: %s"
+             % (len(c), len(bound), len(grouped),
+                sorted(c - bound) or "-", sorted(c - grouped) or "-",
+                sorted((bound | grouped) - c) or "-"))
 
-    want = {n: int(v) for n, v in header_enum("ta_defs.h", r"TA_MAType_(\w+)\s*=\s*(\d+)").items()}
+    want = {n: int(v, 0) for n, v in header_enum("ta_defs.h", r"TA_MAType_(\w+)\s*=\s*(0x[0-9A-Fa-f]+|\d+)").items()}
     if want == {k: int(v) for k, v in got["matype"].items()}:
         ok("MA_Type mirrors TA_MAType (%d members)" % len(want))
     else:
         fail("MA_Type drift: header has %s, wrapper has %s"
              % (sorted(want), sorted(got["matype"])))
 
-    unst = {n for n in header_enum("ta_defs.h", r"TA_FUNC_UNST_(\w+)\s*=\s*(\d+)")
+    unst = {n for n in header_enum("ta_defs.h", r"TA_FUNC_UNST_(\w+)\s*=\s*(0x[0-9A-Fa-f]+|\d+)")
             if not n.startswith("UNUSED")} | {"ALL", "NONE"}
     if unst <= set(got["unst"]):
         ok("unstable-period ids cover TA_FuncUnstId (%d)" % len(unst))
@@ -251,7 +273,7 @@ print(','.join(str(b) for b in bad))
         ok("every TA_RetCode has a description")
 
 
-def target_check(args):
+def target_check():
     work = work_copy()
     pristine_c = (work / "talib" / "_ta_lib.c").read_text()
 
@@ -284,33 +306,32 @@ def target_check(args):
     (ok if passed else fail)("suite, built from _ta_lib.c: %s" % line)
 
 
-def target_sync(args):
+def target_sync():
     work = work_copy()
     build_wrapper(work)
     print("\nregenerating into %s" % WRAPPER)
     regenerate(work, WRAPPER)
     version, cython = cython_pin()
-    for name in ("_func.pxi", "_stream.pxi"):
-        shutil.copy2(WRAPPER / "talib" / name, work / "talib" / name)
-    stub = run([sys.executable, "tools/generate_abstract_stub.py"],
-               cwd=work, env=env_for(work)).stdout
-    (WRAPPER / "talib" / "abstract.pyi").write_text(stub)
     print("refreshing _ta_lib.c with Cython %s" % version)
+    # Cython embeds a RELATIVE path to numpy's pxd, so this reproduces the
+    # committed file byte for byte only from the wrapper's usual location.
     run([str(cython / "bin" / "cython"), "talib/_ta_lib.pyx"], cwd=WRAPPER,
         env=dict(os.environ, PYTHONPATH=str(cython)))
     print("\nwritten, not committed:")
     print(git(WRAPPER, "status", "--short") or "  (nothing changed)")
-    print("\nStill yours to edit by hand if `check` reports them: the "
-          "__function_groups__ dict, MA_Type, the unstable-period table, "
-          "the flag dicts, and _ta_lib.pyi.")
+    print("\nA new function, moving average or unstable-period id still needs its "
+          "line by hand in __function_groups__, MA_Type, the unstable table and "
+          "_ta_lib.pyi. `check` names the ones that are missing.")
 
 
-def target_wheel(args):
+def target_wheel():
     work = work_copy()
     shutil.rmtree(work / "dist", ignore_errors=True)
     run([sys.executable, "-m", "build", "--wheel", "--no-isolation"],
         cwd=work, env=env_for(work))
-    wheel = next((work / "dist").glob("*.whl"))
+    wheel = next((work / "dist").glob("*.whl"), None)
+    if wheel is None:
+        sys.exit("no wheel in %s" % (work / "dist"))
     target = CACHE / "wheeltest"
     shutil.rmtree(target, ignore_errors=True)
     run([sys.executable, "-m", "pip", "install", "--quiet", "--target", str(target), str(wheel)])
@@ -337,14 +358,15 @@ def main():
     require_branches(args.any_branch)
     build_c()
 
-    {"check": target_check, "sync": target_sync, "wheel": target_wheel}[args.target](args)
+    {"check": target_check, "sync": target_sync, "wheel": target_wheel}[args.target]()
 
     print()
     if FAILURES:
         print("%d problem(s). `%s sync` regenerates what it can."
               % (len(FAILURES), Path(__file__).name))
         sys.exit(1)
-    print("ta-lib-python/dev is ready for this worktree's C library.")
+    if args.target == "check":
+        print("ta-lib-python/dev is ready for this worktree's C library.")
 
 
 if __name__ == "__main__":

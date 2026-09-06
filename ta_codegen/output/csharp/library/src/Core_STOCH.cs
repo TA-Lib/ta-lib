@@ -65,6 +65,9 @@ public partial class Core
     *               small enough to fall under it.
     *  082726 MF,CC Fix #269. Answer a rejected %D ma() before the copy, not after:
     *               the stale *outNBElement overran outSlowK by lookbackDSlow.
+    *  090626 MF,CC Fix #390. Divide by the range, scale after: the hoisted
+    *               `(highest-lowest)/100.0` underflowed to 0.0 on a denormal
+    *               range that the guard still called "not flat".
     */
    /// <summary>
    /// Number of leading input bars <c>STOCH</c> consumes before it can produce
@@ -148,7 +151,6 @@ public partial class Core
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
       Span<double> tempBuffer;
       int outIdx = 0;
       int lowestIdx = 0;
@@ -271,7 +273,6 @@ public partial class Core
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
@@ -303,11 +304,9 @@ public partial class Core
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -322,22 +321,22 @@ public partial class Core
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-          * machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-          * range against ITS OWN two extremes, not against a fixed band: the range
-          * carries the quote unit, so a constant put against it answers "flat" for
-          * every window of an instrument quoted below it and zeroed the whole
-          * output (issue #253).
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [0,100] noise (issue #107 / STOCHRSI).
           */
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+            tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
          } else {
             tempBuffer[outIdx++] = 0.0;
          }
@@ -402,7 +401,6 @@ public partial class Core
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
       Span<double> tempBuffer;
       int outIdx = 0;
       int lowestIdx = 0;
@@ -469,7 +467,6 @@ public partial class Core
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       bufferIsAllocated = 0;
       bufferIsAllocated = 1;
       tempBuffer = new double[(int)((endIdx - today + 1) * 1)];
@@ -486,11 +483,9 @@ public partial class Core
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
          tmp = (double)inHigh[today];
          if( highestIdx < trailingIdx ) {
@@ -504,14 +499,12 @@ public partial class Core
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / diff;
+            tempBuffer[outIdx++] = ((double)inClose[today] - lowest) / (highest - lowest) * 100.0;
          } else {
             tempBuffer[outIdx++] = 0.0;
          }
@@ -766,7 +759,6 @@ public partial class Core
       internal MAType optInSlowD_MAType;
       internal double lowest;
       internal double highest;
-      internal double diff;
       internal int lowestIdx;
       internal int highestIdx;
       internal int trailingIdx;
@@ -820,7 +812,6 @@ public partial class Core
          this.optInSlowD_MAType = other.optInSlowD_MAType;
          this.lowest = other.lowest;
          this.highest = other.highest;
-         this.diff = other.diff;
          this.lowestIdx = other.lowestIdx;
          this.highestIdx = other.highestIdx;
          this.trailingIdx = other.trailingIdx;
@@ -888,7 +879,6 @@ public partial class Core
          double cur_outSlowD = 0.0;
          double cur_outSlowK = 0.0;
          double tmp = 0.0;
-         double diff = sp.diff;
          double highest = sp.highest;
          int highestIdx = sp.highestIdx;
          int i = sp.i;
@@ -929,11 +919,9 @@ public partial class Core
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
          /* Set the highest high */
          tmp = ((today & sp.xMask) != pkSlot0) ? sp.x_inHigh[today & sp.xMask] : pkVal0;
@@ -948,22 +936,22 @@ public partial class Core
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-          * machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-          * range against ITS OWN two extremes, not against a fixed band: the range
-          * carries the quote unit, so a constant put against it answers "flat" for
-          * every window of an instrument quoted below it and zeroed the whole
-          * output (issue #253).
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [0,100] noise (issue #107 / STOCHRSI).
           */
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / diff;
+            cur_tempBuffer = ((((today & sp.xMask) != pkSlot2) ? sp.x_inClose[today & sp.xMask] : pkVal2) - lowest) / (highest - lowest) * 100.0;
          } else {
             cur_tempBuffer = 0.0;
          }
@@ -1020,11 +1008,9 @@ public partial class Core
                sp.lowest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / 100.0;
       } else if( tmp <= sp.lowest ) {
          sp.lowestIdx = sp.today;
          sp.lowest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / 100.0;
       }
       /* Set the highest high */
       tmp = sp.x_inHigh[sp.today & sp.xMask];
@@ -1039,22 +1025,22 @@ public partial class Core
                sp.highest = tmp;
             }
          }
-         sp.diff = (sp.highest - sp.lowest) / 100.0;
       } else if( tmp >= sp.highest ) {
          sp.highestIdx = sp.today;
          sp.highest = tmp;
-         sp.diff = (sp.highest - sp.lowest) / 100.0;
       }
-      /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-       * machine-flat window leaves a sub-epsilon residue that an exact check
-       * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-       * range against ITS OWN two extremes, not against a fixed band: the range
-       * carries the quote unit, so a constant put against it answers "flat" for
-       * every window of an instrument quoted below it and zeroed the whole
-       * output (issue #253).
+      /* Divide by the range itself and scale after: the guard has to test the
+       * very expression the division uses, or a scaling step can carry a
+       * guarded-non-zero into a zero divisor.
+       *
+       * The band is the range against ITS OWN two extremes, not a fixed
+       * constant: the range carries the quote unit, so a constant answers
+       * "flat" for every window of an instrument quoted below it (issue #253).
+       * It absorbs the machine-flat window an exact test would divide into
+       * [0,100] noise (issue #107 / STOCHRSI).
        */
       if( !(Math.Abs(sp.highest - sp.lowest) <= 0.00000000000001 * (Math.Abs(sp.highest) + Math.Abs(sp.lowest))) ) {
-         cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / sp.diff;
+         cur_tempBuffer = (sp.x_inClose[sp.today & sp.xMask] - sp.lowest) / (sp.highest - sp.lowest) * 100.0;
       } else {
          cur_tempBuffer = 0.0;
       }
@@ -1075,7 +1061,6 @@ public partial class Core
       double lowest = 0;
       double highest = 0;
       double tmp = 0;
-      double diff = 0;
       Span<double> tempBuffer;
       int outIdx = 0;
       int lowestIdx = 0;
@@ -1207,7 +1192,6 @@ public partial class Core
       lowestIdx = highestIdx;
       lowest = 0.0;
       highest = lowest;
-      diff = highest;
       /* Allocate a temporary buffer large enough to
        * store the K.
        *
@@ -1239,11 +1223,9 @@ public partial class Core
                   lowest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp <= lowest ) {
             lowestIdx = today;
             lowest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
          /* Set the highest high */
          tmp = inHigh[today];
@@ -1258,22 +1240,22 @@ public partial class Core
                   highest = tmp;
                }
             }
-            diff = (highest - lowest) / 100.0;
          } else if( tmp >= highest ) {
             highestIdx = today;
             highest = tmp;
-            diff = (highest - lowest) / 100.0;
          }
-         /* Calculate stochastic. The guard is not an exact `diff != 0.0`: a
-          * machine-flat window leaves a sub-epsilon residue that an exact check
-          * would divide into [0,100] noise (issue #107 / STOCHRSI). It is the
-          * range against ITS OWN two extremes, not against a fixed band: the range
-          * carries the quote unit, so a constant put against it answers "flat" for
-          * every window of an instrument quoted below it and zeroed the whole
-          * output (issue #253).
+         /* Divide by the range itself and scale after: the guard has to test the
+          * very expression the division uses, or a scaling step can carry a
+          * guarded-non-zero into a zero divisor.
+          *
+          * The band is the range against ITS OWN two extremes, not a fixed
+          * constant: the range carries the quote unit, so a constant answers
+          * "flat" for every window of an instrument quoted below it (issue #253).
+          * It absorbs the machine-flat window an exact test would divide into
+          * [0,100] noise (issue #107 / STOCHRSI).
           */
          if( !(Math.Abs(highest - lowest) <= 0.00000000000001 * (Math.Abs(highest) + Math.Abs(lowest))) ) {
-            tempBuffer[outIdx++] = (inClose[today] - lowest) / diff;
+            tempBuffer[outIdx++] = (inClose[today] - lowest) / (highest - lowest) * 100.0;
          } else {
             tempBuffer[outIdx++] = 0.0;
          }
@@ -1352,7 +1334,6 @@ public partial class Core
       sp.optInSlowD_MAType = optInSlowD_MAType;
       sp.lowest = lowest;
       sp.highest = highest;
-      sp.diff = diff;
       sp.lowestIdx = lowestIdx;
       sp.highestIdx = highestIdx;
       sp.trailingIdx = trailingIdx;

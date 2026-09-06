@@ -67,6 +67,9 @@
  *                the fixed TA_IS_ZERO band beside the efficiency ratio, which
  *                forced the fastest adaptation on any instrument quoted small
  *                enough to fall under it.
+ *  090626 MF,CC  Fix #390. Clamp the efficiency ratio to 1. A drifted sumROC1
+ *                let it exceed its own mathematical maximum, and the squared
+ *                smoothing constant then amplified instead of averaging.
  */
 
 TA_LIB_API int TA_KAMA_Lookback( int optInTimePeriod )
@@ -214,21 +217,14 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
    trailingValue = tempReal2;
    /* Calculate the efficiency ratio.
     *
-    * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-    * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-    * sit beside it was not -- it declared the window flat, and forced the
-    * fastest adaptation, for every window of an instrument quoted below it
-    * (issue #253). A genuinely flat window is now recognized by the exact bar
-    * count above instead.
+    * The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+    * clamp it: past 1 the squared smoothing constant amplifies instead of
+    * averaging and the recurrence below stops being a convex combination.
     *
-    * `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-    * beside it compares against the SIGNED numerator, so it is false whenever
-    * periodROC < 0 and cannot stand in for one. sumROC1 is a running
-    * add/subtract of fabs terms, so an addend absorbed on the way in and
-    * subtracted later at full precision drives it to exactly 0.0 on a window
-    * that is not flat; without this clause that bar divides by zero and the
-    * +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-    * carried until #350).
+    * `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+    * +Inf onto the same 1.0 -- so a value test written against it would pass
+    * with it deleted. Keep it anyway: the divisor sweep requires a division to
+    * be dominated by a test of its own divisor against a literal zero.
     */
    if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
    {
@@ -236,6 +232,10 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
    } else 
    {
       tempReal = fabs(periodROC / sumROC1);
+      if( tempReal > 1.0 )
+      {
+         tempReal = 1.0;
+      }
    }
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, constDiff, constMax);
@@ -290,6 +290,10 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
       } else 
       {
          tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
       }
       /* Calculate the smoothing constant */
       tempReal = fma(tempReal, constDiff, constMax);
@@ -344,6 +348,10 @@ TA_LIB_API TA_RetCode TA_KAMA( int    startIdx,
       } else 
       {
          tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
       }
       /* Calculate the smoothing constant */
       tempReal = fma(tempReal, constDiff, constMax);
@@ -463,6 +471,10 @@ TA_RetCode TA_S_KAMA( int    startIdx,
    } else 
    {
       tempReal = fabs(periodROC / sumROC1);
+      if( tempReal > 1.0 )
+      {
+         tempReal = 1.0;
+      }
    }
    tempReal = fma(tempReal, constDiff, constMax);
    tempReal *= tempReal;
@@ -493,6 +505,10 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       } else 
       {
          tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
       }
       tempReal = fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
@@ -527,6 +543,10 @@ TA_RetCode TA_S_KAMA( int    startIdx,
       } else 
       {
          tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
       }
       tempReal = fma(tempReal, constDiff, constMax);
       tempReal *= tempReal;
@@ -540,8 +560,7 @@ TA_RetCode TA_S_KAMA( int    startIdx,
 /**** Streaming API *****/
 
 struct TA_KAMA_Stream {
-   /* The bars this handle has an output for (see TA_StreamOutRange).
-    * Kept first, and in this order, in every stream struct. */
+   /* The bars this handle has an output for (see TA_KAMA_OutRange). */
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_KAMA_Value). */
@@ -622,6 +641,10 @@ static void TA_KAMA_StepImpl( struct TA_KAMA_Stream *sp, double inReal, double *
    } else 
    {
       tempReal = fabs(periodROC / sp->sumROC1);
+      if( tempReal > 1.0 )
+      {
+         tempReal = 1.0;
+      }
    }
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
@@ -783,21 +806,14 @@ static TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **stream, const double
       trailingValue = tempReal2;
       /* Calculate the efficiency ratio.
        *
-       * The only threshold is `sumROC1 <= periodROC`, and it is scale-consistent:
-       * both sides carry the quote unit. The fixed TA_IS_ZERO band that used to
-       * sit beside it was not -- it declared the window flat, and forced the
-       * fastest adaptation, for every window of an instrument quoted below it
-       * (issue #253). A genuinely flat window is now recognized by the exact bar
-       * count above instead.
+       * The ratio cannot exceed 1 in exact arithmetic, but sumROC1 drifts, so
+       * clamp it: past 1 the squared smoothing constant amplifies instead of
+       * averaging and the recurrence below stops being a convex combination.
        *
-       * `sumROC1 <= 0.0` is the denominator test and must stay FIRST: the clamp
-       * beside it compares against the SIGNED numerator, so it is false whenever
-       * periodROC < 0 and cannot stand in for one. sumROC1 is a running
-       * add/subtract of fabs terms, so an addend absorbed on the way in and
-       * subtracted later at full precision drives it to exactly 0.0 on a window
-       * that is not flat; without this clause that bar divides by zero and the
-       * +Inf poisons prevKAMA for the rest of the call (#385, the same shape ER
-       * carried until #350).
+       * `sumROC1 <= 0.0` (#385) is now numerically redundant -- the clamp maps its
+       * +Inf onto the same 1.0 -- so a value test written against it would pass
+       * with it deleted. Keep it anyway: the divisor sweep requires a division to
+       * be dominated by a test of its own divisor against a literal zero.
        */
       if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       {
@@ -805,6 +821,10 @@ static TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **stream, const double
       } else 
       {
          tempReal = fabs(periodROC / sumROC1);
+         if( tempReal > 1.0 )
+         {
+            tempReal = 1.0;
+         }
       }
       /* Calculate the smoothing constant */
       tempReal = fma(tempReal, constDiff, constMax);
@@ -859,6 +879,10 @@ static TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **stream, const double
          } else 
          {
             tempReal = fabs(periodROC / sumROC1);
+            if( tempReal > 1.0 )
+            {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = fma(tempReal, constDiff, constMax);
@@ -913,6 +937,10 @@ static TA_RetCode TA_KAMA_OpenImpl( struct TA_KAMA_Stream **stream, const double
          } else 
          {
             tempReal = fabs(periodROC / sumROC1);
+            if( tempReal > 1.0 )
+            {
+               tempReal = 1.0;
+            }
          }
          /* Calculate the smoothing constant */
          tempReal = fma(tempReal, constDiff, constMax);
@@ -1074,6 +1102,10 @@ TA_LIB_API TA_RetCode TA_KAMA_Peek( const TA_KAMA_Stream *stream, double inReal,
    } else 
    {
       tempReal = fabs(periodROC / sumROC1);
+      if( tempReal > 1.0 )
+      {
+         tempReal = 1.0;
+      }
    }
    /* Calculate the smoothing constant */
    tempReal = fma(tempReal, sp->constDiff, sp->constMax);
@@ -1096,6 +1128,21 @@ TA_LIB_API TA_RetCode TA_KAMA_Value( const TA_KAMA_Stream *stream, double *outRe
 {
    if( !stream || !outReal ) return TA_BAD_PARAM;
    *outReal = stream->cur_outReal;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_KAMA_OutRange( const TA_KAMA_Stream *stream, int *outBegIdx, int *outNBElement )
+{
+   if( !stream || !outBegIdx || !outNBElement ) return TA_BAD_PARAM;
+   *outBegIdx = stream->outRangeBegIdx;
+   *outNBElement = stream->outRangeCount;
+   return TA_SUCCESS;
+}
+
+TA_LIB_API TA_RetCode TA_KAMA_Advance( TA_KAMA_Stream *stream )
+{
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

@@ -34,16 +34,19 @@ TA_RetCode er(int startIdx, int endIdx,
     *
     *   ER[t] = |c[t] - c[t-P]| / SUM(k = t-P+1 .. t) |c[k] - c[k-1]|
     *
+    * The ratio is in [0,1] in exact arithmetic, but sumROC1 drifts, so the
+    * clamp to 1.0 is what makes the declared range a bound rather than a
+    * hope -- and in kama.c what keeps its recurrence a convex combination.
+    *
     * This is a lift of TA_KAMA's inner efficiency ratio (kama.c) so the
     * two stay bit-identical -- the KAMA-reconstruction differential in
-    * test_composite2.c exists to keep it that way. Two guards are
+    * test_composite2.c exists to keep it that way. Three more guards are
     * load-bearing and shared with kama.c:
     *
     *   - `sumROC1 <= periodROC` pins the ratio to exactly 1.0 where FP
-    *     would give 1.0000000000000002. The comparison is against the
-    *     SIGNED numerator, so it only fires on up-moves; on sustained
-    *     declines the raw fabs ratio can exceed 1.0 by a few ULP. Do NOT
-    *     "fix" this with fabs -- it changes TA_KAMA's output.
+    *     would give 1.0000000000000002, on up-moves. It compares against
+    *     the SIGNED numerator, so it is false for every down move: it
+    *     bounds nothing on its own, which is what the clamp is for.
     *   - a genuinely flat window is recognized by COUNTING exactly-zero
     *     one-bar changes (nullRun >= P forces sumROC1 to 0.0, purging the
     *     running sum's rounding residue), after which `0 <= 0` pins the
@@ -52,13 +55,10 @@ TA_RetCode er(int startIdx, int endIdx,
     *     gate (ER is homogeneous of degree 0, and a fixed 1e-14 met a
     *     price-carrying sum).
     *
-    * A third guard is the denominator test: the division runs only where
-    * sumROC1 is exactly positive. The clamp above cannot serve as it,
-    * because it compares against the SIGNED numerator and so is false for
-    * every down move -- and a subtract-then-add sum can reach 0.0, or
-    * below it, on a window that is not flat, when a term absorbed on the
-    * way in is subtracted later at full precision. Without the guard those
-    * bars divide by zero.
+    * The third is the denominator test (#385): a subtract-then-add sum can
+    * reach 0.0, or below it, on a window that is not flat. The clamp
+    * subsumes it numerically, so it is held by the structural sweep over
+    * divisors, not by any value test.
     *
     * The subtract-then-add update order matches TA_SUM's recurrence,
     * which is what makes the composite differential bit-exact. The
@@ -111,7 +111,12 @@ TA_RetCode er(int startIdx, int endIdx,
    if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
       outReal[0] = 1.0;
    else
-      outReal[0] = fabs( periodROC / sumROC1 );
+   {
+      tempReal = fabs( periodROC / sumROC1 );
+      if( tempReal > 1.0 )
+         tempReal = 1.0;
+      outReal[0] = tempReal;
+   }
    outIdx = 1;
    today++;
 
@@ -147,7 +152,12 @@ TA_RetCode er(int startIdx, int endIdx,
       if( sumROC1 <= 0.0 || sumROC1 <= periodROC )
          outReal[outIdx++] = 1.0;
       else
-         outReal[outIdx++] = fabs( periodROC / sumROC1 );
+      {
+         tempReal = fabs( periodROC / sumROC1 );
+         if( tempReal > 1.0 )
+            tempReal = 1.0;
+         outReal[outIdx++] = tempReal;
+      }
       today++;
    }
 

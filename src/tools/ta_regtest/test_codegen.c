@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <time.h>
 
 /* Display flag set by ta_regtest.c --no-guarded */
@@ -5431,7 +5432,7 @@ typedef struct {
     double       maxFmaRel;   /* largest FMA-tolerated relative divergence observed (evidence vs the 1e-9 contract) */
     long long    stochRsiSkipped; /* STOCHRSI cases skipped: intentionally diverges from 0.6.4 (issue #107) */
     long long    mfiSkipped;      /* MFI cases skipped: v0.6.4 categorically wrong there (issue #244) */
-    long long    kamaSkipped;     /* KAMA (and KAMA-smoothed STOCH/STOCHF): v0.6.4 divides residue (issue #253) */
+    long long    kamaSkipped;     /* KAMA (and KAMA-smoothed STOCH/STOCHF): v0.6.4 divides residue (#253, #390) */
     long long    ultoscSkipped;   /* ULTOSC: same (issue #253) */
     long long    varianceSkipped; /* VAR/STDDEV/BBANDS cases skipped: cancellation-free variance re-baseline (issue #118) */
     long long    xySkipped;      /* CORREL/BETA cases skipped: same re-baseline over two series (issue #242) */
@@ -6058,31 +6059,52 @@ static int fuzz_mfi_064_blind( const double *h, const double *l,
  * answers it exactly by counting flat bars, so the two differ there and only
  * there.
  *
- * A case is not compared when any window KAMA evaluates is exactly flat, or
- * when the true sum is inside v0.6.4's band. Two-pass on purpose, like
- * fuzz_mfi_064_blind: the predicate must not re-run the algorithm under test.
- * The scan starts at the first bar with a full window rather than at the call's
- * startIdx, because a divergence at one bar is carried forward by prevKAMA. */
+ * That residue drives a second divergence, which is #390 rather than #253. Once
+ * it is comparable to the window's own true sum the accumulator can report a
+ * total below the window's net move, and v0.6.4 then divides out a ratio above
+ * 1 -- its mathematical maximum -- and smooths with a constant outside the
+ * adaptive range. On the EXTREME shape that reaches an output outside the hull
+ * of an all-positive input, from an OVERLAP-flagged function. The fix clamps
+ * the ratio, so the two differ exactly where v0.6.4's ratio left [0,1].
+ *
+ * A case is not compared when any window KAMA evaluates is exactly flat, when
+ * the true sum is inside v0.6.4's band, or when absorption can put the residue
+ * at the scale of the true sum. Two-pass on purpose, like fuzz_mfi_064_blind:
+ * the predicate must not re-run the algorithm under test -- it recomputes each
+ * window's sum fresh and tracks the running maximum, neither of which is what
+ * the library does. The scan starts at the first bar with a full window rather
+ * than at the call's startIdx, because a divergence at one bar is carried
+ * forward by prevKAMA. */
 static int fuzz_kama_064_blind( const double *x, int n, int period, int s, int e )
 {
     int t, j;
+    double everSeen = 0.0;             /* largest |1-bar change| so far */
 
     (void)s;
     if( period < 2 ) return 0;         /* period 1 is a copy of the input */
     if( e >= n ) e = n - 1;
 
+    for( t = 1; t < period && t < n; t++ )
+    {
+        double d = fabs( x[t] - x[t-1] );
+        if( d > everSeen ) everSeen = d;
+    }
+
     for( t = period; t <= e; t++ )
     {
-        double sum = 0.0;
+        double sum = 0.0, d;
         int flat = 1;
+        d = fabs( x[t] - x[t-1] );
+        if( d > everSeen ) everSeen = d;
         for( j = t - period + 1; j <= t; j++ )
         {
-            double d = x[j] - x[j-1];
-            if( d != 0.0 ) flat = 0;
-            sum += fabs(d);
+            double c = x[j] - x[j-1];
+            if( c != 0.0 ) flat = 0;
+            sum += fabs(c);
         }
         if( flat ) return 1;
         if( sum < 1e-14 ) return 1;    /* v0.6.4's band, on the true sum */
+        if( everSeen * DBL_EPSILON >= sum ) return 1;   /* absorption (#390) */
     }
     return 0;
 }
@@ -6753,7 +6775,9 @@ ErrorNumber fuzz_ref064(const char *functionFilter)
                ctx.stochRsiSkipped);
     if( ctx.kamaSkipped > 0 )
         printf("kama-skipped: %lld case(s) where v0.6.4's efficiency ratio is decided by"
-               " accumulator residue on a flat window (issue #253) -- KAMA itself, and the"
+               " accumulator residue rather than by the window -- on a flat window (issue"
+               " #253), or where absorption puts the residue at the scale of the window's"
+               " own sum and v0.6.4's ratio leaves [0,1] (issue #390). KAMA itself, and the"
                " STOCH/STOCHF vectors that smooth with MAType=KAMA, whose series this gate"
                " cannot examine. Every other case was compared bit-exact\n",
                ctx.kamaSkipped);

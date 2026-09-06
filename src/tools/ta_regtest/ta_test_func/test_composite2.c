@@ -1228,10 +1228,14 @@ static ErrorNumber test_er_differential( const TA_History *history )
             if( nullRun >= n )
                sum = 0.0;
             mom = momP[i];
-            if( sum <= mom )
+            if( sum <= 0.0 || sum <= mom )
                ref[i] = 1.0;
             else
+            {
                ref[i] = fabs( mom / sum );
+               if( ref[i] > 1.0 )
+                  ref[i] = 1.0;
+            }
             if( memcmp( &out[i], &ref[i], sizeof(TA_Real) ) != 0 )
             {
                printf( "ER differential Fail [start %d n %d] bar %d: fused %.17g "
@@ -1307,7 +1311,7 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
    double err;
    const char *mode;
    unsigned int p;
-   int i, nbOver, nbBars = (int)history->nbBars;
+   int i, nbMirror, nbBars = (int)history->nbBars;
 
    rc = TA_ER( 0, nbBars - 1, history->close, 10, &beg, &nb, out );
    if( rc != TA_SUCCESS || beg != 10 || nb != nbBars - 10 )
@@ -1386,8 +1390,8 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
       }
    }
 
-   /* Monotone UP: the clamp fires (sum == mom in exact math; FP can nudge
-    * the raw ratio above 1) => exactly 1.0 everywhere. */
+   /* Monotone UP: the signed comparison fires (sum == mom in exact math; FP
+    * can nudge the raw ratio above 1) => exactly 1.0 everywhere. */
    for( i = 0; i < 64; i++ )
       buf[i] = 100.0 + (double)i * 0.7;
    rc = TA_ER( 0, 63, buf, 10, &beg, &nb, out );
@@ -1398,53 +1402,97 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
       if( out[i] != 1.0 )
       {
          printf( "ER monotone-up Fail bar %d: %.17g != exact 1.0 -- the signed "
-                 "clamp did not fire\n", (int)beg + i, out[i] );
+                 "comparison did not fire\n", (int)beg + i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
 
-   /* Monotone DOWN: the clamp compares against the SIGNED numerator, so it
-    * never fires here and the raw fabs ratio is free to exceed 1.0 by a few
-    * ULP. A uniform decrement does not show it -- the sum comes out exactly
-    * equal to the net move on every window, so the band is satisfied under
-    * the fabs clamp `er.c` forbids just as well. These two alternating
-    * decrements put 24 of the 54 outputs strictly above 1.0, which is what
-    * the forbidden edit would pin back to exactly 1.0.
+   /* Monotone DOWN: `sum <= mom` compares against the SIGNED numerator, so it
+    * cannot fire on a decline. Nothing but the clamp bounds the ratio here,
+    * and these two alternating decrements are chosen because the running sum
+    * lands a few ULP under the net move -- unclamped, most outputs come out
+    * strictly above 1.0, which is above the ratio's own maximum.
     *
-    * So: the band, AND a count of bars that are strictly greater than 1.0.
-    * The count is the discriminating half; the band is what keeps it honest
-    * about the magnitude. */
+    * Two assertions, failing for different reasons if the clamp is removed:
+    * every output is EXACTLY 1.0, and the series mirrored through zero
+    * returns bit-identical output. ER is sign-symmetric in exact arithmetic
+    * (negation is exact, and both |net| and the path sum are built from
+    * magnitudes), so the signed comparison is the only asymmetry the body
+    * has; mirroring turns this decline into an advance, where the comparison
+    * DOES fire. The exact-1.0 assertion is what gates the clamp here (unclamped,
+    * most outputs exceed 1.0); the mirror pins sign symmetry, a separate
+    * property. Neither rules out a body that always answers 1.0 -- the zigzag
+    * leg above does, requiring an exact 0.0. */
    for( i = 0; i < 64; i++ )
       buf[i] = ( i == 0 ) ? 77.04
                           : buf[i-1] - ( ( i & 1 ) ? 1.8512 : 1.9002 );
    rc = TA_ER( 0, 63, buf, 10, &beg, &nb, out );
-   if( rc != TA_SUCCESS )
+   if( rc != TA_SUCCESS || nb <= 0 )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
-   nbOver = 0;
    for( i = 0; i < (int)nb; i++ )
    {
-      if( !(out[i] > 1.0 - 1e-12 && out[i] < 1.0 + 1e-12) )
+      if( out[i] != 1.0 )
       {
-         printf( "ER monotone-down Fail bar %d: %.17g outside 1 +- 1e-12\n",
-                 (int)beg + i, out[i] );
+         printf( "ER monotone-down Fail bar %d: %.17g != exact 1.0 -- the ratio "
+                 "exceeded its own maximum\n", (int)beg + i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
-      if( out[i] > 1.0 )
-         nbOver++;
    }
-   if( nbOver == 0 )
+   for( i = 0; i < 64; i++ )
+      buf[i] = -buf[i];
+   rc = TA_ER( 0, 63, buf, 10, &beg, &nbMirror, ref );
+   if( rc != TA_SUCCESS || nbMirror != nb )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   if( memcmp( out, ref, (size_t)nb * sizeof(TA_Real) ) != 0 )
    {
-      printf( "ER monotone-down Fail: no output exceeded 1.0 -- the clamp is "
-              "no longer asymmetric, or the series stopped discriminating\n" );
+      for( i = 0; i < (int)nb; i++ )
+         if( memcmp( &out[i], &ref[i], sizeof(TA_Real) ) != 0 ) break;
+      printf( "ER sign-mirror Fail bar %d: ER(x)=%.17g != ER(-x)=%.17g -- the "
+              "signed comparison leaked into the value\n",
+              (int)beg + i, out[i], ref[i] );
       return TA_TESTUTIL_TFRR_BAD_CALCULATION;
    }
 
-   /* Zero denominator on a window that is NOT flat. A step absorbed on the
-    * way into the running sum is subtracted later at full precision, so the
-    * sum can reach exactly 0.0 while live terms remain in the window. Paired
-    * with a down move the clamp is false (`0.0 <= negative`), and without
-    * er.c's `sumROC1 <= 0.0` guard the division returns +Inf. The nullRun
-    * purge does not cover this: the window is not flat. */
+   /* KAMA carries the same clamp, and nothing else in the tree observes it: the
+    * ER/KAMA reconstruction differential runs on the reference series, where the
+    * ratio never exceeds 1, so it is green either way. Sign symmetry is what the
+    * clamp buys -- KAMA is exactly sign-symmetric but for the signed comparison,
+    * which fires only on advances -- so mirror the decline above through zero and
+    * require bit-identical negation. Unclamped, 25 of 54 bars break it. */
+   for( i = 0; i < 64; i++ )
+      buf[i] = ( i == 0 ) ? 77.04
+                          : buf[i-1] - ( ( i & 1 ) ? 1.8512 : 1.9002 );
+   rc = TA_KAMA( 0, 63, buf, 10, &beg, &nb, out );
+   if( rc != TA_SUCCESS || nb <= 0 )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < 64; i++ )
+      buf[i] = -buf[i];
+   rc = TA_KAMA( 0, 63, buf, 10, &beg, &nbMirror, ref );
+   if( rc != TA_SUCCESS || nbMirror != nb )
+      return TA_TESTUTIL_TFRR_BAD_RETCODE;
+   for( i = 0; i < (int)nb; i++ )
+   {
+      TA_Real negated = -ref[i];
+      if( memcmp( &out[i], &negated, sizeof(TA_Real) ) != 0 )
+      {
+         printf( "KAMA sign-mirror Fail bar %d: KAMA(x)=%.17g != -KAMA(-x)=%.17g -- "
+                 "the efficiency ratio left [0,1] on the decline\n",
+                 (int)beg + i, out[i], negated );
+         return TA_TESTUTIL_TFRR_BAD_CALCULATION;
+      }
+   }
+
+   /* Degenerate denominator on a window that is NOT flat. A step absorbed on
+    * the way into the running sum is subtracted later at full precision, so
+    * the sum can reach exactly 0.0 while live terms remain in the window, and
+    * the signed comparison is false against a down move (`0.0 <= negative`).
+    * The nullRun purge does not cover it: the window is not flat.
+    *
+    * Two mechanisms answer these bars -- `sumROC1 <= 0.0` returns 1.0 before
+    * dividing, the clamp maps the +Inf onto the same 1.0 -- so the assertion is
+    * an EXACT 1.0, not a band: drop the clamp and a neighbouring bar whose sum
+    * is tiny-but-positive comes back 1.0000000000000004. A band wide enough to
+    * absorb that would gate neither. */
    buf[0] = 1.0e16;
    buf[1] = 0.0;
    buf[2] = -1.0;
@@ -1457,10 +1505,10 @@ static ErrorNumber test_er_pins_and_edges( const TA_History *history )
       return TA_TESTUTIL_TFRR_BAD_RETCODE;
    for( i = 0; i < (int)nb; i++ )
    {
-      if( !TA_IS_FINITE( out[i] ) || out[i] > 1.0 + 1e-12 )
+      if( out[i] != 1.0 )
       {
-         printf( "ER zero-denominator Fail bar %d: %.17g -- the path sum "
-                 "reached 0.0 on a live window\n", (int)beg + i, out[i] );
+         printf( "ER zero-denominator Fail bar %d: %.17g != exact 1.0 -- the path "
+                 "sum reached 0.0 on a live window\n", (int)beg + i, out[i] );
          return TA_TESTUTIL_TFRR_BAD_CALCULATION;
       }
    }
