@@ -163,12 +163,6 @@
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-       * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
        */
       kSlow = 2.0 / (double)(optInSlowPeriod + 1);
       kFast = 2.0 / (double)(optInFastPeriod + 1);
@@ -1278,12 +1272,6 @@
        * from the values its predecessor would have published, exactly as the
        * composed form does. The seed sums accumulate from 0.0 in production
        * order; do not reorder or fuse them (0.0+x is not x for x=-0.0).
-       *
-       * TA_GetCompatibility() is deliberately NOT consulted, for the reason
-       * spelled out in efi.c: ema.c's TA_COMPATIBILITY_METASTOCK seeding arm is
-       * preserved for the functions that already shipped with it and dropped from
-       * new ones, and it is not reachable at all from the Rust, Java and C# APIs.
-       * The seeding choice itself is measured in docs/studies/ema-seeding/README.md.
        */
       kSlow = 2.0 / (double)(optInSlowPeriod + 1);
       kFast = 2.0 / (double)(optInFastPeriod + 1);

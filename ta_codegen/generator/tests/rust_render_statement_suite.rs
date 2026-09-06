@@ -1416,20 +1416,6 @@ fn rust_func_call_unstable_period() {
 }
 
 #[test]
-fn rust_func_call_compatibility() {
-    let stmt = ir::Statement::Assign {
-        target: ir::Expr::Var("x".to_string()),
-        value: ir::Expr::FuncCall("COMPATIBILITY".to_string(), vec![]),
-        compound: false,
-    };
-    let rendered = render_rust_stmt(&stmt);
-    assert!(
-        rendered.contains("self.compatibility"),
-        "COMPATIBILITY should render as self.compatibility: {rendered}"
-    );
-}
-
-#[test]
 fn rust_func_call_is_zero() {
     let stmt = ir::Statement::Assign {
         target: ir::Expr::Var("x".to_string()),

@@ -9,14 +9,14 @@
 //! walkers. No expression text is hand-built outside the shared renderers.
 //!
 //! The step is a method on `Core`, not on the handle, so batch rendering
-//! conventions — `this.compatibility`, cross-calls, `Math.fma` sites — work
+//! conventions — cross-calls, `Math.fma` sites — work
 //! verbatim.
 //!
 //! Deliberate Java shapings vs C/Rust:
 //! - Open failures surface as unchecked exceptions, typed by the thin public
 //!   wrapper. Inside `OpenImpl` the batch body's rejects stay plain `RetCode`,
 //!   because no throw statement may cross the shared renderer; the early
-//!   SUCCESS no-data/seed-boundary returns are mapped to `InsufficientHistory`
+//!   SUCCESS no-data returns are mapped to `InsufficientHistory`
 //!   so the one routine, data-dependent condition can be typed
 //!   `InsufficientHistoryException` (an `IllegalArgumentException` subclass).
 //!   `InternalError` becomes `IllegalStateException`, every other reject a
@@ -1531,7 +1531,7 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
 // ---------------------------------------------------------------------------
 
 /// Map a batch return-code variable for the open body. Early SUCCESS returns
-/// (the no-data guard AND the Metastock seed-boundary return) become
+/// (the no-data guard) become
 /// `InsufficientHistory` — the wrapper types it as
 /// `InsufficientHistoryException`. Everything else passes through (BAD_PARAM /
 /// ALLOC_ERR / INTERNAL_ERROR render natively; `retCode` locals propagate a

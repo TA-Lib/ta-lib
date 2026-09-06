@@ -69,10 +69,6 @@ TA_LIB_API int TA_CMO_Lookback( int optInTimePeriod )
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
       return -1;
    retValue = optInTimePeriod + TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   if( TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
-   {
-      retValue -= 1;
-   }
    return retValue;
 }
 
@@ -87,16 +83,12 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
-   int unstablePeriod;
    int i;
    double prevGain;
    double prevLoss;
    double prevValue;
-   double savePrevValue;
    double tempValue1;
    double tempValue2;
-   double tempValue3;
-   double tempValue4;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -164,78 +156,6 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
     */
    today = startIdx - lookbackTotal;
    prevValue = inReal[today];
-   unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   /* If there is no unstable period,
-    * calculate the 'additional' initial
-    * price bar who is particuliar to
-    * metastock.
-    * If there is an unstable period,
-    * no need to calculate since this
-    * first value will be surely skip.
-    */
-   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
-   {
-      /* Preserve prevValue because it may get
-       * overwritten by the output.
-       * (because output ptr could be the same as input ptr).
-       */
-      savePrevValue = prevValue;
-      /* No unstable period, so must calculate first output
-       * particular to Metastock.
-       * (Metastock re-use the first price bar, so there
-       *  is no loss/gain at first. Beats me why they
-       *  are doing all this).
-       */
-      prevGain = 0.0;
-      prevLoss = 0.0;
-      for( i = optInTimePeriod; i > 0; i -= 1 )
-      {
-         tempValue1 = inReal[today++];
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-      }
-      tempValue1 = prevLoss / optInTimePeriod;
-      tempValue2 = prevGain / optInTimePeriod;
-      tempValue3 = tempValue2 - tempValue1;
-      tempValue4 = tempValue1 + tempValue2;
-      /* Write the output.
-       *
-       * Both halves are averages of non-negative magnitudes, so the total is
-       * zero only when every change since the seed was exactly zero -- test it
-       * exactly, do not compare it to a fixed band.  A gain carries the quote
-       * unit, so any constant put against it is a constant in some arbitrary
-       * unit, and zeroes a healthy oscillator for an instrument quoted below it
-       * (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
-       * unlike a sliding sum this total cannot hold cancellation residue.
-       */
-      if( tempValue4 > 0.0 )
-      {
-         outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
-      /* Are we done? */
-      if( today > endIdx )
-      {
-         *outBegIdx= startIdx;
-         *outNBElement= outIdx;
-         return TA_SUCCESS;
-      }
-      /* Start over for the next price bar. */
-      today -= optInTimePeriod;
-      prevValue = savePrevValue;
-   }
-   /* Remaining of the processing is identical
-    * for both Classic calculation and Metastock.
-    */
    prevGain = 0.0;
    prevLoss = 0.0;
    today += 1;
@@ -267,6 +187,12 @@ TA_LIB_API TA_RetCode TA_CMO( int    startIdx,
     *    RSI = 100 * (prevGain/(prevGain+prevLoss))
     *
     * The second equation is used here for speed optimization.
+    *
+    * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+    * when every change since the seed was exactly zero -- test it exactly, never
+    * against a fixed band. A gain carries the quote unit, so a constant put
+    * against it zeroes a healthy oscillator for an instrument quoted below it
+    * (issue #253).
     */
    if( today > startIdx )
    {
@@ -346,16 +272,12 @@ TA_RetCode TA_S_CMO( int    startIdx,
    int outIdx;
    int today;
    int lookbackTotal;
-   int unstablePeriod;
    int i;
    double prevGain;
    double prevLoss;
    double prevValue;
-   double savePrevValue;
    double tempValue1;
    double tempValue2;
-   double tempValue3;
-   double tempValue4;
 
    if( (startIdx < 0) || (startIdx > TA_MAX_INDEX) )
       return TA_OUT_OF_RANGE_START_INDEX;
@@ -399,45 +321,6 @@ TA_RetCode TA_S_CMO( int    startIdx,
    }
    today = startIdx - lookbackTotal;
    prevValue = (double)inReal[today];
-   unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-   if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
-   {
-      savePrevValue = prevValue;
-      prevGain = 0.0;
-      prevLoss = 0.0;
-      for( i = optInTimePeriod; i > 0; i -= 1 )
-      {
-         tempValue1 = (double)inReal[today++];
-         tempValue2 = tempValue1 - prevValue;
-         prevValue = tempValue1;
-         if( tempValue2 < 0 )
-         {
-            prevLoss -= tempValue2;
-         } else 
-         {
-            prevGain += tempValue2;
-         }
-      }
-      tempValue1 = prevLoss / optInTimePeriod;
-      tempValue2 = prevGain / optInTimePeriod;
-      tempValue3 = tempValue2 - tempValue1;
-      tempValue4 = tempValue1 + tempValue2;
-      if( tempValue4 > 0.0 )
-      {
-         outReal[outIdx++] = 100 * (tempValue3 / tempValue4);
-      } else 
-      {
-         outReal[outIdx++] = 0.0;
-      }
-      if( today > endIdx )
-      {
-         *outBegIdx= startIdx;
-         *outNBElement= outIdx;
-         return TA_SUCCESS;
-      }
-      today -= optInTimePeriod;
-      prevValue = savePrevValue;
-   }
    prevGain = 0.0;
    prevLoss = 0.0;
    today += 1;
@@ -628,16 +511,12 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
       int outIdx;
       int today;
       int lookbackTotal;
-      int unstablePeriod;
       int i;
       double prevGain = 0.0;
       double prevLoss = 0.0;
       double prevValue = 0.0;
-      double savePrevValue;
       double tempValue1;
       double tempValue2;
-      double tempValue3;
-      double tempValue4;
       /* CMO calculation is mostly identical to RSI.
        *
        * The only difference is in the last step of calculation:
@@ -668,78 +547,6 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
        */
       today = startIdx - lookbackTotal;
       prevValue = inReal[today];
-      unstablePeriod = TA_GLOBALS_UNSTABLE_PERIOD(TA_FUNC_UNST_CMO,Cmo);
-      /* If there is no unstable period,
-       * calculate the 'additional' initial
-       * price bar who is particuliar to
-       * metastock.
-       * If there is an unstable period,
-       * no need to calculate since this
-       * first value will be surely skip.
-       */
-      if( unstablePeriod == 0 && TA_GLOBALS_COMPATIBILITY == TA_COMPATIBILITY_METASTOCK )
-      {
-         /* Preserve prevValue because it may get
-          * overwritten by the output.
-          * (because output ptr could be the same as input ptr).
-          */
-         savePrevValue = prevValue;
-         /* No unstable period, so must calculate first output
-          * particular to Metastock.
-          * (Metastock re-use the first price bar, so there
-          *  is no loss/gain at first. Beats me why they
-          *  are doing all this).
-          */
-         prevGain = 0.0;
-         prevLoss = 0.0;
-         for( i = optInTimePeriod; i > 0; i -= 1 )
-         {
-            tempValue1 = inReal[today++];
-            tempValue2 = tempValue1 - prevValue;
-            prevValue = tempValue1;
-            if( tempValue2 < 0 )
-            {
-               prevLoss -= tempValue2;
-            } else 
-            {
-               prevGain += tempValue2;
-            }
-         }
-         tempValue1 = prevLoss / optInTimePeriod;
-         tempValue2 = prevGain / optInTimePeriod;
-         tempValue3 = tempValue2 - tempValue1;
-         tempValue4 = tempValue1 + tempValue2;
-         /* Write the output.
-          *
-          * Both halves are averages of non-negative magnitudes, so the total is
-          * zero only when every change since the seed was exactly zero -- test it
-          * exactly, do not compare it to a fixed band.  A gain carries the quote
-          * unit, so any constant put against it is a constant in some arbitrary
-          * unit, and zeroes a healthy oscillator for an instrument quoted below it
-          * (issue #253).  Wilder's smoothing only ever adds non-negative terms, so
-          * unlike a sliding sum this total cannot hold cancellation residue.
-          */
-         if( tempValue4 > 0.0 )
-         {
-            outReal[outIdx++ * outStride] = 100 * (tempValue3 / tempValue4);
-         } else 
-         {
-            outReal[outIdx++ * outStride] = 0.0;
-         }
-         /* Are we done? */
-         if( today > endIdx )
-         {
-            *outBegIdx= startIdx;
-            *outNBElement= outIdx;
-            return TA_INSUFFICIENT_HISTORY;
-         }
-         /* Start over for the next price bar. */
-         today -= optInTimePeriod;
-         prevValue = savePrevValue;
-      }
-      /* Remaining of the processing is identical
-       * for both Classic calculation and Metastock.
-       */
       prevGain = 0.0;
       prevLoss = 0.0;
       today += 1;
@@ -771,6 +578,12 @@ static TA_RetCode TA_CMO_OpenImpl( struct TA_CMO_Stream **stream, const double i
        *    RSI = 100 * (prevGain/(prevGain+prevLoss))
        *
        * The second equation is used here for speed optimization.
+       *
+       * prevGain+prevLoss is a sum of non-negative magnitudes, so it is zero only
+       * when every change since the seed was exactly zero -- test it exactly, never
+       * against a fixed band. A gain carries the quote unit, so a constant put
+       * against it zeroes a healthy oscillator for an instrument quoted below it
+       * (issue #253).
        */
       if( today > startIdx )
       {

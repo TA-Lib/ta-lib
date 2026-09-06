@@ -456,8 +456,7 @@ Global settings in C; a builder producing an immutable core in Rust, Java and C#
 | G4 | The candlestick range type is in domain | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; |
 | G5 | The candlestick average period is within `[0, MAX_INDEX]` | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | G6 | The candlestick factor is not NaN [17] | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
-| G7 | The compatibility mode is in domain | `TA_BAD_PARAM` | ✅<br>[15] | —<br>[15] | —<br>[15] | —<br>[15] |
-| G8 | A rejected setting leaves the configuration unchanged | — | ✅<br>&nbsp; | ✅<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; |
+| G7 | A rejected setting leaves the configuration unchanged | — | ✅<br>&nbsp; | ✅<br>[16] | ✅<br>&nbsp; | ✅<br>&nbsp; |
 
 The bounds in G2 and G5 are not arbitrary. Both values are added to a lookback
 which is then used as an index: unbounded, the lookback overflows negative and
@@ -473,13 +472,6 @@ the declared set is unrepresentable.
 that names no single function reads as `0`. Accepted, and pinned by
 `test_internals.c`; the other three backends reject it because a getter that can
 throw costs them nothing.
-
-[15] C rejects an out-of-domain value with `TA_BAD_PARAM` and leaves the mode
-unchanged. It previously accepted anything and echoed it back from the getter, so a
-caller could not tell a typo from a setting; the two-line domain check was taken even
-though `TA_SetCompatibility` is deprecated, because it was that cheap. Rust, Java and
-C# expose no public setter at all, so the mode is pinned and the domain cannot be
-violated there.
 
 [16] Rust's setters chain and cannot fail individually; each latches the **first**
 rejection, which surfaces when the core is built. Verified that a later valid
@@ -777,7 +769,7 @@ time: C is handed bare pointers and has no sizes to check against.
 | ~~7~~ | C# | S1 | *Fixed.* The empty-history *message* omitted the cross-language `<NAME> open: ` prefix. Taken with item 13, as predicted: the two were faults of one line. |
 | ~~8~~ | all | S7 | *Fixed.* `TA_RetCode` had **no member** for "history shorter than the lookback", so C and Rust fell back to the catch-all and Java and C# borrowed `TA_OUT_OF_RANGE_END_INDEX`. `TA_INSUFFICIENT_HISTORY = 17` was appended and all four now report it. The borrowed code took `MAX_INDEX + 1` history (S2) down with it — see footnote [8]. |
 | ~~9~~ | Rust, Java, C# | S5 | *Fixed.* `OpenAndFill` validated no output capacity, unlike the batch tier which does, so an undersized output faulted inside the fill with the buffer already partly written — a raw index exception in Java and C#, a panic in Rust. The public frame now bounds every output by `historyLen - <N>_Lookback(...)`, the count the fill writes. (C still cannot — no sizes.) Rust used to be a partial exception by accident: its `OpenAndFill` distinctness guard rejected two *empty* outputs before the fill could fault, so that one undersized shape answered `BadParam` where every other answered a panic — and where C# faulted, its `Overlaps` being false for an empty span. #262 excluded empty operands from both guards, and now the capacity check answers that shape and every other one alike. |
-| ~~10~~ | C | G7 | *Fixed.* `TA_SetCompatibility` now returns `TA_BAD_PARAM` for a value outside the enum instead of latching it. The function stays deprecated — this was taken only because it was a two-line domain check. |
+| ~~10~~ | C | — | *Obsolete.* `TA_SetCompatibility` accepted any value and echoed it back from the getter; a domain check was added, and #388 then removed the behaviour it selected. The pair is kept declared for source compatibility and is now inert, so it carries no domain to be in. Numbering left as-is, as for item 5. |
 | ~~11~~ | C#, Rust | B6 | *Fixed.* Two **empty** output buffers were rejected as aliased. C# said so explicitly (`a.IsEmpty && b.IsEmpty` was a clause of the guard); Rust did it incidentally, because the guard compared `as_ptr()` and two zero-capacity allocations answer the same dangling value (a slice of a longer buffer truncated to zero would not, so Rust rejected *some* empty pairs and accepted others — which is worse than either). C and Java accepted them. The call is legal by rule N1 and by B5's own wording — on a range shorter than the lookback *any output length will do, including none* — so this was a four-way divergence on a call the specification says all four accept. Measured on `ACCBANDS(0, 251, …, optInTimePeriod 253, …)` with three distinct zero-length outputs: `TA_SUCCESS` in C and Java, `BadParam` in Rust and C#. Both guards now require **both** operands to be non-empty — two zero-length buffers cannot clobber each other — which is also what makes "declined" spellable in C#, where an empty span is the only way to say it (rule B6a, #262). The empty triple is now a probe in each backend's own suite; no cross-language gate can see it, because the servers bind every output and floor its length at one. |
 | ~~13~~ | all | S1 | *Fixed.* An empty history answered `TA_BAD_PARAM` where S1 specifies `TA_OUT_OF_RANGE_START_INDEX`, and the index pair was not evaluated first: C checked argument presence (S4) ahead of it, so a call that was both an absent output and an empty history reported S4's code — and a caller who fixed that argument got the same rejection back for a reason nothing had mentioned. All four openers now answer the pair ahead of every presence check, except for the one check each language makes a precondition of reading the length at all (footnote [4]). What was measured on a zero-length history before: `TA_BAD_PARAM` in C, `Err(BadParam)` in Rust, `TaLibArgumentException` carrying `BadParam` in Java, `ArgumentException` in C#. |
 

@@ -77,13 +77,10 @@
        *
        * One fused loop, not ema() + a combine map: a composed form cannot
        * stream (raw bar inputs are outside check_map_step's provenance), which
-       * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-       * op for op -- sequential seed sum from 0.0 then one divide, the
-       * unstable-period warm-up consumed bar by bar -- so the differential
-       * against shipped TA_EMA holds bitwise. No compatibility branch: the
-       * Metastock arm is unreachable from three of the four backends, and a
-       * new function honouring it would make C diverge from them (EFI/SMI
-       * precedent).
+       * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+       * sequential seed sum from 0.0 then one divide, the unstable-period
+       * warm-up consumed bar by bar -- so the differential against shipped
+       * TA_EMA holds bitwise.
        *
        * No division in the per-bar map: no 0/0, no NaN path (#112 by
        * construction). Bull >= Bear on every bar since high >= low.
@@ -635,13 +632,10 @@
           *
           * One fused loop, not ema() + a combine map: a composed form cannot
           * stream (raw bar inputs are outside check_map_step's provenance), which
-          * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-          * op for op -- sequential seed sum from 0.0 then one divide, the
-          * unstable-period warm-up consumed bar by bar -- so the differential
-          * against shipped TA_EMA holds bitwise. No compatibility branch: the
-          * Metastock arm is unreachable from three of the four backends, and a
-          * new function honouring it would make C diverge from them (EFI/SMI
-          * precedent).
+          * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+          * sequential seed sum from 0.0 then one divide, the unstable-period
+          * warm-up consumed bar by bar -- so the differential against shipped
+          * TA_EMA holds bitwise.
           *
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.
@@ -701,13 +695,10 @@
           *
           * One fused loop, not ema() + a combine map: a composed form cannot
           * stream (raw bar inputs are outside check_map_step's provenance), which
-          * is the same reason ACCBANDS is fused. The EMA is ema.c's DEFAULT arm
-          * op for op -- sequential seed sum from 0.0 then one divide, the
-          * unstable-period warm-up consumed bar by bar -- so the differential
-          * against shipped TA_EMA holds bitwise. No compatibility branch: the
-          * Metastock arm is unreachable from three of the four backends, and a
-          * new function honouring it would make C diverge from them (EFI/SMI
-          * precedent).
+          * is the same reason ACCBANDS is fused. The EMA is ema.c op for op --
+          * sequential seed sum from 0.0 then one divide, the unstable-period
+          * warm-up consumed bar by bar -- so the differential against shipped
+          * TA_EMA holds bitwise.
           *
           * No division in the per-bar map: no 0/0, no NaN path (#112 by
           * construction). Bull >= Bear on every bar since high >= low.

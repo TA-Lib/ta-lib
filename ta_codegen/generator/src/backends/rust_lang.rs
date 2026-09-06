@@ -3978,9 +3978,6 @@ impl ExprEmitter for RustExpr<'_> {
 
     fn var(&self, name: &str) -> String {
         match name {
-            "COMPATIBILITY" => "(self.compatibility)".to_string(),
-            "METASTOCK" => "Compatibility::Metastock".to_string(),
-            "DEFAULT" => "Compatibility::Default".to_string(),
             "BAD_PARAM" => "RetCode::BadParam".to_string(),
             "SUCCESS" => "RetCode::Success".to_string(),
             "ALLOC_ERR" => "RetCode::AllocErr".to_string(),
@@ -4903,7 +4900,6 @@ fn render_func_call(
                 }
                 "self.unstable_period[0]".to_string()
             }
-            SpecialBuiltin::Compatibility => "self.compatibility".to_string(),
             pred @ (SpecialBuiltin::IsZero
                    | SpecialBuiltin::IsZeroScaled
                    | SpecialBuiltin::IsZeroOrNeg
@@ -6501,9 +6497,6 @@ fn is_ta_function(name: &str) -> bool {
                 | "IS_FINITE"
                 | "ARRAY_COPY"
                 | "PER_TO_K"
-                | "COMPATIBILITY"
-                | "METASTOCK"
-                | "DEFAULT"
         )
         && !name.ends_with("_Lookback")
 }

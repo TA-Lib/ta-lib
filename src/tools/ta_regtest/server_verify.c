@@ -46,7 +46,6 @@ static const char  *g_pipeLang[SV_MAX_PIPES];          /* "c"/"rust"/"java"/"csh
 static int          g_nbPipes = 0;
 static char        *g_reqBuf  = NULL;
 static char        *g_respBuf = NULL;
-static int          g_lastCompatibility[SV_MAX_PIPES]; /* cached per pipe */
 static int          g_curPipe = -1; /* pipe being verified (for diagnostics) */
 
 /* Unstable period lookup table (same as test_codegen.c) */
@@ -160,7 +159,6 @@ void server_verify_init(CodegenPipe *pipes[], const char *langs[], int nbPipes)
         TA_TOOL_CHECK_ALLOC(g_respBuf);
         for( int p = 0; p < SV_MAX_PIPES; p++ )
         {
-            g_lastCompatibility[p] = -1;
             g_unstInitialized[p] = 0;
             g_candleInitialized[p] = 0;
         }
@@ -176,7 +174,6 @@ void server_verify_shutdown(void)
     g_nbPipes = 0;
     for( int p = 0; p < SV_MAX_PIPES; p++ )
     {
-        g_lastCompatibility[p] = -1;
         g_unstInitialized[p] = 0;
         g_candleInitialized[p] = 0;
         g_pipeLang[p] = NULL;
@@ -334,30 +331,6 @@ static ErrorNumber sync_candle_settings(int pipeIdx)
         g_lastCandle[pipeIdx][i] = *cur;
         g_candleSyncs++;
     }
-    return TA_TEST_PASS;
-}
-
-static ErrorNumber sync_compatibility(int pipeIdx)
-{
-    int compat = (int)TA_GetCompatibility();
-    if( compat == g_lastCompatibility[pipeIdx] )
-        return TA_TEST_PASS;
-
-    /* Use local buffers to avoid overwriting g_reqBuf/g_respBuf
-     * which hold the function call request. */
-    char syncReq[128];
-    char syncResp[256];
-    snprintf(syncReq, sizeof(syncReq),
-             "{\"method\":\"set_compatibility\",\"params\":{\"mode\":%d}}", compat);
-    ErrorNumber err = codegen_pipe_call(g_pipes[pipeIdx], syncReq, syncResp, sizeof(syncResp));
-    if( err != TA_TEST_PASS )
-        return err;
-    if( sv_json_is_error(syncResp) )
-    {
-        printf("  SV WARN: set_compatibility rejected by server: %s\n", syncResp);
-        return TA_SV_RETCODE_MISMATCH;
-    }
-    g_lastCompatibility[pipeIdx] = compat;
     return TA_TEST_PASS;
 }
 
@@ -668,27 +641,11 @@ ErrorNumber server_verify(
          * drifted apart, leaving C# bitwise here and tolerant there. */
         int bitwise = !(codegen_lang_needs_transcendental_tol(lang) && isTranscendental);
 
-        /* Sync global state (unstable periods + compatibility) */
+        /* Sync global state (unstable periods + candle settings) */
         ErrorNumber err = sync_unstable_periods(p);
         if( err != TA_TEST_PASS )
         {
             printf("  SV WARN [%s]: failed to sync unstable periods\n", funcName);
-            continue;
-        }
-        if( TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT &&
-            !codegen_lang_has_compatibility_api(lang) )
-        {
-            /* A Metastock leg, against a backend that deliberately has no
-             * compatibility API. Not a coverage gap deferred: TA_SetCompatibility
-             * is deprecated in C and unreachable from Rust/Java/C# by design, so
-             * there is no second implementation to compare against — permanently,
-             * for all three. Silent because it is an invariant, not news. */
-            continue;
-        }
-        err = sync_compatibility(p);
-        if( err != TA_TEST_PASS )
-        {
-            printf("  SV WARN [%s]: failed to sync compatibility\n", funcName);
             continue;
         }
         err = sync_candle_settings(p);
@@ -822,15 +779,6 @@ ErrorNumber server_verify_lookback_parity(
         if( err != TA_TEST_PASS )
         {
             printf("  SV WARN [%s]: lookback-parity: failed to sync unstable periods\n", funcName);
-            continue;
-        }
-        if( TA_GetCompatibility() != TA_COMPATIBILITY_DEFAULT &&
-            !codegen_lang_has_compatibility_api(lang) )
-            continue;   /* same graceful skip as server_verify() above */
-        err = sync_compatibility(p);
-        if( err != TA_TEST_PASS )
-        {
-            printf("  SV WARN [%s]: lookback-parity: failed to sync compatibility\n", funcName);
             continue;
         }
         err = sync_candle_settings(p);

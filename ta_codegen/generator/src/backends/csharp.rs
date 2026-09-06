@@ -52,7 +52,7 @@
 //! - **The float-overload comparison fold is statement-level here.** Java
 //!   renders a `float[] == double[]` identity test as a literal `false`; C#
 //!   additionally makes the then-arm CS0162 unreachable code under
-//!   `-warnaserror`, so [`compat_fold`](super::compat_fold) folds the whole
+//!   `-warnaserror`, so [`cond_fold`](super::cond_fold) folds the whole
 //!   `if` away (dead code only — never a value change).
 //!
 //! - **Method names are the YAML `name:` verbatim** (`SMA`, `WILLR`), suffixed
@@ -74,7 +74,7 @@ use super::builtins::{MathFn, SpecialBuiltin, StdlibFn};
 use super::common::{
     contains_alloc_err_return, expr_directly_contains_candle_call, find_sizeof_type, CANDLE_FNS,
 };
-use super::compat_fold::{fold_compat_cond, fold_cond, CondFold};
+use super::cond_fold::{fold_cond, CondFold};
 use super::expr_walk::{binop_prec, expr_prec, is_int_bitwise, wrap_child, wrap_inlined, ExprEmitter};
 use super::fma::{self, FmaVarSets};
 use super::java::{
@@ -1157,12 +1157,12 @@ impl CsStmt<'_> {
                 && matches!(else_body.get(code_start), Some(Statement::If { .. }));
             if is_else_if {
                 // The `} else if` collapse pastes the walked inner `if`
-                // unbraced after `else` — but a render-time fold (compat or
-                // the float-overload comparison) can dissolve that inner `if`
-                // into bare statements or nothing, and `} else <bare>` either
-                // lets statements escape the else or dangles onto the next
-                // sibling. Collapse only when the walk still starts with an
-                // `if(`; otherwise fall through to the braced form.
+                // unbraced after `else` — but the float-overload comparison
+                // fold can dissolve that inner `if` into bare statements or
+                // nothing, and `} else <bare>` either lets statements escape
+                // the else or dangles onto the next sibling. Collapse only
+                // when the walk still starts with an `if(`; otherwise fall
+                // through to the braced form.
                 let inner = self.walk_stmt(&else_body[code_start], indent);
                 if inner.trim_start().starts_with("if(") {
                     for c in &else_body[..code_start] {
@@ -1423,24 +1423,6 @@ impl StatementEmitter for CsStmt<'_> {
         // Skip post-allocation null-check blocks (dead code — `new` never returns null)
         if contains_alloc_err_return(then_body) {
             return String::new();
-        }
-        // Compatibility is pinned to Default: fold the branch away and splice
-        // the surviving arm in place (see `compat_fold`).
-        match fold_compat_cond(condition) {
-            CondFold::Known(taken) => {
-                let kept = if taken { then_body } else { else_body };
-                return kept.iter().map(|s| self.walk_stmt(s, indent)).collect();
-            }
-            CondFold::Open { expr, changed: true } => {
-                let rebuilt = Statement::If {
-                    condition: expr,
-                    then_body: then_body.to_vec(),
-                    else_body: else_body.to_vec(),
-                    cond_comments: Vec::new(),
-                };
-                return self.walk_stmt(&rebuilt, indent);
-            }
-            CondFold::Open { changed: false, .. } => {}
         }
         // Single-precision comparison fold: a float[]-input vs double[] identity
         // test cannot hold and does not even compile in C#; fold the statement
@@ -1839,15 +1821,6 @@ struct CsExpr<'a> {
 impl ExprEmitter for CsExpr<'_> {
     fn var(&self, name: &str) -> String {
         let mapped = match name {
-            // C# has no compatibility field: every read is folded away by
-            // `fold_compat_cond` before rendering. Reaching here means a new
-            // construct escaped the fold — fail loudly rather than emit a
-            // reference to a field that does not exist.
-            "COMPATIBILITY" | "METASTOCK" | "DEFAULT" => panic!(
-                "csharp: compatibility reference `{name}` survived the render-time fold \
-                 (C# pins the mode to Default — extend compat_fold to cover this \
-                 construct)"
-            ),
             "BAD_PARAM" => "RetCode.BadParam".to_string(),
             "SUCCESS" => "RetCode.Success".to_string(),
             "ALLOC_ERR" => "RetCode.AllocErr".to_string(),
@@ -2219,12 +2192,6 @@ fn render_func_call(
                     return format!("this.unstablePeriod[(int)FuncUnstId.{variant}]");
                 }
                 "this.unstablePeriod[0]".to_string()
-            }
-            SpecialBuiltin::Compatibility => {
-                panic!(
-                    "csharp: COMPATIBILITY() survived the render-time fold (C# pins \
-                     the mode to Default — extend compat_fold to cover this construct)"
-                )
             }
             pred @ (SpecialBuiltin::IsZero
             | SpecialBuiltin::IsZeroScaled

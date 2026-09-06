@@ -190,37 +190,13 @@ impl Core {
         }
         (*outBegIdx) = startIdx;
         // Do the EMA calculation using tight loops.
-        // The first EMA is calculated differently. It
-        // then become the seed for subsequent EMA.
-        //
-        // The algorithm for this seed vary widely.
-        // Only 3 are implemented here:
-        //
-        // TA_MA_CLASSIC:
-        //    Use a simple MA of the first 'period'.
-        //    This is the approach most widely documented.
-        //
-        // TA_MA_METASTOCK:
-        //    Use first price bar value as a seed
-        //    from the begining of all the available
-        //    data.
-        //
-        // TA_MA_TRADESTATION:
-        //    Use 4th price bar as a seed, except when
-        //    period is 1 who use 2th price bar or something
-        //    like that... (not an obvious one...).
-        if self.compatibility == Compatibility::Default {
-            today = startIdx - lookbackTotal;
-            i = (optInTimePeriod) as usize;
-            tempReal = 0.0;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevMA = tempReal / ((optInTimePeriod) as f64);
-        } else {
-            prevMA = inReal[0];
-            today = 1;
+        today = startIdx - lookbackTotal;
+        i = (optInTimePeriod) as usize;
+        tempReal = 0.0;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
+        prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
             prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
         }
@@ -451,37 +427,13 @@ impl Core {
         }
         (*outBegIdx) = startIdx;
         // Do the EMA calculation using tight loops.
-        // The first EMA is calculated differently. It
-        // then become the seed for subsequent EMA.
-        //
-        // The algorithm for this seed vary widely.
-        // Only 3 are implemented here:
-        //
-        // TA_MA_CLASSIC:
-        //    Use a simple MA of the first 'period'.
-        //    This is the approach most widely documented.
-        //
-        // TA_MA_METASTOCK:
-        //    Use first price bar value as a seed
-        //    from the begining of all the available
-        //    data.
-        //
-        // TA_MA_TRADESTATION:
-        //    Use 4th price bar as a seed, except when
-        //    period is 1 who use 2th price bar or something
-        //    like that... (not an obvious one...).
-        if self.compatibility == Compatibility::Default {
-            today = startIdx - lookbackTotal;
-            i = (optInTimePeriod) as usize;
-            tempReal = 0.0;
-            while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
-                tempReal += inReal[{ let _v = today; today += 1; _v }];
-            }
-            prevMA = tempReal / ((optInTimePeriod) as f64);
-        } else {
-            prevMA = inReal[0];
-            today = 1;
+        today = startIdx - lookbackTotal;
+        i = (optInTimePeriod) as usize;
+        tempReal = 0.0;
+        while { let _v = i; i = i.wrapping_sub(1); _v } > 0 {
+            tempReal += inReal[{ let _v = today; today += 1; _v }];
         }
+        prevMA = tempReal / ((optInTimePeriod) as f64);
         while today <= startIdx {
             prevMA = (inReal[{ let _v = today; today += 1; _v }] - prevMA as f64).mul_add(optInK_1, prevMA);
         }

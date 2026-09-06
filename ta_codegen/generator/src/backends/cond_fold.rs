@@ -1,24 +1,13 @@
-//! Render-time constant-folding of conditions, shared by the managed backends
-//! (Java, C#).
+//! Render-time constant-folding of conditions, against a leaf classifier the
+//! caller supplies.
 //!
-//! Two folds funnel through the one propagation engine here:
-//!
-//! - **Compatibility fold.** The managed `Core`s carry no compatibility field,
-//!   so every `TA_GetCompatibility()` test in the shared input sources is a
-//!   compile-time constant there: `== DEFAULT` is true, `== METASTOCK` false,
-//!   and the surviving arm is spliced in place of the branch. C still ships the
-//!   setting and renders the same IR untouched.
-//!
-//! - **Float-overload comparison fold (C# only, statement level).** In the
-//!   single-precision variants the inputs are `float[]` while outputs are
-//!   `double[]`, so an input↔output identity test can never be true — and C#
-//!   rejects `float[] == double[]` outright, then promotes the then-arm of a
-//!   literal `if (false)` to a CS0162 unreachable-code error under
-//!   `-warnaserror`. Folding the whole statement removes both problems; Java
-//!   renders the same comparisons as literals, which javac accepts.
-//!
-//! [`ir_cleanup`](super::ir_cleanup) is the engine's third consumer, for the
-//! guard on a cross-call the backend has already answered.
+//! Two consumers today: the C#-only float-overload comparison fold — in the
+//! single-precision variants the inputs are `float[]` while outputs are
+//! `double[]`, so an input↔output identity test can never be true, and C#
+//! rejects `float[] == double[]` outright, then promotes the then-arm of a
+//! literal `if (false)` to a CS0162 unreachable-code error under
+//! `-warnaserror` — and [`ir_cleanup`](super::ir_cleanup), for the guard on a
+//! cross-call the backend has already answered.
 //!
 //! The engine handles both operand orders and propagates through `&&` / `||` /
 //! `!`, so a compound test collapses whole.
@@ -101,8 +90,6 @@ pub(crate) fn fold_cond(expr: &Expr, leaf: &dyn Fn(&Expr) -> Option<bool>) -> Co
     }
 }
 
-
-
 /// Does evaluating this expression change nothing? A call counts as impure:
 /// this module cannot know whether it is.
 fn expr_is_pure(e: &Expr) -> bool {
@@ -120,47 +107,6 @@ fn expr_is_pure(e: &Expr) -> bool {
         }
     });
     pure
-}
-
-/// Is this expression the `COMPATIBILITY()` builtin (or its bare-`Var` spelling)?
-fn is_compat_read(expr: &Expr) -> bool {
-    match expr {
-        Expr::Var(n) => n == "COMPATIBILITY",
-        Expr::FuncCall(n, args) => n == "COMPATIBILITY" && args.is_empty(),
-        _ => false,
-    }
-}
-
-/// The truth value of `COMPATIBILITY() == <name>` under the Default pin.
-fn compat_variant_matches(expr: &Expr) -> Option<bool> {
-    match expr {
-        Expr::Var(n) if n == "DEFAULT" => Some(true),
-        Expr::Var(n) if n == "METASTOCK" => Some(false),
-        _ => None,
-    }
-}
-
-/// Leaf classifier for the compatibility fold: `COMPATIBILITY() == <variant>`
-/// (either operand order, `==` or `!=`) is constant under the Default pin.
-fn compat_leaf(expr: &Expr) -> Option<bool> {
-    let Expr::BinOp(lhs, op @ (BinOp::Eq | BinOp::NotEq), rhs) = expr else {
-        return None;
-    };
-    let matched = if is_compat_read(lhs) {
-        compat_variant_matches(rhs)
-    } else if is_compat_read(rhs) {
-        compat_variant_matches(lhs)
-    } else {
-        None
-    };
-    matched.map(|eq| if matches!(op, BinOp::Eq) { eq } else { !eq })
-}
-
-/// Fold a condition against the managed backends' pinned-to-Default
-/// compatibility. See the module docs; the fold hangs off each backend's
-/// `if_stmt` hook, which every render path funnels through.
-pub(crate) fn fold_compat_cond(expr: &Expr) -> CondFold {
-    fold_cond(expr, &compat_leaf)
 }
 
 #[cfg(test)]

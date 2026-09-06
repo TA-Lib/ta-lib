@@ -14025,12 +14025,17 @@ TA_LIB_API TA_RetCode TA_SetUnstablePeriod( TA_FuncUnstId id,
 
 TA_LIB_API unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id );
 
-/* DEPRECATED: TA_SetCompatibility is deprecated and may be removed in
- * a future release. Avoid it in new code and rely on TA-Lib's default
- * behavior. See ta_defs.h for the enumeration TA_Compatibility.
+/* DEPRECATED: the MetaStock variant was removed in 0.8.1, so
+ * TA_SetCompatibility does nothing and TA_GetCompatibility always
+ * answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing
+ * sources still compile and link; avoid them in new code.
+ *
+ * Deliberately NOT TA_LIB_API: no released version ever exported
+ * them from the Windows DLL, and a retired setting is not the one
+ * to start. Adding it back would widen the shipped surface.
  */
-TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );
-TA_LIB_API TA_Compatibility TA_GetCompatibility( void );
+TA_RetCode TA_SetCompatibility( TA_Compatibility value );
+TA_Compatibility TA_GetCompatibility( void );
 
 /* Candlesticks struct and functions
  * Because candlestick patterns are subjective, it is necessary 

@@ -157,7 +157,9 @@ typedef enum {
     TA_UNKNOWN_ERR               = 0xFFFF
 } TA_RetCode;
 
-/* TA_Compatibility is now DEPRECATED. Will be removed in a future release. */
+/* DEPRECATED: the MetaStock variant was removed in 0.8.1 and the setting now
+ * selects nothing. Kept so existing sources still compile and link.
+ */
 typedef enum {
     TA_COMPATIBILITY_DEFAULT   = 0,
     TA_COMPATIBILITY_METASTOCK = 1

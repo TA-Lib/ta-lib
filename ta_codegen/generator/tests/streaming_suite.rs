@@ -209,17 +209,11 @@ fn t3_identity_path_recognized() {
 }
 
 #[test]
-fn rsi_memmove_identity_and_seed_boundary() {
-    // RSI's period==1 memmove path is recognized as the identity fast path,
-    // and its Metastock seed exit (output write, then a guarded success
-    // return) is flagged: Open honestly rejects at exactly lookback+1 there.
+fn rsi_memmove_identity() {
+    // RSI's period==1 memmove path is recognized as the identity fast path.
     let f = load("rsi");
     let m = streaming::analyze(&f).expect("RSI analyzes");
     assert!(m.identity.is_some(), "memmove identity path");
-    assert!(m.seed_boundary, "Metastock seed boundary flagged");
-    let f2 = load("avgdev");
-    let m2 = streaming::analyze(&f2).expect("AVGDEV analyzes");
-    assert!(!m2.seed_boundary, "pure no-data guard is not a seed boundary");
 }
 
 #[test]

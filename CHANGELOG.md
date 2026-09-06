@@ -90,9 +90,7 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
   (it is rejected) and was never returned, so it had no use in the public API.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
-
-### Deprecated
-- `TA_SetCompatibility()` and `TA_GetCompatibility()`. The notion of variant (e.g. MetaStock compatibility) is not actively maintained and will be removed in a future release. Default behavior is unaffected. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
+- (#388) API: the MetaStock variant of CMO, DEMA, EMA, MACD, MACDFIX, RSI, TEMA and TRIX is removed. The same variant reached MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MAType was EMA, DEMA or TEMA. Default behavior is unchanged. `TA_SetCompatibility()` and `TA_GetCompatibility()` remain declared, so existing sources still compile, but the setter now does nothing and the getter always answers `TA_COMPATIBILITY_DEFAULT`. They are not exported from the Windows DLL — no released version exported them either. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
 
 ### Fixed
 - (#385) KAMA could divide by zero and return `-Inf`, after which every remaining bar of the call was NaN. It needs a window whose one-bar changes sum to exactly zero through floating-point absorption while the net change over that window is negative.

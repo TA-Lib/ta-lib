@@ -23295,14 +23295,6 @@ fn dispatch(core: &mut Core, ref_data: &mut RefData, method: &str, params: &Valu
                 Err(msg) => format!("{{\"error\":\"{msg}\"}}"),
             }
         }
-        "set_compatibility" => {
-            let mode = params["mode"].as_u64().unwrap_or(0);
-            if mode == 0 {
-                "{\"status\":\"ok\"}".to_string()
-            } else {
-                "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string()
-            }
-        }
         "set_candle_settings" => {
             let st = params["settingType"].as_i64().unwrap_or(-1);
             let rt = params["rangeType"].as_i64().unwrap_or(-1);
@@ -23746,10 +23738,6 @@ fn sv_ac(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(5) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(34) as i32;
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(5) as i32;
@@ -23810,9 +23798,8 @@ fn sv_ac(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -23897,10 +23884,6 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -23967,9 +23950,8 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24070,10 +24052,6 @@ fn sv_acos(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -24131,9 +24109,8 @@ fn sv_acos(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24218,10 +24195,6 @@ fn sv_ad(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -24279,9 +24252,8 @@ fn sv_ad(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24366,10 +24338,6 @@ fn sv_add(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -24427,9 +24395,8 @@ fn sv_add(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24514,10 +24481,6 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(3) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -24578,9 +24541,8 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24665,10 +24627,6 @@ fn sv_adr(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24727,9 +24685,8 @@ fn sv_adr(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24814,10 +24771,6 @@ fn sv_adx(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -24877,9 +24830,8 @@ fn sv_adx(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -24964,10 +24916,6 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25027,9 +24975,8 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -25114,10 +25061,6 @@ fn sv_ao(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(5) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(34) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -25177,9 +25120,8 @@ fn sv_ao(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -25264,10 +25206,6 @@ fn sv_apo(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
@@ -25337,9 +25275,8 @@ fn sv_apo(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -25424,10 +25361,6 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25490,9 +25423,8 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -25585,10 +25517,6 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -25647,9 +25575,8 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -25734,10 +25661,6 @@ fn sv_asin(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -25795,9 +25718,8 @@ fn sv_asin(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -25882,10 +25804,6 @@ fn sv_atan(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -25943,9 +25861,8 @@ fn sv_atan(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26030,10 +25947,6 @@ fn sv_atr(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26093,9 +26006,8 @@ fn sv_atr(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26180,10 +26092,6 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26242,9 +26150,8 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26329,10 +26236,6 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26390,9 +26293,8 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26477,10 +26379,6 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInNbDevUp = params["optInNbDevUp"].as_f64().unwrap_or(2.0);
     let optInNbDevDn = params["optInNbDevDn"].as_f64().unwrap_or(2.0);
@@ -26559,9 +26457,8 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26662,10 +26559,6 @@ fn sv_beta(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -26724,9 +26617,8 @@ fn sv_beta(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26811,10 +26703,6 @@ fn sv_bop(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -26872,9 +26760,8 @@ fn sv_bop(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -26959,10 +26846,6 @@ fn sv_cci(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27021,9 +26904,8 @@ fn sv_cci(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -27108,10 +26990,6 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27173,9 +27051,8 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -27260,10 +27137,6 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27325,9 +27198,8 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -27412,10 +27284,6 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27477,9 +27345,8 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -27564,10 +27431,6 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27629,9 +27492,8 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -27716,10 +27578,6 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27781,9 +27639,8 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -27868,10 +27725,6 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -27933,9 +27786,8 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28020,10 +27872,6 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28085,9 +27933,8 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28172,10 +28019,6 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -28238,9 +28081,8 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28325,10 +28167,6 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28390,9 +28228,8 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28477,10 +28314,6 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28542,9 +28375,8 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28629,10 +28461,6 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28694,9 +28522,8 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28781,10 +28608,6 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28846,9 +28669,8 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -28933,10 +28755,6 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -28998,9 +28816,8 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29085,10 +28902,6 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29150,9 +28963,8 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29237,10 +29049,6 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.5);
     let mut fz_o = vec![0.0f64; svN];
@@ -29303,9 +29111,8 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29390,10 +29197,6 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29455,9 +29258,8 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29542,10 +29344,6 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29607,9 +29405,8 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29694,10 +29491,6 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29759,9 +29552,8 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29846,10 +29638,6 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -29911,9 +29699,8 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -29998,10 +29785,6 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -30064,9 +29847,8 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -30151,10 +29933,6 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -30217,9 +29995,8 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -30304,10 +30081,6 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -30369,9 +30142,8 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -30456,10 +30228,6 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -30521,9 +30289,8 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -30608,10 +30375,6 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -30673,9 +30436,8 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -30760,10 +30522,6 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -30825,9 +30583,8 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -30912,10 +30669,6 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -30977,9 +30730,8 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31064,10 +30816,6 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -31129,9 +30877,8 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31216,10 +30963,6 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -31281,9 +31024,8 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31368,10 +31110,6 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -31433,9 +31171,8 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31520,10 +31257,6 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -31585,9 +31318,8 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31672,10 +31404,6 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -31737,9 +31465,8 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31824,10 +31551,6 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -31889,9 +31612,8 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -31976,10 +31698,6 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32041,9 +31759,8 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -32128,10 +31845,6 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32193,9 +31906,8 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -32280,10 +31992,6 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32345,9 +32053,8 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -32432,10 +32139,6 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32497,9 +32200,8 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -32584,10 +32286,6 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32649,9 +32347,8 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -32736,10 +32433,6 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32801,9 +32494,8 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -32888,10 +32580,6 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -32953,9 +32641,8 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33040,10 +32727,6 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -33105,9 +32788,8 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33192,10 +32874,6 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -33257,9 +32935,8 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33344,10 +33021,6 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.5);
     let mut fz_o = vec![0.0f64; svN];
@@ -33410,9 +33083,8 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33497,10 +33169,6 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -33563,9 +33231,8 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33650,10 +33317,6 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let optInPenetration = params["optInPenetration"].as_f64().unwrap_or(0.3);
     let mut fz_o = vec![0.0f64; svN];
@@ -33716,9 +33379,8 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33803,10 +33465,6 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -33868,9 +33526,8 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -33955,10 +33612,6 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34020,9 +33673,8 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -34107,10 +33759,6 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34172,9 +33820,8 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -34259,10 +33906,6 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34324,9 +33967,8 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -34411,10 +34053,6 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34476,9 +34114,8 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -34563,10 +34200,6 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34628,9 +34261,8 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -34715,10 +34347,6 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34780,9 +34408,8 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -34867,10 +34494,6 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -34932,9 +34555,8 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35019,10 +34641,6 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35084,9 +34702,8 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35171,10 +34788,6 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35236,9 +34849,8 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35323,10 +34935,6 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35388,9 +34996,8 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35475,10 +35082,6 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35540,9 +35143,8 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35627,10 +35229,6 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35692,9 +35290,8 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35779,10 +35376,6 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35844,9 +35437,8 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -35931,10 +35523,6 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -35996,9 +35584,8 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36083,10 +35670,6 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -36148,9 +35731,8 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36235,10 +35817,6 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let candleLegs = params["candleLegs"].as_i64().unwrap_or(0);
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -36300,9 +35878,8 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36387,10 +35964,6 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -36448,9 +36021,8 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36535,10 +36107,6 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -36597,9 +36165,8 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36684,10 +36251,6 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -36747,9 +36310,8 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = if svCompat == 1 { 1 } else { 0 };
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36834,10 +36396,6 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -36896,9 +36454,8 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -36983,10 +36540,6 @@ fn sv_coppock(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInWMAPeriod = params["optInWMAPeriod"].as_i64().unwrap_or(10) as i32;
     let optInROC1Period = params["optInROC1Period"].as_i64().unwrap_or(11) as i32;
     let optInROC2Period = params["optInROC2Period"].as_i64().unwrap_or(14) as i32;
@@ -37047,9 +36600,8 @@ fn sv_coppock(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -37134,10 +36686,6 @@ fn sv_correl(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -37196,9 +36744,8 @@ fn sv_correl(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -37283,10 +36830,6 @@ fn sv_cos(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -37344,9 +36887,8 @@ fn sv_cos(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -37431,10 +36973,6 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -37492,9 +37030,8 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -37579,10 +37116,6 @@ fn sv_cumsum(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -37640,9 +37173,8 @@ fn sv_cumsum(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -37727,10 +37259,6 @@ fn sv_cvi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let optInROCPeriod = params["optInROCPeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -37791,9 +37319,8 @@ fn sv_cvi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -37878,10 +37405,6 @@ fn sv_dema(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -37941,9 +37464,8 @@ fn sv_dema(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38028,10 +37550,6 @@ fn sv_div(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -38089,9 +37607,8 @@ fn sv_div(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38176,10 +37693,6 @@ fn sv_donchian(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -38246,9 +37759,8 @@ fn sv_donchian(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38349,10 +37861,6 @@ fn sv_dpo(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -38411,9 +37919,8 @@ fn sv_dpo(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38498,10 +38005,6 @@ fn sv_dx(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -38561,9 +38064,8 @@ fn sv_dx(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38648,10 +38150,6 @@ fn sv_efi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(13) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -38710,9 +38208,8 @@ fn sv_efi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38797,10 +38294,6 @@ fn sv_ema(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -38860,9 +38353,8 @@ fn sv_ema(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -38947,10 +38439,6 @@ fn sv_er(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -39009,9 +38497,8 @@ fn sv_er(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -39096,10 +38583,6 @@ fn sv_eri(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(13) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -39163,9 +38646,8 @@ fn sv_eri(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -39258,10 +38740,6 @@ fn sv_exp(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -39319,9 +38797,8 @@ fn sv_exp(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -39406,10 +38883,6 @@ fn sv_floor(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -39467,9 +38940,8 @@ fn sv_floor(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -39554,10 +39026,6 @@ fn sv_fosc(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -39616,9 +39084,8 @@ fn sv_fosc(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -39703,10 +39170,6 @@ fn sv_fractal(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInLeftBars = params["optInLeftBars"].as_i64().unwrap_or(2) as i32;
     let optInRightBars = params["optInRightBars"].as_i64().unwrap_or(2) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -39770,9 +39233,8 @@ fn sv_fractal(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -39865,10 +39327,6 @@ fn sv_ha(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -39939,9 +39397,8 @@ fn sv_ha(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40050,10 +39507,6 @@ fn sv_hma(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -40112,9 +39565,8 @@ fn sv_hma(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40199,10 +39651,6 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -40261,9 +39709,8 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40348,10 +39795,6 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -40410,9 +39853,8 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40497,10 +39939,6 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -40563,9 +40001,8 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40658,10 +40095,6 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -40724,9 +40157,8 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40819,10 +40251,6 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -40881,9 +40309,8 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -40968,10 +40395,6 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -41030,9 +40453,8 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -41117,10 +40539,6 @@ fn sv_imi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -41179,9 +40597,8 @@ fn sv_imi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -41266,10 +40683,6 @@ fn sv_kama(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -41329,9 +40742,8 @@ fn sv_kama(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -41416,10 +40828,6 @@ fn sv_kc(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let optInATRPeriod = params["optInATRPeriod"].as_i64().unwrap_or(10) as i32;
     let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(2.0);
@@ -41490,9 +40898,8 @@ fn sv_kc(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -41593,10 +41000,6 @@ fn sv_kdj(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(9) as i32;
     let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
     let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(13) as i32;
@@ -41680,9 +41083,8 @@ fn sv_kdj(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -41783,10 +41185,6 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -41845,9 +41243,8 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -41932,10 +41329,6 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -41994,9 +41387,8 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -42081,10 +41473,6 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -42143,9 +41531,8 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -42230,10 +41617,6 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -42292,9 +41675,8 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -42379,10 +41761,6 @@ fn sv_ln(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -42440,9 +41818,8 @@ fn sv_ln(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -42527,10 +41904,6 @@ fn sv_log10(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -42588,9 +41961,8 @@ fn sv_log10(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -42675,10 +42047,6 @@ fn sv_ma(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
     let optInMAType = match MAType::try_from(optInMAType_raw) {
@@ -42747,9 +42115,8 @@ fn sv_ma(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -42834,10 +42201,6 @@ fn sv_macd(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
@@ -42907,9 +42270,8 @@ fn sv_macd(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -43010,10 +42372,6 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInFastMAType_raw = params["optInFastMAType"].as_i64().unwrap_or(0) as i32;
     let optInFastMAType = match MAType::try_from(optInFastMAType_raw) {
@@ -43102,9 +42460,8 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -43205,10 +42562,6 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInSignalPeriod = params["optInSignalPeriod"].as_i64().unwrap_or(9) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -43276,9 +42629,8 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -43379,10 +42731,6 @@ fn sv_mama(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastLimit = params["optInFastLimit"].as_f64().unwrap_or(0.5);
     let optInSlowLimit = params["optInSlowLimit"].as_f64().unwrap_or(0.05);
     let mut fz_o = vec![0.0f64; svN];
@@ -43447,9 +42795,8 @@ fn sv_mama(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -43542,10 +42889,6 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -43603,9 +42946,8 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -43690,10 +43032,6 @@ fn sv_massi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(9) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(25) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -43754,9 +43092,8 @@ fn sv_massi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -43841,10 +43178,6 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInMinPeriod = params["optInMinPeriod"].as_i64().unwrap_or(2) as i32;
     let optInMaxPeriod = params["optInMaxPeriod"].as_i64().unwrap_or(30) as i32;
     let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(0) as i32;
@@ -43915,9 +43248,8 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44002,10 +43334,6 @@ fn sv_max(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -44064,9 +43392,8 @@ fn sv_max(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44151,10 +43478,6 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -44213,9 +43536,8 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44300,10 +43622,6 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -44361,9 +43679,8 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44448,10 +43765,6 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -44510,9 +43823,8 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44597,10 +43909,6 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -44659,9 +43967,8 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44746,10 +44053,6 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -44808,9 +44111,8 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -44895,10 +44197,6 @@ fn sv_min(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -44957,9 +44255,8 @@ fn sv_min(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45044,10 +44341,6 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -45106,9 +44399,8 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45193,10 +44485,6 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -45259,9 +44547,8 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45354,10 +44641,6 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -45420,9 +44703,8 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45515,10 +44797,6 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -45578,9 +44856,8 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45665,10 +44942,6 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -45728,9 +45001,8 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45815,10 +45087,6 @@ fn sv_mom(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -45877,9 +45145,8 @@ fn sv_mom(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -45964,10 +45231,6 @@ fn sv_mult(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -46025,9 +45288,8 @@ fn sv_mult(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -46112,10 +45374,6 @@ fn sv_natr(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -46175,9 +45433,8 @@ fn sv_natr(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -46262,10 +45519,6 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -46323,9 +45576,8 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -46410,10 +45662,6 @@ fn sv_obv(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -46471,9 +45719,8 @@ fn sv_obv(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -46558,10 +45805,6 @@ fn sv_percentile(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let optInPercentile = params["optInPercentile"].as_f64().unwrap_or(50.0);
     let mut fz_o = vec![0.0f64; svN];
@@ -46621,9 +45864,8 @@ fn sv_percentile(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -46708,10 +45950,6 @@ fn sv_percentrank(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(100) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -46770,9 +46008,8 @@ fn sv_percentrank(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -46857,10 +46094,6 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -46920,9 +46153,8 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47007,10 +46239,6 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -47070,9 +46298,8 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47157,10 +46384,6 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
@@ -47230,9 +46453,8 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47317,10 +46539,6 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -47378,9 +46596,8 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47465,10 +46682,6 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(12) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(26) as i32;
     let optInMAType_raw = params["optInMAType"].as_i64().unwrap_or(1) as i32;
@@ -47538,9 +46751,8 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47625,10 +46837,6 @@ fn sv_pvt(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -47686,9 +46894,8 @@ fn sv_pvt(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47773,10 +46980,6 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -47835,9 +47038,8 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -47922,10 +47124,6 @@ fn sv_rma(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -47985,9 +47183,8 @@ fn sv_rma(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48072,10 +47269,6 @@ fn sv_roc(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -48134,9 +47327,8 @@ fn sv_roc(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48221,10 +47413,6 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -48283,9 +47471,8 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48370,10 +47557,6 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -48432,9 +47615,8 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48519,10 +47701,6 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -48581,9 +47759,8 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48668,10 +47845,6 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -48731,9 +47904,8 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = if svCompat == 1 { 1 } else { 0 };
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48818,10 +47990,6 @@ fn sv_rvi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let optInStdDevPeriod = params["optInStdDevPeriod"].as_i64().unwrap_or(10) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -48882,9 +48050,8 @@ fn sv_rvi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -48969,10 +48136,6 @@ fn sv_rvol(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(20) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -49031,9 +48194,8 @@ fn sv_rvol(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -49118,10 +48280,6 @@ fn sv_sar(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInAcceleration = params["optInAcceleration"].as_f64().unwrap_or(0.02);
     let optInMaximum = params["optInMaximum"].as_f64().unwrap_or(0.2);
     let mut fz_o = vec![0.0f64; svN];
@@ -49181,9 +48339,8 @@ fn sv_sar(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -49268,10 +48425,6 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInStartValue = params["optInStartValue"].as_f64().unwrap_or(0.0);
     let optInOffsetOnReverse = params["optInOffsetOnReverse"].as_f64().unwrap_or(0.0);
     let optInAccelerationInitLong = params["optInAccelerationInitLong"].as_f64().unwrap_or(0.02);
@@ -49337,9 +48490,8 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -49424,10 +48576,6 @@ fn sv_sin(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -49485,9 +48633,8 @@ fn sv_sin(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -49572,10 +48719,6 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -49633,9 +48776,8 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -49720,10 +48862,6 @@ fn sv_sma(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -49782,9 +48920,8 @@ fn sv_sma(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -49869,10 +49006,6 @@ fn sv_smi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(13) as i32;
     let optInFastPeriod = params["optInFastPeriod"].as_i64().unwrap_or(2) as i32;
     let optInSlowPeriod = params["optInSlowPeriod"].as_i64().unwrap_or(25) as i32;
@@ -49939,9 +49072,8 @@ fn sv_smi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -50034,10 +49166,6 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -50095,9 +49223,8 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -50182,10 +49309,6 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0);
     let mut fz_o = vec![0.0f64; svN];
@@ -50245,9 +49368,8 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -50332,10 +49454,6 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInSlowK_Period = params["optInSlowK_Period"].as_i64().unwrap_or(3) as i32;
     let optInSlowK_MAType_raw = params["optInSlowK_MAType"].as_i64().unwrap_or(0) as i32;
@@ -50415,9 +49533,8 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -50510,10 +49627,6 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
     let optInFastD_MAType_raw = params["optInFastD_MAType"].as_i64().unwrap_or(0) as i32;
@@ -50587,9 +49700,8 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -50682,10 +49794,6 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let optInFastK_Period = params["optInFastK_Period"].as_i64().unwrap_or(5) as i32;
     let optInFastD_Period = params["optInFastD_Period"].as_i64().unwrap_or(3) as i32;
@@ -50761,9 +49869,8 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = if svCompat == 1 { 1 } else { 0 };
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -50856,10 +49963,6 @@ fn sv_sub(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -50917,9 +50020,8 @@ fn sv_sub(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51004,10 +50106,6 @@ fn sv_sum(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -51066,9 +50164,8 @@ fn sv_sum(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51153,10 +50250,6 @@ fn sv_supertrend(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(10) as i32;
     let optInMultiplier = params["optInMultiplier"].as_f64().unwrap_or(3.0);
     let mut fz_o = vec![0.0f64; svN];
@@ -51221,9 +50314,8 @@ fn sv_supertrend(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51316,10 +50408,6 @@ fn sv_t3(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInVFactor = params["optInVFactor"].as_f64().unwrap_or(0.7);
     let mut fz_o = vec![0.0f64; svN];
@@ -51380,9 +50468,8 @@ fn sv_t3(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51467,10 +50554,6 @@ fn sv_tan(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -51528,9 +50611,8 @@ fn sv_tan(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51615,10 +50697,6 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -51676,9 +50754,8 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51763,10 +50840,6 @@ fn sv_tema(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -51826,9 +50899,8 @@ fn sv_tema(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -51913,10 +50985,6 @@ fn sv_trange(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -51974,9 +51042,8 @@ fn sv_trange(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52061,10 +51128,6 @@ fn sv_trima(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -52123,9 +51186,8 @@ fn sv_trima(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52210,10 +51272,6 @@ fn sv_trix(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -52273,9 +51331,8 @@ fn sv_trix(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52360,10 +51417,6 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -52422,9 +51475,8 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52509,10 +51561,6 @@ fn sv_tsi(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInFirstPeriod = params["optInFirstPeriod"].as_i64().unwrap_or(25) as i32;
     let optInSecondPeriod = params["optInSecondPeriod"].as_i64().unwrap_or(13) as i32;
     let mut fz_o = vec![0.0f64; svN];
@@ -52573,9 +51621,8 @@ fn sv_tsi(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52660,10 +51707,6 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -52721,9 +51764,8 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52808,10 +51850,6 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod1 = params["optInTimePeriod1"].as_i64().unwrap_or(7) as i32;
     let optInTimePeriod2 = params["optInTimePeriod2"].as_i64().unwrap_or(14) as i32;
     let optInTimePeriod3 = params["optInTimePeriod3"].as_i64().unwrap_or(28) as i32;
@@ -52872,9 +51910,8 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -52959,10 +51996,6 @@ fn sv_var(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(5) as i32;
     let optInNbDev = params["optInNbDev"].as_f64().unwrap_or(1.0);
     let mut fz_o = vec![0.0f64; svN];
@@ -53022,9 +52055,8 @@ fn sv_var(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -53109,10 +52141,6 @@ fn sv_vhf(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(28) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -53171,9 +52199,8 @@ fn sv_vhf(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -53258,10 +52285,6 @@ fn sv_vortex(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -53324,9 +52347,8 @@ fn sv_vortex(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -53419,10 +52441,6 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -53480,9 +52498,8 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -53567,10 +52584,6 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -53629,9 +52642,8 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -53716,10 +52728,6 @@ fn sv_wad(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -53777,9 +52785,8 @@ fn sv_wad(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -53864,10 +52871,6 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
     let mut fz_l = vec![0.0f64; svN];
@@ -53925,9 +52928,8 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -54012,10 +53014,6 @@ fn sv_willr(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(14) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -54074,9 +53072,8 @@ fn sv_willr(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -54161,10 +53158,6 @@ fn sv_wma(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -54223,9 +53216,8 @@ fn sv_wma(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
@@ -54310,10 +53302,6 @@ fn sv_zlema(core: &Core, params: &Value) -> String {
         Ok(v) => v,
         Err(_) => return "{\"error\":\"negative unstablePeriod\"}".to_string(),
     };
-    let svCompat = params["compatibility"].as_i64().unwrap_or(0) as i32;
-    if svCompat != 0 {
-        return "{\"error\":\"rust has no compatibility API (pinned to Default)\"}".to_string();
-    }
     let optInTimePeriod = params["optInTimePeriod"].as_i64().unwrap_or(30) as i32;
     let mut fz_o = vec![0.0f64; svN];
     let mut fz_h = vec![0.0f64; svN];
@@ -54373,9 +53361,8 @@ fn sv_zlema(core: &Core, params: &Value) -> String {
             }
         }
         }
-        let seed_shift: usize = 0;
-        let mut pcs = vec![lb + 1 + seed_shift, lb + 13, svN / 2, svN - 1];
-        pcs.retain(|p| *p >= lb + 1 + seed_shift && *p <= svN - 1);
+        let mut pcs = vec![lb + 1, lb + 13, svN / 2, svN - 1];
+        pcs.retain(|p| *p >= lb + 1 && *p <= svN - 1);
         pcs.sort_unstable();
         pcs.dedup();
         for &p in &pcs {
