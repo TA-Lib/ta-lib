@@ -882,11 +882,8 @@ static ErrorNumber testTAFunction_ALL( void )
    DO_TEST_LBL( test_func_stream_finite,
             "SMA,MINUS_DI,MA,MAVP,BBANDS,STOCH,CDLDOJI,STREAM,FINITE",
             "Streaming finite-input gate" );
-   /* Corpus-wide: the tag names the concept rather than the members, the way
-    * the candlestick group's CDL* prefix claim does. RSI and CMO are named
-    * because they are the two the sweep currently reports as open. */
    DO_TEST_LBL( test_func_open_contract,
-            "STREAM,OPEN,REJECT,CONTRACT,RSI,CMO",
+            "STREAM,OPEN,REJECT,CONTRACT",
             "Open rejection write contract" );
 
    /* A filter that matched nothing must not read as success. The group tags are

@@ -512,7 +512,6 @@ typedef enum
 
   /* A rejected Open/OpenAndFill and the caller's output buffer (#389). */
   TA_OPEN_CONTRACT_WROTE             = 1680,
-  TA_OPEN_CONTRACT_STALE             = 1681,
   TA_OPEN_CONTRACT_VACUOUS           = 1682,
 
   /* --function= named something no test group covers, on a run that had

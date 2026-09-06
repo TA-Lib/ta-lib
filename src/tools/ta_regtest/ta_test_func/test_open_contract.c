@@ -36,79 +36,50 @@
  *  Initial  Name/description
  *  -------------------------------------------------------------------
  *  KL       Kevin Lin
+ *  MF       Mario Fortier
+ *  CC       Claude Code (AI assistant)
  *
  * Change history:
  *
  *  MMDDYY BY     Description
  *  -------------------------------------------------------------------
  *  090626 KL     First version (issue #389).
+ *  090626 MF,CC  Compatibility dimension dropped with #388.
  */
 
 /* Description:
  *
  *   A rejected Open or OpenAndFill leaves the caller's output buffers exactly
- *   as it found them. Corpus-wide, both compatibility modes, both entry points.
- *
- *   The property is stated in website/src/api/README.md 3.4 ("on anything else,
- *   treat outBegIdx and outNBElement as undefined and the output buffers as
- *   untouched") and had one test behind it: an undersized
- *   output handed to SMA in the Rust crate. That rejection is raised by the
- *   public frame BEFORE the transcribed body runs, so it structurally cannot
- *   write -- the suite asserted the property on the one rejection class that
- *   can never violate it. The class that CAN is a rejection raised from inside
- *   the body, after it has already written: TA_RSI_OpenAndFill and
- *   TA_CMO_OpenAndFill under Metastock return TA_INSUFFICIENT_HISTORY with a
- *   plausible RSI value already in outReal[0] (issue #389).
+ *   as it found them (website/src/api/README.md 3.4). Corpus-wide, both entry
+ *   points.
  *
  *   WHY A RAMP RATHER THAN A COMPUTED SHORT HISTORY. The leg walks historyLen
- *   up from 0 and stops at the first length that produces a value, so the
- *   last rejection it sees is the one at the boundary -- whatever the boundary
- *   turns out to be. That matters here: under Metastock TA_RSI_Lookback says
- *   13 while Open needs 15 bars, so a probe built from the lookback lands one
- *   bar away from the violating call. Nothing in the leg knows a lookback.
+ *   up from 0 and stops at the first length that produces a value, so the last
+ *   rejection it sees is the one at the boundary -- whatever the boundary turns
+ *   out to be. A probe built from TA_<N>_Lookback assumes the two agree, and
+ *   #389 is a case where they did not. Nothing here knows a lookback.
  *
- *   WHAT IS ASSERTED, AND WHAT IS ONLY RATCHETED. The output BUFFERS are the
- *   assertion. outBegIdx/outNBElement are not: the spec calls them undefined
- *   on a non-success return, and most bodies legitimately zero them on the
- *   no-data path. A rejection leaving outNBElement NON-ZERO is what turns a
- *   silent write into a value a caller trusting the count will read, so it
- *   carries a ceiling instead -- measured at exactly two over the whole
- *   corpus, and those two are the same pair listed below.
+ *   It runs twice: once at the default parameters and once with every integer
+ *   and enum parameter at its declared minimum, which is a different boundary
+ *   and often a different code path (a period-1 arm rather than the general
+ *   loop). A sweep that only ever probes the default period is the #147 trap.
  *
- *   THE POSITIVE CONTROL IS PER FUNCTION, not a corpus total. At the first
- *   producing history the same buffers must come back CHANGED. Without it
- *   "nothing was written" is satisfied by a fixture whose pointers the
- *   function never writes through at all -- a mis-sized buffer, a thunk
- *   handed the wrong slot -- and the sweep would read green over 201
- *   functions while probing none of them. Every function must also reach that
- *   producing history inside OC_MAX_BARS, or the run fails rather than
- *   quietly skipping it.
+ *   THE POSITIVE CONTROL IS PER FUNCTION, PER ENTRY POINT, AND EVERY SLOT. At
+ *   the first producing history the same buffers must come back CHANGED --
+ *   all of them, because "one of them moved" is satisfied by a fixture that
+ *   mis-binds the others, which is the thunk mistake the control exists to
+ *   catch. Without it "nothing was written" is satisfied by pointers the
+ *   function never writes through, and the sweep reads green over the whole
+ *   corpus while probing none of it. Every function must also reach a producing
+ *   history inside OC_MAX_BARS, or the run fails rather than skipping it.
  *
- *   THE KNOWN-OPEN LIST IS NOW EMPTY, and that is the mechanism working. RSI
- *   and CMO under Metastock were listed as open and asserted to STILL
- *   violate; #388 retired the compatibility mode, the violation went with it,
- *   and the stale-entry check failed the run until the rows were removed --
- *   which is exactly what a list that "cannot rot into a silent pass" is for.
- *   A row that stops violating fails; so does a row added for a function that
- *   does not violate.
+ *   TA_ALLOC_ERR IS OUT OF SCOPE rather than a hole: nothing past it is defined
+ *   (docs/error-handling-spec.md, rule B7), and nothing here could provoke one
+ *   anyway. Every rejection this sweep drives is a defined one.
  *
- *   THE PARAMETER LEG CARRIES ITS OWN ASSERTION. Its rejections come from the
- *   public frame, before the body runs, so they are the class that cannot
- *   write -- having both classes here is what makes "only the in-body class
- *   writes" a measurement rather than a claim. For that to mean anything the
- *   probe has to actually be out of range, so a probe the tier ACCEPTS fails
- *   the run: today none is accepted, over the 1360 probes the corpus
- *   carries (170 parameters x both bounds x both entry points x both modes).
- *
- *   NOT COVERED HERE. The undersized-output rejection class has no C
- *   expression at all -- TA_<N>_Open takes a bare output pointer and carries
- *   no length -- so it stays where it already is, in the Rust crate's
- *   stream_open_contract.rs. Rust also cannot host what IS here: its
- *   Compatibility is pub(crate) and pinned to Default, with a unit test
- *   asserting there is no setter. That was written when the Metastock seeding
- *   path still existed; after #388 the two modes are the same behaviour, so
- *   the two-mode sweep here is now a redundancy check rather than a second
- *   behaviour, and the ramp is what carries the leg.
+ *   The undersized-output class has no C expression at all -- TA_<N>_Open takes
+ *   a bare output pointer and carries no length -- so it stays in the Rust
+ *   crate's stream_open_contract.rs.
  */
 
 #include <stdio.h>
@@ -133,6 +104,9 @@
 #define OC_MAX_OUT    8      /* Widest output list (4 today). */
 #define OC_MAX_OPT    8
 
+/* Leg A's parameter passes: the defaults, then the minimum integer/enum ones. */
+#define OC_NB_PASS    2
+
 /* Anything but these in a buffer after a non-success return is a write. Both
  * are values no indicator produces on this series, so a violation reads as a
  * value rather than as a bit pattern. */
@@ -142,33 +116,6 @@
 /* Pre-set outBegIdx/outNBElement, so "written" and "written as zero" are
  * distinguishable from each other. */
 #define OC_SENT_IDX   (-999)
-
-typedef struct {
-   const char   *name;        /* without the TA_ prefix */
-   int           metastock;   /* 1 = only violates under Metastock */
-} OcKnownOpen;
-
-/* Issue #389. Both are the same emitter shape: the transcribed batch prologue
- * writes the Metastock seed output, and only then does the body discover it
- * has no bar left to continue from. Asserted to still fail -- see the header
- * comment for why they are listed rather than fixed. */
-/* EMPTY since #388 retired the Metastock behaviour. RSI and CMO were the two
- * rows, and the thing that made them write on rejection -- the Metastock
- * seeding path -- no longer exists, so the sweep stopped seeing them and the
- * stale-entry check said so. Kept as a declaration rather than deleted: it is
- * where the next known-open case goes, and OC_NB_KNOWN_OPEN doubles as the
- * outNBElement ceiling, which correctly drops to zero with the list. */
-static const OcKnownOpen ocKnownOpen[] = { { NULL, 0 } };
-#define OC_NB_KNOWN_OPEN 0
-static int ocKnownOpenHit[OC_NB_KNOWN_OPEN];
-
-/* The two modes, in the order the sweep runs them. */
-static const struct { TA_Compatibility mode; const char *name; } ocCompat[] = {
-   { TA_COMPATIBILITY_DEFAULT,   "DEFAULT"   },
-   { TA_COMPATIBILITY_METASTOCK, "METASTOCK" },
-};
-#define OC_NB_COMPAT ((int)(sizeof(ocCompat)/sizeof(ocCompat[0])))
-
 typedef struct {
    /* Input series, OC_MAX_BARS long. */
    double  open[OC_MAX_BARS];
@@ -189,12 +136,16 @@ typedef struct {
     * bound: a count taken from the trip count stays healthy while the checks
     * inside are deleted. */
    long    nbRejectChecked;   /* rejections whose buffers were compared */
-   long    nbSuccessChecked;  /* producing calls whose buffers must have moved */
-   long    nbCountLeaked;     /* rejections leaving outNBElement non-zero */
-   long    nbParamRejects;    /* leg B probes that were rejected */
-   int     nbParamAccepted;   /* leg B probes that were NOT */
-   char    leaked[OC_NB_KNOWN_OPEN + 4][96];   /* who, for the ceiling's report */
-   int     nbViolation;       /* buffer writes on a rejection, known-open aside */
+   long    nbSuccessChecked;  /* producing OpenAndFill calls, every slot moved */
+   long    nbOpenControlled;  /* producing Open calls, every slot moved */
+   long    nbParamRejects;    /* leg B probes answered TA_BAD_PARAM */
+   long    nbParamAccepted;   /* leg B probes that were not rejected at all */
+   long    nbParamMiscoded;   /* leg B probes rejected for some other reason */
+   long    nbMinParamRejects; /* leg A rejections seen on a differing pass 1 */
+   int     nbMinParamPasses;  /* functions whose pass 1 actually differed */
+   int     nbMinParamFuncs;   /* functions whose table row says it should */
+   int     nbViolation;       /* buffer writes on a rejection */
+   int     nbCountLeaked;     /* rejections leaving outNBElement non-zero */
    int     nbFunc;
    int     nbReported;
 } OcCtx;
@@ -256,34 +207,43 @@ static void oc_arm( OcCtx *c, const TA_StreamEntry *e )
    }
 }
 
+static int oc_slot_moved( const OcCtx *c, const TA_StreamEntry *e, int o )
+{
+   if( e->outIsInt[o] ) return memcmp( c->outInt[o],  c->refInt,  sizeof(c->refInt)  ) != 0;
+   return                      memcmp( c->outReal[o], c->refReal, sizeof(c->refReal) ) != 0;
+}
+
 /* Index of the first output slot that moved, or -1 when none did. */
 static int oc_first_moved( const OcCtx *c, const TA_StreamEntry *e )
 {
    int o;
    for( o = 0; o < e->nbOutput; o++ )
-   {
-      if( e->outIsInt[o] )
-      {
-         if( memcmp( c->outInt[o], c->refInt, sizeof(c->refInt) ) != 0 ) return o;
-      }
-      else
-      {
-         if( memcmp( c->outReal[o], c->refReal, sizeof(c->refReal) ) != 0 ) return o;
-      }
-   }
+      if( oc_slot_moved( c, e, o ) ) return o;
+   return -1;
+}
+
+/* Index of the first output slot that did NOT move, or -1 when all did. The
+ * control has to be every slot: "one of them moved" is satisfied by a fixture
+ * that mis-binds all the others, which is the thunk mistake it exists to
+ * catch. */
+static int oc_first_still( const OcCtx *c, const TA_StreamEntry *e )
+{
+   int o;
+   for( o = 0; o < e->nbOutput; o++ )
+      if( !oc_slot_moved( c, e, o ) ) return o;
    return -1;
 }
 
 /* The offset and value of the first moved element of one output, for the
  * report: "wrote something" is not actionable, "wrote 66.6667 at [0]" is. */
 static void oc_report_write( const OcCtx *c, const TA_StreamEntry *e,
-                             const char *compat, const char *what,
+                             const char *what,
                              int rc, int begIdx, int nbElement, int slot )
 {
    int k;
-   printf( "  OPEN-CONTRACT TA_%s %s %s: retCode=%d wrote the caller's buffer"
+   printf( "  OPEN-CONTRACT TA_%s %s: retCode=%d wrote the caller's buffer"
            " (outBegIdx=%d outNBElement=%d)\n",
-           e->name, compat, what, rc, begIdx, nbElement );
+           e->name, what, rc, begIdx, nbElement );
    for( k = 0; k < OC_BUF; k++ )
    {
       if( e->outIsInt[slot] )
@@ -306,9 +266,8 @@ static void oc_report_write( const OcCtx *c, const TA_StreamEntry *e,
  *
  * Not `min - 1` for a real: a real parameter's declared bounds are
  * -/+TA_REAL_MAX (3e37), where adding one is the identity and the "out of
- * range" probe lands back INSIDE the range -- 58 of the 116 probes were
- * no-ops before this. Integers and enums keep the exact +/-1, which is the
- * tightest probe and exact at their magnitudes. */
+ * range" probe lands back INSIDE the range. Integers and enums keep the exact
+ * +/-1, which is the tightest probe and exact at their magnitudes. */
 static double oc_out_of_range( const TA_VOptSpec *spec, int above )
 {
    if( spec->kind == TA_VOPT_REAL )
@@ -317,29 +276,48 @@ static double oc_out_of_range( const TA_VOptSpec *spec, int above )
    return above ? spec->maxValue + 1.0 : spec->minValue - 1.0;
 }
 
-static int oc_known_open_idx( const char *name, int metastock )
+/* An out-of-range probe run at the shortest producing history trips the
+ * insufficient-history guard too, so only the CODE says which one answered.
+ * Accepting any rejection would let a deleted bound stay green. */
+static void oc_param_judge_code( OcCtx *c, const TA_StreamEntry *e, int p,
+                                 double value, const char *what, int rc )
 {
-   int i;
-   for( i = 0; i < OC_NB_KNOWN_OPEN; i++ )
-      if( strcmp( ocKnownOpen[i].name, name ) == 0 &&
-          ocKnownOpen[i].metastock == metastock )
-         return i;
-   return -1;
+   if( rc == TA_BAD_PARAM )
+   {
+      c->nbParamRejects++;
+      return;
+   }
+   c->nbParamMiscoded++;
+   if( c->nbReported < 12 )
+   {
+      c->nbReported++;
+      printf( "  OPEN-CONTRACT TA_%s %s: %s=%g is outside [%g, %g] but the"
+              " rejection was retCode=%d, not TA_BAD_PARAM.\n",
+              e->name, what, e->optInput[p].name, value,
+              e->optInput[p].minValue, e->optInput[p].maxValue, rc );
+   }
 }
 
 /* Judge one call that came back non-success. */
-static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int compatIdx,
-                            const char *what, int rc, int begIdx, int nbElement )
+static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
+                             const char *what, int rc, int begIdx, int nbElement )
 {
-   int slot, known;
+   int slot;
 
    c->nbRejectChecked++;
+   if( minParams ) c->nbMinParamRejects++;
+
+   /* A count is what turns a write a caller cannot see into a value it reads.
+    * 3.4 leaves the indices undefined on a rejection and most bodies zero them,
+    * so only a NON-ZERO one is a finding. */
    if( nbElement != 0 && nbElement != OC_SENT_IDX )
    {
-      if( c->nbCountLeaked < (long)( sizeof(c->leaked) / sizeof(c->leaked[0]) ) )
-         snprintf( c->leaked[c->nbCountLeaked], sizeof(c->leaked[0]),
-                   "TA_%s %s %s (outNBElement=%d)",
-                   e->name, ocCompat[compatIdx].name, what, nbElement );
+      if( c->nbReported < 12 )
+      {
+         c->nbReported++;
+         printf( "  OPEN-CONTRACT TA_%s %s: retCode=%d reported outNBElement=%d\n",
+                 e->name, what, rc, nbElement );
+      }
       c->nbCountLeaked++;
    }
 
@@ -347,30 +325,23 @@ static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int compatIdx,
    if( slot < 0 )
       return;
 
-   known = oc_known_open_idx( e->name, compatIdx == 1 );
-   if( known >= 0 )
-   {
-      ocKnownOpenHit[known] = 1;
-      return;
-   }
-
    if( c->nbReported < 12 )
    {
       c->nbReported++;
-      oc_report_write( c, e, ocCompat[compatIdx].name, what, rc, begIdx, nbElement, slot );
+      oc_report_write( c, e, what, rc, begIdx, nbElement, slot );
    }
    c->nbViolation++;
 }
 
-/* One function, one compatibility mode. Returns the shortest history that
- * produced a value, or -1 when none did inside OC_MAX_BARS. */
-static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
+/* One function. Returns the shortest history that produced a value, -1 when
+ * none did inside OC_MAX_BARS, -2 when the positive control failed. */
+static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e )
 {
    const double *in[OC_MAX_IN];
    double       *outReal[OC_MAX_OUT];
    TA_Integer   *outInt[OC_MAX_OUT];
    double        opt[OC_MAX_OPT];
-   int i, h, firstOk = -1;
+   int i, h, pass, firstOk = -1;
 
    for( i = 0; i < e->nbInput; i++ )
       in[i] = oc_series( c, e->inputKind[i], i );
@@ -381,10 +352,31 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
       outReal[i] = c->outReal[i];
       outInt[i]  = c->outInt[i];
    }
+   /* ---- Leg A: the history ramp, from an empty one up. Once at the default
+    * parameters, once at the minimum integer/enum ones. Reals keep their
+    * default: their declared floor is -TA_REAL_MAX, which is leg B's probe
+    * rather than a second boundary. ---- */
+  for( pass = 0; pass < OC_NB_PASS; pass++ )
+  {
+   int firstOkPass = -1, differs = 0;
    for( i = 0; i < e->nbOptInput; i++ )
+   {
       opt[i] = e->optInput[i].defValue;
+      if( pass == 1 && e->optInput[i].kind != TA_VOPT_REAL )
+         opt[i] = e->optInput[i].minValue;
+      /* Read back what was actually assigned: a selector that quietly stopped
+       * selecting would still satisfy a test written against the table. */
+      if( opt[i] != e->optInput[i].defValue )
+         differs = 1;
+   }
+   /* A pass that would repeat pass 0 is not run: duplicated work reads as
+    * coverage on any counter derived from the trip count. */
+   if( pass == 1 )
+   {
+      if( !differs ) continue;
+      c->nbMinParamPasses++;
+   }
 
-   /* ---- Leg A: the history ramp, from an empty one up. ---- */
    for( h = 0; h <= OC_MAX_BARS; h++ )
    {
       void *stream = NULL;
@@ -398,22 +390,24 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
 
       if( rc != TA_SUCCESS )
       {
-         oc_judge_reject( c, e, compatIdx, "OpenAndFill", (int)rc, (int)begIdx, (int)nbElement );
+         oc_judge_reject( c, e, pass == 1, "OpenAndFill", (int)rc, (int)begIdx, (int)nbElement );
       }
       else if( nbElement > 0 )
       {
          /* The positive control: this call MUST have moved the buffers the
           * rejections above were checked against. */
+         int still;
          c->nbSuccessChecked++;
-         if( oc_first_moved( c, e ) < 0 )
+         still = oc_first_still( c, e );
+         if( still >= 0 )
          {
-            printf( "  OPEN-CONTRACT TA_%s %s: OpenAndFill reported %d elements at"
-                    " historyLen=%d and wrote nothing -- the sweep is checking"
-                    " buffers this function does not write.\n",
-                    e->name, ocCompat[compatIdx].name, (int)nbElement, h );
+            printf( "  OPEN-CONTRACT TA_%s: OpenAndFill reported %d elements at"
+                    " historyLen=%d (pass %d) and left output %d untouched -- the"
+                    " sweep is checking a buffer this function does not write.\n",
+                    e->name, (int)nbElement, h, pass, still );
             return -2;
          }
-         firstOk = h;
+         firstOkPass = h;
       }
 
       /* Open: its own one-slot sink per output, on the same history. */
@@ -422,20 +416,42 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
       rc = e->open( &stream, in, h, opt, outReal, outInt );
       if( stream ) e->close( stream );
       if( rc != TA_SUCCESS )
-         oc_judge_reject( c, e, compatIdx, "Open", (int)rc, OC_SENT_IDX, OC_SENT_IDX );
+         oc_judge_reject( c, e, pass == 1, "Open", (int)rc, OC_SENT_IDX, OC_SENT_IDX );
+      else if( firstOkPass >= 0 )
+      {
+         /* Open's own control, on its own counter: it writes one slot per
+          * output rather than a range, and nothing else here would notice a
+          * thunk that handed it the wrong buffer. */
+         int still = oc_first_still( c, e );
+         c->nbOpenControlled++;
+         if( still >= 0 )
+         {
+            printf( "  OPEN-CONTRACT TA_%s: Open succeeded at historyLen=%d"
+                    " (pass %d) and left output %d untouched -- the sweep is"
+                    " checking a buffer this function does not write.\n",
+                    e->name, h, pass, still );
+            return -2;
+         }
+      }
 
-      if( firstOk >= 0 )
+      if( firstOkPass >= 0 )
          break;
    }
 
-   if( firstOk < 0 )
+   if( firstOkPass < 0 )
+   {
+      printf( "  OPEN-CONTRACT TA_%s: no history up to %d bars produced a value"
+              " on pass %d, so the sweep never reached a rejection boundary.\n",
+              e->name, OC_MAX_BARS, pass );
       return -1;
+   }
+   if( pass == 0 )
+      firstOk = firstOkPass;
+  }
 
    /* ---- Leg B: a parameter outside its range, on a history that otherwise
-    * produces. A different rejection class, answered by the public frame
-    * before the body runs -- which is exactly why it belongs here: it is the
-    * class the one pre-existing test already covered, and having both is what
-    * makes "which class can write" a measurement rather than a claim. ---- */
+    * produces. A probe the tier ACCEPTS fails the run: a probe that landed back
+    * inside the range would make the whole leg a no-op. ---- */
    for( i = 0; i < e->nbOptInput; i++ )
    {
       int k, side;
@@ -447,28 +463,22 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
 
          for( k = 0; k < e->nbOptInput; k++ )
             opt[k] = e->optInput[k].defValue;
-         opt[i] = ( side == 0 ) ? oc_out_of_range( &e->optInput[i], 0 )
-                                : oc_out_of_range( &e->optInput[i], 1 );
+         opt[i] = oc_out_of_range( &e->optInput[i], side );
 
          oc_arm( c, e );
          rc = e->openAndFill( &stream, in, firstOk, opt, &begIdx, &nbElement, outReal, outInt );
          if( stream ) e->close( stream );
          if( rc != TA_SUCCESS )
          {
-            c->nbParamRejects++;
-            oc_judge_reject( c, e, compatIdx, "OpenAndFill/param", (int)rc, (int)begIdx, (int)nbElement );
+            oc_param_judge_code( c, e, i, opt[i], "OpenAndFill", (int)rc );
+            oc_judge_reject( c, e, 0, "OpenAndFill/param", (int)rc, (int)begIdx, (int)nbElement );
          }
          else
          {
-            /* The probe is only a probe while it is out of range. Reported
-             * here rather than silently skipped: a bound that stopped
-             * rejecting turns this whole leg into a no-op, which is what it
-             * already was for every real-valued parameter until the probe
-             * value stopped being `min - 1`. */
             c->nbParamAccepted++;
-            printf( "  OPEN-CONTRACT TA_%s %s: %s=%g is outside its declared"
+            printf( "  OPEN-CONTRACT TA_%s: %s=%g is outside its declared"
                     " [%g, %g] and OpenAndFill accepted it.\n",
-                    e->name, ocCompat[compatIdx].name, e->optInput[i].name, opt[i],
+                    e->name, e->optInput[i].name, opt[i],
                     e->optInput[i].minValue, e->optInput[i].maxValue );
          }
 
@@ -478,8 +488,8 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
          if( stream ) e->close( stream );
          if( rc != TA_SUCCESS )
          {
-            c->nbParamRejects++;
-            oc_judge_reject( c, e, compatIdx, "Open/param", (int)rc, OC_SENT_IDX, OC_SENT_IDX );
+            oc_param_judge_code( c, e, i, opt[i], "Open", (int)rc );
+            oc_judge_reject( c, e, 0, "Open/param", (int)rc, OC_SENT_IDX, OC_SENT_IDX );
          }
          else
             c->nbParamAccepted++;
@@ -493,13 +503,11 @@ static int oc_sweep_one( OcCtx *c, const TA_StreamEntry *e, int compatIdx )
 ErrorNumber test_func_open_contract( TA_History *history )
 {
    static OcCtx ctx;   /* ~40 KB of buffers; not a stack frame. */
-   int f, m, i, firstOk;
-   ErrorNumber errNb = TA_TEST_PASS;
+   int f, i, firstOk;
 
    (void)history;   /* The lengths are the subject here, so the series is local. */
 
    memset( &ctx, 0, sizeof(ctx) );
-   memset( ocKnownOpenHit, 0, sizeof(ocKnownOpenHit) );
    oc_build_series( &ctx );
 
    for( f = 0; f < TA_STREAM_TABLE_SIZE; f++ )
@@ -512,103 +520,72 @@ ErrorNumber test_func_open_contract( TA_History *history )
          printf( "\nFail: TA_%s outgrew the open-contract sweep's fixture"
                  " (%d inputs, %d outputs, %d parameters).\n",
                  e->name, e->nbInput, e->nbOutput, e->nbOptInput );
-         errNb = TA_OPEN_CONTRACT_VACUOUS;
-         goto done;
+         return TA_OPEN_CONTRACT_VACUOUS;
       }
 
       ctx.nbFunc++;
-      for( m = 0; m < OC_NB_COMPAT; m++ )
-      {
-         TA_SetCompatibility( ocCompat[m].mode );
-         firstOk = oc_sweep_one( &ctx, e, m );
-         if( firstOk == -2 )
+      for( i = 0; i < e->nbOptInput; i++ )
+         if( e->optInput[i].kind != TA_VOPT_REAL &&
+             e->optInput[i].minValue != e->optInput[i].defValue )
          {
-            errNb = TA_OPEN_CONTRACT_VACUOUS;
-            goto done;
+            ctx.nbMinParamFuncs++;
+            break;
          }
-         if( firstOk < 0 )
-         {
-            printf( "\nFail: TA_%s %s produced no value at any history up to %d bars,"
-                    " so the sweep never reached its rejection boundary.\n",
-                    e->name, ocCompat[m].name, OC_MAX_BARS );
-            errNb = TA_OPEN_CONTRACT_VACUOUS;
-            goto done;
-         }
-      }
+
+      firstOk = oc_sweep_one( &ctx, e );
+      if( firstOk == -2 )
+         return TA_OPEN_CONTRACT_VACUOUS;
+      if( firstOk < 0 )
+         return TA_OPEN_CONTRACT_VACUOUS;
    }
 
-   if( ctx.nbViolation > 0 )
+   if( ctx.nbViolation > 0 || ctx.nbCountLeaked > 0 )
    {
       printf( "\nFail: %d Open/OpenAndFill rejection%s wrote the caller's output"
-              " buffer (issue #389).\n",
-              ctx.nbViolation, ctx.nbViolation == 1 ? "" : "s" );
-      errNb = TA_OPEN_CONTRACT_WROTE;
-      goto done;
+              " buffer and %d reported a non-zero outNBElement (issue #389).\n",
+              ctx.nbViolation, ctx.nbViolation == 1 ? "" : "s", ctx.nbCountLeaked );
+      return TA_OPEN_CONTRACT_WROTE;
    }
 
-   /* A listed row that stopped violating is the fix landing, and the entry has
-    * to come out with it -- otherwise the list slowly becomes a description of
-    * defects that no longer exist. */
-   for( i = 0; i < OC_NB_KNOWN_OPEN; i++ )
-      if( !ocKnownOpenHit[i] )
-      {
-         printf( "\nFail: TA_%s is listed as a known open write-on-rejection (#389)"
-                 " under %s, but the sweep no longer sees it.\n"
-                 "      If that is the fix landing, delete the entry from"
-                 " ocKnownOpen so the row stops claiming an open defect.\n",
-                 ocKnownOpen[i].name,
-                 ocKnownOpen[i].metastock ? "Metastock" : "the default mode" );
-         errNb = TA_OPEN_CONTRACT_STALE;
-         goto done;
-      }
-
-   /* The count, as a CEILING rather than an assertion. Over 201 functions x 2
-    * modes exactly two rejections come back with outNBElement non-zero, and
-    * they are the two rows above -- so the ceiling is the row count itself and
-    * drops with the list rather than being a second constant to forget. It is
-    * a ratchet, not a rule: the spec calls the indices undefined on a
-    * non-success return, so a third one is reported as a new instance of the
-    * trap for someone to judge, not as a violated contract. */
-   if( ctx.nbCountLeaked > OC_NB_KNOWN_OPEN )
+   if( ctx.nbParamMiscoded > 0 )
    {
-      printf( "\nFail: %ld rejections reported a non-zero outNBElement, above the"
-              " %d this corpus is known to have (#389):\n",
-              ctx.nbCountLeaked, OC_NB_KNOWN_OPEN );
-      for( i = 0; i < (int)( sizeof(ctx.leaked) / sizeof(ctx.leaked[0]) ) &&
-                  i < (int)ctx.nbCountLeaked; i++ )
-         printf( "      %s\n", ctx.leaked[i] );
-      errNb = TA_OPEN_CONTRACT_WROTE;
-      goto done;
+      printf( "\nFail: %ld out-of-range parameter probe%s were rejected for some"
+              " reason other than the parameter, so they prove nothing about the"
+              " bound.\n",
+              ctx.nbParamMiscoded, ctx.nbParamMiscoded == 1 ? "" : "s" );
+      return TA_OPEN_CONTRACT_VACUOUS;
    }
 
    if( ctx.nbParamAccepted > 0 )
    {
-      printf( "\nFail: %d out-of-range parameter probe%s were accepted by the"
+      printf( "\nFail: %ld out-of-range parameter probe%s were accepted by the"
               " streaming open tier.\n",
               ctx.nbParamAccepted, ctx.nbParamAccepted == 1 ? "" : "s" );
-      errNb = TA_OPEN_CONTRACT_VACUOUS;
-      goto done;
+      return TA_OPEN_CONTRACT_VACUOUS;
    }
 
    /* Vacuity floors. Each has been a real failure mode of a sweep in this
     * suite: a corpus that shrank to nothing, a leg whose rejections all became
     * successes, and a control arm that stopped comparing. */
-   if( ctx.nbFunc < TA_STREAM_TABLE_SIZE || ctx.nbRejectChecked == 0 ||
-       ctx.nbParamRejects == 0 ||
-       ctx.nbSuccessChecked < ctx.nbFunc * OC_NB_COMPAT )
    {
-      printf( "\nFail: open-contract sweep ran thin -- %d functions,"
-              " %ld rejections checked (%ld of them parameter probes),"
-              " %ld producing calls controlled"
-              " (expected %d functions and at least %d controls).\n",
-              ctx.nbFunc, ctx.nbRejectChecked, ctx.nbParamRejects,
-              ctx.nbSuccessChecked,
-              TA_STREAM_TABLE_SIZE, TA_STREAM_TABLE_SIZE * OC_NB_COMPAT );
-      errNb = TA_OPEN_CONTRACT_VACUOUS;
-      goto done;
+      int wantControls = TA_STREAM_TABLE_SIZE + ctx.nbMinParamFuncs;
+      if( ctx.nbFunc < TA_STREAM_TABLE_SIZE || ctx.nbRejectChecked == 0 ||
+          ctx.nbParamRejects == 0 || ctx.nbMinParamRejects == 0 ||
+          ctx.nbMinParamPasses != ctx.nbMinParamFuncs || ctx.nbMinParamFuncs == 0 ||
+          ctx.nbSuccessChecked < wantControls || ctx.nbOpenControlled < wantControls )
+      {
+         printf( "\nFail: open-contract sweep ran thin -- %d functions,"
+                 " %ld rejections checked (%ld parameter probes, %ld on a"
+                 " minimum-parameter pass), %d of %d minimum-parameter passes run,"
+                 " %ld OpenAndFill and %ld Open producing calls controlled"
+                 " (expected %d functions and %d controls of each).\n",
+                 ctx.nbFunc, ctx.nbRejectChecked, ctx.nbParamRejects,
+                 ctx.nbMinParamRejects, ctx.nbMinParamPasses, ctx.nbMinParamFuncs,
+                 ctx.nbSuccessChecked, ctx.nbOpenControlled, TA_STREAM_TABLE_SIZE,
+                 wantControls );
+         return TA_OPEN_CONTRACT_VACUOUS;
+      }
    }
 
-done:
-   TA_SetCompatibility( TA_COMPATIBILITY_DEFAULT );
-   return errNb;
+   return TA_TEST_PASS;
 }
