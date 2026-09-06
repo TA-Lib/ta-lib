@@ -47,6 +47,7 @@ ta_regtest_SOURCES = ta_regtest.c \
 	ta_test_func/test_s_overflow.c \
 	ta_test_func/test_div_zero.c \
 	ta_test_func/test_stream_finite.c \
+	ta_test_func/test_open_contract.c \
 	ta_test_func/test_composite1.c \
 	ta_test_func/test_composite2.c \
 	ta_test_func/test_marketfi.c \
