@@ -178,7 +178,7 @@ it is TA_SMA_Lookback.</p>
 
 ### 3.4 Return Codes {#retcode}
 
-<p>Every TA function returns a <b>TA_RetCode</b>. <b>TA_SUCCESS</b> (zero) means the call completed and wrote its outputs; on anything else, treat outBegIdx and outNBElement as undefined and the output buffers as untouched.</p>
+<p>Every TA function returns a <b>TA_RetCode</b>. <b>TA_SUCCESS</b> (zero) means the call completed and wrote its outputs; on anything else, treat outBegIdx and outNBElement as undefined and the output buffers as untouched. <b>TA_ALLOC_ERR</b> is the exception: it is fatal, and nothing about the call is defined past it.</p>
 <p>The codes a caller normally encounters:</p>
 
 | Code | Meaning |
@@ -186,7 +186,7 @@ it is TA_SMA_Lookback.</p>
 | `TA_SUCCESS` | No error. |
 | `TA_LIB_NOT_INITIALIZE` | [TA_Initialize](#init) was not called, or did not succeed. |
 | `TA_BAD_PARAM` | A parameter is out of range, or a required pointer is NULL. |
-| `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. |
+| `TA_ALLOC_ERR` | Allocation failed, most likely out of memory. Fatal: nothing about the call is defined past it. |
 | `TA_OUT_OF_RANGE_START_INDEX` | startIdx is negative or above [TA_MAX_INDEX](#index_range). |
 | `TA_OUT_OF_RANGE_END_INDEX` | endIdx is negative, above [TA_MAX_INDEX](#index_range), or below startIdx. |
 
