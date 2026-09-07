@@ -1137,10 +1137,11 @@ fn gen_func_inner(
         // aliases nothing, and two nulls would otherwise compare equal and
         // spuriously reject (rule B6a).
         //
-        // Cross-typed pairs are skipped: `double[] == int[]` is "incomparable
-        // types" and does not compile, and the two can never be one object
-        // anyway. C# has always skipped them and C and Rust now do — Appendix E
-        // of docs/error-handling-spec.md, #262.
+        // Cross-typed pairs are skipped: a `double[]` and an `int[]` are never
+        // the same object, so there is nothing to detect. (`double[] == int[]`
+        // is also "incomparable types", but that is not the reason — the stream
+        // tier spells the same compare through `(Object)` casts and it is dead
+        // there too.) Appendix E of docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {

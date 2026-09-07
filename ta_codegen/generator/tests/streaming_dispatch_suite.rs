@@ -348,21 +348,29 @@ fn test_frames_index_outputs_by_declaration_position() {
     );
 }
 
-/// A cross-typed output pair is compared where the language can express the
-/// comparison, and the guard vanishes whole where it cannot.
+/// A cross-typed output pair is compared wherever it can actually alias, and
+/// the guard goes wherever it cannot.
 ///
-/// Two of the four can: C casts both to `const void *`, C# reinterprets both as
-/// `Span<byte>`. Java's `double[] == int[]` is "incomparable types" and Rust's
-/// `*const f64 == *const i32` is a type error, so those two emit no guard at all
-/// rather than an empty one.
+/// Three arms, because the corpus has three answers, not two:
 ///
-/// Counted per SITE, against the same-typed rendering of the same function, and
-/// that is the whole strength of it: each backend emits the pair at more than one
-/// site, so a needle that only asks "is it compared somewhere" reads green while
-/// one site silently drops it — which is exactly what the check this replaced did
+/// - **C and C#** — the pair CAN be one buffer (a cast; `MemoryMarshal.Cast`),
+///   so every site that compares a same-typed pair must compare a cross-typed
+///   one, through the reinterpreting spelling and never the plain one.
+/// - **Rust** — safe code cannot lay a `&mut [f64]` over a `&mut [i32]`, so the
+///   term is dropped whole rather than left as an empty `if`.
+/// - **Java** — a `double[]` and an `int[]` are never the same object, so there
+///   is likewise nothing to catch, but the two tiers spell that differently:
+///   batch omits the term, while the stream tier's `(Object)a == (Object)b`
+///   compiles and stays, always false. Pinned rather than ignored, because a
+///   reader meeting it would otherwise take it for a live guard.
+///
+/// Counted per SITE against the same-typed rendering of the same function, and
+/// that is the whole strength of it: each backend emits the pair at more than
+/// one site, so a needle that only asks "is it compared somewhere" reads green
+/// while one site silently drops it — which is what the check this replaced did
 /// after C# learned the byte-range compare (#386). The same-typed pass is also
-/// the non-vacuity floor: a backend that had stopped emitting the guard entirely
-/// would otherwise satisfy every absence below.
+/// the non-vacuity floor: a backend that had stopped emitting the guard
+/// entirely would otherwise satisfy every absence below.
 #[test]
 fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     let (mut func, enums) = load_indicator("minmaxindex");
@@ -373,10 +381,10 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     );
     let (a, b) = (func.outputs[0].name.clone(), func.outputs[1].name.clone());
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let as_bytes = |x: &str| format!("System.Runtime.InteropServices.MemoryMarshal.AsBytes({x})");
-    // Per backend: the plain spelling, and the reinterpreting one where the
-    // language has it. `None` is "cannot express a cross-typed comparison".
+    // Per backend, the plain spelling and — where the language has one — the
+    // spelling a cross-typed pair takes instead.
     let plain = [
         format!("{a} == {b}"),
         format!("{a} == {b}"),
@@ -389,6 +397,11 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
         None,
         Some(format!("{}.Overlaps({})", as_bytes(&a), as_bytes(&b))),
     ];
+    // Java's stream tier spells the pair through `(Object)` casts in BOTH
+    // passes. It is inert either way, so it is counted separately rather than
+    // folded into `plain` — otherwise the same-typed control would credit a
+    // site the cross-typed pass keeps, and the arm could not fail.
+    let java_inert = format!("(Object){a} == (Object){b}");
     let render = |f: &ir::FuncDef| {
         [
             backends::c::generate(f, &enums, &registry, &helpers),
@@ -416,7 +429,7 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
             Some(_) => {
                 assert_eq!(
                     n_cross, n_same,
-                    "{lang}: re-typing one output dropped the pair at {} of {n_same} site(s); \
+                    "{lang}: re-typing one output changed the pair at {} of {n_same} site(s); \
                      every site that compares a same-typed pair must compare a cross-typed one",
                     n_same.abs_diff(n_cross)
                 );
@@ -430,7 +443,7 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
             None => {
                 assert_eq!(
                     n_cross, 0,
-                    "{lang}: cannot express a cross-typed comparison, so it must emit none"
+                    "{lang}: the pair cannot alias, so the comparable term must go"
                 );
                 // And nothing is left behind: no empty `if( )` where the guard was.
                 assert!(
@@ -441,6 +454,20 @@ fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
             }
         }
     }
+
+    // Java's stream tier keeps the compare in both passes. Asserted in both
+    // directions so the arm above cannot be satisfied by the term simply not
+    // being emitted any more.
+    let (j_same, j_cross) = (
+        same[1].matches(&java_inert).count(),
+        cross[1].matches(&java_inert).count(),
+    );
+    assert!(j_same > 0, "Java: the stream tier stopped comparing a same-typed output pair");
+    assert_eq!(
+        j_cross, j_same,
+        "Java: the stream tier's `(Object)` compare survives a re-type — it is inert, not \
+         type-dependent"
+    );
 }
 
 /// Rule B6a (`docs/error-handling-spec.md` 2.2, issue #262): an omitted output

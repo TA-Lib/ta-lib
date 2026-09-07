@@ -916,12 +916,10 @@ fn rust_cross_calls_target_the_public_tier() {
         if found.is_empty() {
             continue;
         }
-        let mut rust = generate_all(&func, &enums).rust;
-        if func.streaming && backends::rust_stream::emits_stream(&func, &registry) {
-            rust.push_str(&backends::rust_stream::generate(
-                &func, &enums, &registry, &common::make_helpers(),
-            ));
-        }
+        // `rust_lang::generate` already appends the stream section for a
+        // streamable function, so appending it again double-counted every
+        // stream-tier site below and halved what the floor actually demanded.
+        let rust = generate_all(&func, &enums).rust;
         callers += 1;
         for c in &found {
             let public = registry.resolve_call(c, Lang::Rust);

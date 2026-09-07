@@ -834,16 +834,19 @@ C — and C is the one language where the check is not merely expensive but not
 straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
 making the state unreachable, which is not the same as enforcing it.
 
-**Outputs of different element types: C and C# compare them, Java and Rust cannot.**
+**Outputs of different element types: C and C# compare them; in Java and Rust
+there is nothing to compare.**
 A `double` output and an `int` output can only be the same buffer through a
 reinterpreting cast, which two of the four backends can express and check:
 C compares both through `const void *` — well defined, and not the
 `double * == int *` constraint violation that reading suggests — and C# compares
 the byte ranges through `MemoryMarshal.AsBytes`, because `MemoryMarshal.Cast`
 lets a caller lay a `Span<int>` over a `Span<double>` without `unsafe`. The other
-two do not: `double[] == int[]` is "incomparable types" in Java, and Rust has
-nothing to detect — safe code has no `MemoryMarshal.Cast` analogue, so a caller
-cannot lay the two over one allocation to begin with. C's streaming frames have
+two have no such case to catch: a `double[]` and an `int[]` are never the same
+object in Java, and safe Rust has no `MemoryMarshal.Cast` analogue, so a caller
+cannot lay the two over one allocation to begin with. Java's batch tier omits
+the term outright; its streaming tier spells it `(Object)a == (Object)b`, which
+compiles and is always false. C's streaming frames have
 always cast; its batch tier joined them with `SUPERTREND` (#272), and both C#
 tiers with #386.
 
