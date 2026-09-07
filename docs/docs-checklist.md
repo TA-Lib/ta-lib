@@ -1,4 +1,4 @@
-# Docs Checklist for v0.8.1
+# Docs Checklist
 
 ## Cycle Indicators
 
