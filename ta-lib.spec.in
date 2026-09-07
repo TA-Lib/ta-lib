@@ -69,8 +69,10 @@ find %{buildroot} -name '*.la' -delete
 %files
 %license LICENSE
 %doc README.md
-%{_libdir}/libta-lib.so.0
-%{_libdir}/libta-lib.so.0.*
+# Globbed, not spelled: the ABI generation is declared once in configure.ac and
+# a literal here is a third copy that only fails at rpmbuild time. `.so.*` cannot
+# match the bare `libta-lib.so` the -devel package claims.
+%{_libdir}/libta-lib.so.*
 
 %files devel
 %{_includedir}/ta-lib/

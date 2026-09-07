@@ -526,10 +526,32 @@ message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}  BUILD_STATIC_LIBS: ${BU
 # library needs its own DT_NEEDED libm and the static archive must propagate the
 # dependency to consumers. Windows math is in the CRT, macOS in libSystem, so 'm'
 # is linked only on non-Windows. PRIVATE: libm is an implementation detail.
+# The ABI generation is declared ONCE, in configure.ac, and parsed here — the two
+# build systems ship the same library and a soname they disagree about is a
+# library that resolves differently depending on which one built it. libtool's
+# arithmetic: soname suffix is `current - age`, file version `<soname>.age.revision`.
+# Without this the ABI generation can change and an EXISTING build tree keeps
+# stamping the old soname: `cmake --build` alone never re-reads configure.ac.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+             "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" TA_ABI_LINE
+     REGEX "^TALIB_LIBRARY_VERSION=[0-9]+:[0-9]+:[0-9]+$")
+if(NOT TA_ABI_LINE)
+	message(FATAL_ERROR "no TALIB_LIBRARY_VERSION=c:r:a in configure.ac — the ABI generation is declared there")
+endif()
+string(REGEX REPLACE "^TALIB_LIBRARY_VERSION=([0-9]+):([0-9]+):([0-9]+)$" "\\1;\\2;\\3"
+       TA_ABI_TRIPLE "${TA_ABI_LINE}")
+list(GET TA_ABI_TRIPLE 0 TA_ABI_CURRENT)
+list(GET TA_ABI_TRIPLE 1 TA_ABI_REVISION)
+list(GET TA_ABI_TRIPLE 2 TA_ABI_AGE)
+math(EXPR TA_SOVERSION "${TA_ABI_CURRENT} - ${TA_ABI_AGE}")
+set(TA_ABI_FILE_VERSION "${TA_SOVERSION}.${TA_ABI_AGE}.${TA_ABI_REVISION}")
+
 if(BUILD_SHARED_LIBS)
 	add_library(ta-lib SHARED ${LIB_SOURCES})
 	set_target_properties(ta-lib PROPERTIES
-		SOVERSION ${PROJECT_VERSION}
+		VERSION ${TA_ABI_FILE_VERSION}
+		SOVERSION ${TA_SOVERSION}
 		DEFINE_SYMBOL TA_LIB_SHARED
 		OUTPUT_NAME "ta-lib"
 	)

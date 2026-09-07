@@ -11,3 +11,5 @@ libta_lib_la_LIBADD = \
   ta_common/libta_common.la \
   $(LIBM)
 
+libta_lib_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
+

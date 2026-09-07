@@ -73,11 +73,19 @@ AC_CHECK_FUNCS([floor isascii localeconv mblen memmove memset modf pow sqrt strc
 LT_LIB_M
 AC_SUBST([LIBM])
 
-# Versioning:
-# Only change this if library is no longer
-# ABI compatible with previous version
-# (e.g. function declaration changed)
-TALIB_LIBRARY_VERSION=0:0:0
+# The library's ABI generation, as libtool current:revision:age. NOT the release
+# version -- the soname libtool derives from it is `current - age`, and it must
+# change only when the ABI does. Both build systems read this line; CMake parses
+# it out of this file so the two cannot drift apart.
+#
+#   interfaces added, none removed/changed -> c+1 : 0   : a+1   (soname unchanged)
+#   any interface removed or changed       -> c+1 : 0   : 0     (soname +1)
+#   implementation only                    -> c   : r+1 : a     (soname unchanged)
+#
+# 1:0:0 -- 0.8.1 removes the 162 TA_*_Unguarded/TA_EMA_Private entry points and
+# drops TA_FuncInfo.camelCaseName, so it is not the 0.7.1 ABI that shipped as
+# libta-lib.so.0.
+TALIB_LIBRARY_VERSION=1:0:0
 
 AC_SUBST(TALIB_LIBRARY_VERSION)
 

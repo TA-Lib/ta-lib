@@ -24,7 +24,11 @@ class TaLibConan(ConanFile):
         "fPIC": True,
     }
 
-    exports_sources = "CMakeLists.txt", "ta-lib.pc.in", "cmake/*", "include/*", "src/*", "LICENSE", "README.md"
+    # configure.ac is here for CMakeLists.txt, not for autotools: the ABI
+    # generation is declared there and both build systems read it, so a package
+    # that ships CMakeLists without it cannot configure.
+    exports_sources = ("CMakeLists.txt", "configure.ac", "ta-lib.pc.in", "cmake/*",
+                       "include/*", "src/*", "LICENSE", "README.md")
 
     def config_options(self):
         if self.settings.os == "Windows":
