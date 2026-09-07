@@ -39,7 +39,7 @@ Any of Linux, macOS, Windows or WSL2. You need:
 
 - git, a C compiler (gcc/clang/MSVC), CMake ≥ 3.18
 - The Rust toolchain via [rustup](https://rustup.rs) (the generator is written in Rust)
-- Recommended, for full cross-language verification: a JDK (`javac`/`java`) and the .NET SDK (`dotnet`). Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
+- Recommended, for full cross-language verification: a JDK (`javac`/`java`), `unzip` (the committed Maven wrapper needs it), and the .NET SDK (`dotnet`). Without them, pass `--language=c,rust` to `scripts/build.py servers` and `scripts/regtest.py`. The C and Rust gates still verify your function, and CI runs the full matrix.
 
 ```bash
 git clone https://github.com/TA-Lib/ta-lib.git
