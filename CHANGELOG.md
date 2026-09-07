@@ -90,6 +90,20 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
   (it is rejected) and was never returned, so it had no use in the public API.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.
+- (#386) API: the shared library's SONAME is now `libta-lib.so.1`. The two build systems
+  previously disagreed — autotools produced `libta-lib.so.0`, CMake `libta-lib.so.0.8.1` —
+  so a binary built against one could not load the other. Both now derive it from a single
+  `TALIB_LIBRARY_VERSION` in `configure.ac`, and it changes only when the ABI does, not
+  every release. Binaries linked against the old names must be relinked; they will fail to
+  load rather than silently misreading `TA_FuncInfo`.
+
+### Removed
+- (#386) API: `include/ta_func_unguarded.h`, with the 161 `TA_<NAME>_Unguarded` functions and
+  `TA_EMA_Private`. The header declared them `TA_LIB_API` and described them as exported public
+  API. Call the ordinary `TA_<NAME>` functions instead, which validate their arguments.
+- (#386) API: `TA_FuncInfo.camelCaseName`. Code that reads it no longer compiles. Code that reads
+  any field after it — `flags`, `nbInput`, `nbOptInput`, `nbOutput`, `handle` — must be rebuilt:
+  the struct is 8 bytes smaller and every one of those fields moves.
 - (#388) API: the MetaStock variant of CMO, DEMA, EMA, MACD, MACDFIX, RSI, TEMA and TRIX is removed. The same variant reached MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MAType was EMA, DEMA or TEMA. Default behavior is unchanged. `TA_SetCompatibility()` and `TA_GetCompatibility()` remain declared, so existing sources still compile, but the setter now does nothing and the getter always answers `TA_COMPATIBILITY_DEFAULT`. They are not exported from the Windows DLL — no released version exported them either. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
 
 ### Fixed
