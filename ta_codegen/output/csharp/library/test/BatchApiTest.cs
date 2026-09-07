@@ -812,6 +812,44 @@ public static class BatchApiTest
         Check(r.Count > 0, "disjoint float-overload mixed-type operands still produce values");
     }
 
+    /// <summary>
+    /// #386: the float overload skipped the output-input guard for every REAL
+    /// output, on the premise that a <c>float</c> input "cannot share memory
+    /// with" a <c>double</c> output because the element widths differ. Width is
+    /// no barrier -- <c>MemoryMarshal.Cast</c> lays both over one buffer in safe
+    /// code -- so the body read its own half-written output and returned
+    /// <c>Success</c> with wrong values, where the double overload answers
+    /// <c>BadParam</c>.
+    /// </summary>
+    private static void FloatOverloadRealInputAliasingARealOutputIsRejected()
+    {
+        const int n = 64;
+        var core = new Core();
+        double[] shared = new double[2 * n];
+        for (int i = 0; i < shared.Length; i++)
+        {
+            shared[i] = 100.0 + i;
+        }
+
+        // The float view spans the same bytes as the double view of the first
+        // half, so input and output genuinely overlap.
+        CheckThrows<ArgumentException>(
+            () => core.SMA(0, n - 1,
+                MemoryMarshal.Cast<double, float>(shared.AsSpan()).Slice(0, n),
+                5,
+                shared.AsSpan(0, n)),
+            "the float overload's real input sharing memory with its real output is rejected");
+
+        // Same shapes, disjoint buffers: the guard must not fire.
+        float[] disjoint = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            disjoint[i] = 100.0f + i;
+        }
+        OutRange r = core.SMA(0, n - 1, disjoint, 5, new double[n]);
+        Check(r.Count > 0, "a disjoint float input and double output still produce values");
+    }
+
     /// <summary>Every failure carries the code C would have returned, and the
     /// mapping back is TOTAL and LOSSLESS.</summary>
     /// <remarks>
@@ -1042,6 +1080,7 @@ public static class BatchApiTest
         OverlappingBuffersAreRejected();
         CrossTypedOutputOverlapIsRejected();
         FloatOverloadCrossTypedInputOutputOverlapIsRejected();
+        FloatOverloadRealInputAliasingARealOutputIsRejected();
         NoUnguardedTierOnThePublicSurface();
         FloatOverloadHasTheSameShape();
         OutRangeValueSemantics();

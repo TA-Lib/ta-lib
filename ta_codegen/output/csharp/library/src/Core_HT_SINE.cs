@@ -591,6 +591,9 @@ public partial class Core
       if( outSine.Overlaps(outLeadSine) ) {
          return RetCode.BadParam ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSine).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outLeadSine).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         return RetCode.BadParam ;
+      }
       a = 0.0962;
       b = 0.5769;
       smoothPrice = new double[maxIdx_smoothPrice+1];
@@ -956,8 +959,9 @@ public partial class Core
    /// it is too short whenever the range produces a value, and fine when it
    /// produces none, and on an output this function documents as declinable it
    /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. No output can
+   /// BE an input in this overload — their element types differ — so there is no
+   /// in-place case to allow and any overlap at all is rejected.</exception>
    public OutRange HT_SINE( int startIdx,
                             int endIdx,
                             ReadOnlySpan<float> inReal,

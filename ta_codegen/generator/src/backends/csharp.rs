@@ -66,7 +66,7 @@ use std::fmt::Write as _;
 use crate::candle_settings::{detect_candle_settings, emit_csharp_unpacking};
 use crate::helper_registry::{hoist_block_helpers, try_inline_expr, HelperRegistry};
 use crate::ir::{
-    BinOp, CircBuf, EnumDef, Expr, FuncDef, LookbackExpr, ParamType, Statement, VarType,
+    BinOp, CircBuf, EnumDef, Expr, FuncDef, LookbackExpr, Output, ParamType, Statement, VarType,
 };
 use crate::parser::enums::lookup_variant;
 use crate::registry::{Lang, Registry};
@@ -268,6 +268,12 @@ fn float_cmp_leaf(expr: &Expr, float_inputs: &HashSet<String>) -> Option<bool> {
         return None;
     }
     Some(matches!(op, BinOp::NotEq))
+}
+
+/// An output's C# element type. Outputs stay `double` in the float overload —
+/// only the REAL INPUTS narrow — so this needs no `single_precision`.
+fn cs_output_elem(out: &Output) -> &'static str {
+    if out.param_type == ParamType::Integer { "int" } else { "double" }
 }
 
 #[allow(clippy::implicit_hasher)]
@@ -922,9 +928,9 @@ fn gen_func_inner(
                     let (a, b) = (&func.outputs[i], &func.outputs[j]);
                     pairs.push(super::common::csharp_overlap_expr(
                         &a.name,
-                        a.param_type == ParamType::Integer,
+                        cs_output_elem(a),
                         &b.name,
-                        b.param_type == ParamType::Integer,
+                        cs_output_elem(b),
                         false,
                     ));
                 }
@@ -954,19 +960,26 @@ fn gen_func_inner(
         {
             let mut cross: Vec<String> = Vec::new();
             for o in &func.outputs {
-                let o_int = o.param_type == ParamType::Integer;
                 for i in &func.inputs {
-                    // The float overload widens a REAL input on read, so it is a
-                    // different (and differently-sized) element type from a
-                    // double output and cannot share memory with one. An int
-                    // output is a different story: int and float are both 4
-                    // bytes, so `MemoryMarshal.Cast<float,int>` CAN alias them —
-                    // this skip must not blind that pair too (#386 follow-up).
-                    let i_int = i.param_type == ParamType::Integer;
-                    if single_precision && !i_int && !o_int {
-                        continue;
-                    }
-                    cross.push(super::common::csharp_overlap_expr(&o.name, o_int, &i.name, i_int, true));
+                    // The float overload's REAL input is a `float` span while its
+                    // real output stays `double` — a cross-typed pair, which
+                    // `csharp_overlap_expr` answers with a byte-range compare.
+                    // It is not an unaliasable one: differing element width does
+                    // not stop `MemoryMarshal.Cast` laying both over one buffer.
+                    let i_ty = if i.param_type == ParamType::Integer {
+                        "int"
+                    } else if single_precision {
+                        "float"
+                    } else {
+                        "double"
+                    };
+                    cross.push(super::common::csharp_overlap_expr(
+                        &o.name,
+                        cs_output_elem(o),
+                        &i.name,
+                        i_ty,
+                        true,
+                    ));
                 }
             }
             if !cross.is_empty() {

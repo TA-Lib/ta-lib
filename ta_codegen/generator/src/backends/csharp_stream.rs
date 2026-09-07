@@ -1706,18 +1706,14 @@ fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
         for input in inputs {
             // Every declared input is a real series, so a mismatch here is
             // exactly the int-output-vs-real-input case.
-            pairs.push(super::common::csharp_overlap_expr(out, out_int, input, false, false));
+            let out_ty = if out_int { "int" } else { "double" };
+            pairs.push(super::common::csharp_overlap_expr(out, out_ty, input, "double", false));
         }
     }
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
-            pairs.push(super::common::csharp_overlap_expr(
-                outs[i],
-                out_is_int(func, outs[i]),
-                b,
-                out_is_int(func, b),
-                false,
-            ));
+            let ty = |o: &str| if out_is_int(func, o) { "int" } else { "double" };
+            pairs.push(super::common::csharp_overlap_expr(outs[i], ty(outs[i]), b, ty(b), false));
         }
     }
     if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }

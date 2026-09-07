@@ -373,6 +373,9 @@ public partial class Core
       if( outMACD.Overlaps(outMACDSignal) || outMACD.Overlaps(outMACDHist) || outMACDSignal.Overlaps(outMACDHist) ) {
          return RetCode.BadParam ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMACD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMACDSignal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outMACDHist).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         return RetCode.BadParam ;
+      }
       if( optInFastMAType == MAType.EMA && optInSlowMAType == MAType.EMA && optInSignalMAType == MAType.EMA && optInFastPeriod >= 2 && optInSlowPeriod >= 2 && optInSignalPeriod >= 2 ) {
          OutRange _xr0 = MACD(startIdx, endIdx, inReal, optInFastPeriod, optInSlowPeriod, optInSignalPeriod, outMACD, outMACDSignal, outMACDHist);
          outBegIdx = _xr0.BegIdx;
@@ -608,8 +611,9 @@ public partial class Core
    /// it is too short whenever the range produces a value, and fine when it
    /// produces none, and on an output this function documents as declinable it
    /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. No output can
+   /// BE an input in this overload — their element types differ — so there is no
+   /// in-place case to allow and any overlap at all is rejected.</exception>
    public OutRange MACDEXT( int startIdx,
                             int endIdx,
                             ReadOnlySpan<float> inReal,

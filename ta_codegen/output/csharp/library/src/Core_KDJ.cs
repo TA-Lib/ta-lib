@@ -249,6 +249,9 @@ public partial class Core
       if( outK.Overlaps(outD) || outK.Overlaps(outJ) || outD.Overlaps(outJ) ) {
          return RetCode.BadParam ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outK).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outD).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outJ).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outJ).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outJ).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+         return RetCode.BadParam ;
+      }
       lookbackTotal = KDJ_Lookback(optInFastK_Period, optInSlowK_Period, optInSlowK_MAType, optInSlowD_Period, optInSlowD_MAType);
       if( lookbackTotal > endIdx ) {
          outBegIdx = 0;
@@ -454,8 +457,9 @@ public partial class Core
    /// it is too short whenever the range produces a value, and fine when it
    /// produces none, and on an output this function documents as declinable it
    /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. No output can
+   /// BE an input in this overload — their element types differ — so there is no
+   /// in-place case to allow and any overlap at all is rejected.</exception>
    public OutRange KDJ( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inHigh,

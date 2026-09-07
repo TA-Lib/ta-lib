@@ -1371,3 +1371,75 @@ fn rust_category_index_lists_every_function_once() {
     }
     assert_eq!(heading_total, funcs.len(), "every function must land under a heading");
 }
+
+/// The C# FLOAT overload guards its real output against its real inputs.
+///
+/// The pair is cross-typed — a `float` input against a `double` output — so it
+/// takes the `MemoryMarshal.AsBytes` byte-range arm, and that spelling can only
+/// come from this overload: the double one compares a real pair plainly. The
+/// premise that made it skippable ("different element widths cannot share
+/// memory") is false, `MemoryMarshal.Cast` lays both over one buffer in safe
+/// code, and it has now been wrong three times in this emitter (#386) — twice
+/// caught only by a nightly hand suite. This is the PR-gate half.
+///
+/// Both directions: the double overload's plain term has to be there too, or a
+/// backend that stopped emitting the guard entirely would satisfy the first
+/// half by emitting nothing anyone looks for.
+#[test]
+fn the_csharp_float_overload_guards_its_real_output_against_its_real_inputs() {
+    let registry = make_registry();
+    let helpers = common::make_helpers();
+    let (mut pairs, mut offenders) = (0usize, Vec::new());
+
+    for name in discover_indicators() {
+        let (func, enums) = load_indicator(&name);
+        let reals: Vec<&str> = func
+            .inputs
+            .iter()
+            .filter(|i| i.param_type != ir::ParamType::Integer)
+            .map(|i| i.name.as_str())
+            .collect();
+        let outs: Vec<&str> = func
+            .outputs
+            .iter()
+            .filter(|o| o.param_type != ir::ParamType::Integer)
+            .map(|o| o.name.as_str())
+            .collect();
+        if reals.is_empty() || outs.is_empty() {
+            continue;
+        }
+        let src = backends::csharp::generate(&func, &enums, &registry, &helpers);
+        if !src.contains("ReadOnlySpan<float>") {
+            continue; // no float overload to check
+        }
+        let as_bytes = |x: &str| {
+            format!("System.Runtime.InteropServices.MemoryMarshal.AsBytes({x})")
+        };
+        for o in &outs {
+            for i in &reals {
+                pairs += 1;
+                let cross = format!("{}.Overlaps({})", as_bytes(o), as_bytes(i));
+                if !src.contains(&cross) {
+                    offenders.push(format!("{name}: float overload leaves {o} unguarded against {i}"));
+                }
+                // The carve-out spelling, not a bare `Overlaps`: the STREAM
+                // tier guards the same two names with the same call and would
+                // have answered for the batch tier here, leaving this half
+                // unable to fail. Only the batch tier passes allow_identity.
+                let plain = format!("({o}.Overlaps({i}) && {o} != {i})");
+                if !src.contains(&plain) {
+                    offenders.push(format!("{name}: double overload lost its {o}/{i} guard too"));
+                }
+            }
+        }
+    }
+
+    assert!(pairs >= 200, "only {pairs} real output/input pair(s) swept — too few to measure");
+    assert!(
+        offenders.is_empty(),
+        "a real output can share memory with a real input in the float overload \
+         (MemoryMarshal.Cast), so the guard has to be there ({} case(s)):\n{}",
+        offenders.len(),
+        offenders.join("\n")
+    );
+}

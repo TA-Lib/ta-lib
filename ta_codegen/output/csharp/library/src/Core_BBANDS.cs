@@ -485,6 +485,9 @@ public partial class Core
       if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
          return RetCode.BadParam ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealUpperBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealMiddleBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outRealLowerBand).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         return RetCode.BadParam ;
+      }
       if( optInMAType == MAType.SMA ) {
          tempBuffer1 = outRealMiddleBand;
          tempBuffer2 = outRealUpperBand;
@@ -804,8 +807,9 @@ public partial class Core
    /// it is too short whenever the range produces a value, and fine when it
    /// produces none, and on an output this function documents as declinable it
    /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output partially overlaps an input.
-   /// Computing wholly in place (an output that IS an input) is allowed.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. No output can
+   /// BE an input in this overload — their element types differ — so there is no
+   /// in-place case to allow and any overlap at all is rejected.</exception>
    public OutRange BBANDS( int startIdx,
                            int endIdx,
                            ReadOnlySpan<float> inReal,

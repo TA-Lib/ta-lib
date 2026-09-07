@@ -22,6 +22,20 @@ use std::fmt::Write as _;
 use super::doc_meta::{self, ensure_period, RangeMeta};
 use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
 
+/// What the aliasing guard rejects, which differs by overload: only the
+/// `double` one can express computing wholly in place, since a `float` input and
+/// a `double` output are never the same span.
+fn aliasing_exception_text(single_precision: bool) -> &'static str {
+    if single_precision {
+        "Two output buffers overlap, or an output overlaps an input. No output can \
+         BE an input in this overload — their element types differ — so there is no \
+         in-place case to allow and any overlap at all is rejected."
+    } else {
+        "Two output buffers overlap, or an output partially overlaps an input. \
+         Computing wholly in place (an output that IS an input) is allowed."
+    }
+}
+
 /// XML docs for the public guarded batch wrapper.
 ///
 /// `single_precision` selects the `float[]`-input overload, whose only
@@ -128,11 +142,7 @@ pub fn guarded_docs(
          produces a value, and fine when it produces none, and on an output this function \
          documents as declinable it is how you decline.",
     );
-    b.exception(
-        "System.ArgumentException",
-        "Two output buffers overlap, or an output partially overlaps an input. Computing \
-         wholly in place (an output that IS an input) is allowed.",
-    );
+    b.exception("System.ArgumentException", aliasing_exception_text(single_precision));
     b.render()
 }
 
