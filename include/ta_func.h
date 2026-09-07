@@ -52,6 +52,30 @@ extern "C" {
    #include "ta_defs.h"
 #endif
 
+/* The streaming API: what every TA_<NAME>_Open / Update / Peek / Close
+ * quartet below promises. A stream evaluates one bar at a time and is
+ * bit-identical to the batch function over the same series.
+ *
+ * Open( &stream, inputs..., historyLen, params..., out ) warms up on
+ * historyLen bars and hands back a handle. It needs MORE than
+ * TA_<NAME>_Lookback() bars and answers TA_INSUFFICIENT_HISTORY otherwise --
+ * the one recoverable code, meaning send more bars rather than fix the call.
+ * The handle is written only on TA_SUCCESS, and every handle so obtained must
+ * be closed.
+ *
+ * Update( stream, bar..., out ) commits one CLOSED bar and answers its value.
+ * A bar that is not finite is refused with TA_BAD_PARAM and nothing moves --
+ * re-feed the corrected bar, or call TA_<NAME>_Advance to count it and carry
+ * on.
+ *
+ * Peek( stream, bar..., out ) answers what Update would and commits nothing;
+ * the handle it takes is const.
+ *
+ * Close( stream ) frees the handle.
+ *
+ * The streaming pages on ta-lib.org carry the rest.
+ */
+
 
 /*
  * TA_AC - Accelerator/Decelerator Oscillator
@@ -102,7 +126,6 @@ TA_LIB_API int TA_AC_Lookback( int           optInFastPeriod, /* From 2 to 10000
 
 /*
  * Streaming API for TA_AC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AC_Stream TA_AC_Stream;
 
@@ -195,7 +218,6 @@ TA_LIB_API int TA_ACCBANDS_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_ACCBANDS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ACCBANDS_Stream TA_ACCBANDS_Stream;
 
@@ -272,7 +294,6 @@ TA_LIB_API int TA_ACOS_Lookback( void );
 
 /*
  * Streaming API for TA_ACOS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ACOS_Stream TA_ACOS_Stream;
 
@@ -355,7 +376,6 @@ TA_LIB_API int TA_AD_Lookback( void );
 
 /*
  * Streaming API for TA_AD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AD_Stream TA_AD_Stream;
 
@@ -434,7 +454,6 @@ TA_LIB_API int TA_ADD_Lookback( void );
 
 /*
  * Streaming API for TA_ADD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ADD_Stream TA_ADD_Stream;
 
@@ -531,7 +550,6 @@ TA_LIB_API int TA_ADOSC_Lookback( int           optInFastPeriod, /* From 2 to 10
 
 /*
  * Streaming API for TA_ADOSC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ADOSC_Stream TA_ADOSC_Stream;
 
@@ -618,7 +636,6 @@ TA_LIB_API int TA_ADR_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_ADR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ADR_Stream TA_ADR_Stream;
 
@@ -707,7 +724,6 @@ TA_LIB_API int TA_ADX_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_ADX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ADX_Stream TA_ADX_Stream;
 
@@ -796,7 +812,6 @@ TA_LIB_API int TA_ADXR_Lookback( int           optInTimePeriod );  /* From 2 to 
 
 /*
  * Streaming API for TA_ADXR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ADXR_Stream TA_ADXR_Stream;
 
@@ -889,7 +904,6 @@ TA_LIB_API int TA_AO_Lookback( int           optInFastPeriod, /* From 2 to 10000
 
 /*
  * Streaming API for TA_AO — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AO_Stream TA_AO_Stream;
 
@@ -985,7 +999,6 @@ TA_LIB_API int TA_APO_Lookback( int           optInFastPeriod, /* From 2 to 1000
 
 /*
  * Streaming API for TA_APO — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_APO_Stream TA_APO_Stream;
 
@@ -1074,7 +1087,6 @@ TA_LIB_API int TA_AROON_Lookback( int           optInTimePeriod );  /* From 2 to
 
 /*
  * Streaming API for TA_AROON — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AROON_Stream TA_AROON_Stream;
 
@@ -1161,7 +1173,6 @@ TA_LIB_API int TA_AROONOSC_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_AROONOSC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AROONOSC_Stream TA_AROONOSC_Stream;
 
@@ -1238,7 +1249,6 @@ TA_LIB_API int TA_ASIN_Lookback( void );
 
 /*
  * Streaming API for TA_ASIN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ASIN_Stream TA_ASIN_Stream;
 
@@ -1315,7 +1325,6 @@ TA_LIB_API int TA_ATAN_Lookback( void );
 
 /*
  * Streaming API for TA_ATAN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ATAN_Stream TA_ATAN_Stream;
 
@@ -1404,7 +1413,6 @@ TA_LIB_API int TA_ATR_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_ATR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ATR_Stream TA_ATR_Stream;
 
@@ -1489,7 +1497,6 @@ TA_LIB_API int TA_AVGDEV_Lookback( int           optInTimePeriod );  /* From 2 t
 
 /*
  * Streaming API for TA_AVGDEV — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AVGDEV_Stream TA_AVGDEV_Stream;
 
@@ -1572,7 +1579,6 @@ TA_LIB_API int TA_AVGPRICE_Lookback( void );
 
 /*
  * Streaming API for TA_AVGPRICE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_AVGPRICE_Stream TA_AVGPRICE_Stream;
 
@@ -1678,7 +1684,6 @@ TA_LIB_API int TA_BBANDS_Lookback( int           optInTimePeriod, /* From 2 to 1
 
 /*
  * Streaming API for TA_BBANDS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_BBANDS_Stream TA_BBANDS_Stream;
 
@@ -1765,7 +1770,6 @@ TA_LIB_API int TA_BETA_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_BETA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_BETA_Stream TA_BETA_Stream;
 
@@ -1848,7 +1852,6 @@ TA_LIB_API int TA_BOP_Lookback( void );
 
 /*
  * Streaming API for TA_BOP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_BOP_Stream TA_BOP_Stream;
 
@@ -1937,7 +1940,6 @@ TA_LIB_API int TA_CCI_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_CCI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CCI_Stream TA_CCI_Stream;
 
@@ -2020,7 +2022,6 @@ TA_LIB_API int TA_CDL2CROWS_Lookback( void );
 
 /*
  * Streaming API for TA_CDL2CROWS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL2CROWS_Stream TA_CDL2CROWS_Stream;
 
@@ -2103,7 +2104,6 @@ TA_LIB_API int TA_CDL3BLACKCROWS_Lookback( void );
 
 /*
  * Streaming API for TA_CDL3BLACKCROWS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL3BLACKCROWS_Stream TA_CDL3BLACKCROWS_Stream;
 
@@ -2186,7 +2186,6 @@ TA_LIB_API int TA_CDL3INSIDE_Lookback( void );
 
 /*
  * Streaming API for TA_CDL3INSIDE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL3INSIDE_Stream TA_CDL3INSIDE_Stream;
 
@@ -2269,7 +2268,6 @@ TA_LIB_API int TA_CDL3LINESTRIKE_Lookback( void );
 
 /*
  * Streaming API for TA_CDL3LINESTRIKE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL3LINESTRIKE_Stream TA_CDL3LINESTRIKE_Stream;
 
@@ -2352,7 +2350,6 @@ TA_LIB_API int TA_CDL3OUTSIDE_Lookback( void );
 
 /*
  * Streaming API for TA_CDL3OUTSIDE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL3OUTSIDE_Stream TA_CDL3OUTSIDE_Stream;
 
@@ -2435,7 +2432,6 @@ TA_LIB_API int TA_CDL3STARSINSOUTH_Lookback( void );
 
 /*
  * Streaming API for TA_CDL3STARSINSOUTH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL3STARSINSOUTH_Stream TA_CDL3STARSINSOUTH_Stream;
 
@@ -2518,7 +2514,6 @@ TA_LIB_API int TA_CDL3WHITESOLDIERS_Lookback( void );
 
 /*
  * Streaming API for TA_CDL3WHITESOLDIERS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDL3WHITESOLDIERS_Stream TA_CDL3WHITESOLDIERS_Stream;
 
@@ -2609,7 +2604,6 @@ TA_LIB_API int TA_CDLABANDONEDBABY_Lookback( double        optInPenetration );  
 
 /*
  * Streaming API for TA_CDLABANDONEDBABY — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLABANDONEDBABY_Stream TA_CDLABANDONEDBABY_Stream;
 
@@ -2692,7 +2686,6 @@ TA_LIB_API int TA_CDLADVANCEBLOCK_Lookback( void );
 
 /*
  * Streaming API for TA_CDLADVANCEBLOCK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLADVANCEBLOCK_Stream TA_CDLADVANCEBLOCK_Stream;
 
@@ -2775,7 +2768,6 @@ TA_LIB_API int TA_CDLBELTHOLD_Lookback( void );
 
 /*
  * Streaming API for TA_CDLBELTHOLD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLBELTHOLD_Stream TA_CDLBELTHOLD_Stream;
 
@@ -2858,7 +2850,6 @@ TA_LIB_API int TA_CDLBREAKAWAY_Lookback( void );
 
 /*
  * Streaming API for TA_CDLBREAKAWAY — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLBREAKAWAY_Stream TA_CDLBREAKAWAY_Stream;
 
@@ -2941,7 +2932,6 @@ TA_LIB_API int TA_CDLCLOSINGMARUBOZU_Lookback( void );
 
 /*
  * Streaming API for TA_CDLCLOSINGMARUBOZU — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLCLOSINGMARUBOZU_Stream TA_CDLCLOSINGMARUBOZU_Stream;
 
@@ -3024,7 +3014,6 @@ TA_LIB_API int TA_CDLCONCEALBABYSWALL_Lookback( void );
 
 /*
  * Streaming API for TA_CDLCONCEALBABYSWALL — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLCONCEALBABYSWALL_Stream TA_CDLCONCEALBABYSWALL_Stream;
 
@@ -3107,7 +3096,6 @@ TA_LIB_API int TA_CDLCOUNTERATTACK_Lookback( void );
 
 /*
  * Streaming API for TA_CDLCOUNTERATTACK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLCOUNTERATTACK_Stream TA_CDLCOUNTERATTACK_Stream;
 
@@ -3198,7 +3186,6 @@ TA_LIB_API int TA_CDLDARKCLOUDCOVER_Lookback( double        optInPenetration ); 
 
 /*
  * Streaming API for TA_CDLDARKCLOUDCOVER — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLDARKCLOUDCOVER_Stream TA_CDLDARKCLOUDCOVER_Stream;
 
@@ -3281,7 +3268,6 @@ TA_LIB_API int TA_CDLDOJI_Lookback( void );
 
 /*
  * Streaming API for TA_CDLDOJI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLDOJI_Stream TA_CDLDOJI_Stream;
 
@@ -3364,7 +3350,6 @@ TA_LIB_API int TA_CDLDOJISTAR_Lookback( void );
 
 /*
  * Streaming API for TA_CDLDOJISTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLDOJISTAR_Stream TA_CDLDOJISTAR_Stream;
 
@@ -3447,7 +3432,6 @@ TA_LIB_API int TA_CDLDRAGONFLYDOJI_Lookback( void );
 
 /*
  * Streaming API for TA_CDLDRAGONFLYDOJI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLDRAGONFLYDOJI_Stream TA_CDLDRAGONFLYDOJI_Stream;
 
@@ -3530,7 +3514,6 @@ TA_LIB_API int TA_CDLENGULFING_Lookback( void );
 
 /*
  * Streaming API for TA_CDLENGULFING — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLENGULFING_Stream TA_CDLENGULFING_Stream;
 
@@ -3621,7 +3604,6 @@ TA_LIB_API int TA_CDLEVENINGDOJISTAR_Lookback( double        optInPenetration );
 
 /*
  * Streaming API for TA_CDLEVENINGDOJISTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLEVENINGDOJISTAR_Stream TA_CDLEVENINGDOJISTAR_Stream;
 
@@ -3712,7 +3694,6 @@ TA_LIB_API int TA_CDLEVENINGSTAR_Lookback( double        optInPenetration );  /*
 
 /*
  * Streaming API for TA_CDLEVENINGSTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLEVENINGSTAR_Stream TA_CDLEVENINGSTAR_Stream;
 
@@ -3795,7 +3776,6 @@ TA_LIB_API int TA_CDLGAPSIDESIDEWHITE_Lookback( void );
 
 /*
  * Streaming API for TA_CDLGAPSIDESIDEWHITE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLGAPSIDESIDEWHITE_Stream TA_CDLGAPSIDESIDEWHITE_Stream;
 
@@ -3878,7 +3858,6 @@ TA_LIB_API int TA_CDLGRAVESTONEDOJI_Lookback( void );
 
 /*
  * Streaming API for TA_CDLGRAVESTONEDOJI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLGRAVESTONEDOJI_Stream TA_CDLGRAVESTONEDOJI_Stream;
 
@@ -3961,7 +3940,6 @@ TA_LIB_API int TA_CDLHAMMER_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHAMMER — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHAMMER_Stream TA_CDLHAMMER_Stream;
 
@@ -4044,7 +4022,6 @@ TA_LIB_API int TA_CDLHANGINGMAN_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHANGINGMAN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHANGINGMAN_Stream TA_CDLHANGINGMAN_Stream;
 
@@ -4127,7 +4104,6 @@ TA_LIB_API int TA_CDLHARAMI_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHARAMI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHARAMI_Stream TA_CDLHARAMI_Stream;
 
@@ -4210,7 +4186,6 @@ TA_LIB_API int TA_CDLHARAMICROSS_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHARAMICROSS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHARAMICROSS_Stream TA_CDLHARAMICROSS_Stream;
 
@@ -4293,7 +4268,6 @@ TA_LIB_API int TA_CDLHIGHWAVE_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHIGHWAVE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHIGHWAVE_Stream TA_CDLHIGHWAVE_Stream;
 
@@ -4376,7 +4350,6 @@ TA_LIB_API int TA_CDLHIKKAKE_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHIKKAKE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHIKKAKE_Stream TA_CDLHIKKAKE_Stream;
 
@@ -4459,7 +4432,6 @@ TA_LIB_API int TA_CDLHIKKAKEMOD_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHIKKAKEMOD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHIKKAKEMOD_Stream TA_CDLHIKKAKEMOD_Stream;
 
@@ -4542,7 +4514,6 @@ TA_LIB_API int TA_CDLHOMINGPIGEON_Lookback( void );
 
 /*
  * Streaming API for TA_CDLHOMINGPIGEON — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLHOMINGPIGEON_Stream TA_CDLHOMINGPIGEON_Stream;
 
@@ -4625,7 +4596,6 @@ TA_LIB_API int TA_CDLIDENTICAL3CROWS_Lookback( void );
 
 /*
  * Streaming API for TA_CDLIDENTICAL3CROWS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLIDENTICAL3CROWS_Stream TA_CDLIDENTICAL3CROWS_Stream;
 
@@ -4708,7 +4678,6 @@ TA_LIB_API int TA_CDLINNECK_Lookback( void );
 
 /*
  * Streaming API for TA_CDLINNECK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLINNECK_Stream TA_CDLINNECK_Stream;
 
@@ -4791,7 +4760,6 @@ TA_LIB_API int TA_CDLINVERTEDHAMMER_Lookback( void );
 
 /*
  * Streaming API for TA_CDLINVERTEDHAMMER — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLINVERTEDHAMMER_Stream TA_CDLINVERTEDHAMMER_Stream;
 
@@ -4874,7 +4842,6 @@ TA_LIB_API int TA_CDLKICKING_Lookback( void );
 
 /*
  * Streaming API for TA_CDLKICKING — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLKICKING_Stream TA_CDLKICKING_Stream;
 
@@ -4957,7 +4924,6 @@ TA_LIB_API int TA_CDLKICKINGBYLENGTH_Lookback( void );
 
 /*
  * Streaming API for TA_CDLKICKINGBYLENGTH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLKICKINGBYLENGTH_Stream TA_CDLKICKINGBYLENGTH_Stream;
 
@@ -5040,7 +5006,6 @@ TA_LIB_API int TA_CDLLADDERBOTTOM_Lookback( void );
 
 /*
  * Streaming API for TA_CDLLADDERBOTTOM — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLLADDERBOTTOM_Stream TA_CDLLADDERBOTTOM_Stream;
 
@@ -5123,7 +5088,6 @@ TA_LIB_API int TA_CDLLONGLEGGEDDOJI_Lookback( void );
 
 /*
  * Streaming API for TA_CDLLONGLEGGEDDOJI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLLONGLEGGEDDOJI_Stream TA_CDLLONGLEGGEDDOJI_Stream;
 
@@ -5206,7 +5170,6 @@ TA_LIB_API int TA_CDLLONGLINE_Lookback( void );
 
 /*
  * Streaming API for TA_CDLLONGLINE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLLONGLINE_Stream TA_CDLLONGLINE_Stream;
 
@@ -5289,7 +5252,6 @@ TA_LIB_API int TA_CDLMARUBOZU_Lookback( void );
 
 /*
  * Streaming API for TA_CDLMARUBOZU — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLMARUBOZU_Stream TA_CDLMARUBOZU_Stream;
 
@@ -5372,7 +5334,6 @@ TA_LIB_API int TA_CDLMATCHINGLOW_Lookback( void );
 
 /*
  * Streaming API for TA_CDLMATCHINGLOW — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLMATCHINGLOW_Stream TA_CDLMATCHINGLOW_Stream;
 
@@ -5463,7 +5424,6 @@ TA_LIB_API int TA_CDLMATHOLD_Lookback( double        optInPenetration );  /* Fro
 
 /*
  * Streaming API for TA_CDLMATHOLD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLMATHOLD_Stream TA_CDLMATHOLD_Stream;
 
@@ -5554,7 +5514,6 @@ TA_LIB_API int TA_CDLMORNINGDOJISTAR_Lookback( double        optInPenetration );
 
 /*
  * Streaming API for TA_CDLMORNINGDOJISTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLMORNINGDOJISTAR_Stream TA_CDLMORNINGDOJISTAR_Stream;
 
@@ -5645,7 +5604,6 @@ TA_LIB_API int TA_CDLMORNINGSTAR_Lookback( double        optInPenetration );  /*
 
 /*
  * Streaming API for TA_CDLMORNINGSTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLMORNINGSTAR_Stream TA_CDLMORNINGSTAR_Stream;
 
@@ -5728,7 +5686,6 @@ TA_LIB_API int TA_CDLONNECK_Lookback( void );
 
 /*
  * Streaming API for TA_CDLONNECK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLONNECK_Stream TA_CDLONNECK_Stream;
 
@@ -5811,7 +5768,6 @@ TA_LIB_API int TA_CDLPIERCING_Lookback( void );
 
 /*
  * Streaming API for TA_CDLPIERCING — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLPIERCING_Stream TA_CDLPIERCING_Stream;
 
@@ -5894,7 +5850,6 @@ TA_LIB_API int TA_CDLRICKSHAWMAN_Lookback( void );
 
 /*
  * Streaming API for TA_CDLRICKSHAWMAN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLRICKSHAWMAN_Stream TA_CDLRICKSHAWMAN_Stream;
 
@@ -5977,7 +5932,6 @@ TA_LIB_API int TA_CDLRISEFALL3METHODS_Lookback( void );
 
 /*
  * Streaming API for TA_CDLRISEFALL3METHODS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLRISEFALL3METHODS_Stream TA_CDLRISEFALL3METHODS_Stream;
 
@@ -6060,7 +6014,6 @@ TA_LIB_API int TA_CDLSEPARATINGLINES_Lookback( void );
 
 /*
  * Streaming API for TA_CDLSEPARATINGLINES — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLSEPARATINGLINES_Stream TA_CDLSEPARATINGLINES_Stream;
 
@@ -6143,7 +6096,6 @@ TA_LIB_API int TA_CDLSHOOTINGSTAR_Lookback( void );
 
 /*
  * Streaming API for TA_CDLSHOOTINGSTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLSHOOTINGSTAR_Stream TA_CDLSHOOTINGSTAR_Stream;
 
@@ -6226,7 +6178,6 @@ TA_LIB_API int TA_CDLSHORTLINE_Lookback( void );
 
 /*
  * Streaming API for TA_CDLSHORTLINE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLSHORTLINE_Stream TA_CDLSHORTLINE_Stream;
 
@@ -6309,7 +6260,6 @@ TA_LIB_API int TA_CDLSPINNINGTOP_Lookback( void );
 
 /*
  * Streaming API for TA_CDLSPINNINGTOP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLSPINNINGTOP_Stream TA_CDLSPINNINGTOP_Stream;
 
@@ -6392,7 +6342,6 @@ TA_LIB_API int TA_CDLSTALLEDPATTERN_Lookback( void );
 
 /*
  * Streaming API for TA_CDLSTALLEDPATTERN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLSTALLEDPATTERN_Stream TA_CDLSTALLEDPATTERN_Stream;
 
@@ -6475,7 +6424,6 @@ TA_LIB_API int TA_CDLSTICKSANDWICH_Lookback( void );
 
 /*
  * Streaming API for TA_CDLSTICKSANDWICH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLSTICKSANDWICH_Stream TA_CDLSTICKSANDWICH_Stream;
 
@@ -6558,7 +6506,6 @@ TA_LIB_API int TA_CDLTAKURI_Lookback( void );
 
 /*
  * Streaming API for TA_CDLTAKURI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLTAKURI_Stream TA_CDLTAKURI_Stream;
 
@@ -6641,7 +6588,6 @@ TA_LIB_API int TA_CDLTASUKIGAP_Lookback( void );
 
 /*
  * Streaming API for TA_CDLTASUKIGAP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLTASUKIGAP_Stream TA_CDLTASUKIGAP_Stream;
 
@@ -6724,7 +6670,6 @@ TA_LIB_API int TA_CDLTHRUSTING_Lookback( void );
 
 /*
  * Streaming API for TA_CDLTHRUSTING — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLTHRUSTING_Stream TA_CDLTHRUSTING_Stream;
 
@@ -6807,7 +6752,6 @@ TA_LIB_API int TA_CDLTRISTAR_Lookback( void );
 
 /*
  * Streaming API for TA_CDLTRISTAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLTRISTAR_Stream TA_CDLTRISTAR_Stream;
 
@@ -6890,7 +6834,6 @@ TA_LIB_API int TA_CDLUNIQUE3RIVER_Lookback( void );
 
 /*
  * Streaming API for TA_CDLUNIQUE3RIVER — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLUNIQUE3RIVER_Stream TA_CDLUNIQUE3RIVER_Stream;
 
@@ -6973,7 +6916,6 @@ TA_LIB_API int TA_CDLUPSIDEGAP2CROWS_Lookback( void );
 
 /*
  * Streaming API for TA_CDLUPSIDEGAP2CROWS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLUPSIDEGAP2CROWS_Stream TA_CDLUPSIDEGAP2CROWS_Stream;
 
@@ -7056,7 +6998,6 @@ TA_LIB_API int TA_CDLXSIDEGAP3METHODS_Lookback( void );
 
 /*
  * Streaming API for TA_CDLXSIDEGAP3METHODS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CDLXSIDEGAP3METHODS_Stream TA_CDLXSIDEGAP3METHODS_Stream;
 
@@ -7133,7 +7074,6 @@ TA_LIB_API int TA_CEIL_Lookback( void );
 
 /*
  * Streaming API for TA_CEIL — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CEIL_Stream TA_CEIL_Stream;
 
@@ -7224,7 +7164,6 @@ TA_LIB_API int TA_CMF_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_CMF — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CMF_Stream TA_CMF_Stream;
 
@@ -7309,7 +7248,6 @@ TA_LIB_API int TA_CMO_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_CMO — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CMO_Stream TA_CMO_Stream;
 
@@ -7394,7 +7332,6 @@ TA_LIB_API int TA_CMOU_Lookback( int           optInTimePeriod );  /* From 2 to 
 
 /*
  * Streaming API for TA_CMOU — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CMOU_Stream TA_CMOU_Stream;
 
@@ -7491,7 +7428,6 @@ TA_LIB_API int TA_COPPOCK_Lookback( int           optInWMAPeriod, /* From 1 to 1
 
 /*
  * Streaming API for TA_COPPOCK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_COPPOCK_Stream TA_COPPOCK_Stream;
 
@@ -7578,7 +7514,6 @@ TA_LIB_API int TA_CORREL_Lookback( int           optInTimePeriod );  /* From 1 t
 
 /*
  * Streaming API for TA_CORREL — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CORREL_Stream TA_CORREL_Stream;
 
@@ -7655,7 +7590,6 @@ TA_LIB_API int TA_COS_Lookback( void );
 
 /*
  * Streaming API for TA_COS — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_COS_Stream TA_COS_Stream;
 
@@ -7732,7 +7666,6 @@ TA_LIB_API int TA_COSH_Lookback( void );
 
 /*
  * Streaming API for TA_COSH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_COSH_Stream TA_COSH_Stream;
 
@@ -7809,7 +7742,6 @@ TA_LIB_API int TA_CUMSUM_Lookback( void );
 
 /*
  * Streaming API for TA_CUMSUM — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CUMSUM_Stream TA_CUMSUM_Stream;
 
@@ -7902,7 +7834,6 @@ TA_LIB_API int TA_CVI_Lookback( int           optInTimePeriod, /* From 2 to 1000
 
 /*
  * Streaming API for TA_CVI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_CVI_Stream TA_CVI_Stream;
 
@@ -7987,7 +7918,6 @@ TA_LIB_API int TA_DEMA_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_DEMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_DEMA_Stream TA_DEMA_Stream;
 
@@ -8066,7 +7996,6 @@ TA_LIB_API int TA_DIV_Lookback( void );
 
 /*
  * Streaming API for TA_DIV — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_DIV_Stream TA_DIV_Stream;
 
@@ -8157,7 +8086,6 @@ TA_LIB_API int TA_DONCHIAN_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_DONCHIAN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_DONCHIAN_Stream TA_DONCHIAN_Stream;
 
@@ -8242,7 +8170,6 @@ TA_LIB_API int TA_DPO_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_DPO — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_DPO_Stream TA_DPO_Stream;
 
@@ -8331,7 +8258,6 @@ TA_LIB_API int TA_DX_Lookback( int           optInTimePeriod );  /* From 2 to 10
 
 /*
  * Streaming API for TA_DX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_DX_Stream TA_DX_Stream;
 
@@ -8418,7 +8344,6 @@ TA_LIB_API int TA_EFI_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_EFI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_EFI_Stream TA_EFI_Stream;
 
@@ -8503,7 +8428,6 @@ TA_LIB_API int TA_EMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_EMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_EMA_Stream TA_EMA_Stream;
 
@@ -8588,7 +8512,6 @@ TA_LIB_API int TA_ER_Lookback( int           optInTimePeriod );  /* From 2 to 10
 
 /*
  * Streaming API for TA_ER — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ER_Stream TA_ER_Stream;
 
@@ -8679,7 +8602,6 @@ TA_LIB_API int TA_ERI_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_ERI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ERI_Stream TA_ERI_Stream;
 
@@ -8756,7 +8678,6 @@ TA_LIB_API int TA_EXP_Lookback( void );
 
 /*
  * Streaming API for TA_EXP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_EXP_Stream TA_EXP_Stream;
 
@@ -8833,7 +8754,6 @@ TA_LIB_API int TA_FLOOR_Lookback( void );
 
 /*
  * Streaming API for TA_FLOOR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_FLOOR_Stream TA_FLOOR_Stream;
 
@@ -8918,7 +8838,6 @@ TA_LIB_API int TA_FOSC_Lookback( int           optInTimePeriod );  /* From 2 to 
 
 /*
  * Streaming API for TA_FOSC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_FOSC_Stream TA_FOSC_Stream;
 
@@ -9013,7 +8932,6 @@ TA_LIB_API int TA_FRACTAL_Lookback( int           optInLeftBars, /* From 1 to 10
 
 /*
  * Streaming API for TA_FRACTAL — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_FRACTAL_Stream TA_FRACTAL_Stream;
 
@@ -9102,7 +9020,6 @@ TA_LIB_API int TA_HA_Lookback( void );
 
 /*
  * Streaming API for TA_HA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HA_Stream TA_HA_Stream;
 
@@ -9187,7 +9104,6 @@ TA_LIB_API int TA_HMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_HMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HMA_Stream TA_HMA_Stream;
 
@@ -9264,7 +9180,6 @@ TA_LIB_API int TA_HT_DCPERIOD_Lookback( void );
 
 /*
  * Streaming API for TA_HT_DCPERIOD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HT_DCPERIOD_Stream TA_HT_DCPERIOD_Stream;
 
@@ -9341,7 +9256,6 @@ TA_LIB_API int TA_HT_DCPHASE_Lookback( void );
 
 /*
  * Streaming API for TA_HT_DCPHASE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HT_DCPHASE_Stream TA_HT_DCPHASE_Stream;
 
@@ -9420,7 +9334,6 @@ TA_LIB_API int TA_HT_PHASOR_Lookback( void );
 
 /*
  * Streaming API for TA_HT_PHASOR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HT_PHASOR_Stream TA_HT_PHASOR_Stream;
 
@@ -9499,7 +9412,6 @@ TA_LIB_API int TA_HT_SINE_Lookback( void );
 
 /*
  * Streaming API for TA_HT_SINE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HT_SINE_Stream TA_HT_SINE_Stream;
 
@@ -9576,7 +9488,6 @@ TA_LIB_API int TA_HT_TRENDLINE_Lookback( void );
 
 /*
  * Streaming API for TA_HT_TRENDLINE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HT_TRENDLINE_Stream TA_HT_TRENDLINE_Stream;
 
@@ -9653,7 +9564,6 @@ TA_LIB_API int TA_HT_TRENDMODE_Lookback( void );
 
 /*
  * Streaming API for TA_HT_TRENDMODE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_HT_TRENDMODE_Stream TA_HT_TRENDMODE_Stream;
 
@@ -9740,7 +9650,6 @@ TA_LIB_API int TA_IMI_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_IMI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_IMI_Stream TA_IMI_Stream;
 
@@ -9825,7 +9734,6 @@ TA_LIB_API int TA_KAMA_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_KAMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_KAMA_Stream TA_KAMA_Stream;
 
@@ -9930,7 +9838,6 @@ TA_LIB_API int TA_KC_Lookback( int           optInTimePeriod, /* From 2 to 10000
 
 /*
  * Streaming API for TA_KC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_KC_Stream TA_KC_Stream;
 
@@ -10046,7 +9953,6 @@ TA_LIB_API int TA_KDJ_Lookback( int           optInFastK_Period, /* From 1 to 10
 
 /*
  * Streaming API for TA_KDJ — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_KDJ_Stream TA_KDJ_Stream;
 
@@ -10131,7 +10037,6 @@ TA_LIB_API int TA_LINEARREG_Lookback( int           optInTimePeriod );  /* From 
 
 /*
  * Streaming API for TA_LINEARREG — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_LINEARREG_Stream TA_LINEARREG_Stream;
 
@@ -10216,7 +10121,6 @@ TA_LIB_API int TA_LINEARREG_ANGLE_Lookback( int           optInTimePeriod );  /*
 
 /*
  * Streaming API for TA_LINEARREG_ANGLE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_LINEARREG_ANGLE_Stream TA_LINEARREG_ANGLE_Stream;
 
@@ -10301,7 +10205,6 @@ TA_LIB_API int TA_LINEARREG_INTERCEPT_Lookback( int           optInTimePeriod );
 
 /*
  * Streaming API for TA_LINEARREG_INTERCEPT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_LINEARREG_INTERCEPT_Stream TA_LINEARREG_INTERCEPT_Stream;
 
@@ -10386,7 +10289,6 @@ TA_LIB_API int TA_LINEARREG_SLOPE_Lookback( int           optInTimePeriod );  /*
 
 /*
  * Streaming API for TA_LINEARREG_SLOPE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_LINEARREG_SLOPE_Stream TA_LINEARREG_SLOPE_Stream;
 
@@ -10463,7 +10365,6 @@ TA_LIB_API int TA_LN_Lookback( void );
 
 /*
  * Streaming API for TA_LN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_LN_Stream TA_LN_Stream;
 
@@ -10540,7 +10441,6 @@ TA_LIB_API int TA_LOG10_Lookback( void );
 
 /*
  * Streaming API for TA_LOG10 — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_LOG10_Stream TA_LOG10_Stream;
 
@@ -10630,7 +10530,6 @@ TA_LIB_API int TA_MA_Lookback( int           optInTimePeriod, /* From 1 to 10000
 
 /*
  * Streaming API for TA_MA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MA_Stream TA_MA_Stream;
 
@@ -10731,7 +10630,6 @@ TA_LIB_API int TA_MACD_Lookback( int           optInFastPeriod, /* From 2 to 100
 
 /*
  * Streaming API for TA_MACD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MACD_Stream TA_MACD_Stream;
 
@@ -10849,7 +10747,6 @@ TA_LIB_API int TA_MACDEXT_Lookback( int           optInFastPeriod, /* From 2 to 
 
 /*
  * Streaming API for TA_MACDEXT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MACDEXT_Stream TA_MACDEXT_Stream;
 
@@ -10938,7 +10835,6 @@ TA_LIB_API int TA_MACDFIX_Lookback( int           optInSignalPeriod );  /* From 
 
 /*
  * Streaming API for TA_MACDFIX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MACDFIX_Stream TA_MACDFIX_Stream;
 
@@ -11031,7 +10927,6 @@ TA_LIB_API int TA_MAMA_Lookback( double        optInFastLimit, /* From 0.01 to 0
 
 /*
  * Streaming API for TA_MAMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MAMA_Stream TA_MAMA_Stream;
 
@@ -11112,7 +11007,6 @@ TA_LIB_API int TA_MARKETFI_Lookback( void );
 
 /*
  * Streaming API for TA_MARKETFI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MARKETFI_Stream TA_MARKETFI_Stream;
 
@@ -11205,7 +11099,6 @@ TA_LIB_API int TA_MASSI_Lookback( int           optInFastPeriod, /* From 2 to 10
 
 /*
  * Streaming API for TA_MASSI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MASSI_Stream TA_MASSI_Stream;
 
@@ -11303,7 +11196,6 @@ TA_LIB_API int TA_MAVP_Lookback( int           optInMinPeriod, /* From 1 to 1000
 
 /*
  * Streaming API for TA_MAVP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MAVP_Stream TA_MAVP_Stream;
 
@@ -11388,7 +11280,6 @@ TA_LIB_API int TA_MAX_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_MAX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MAX_Stream TA_MAX_Stream;
 
@@ -11473,7 +11364,6 @@ TA_LIB_API int TA_MAXINDEX_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_MAXINDEX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MAXINDEX_Stream TA_MAXINDEX_Stream;
 
@@ -11552,7 +11442,6 @@ TA_LIB_API int TA_MEDPRICE_Lookback( void );
 
 /*
  * Streaming API for TA_MEDPRICE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MEDPRICE_Stream TA_MEDPRICE_Stream;
 
@@ -11643,7 +11532,6 @@ TA_LIB_API int TA_MFI_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_MFI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MFI_Stream TA_MFI_Stream;
 
@@ -11728,7 +11616,6 @@ TA_LIB_API int TA_MIDPOINT_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_MIDPOINT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MIDPOINT_Stream TA_MIDPOINT_Stream;
 
@@ -11815,7 +11702,6 @@ TA_LIB_API int TA_MIDPRICE_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_MIDPRICE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MIDPRICE_Stream TA_MIDPRICE_Stream;
 
@@ -11900,7 +11786,6 @@ TA_LIB_API int TA_MIN_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_MIN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MIN_Stream TA_MIN_Stream;
 
@@ -11985,7 +11870,6 @@ TA_LIB_API int TA_MININDEX_Lookback( int           optInTimePeriod );  /* From 2
 
 /*
  * Streaming API for TA_MININDEX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MININDEX_Stream TA_MININDEX_Stream;
 
@@ -12072,7 +11956,6 @@ TA_LIB_API int TA_MINMAX_Lookback( int           optInTimePeriod );  /* From 2 t
 
 /*
  * Streaming API for TA_MINMAX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MINMAX_Stream TA_MINMAX_Stream;
 
@@ -12159,7 +12042,6 @@ TA_LIB_API int TA_MINMAXINDEX_Lookback( int           optInTimePeriod );  /* Fro
 
 /*
  * Streaming API for TA_MINMAXINDEX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MINMAXINDEX_Stream TA_MINMAXINDEX_Stream;
 
@@ -12248,7 +12130,6 @@ TA_LIB_API int TA_MINUS_DI_Lookback( int           optInTimePeriod );  /* From 1
 
 /*
  * Streaming API for TA_MINUS_DI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MINUS_DI_Stream TA_MINUS_DI_Stream;
 
@@ -12335,7 +12216,6 @@ TA_LIB_API int TA_MINUS_DM_Lookback( int           optInTimePeriod );  /* From 1
 
 /*
  * Streaming API for TA_MINUS_DM — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MINUS_DM_Stream TA_MINUS_DM_Stream;
 
@@ -12420,7 +12300,6 @@ TA_LIB_API int TA_MOM_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_MOM — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MOM_Stream TA_MOM_Stream;
 
@@ -12499,7 +12378,6 @@ TA_LIB_API int TA_MULT_Lookback( void );
 
 /*
  * Streaming API for TA_MULT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_MULT_Stream TA_MULT_Stream;
 
@@ -12588,7 +12466,6 @@ TA_LIB_API int TA_NATR_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_NATR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_NATR_Stream TA_NATR_Stream;
 
@@ -12667,7 +12544,6 @@ TA_LIB_API int TA_NVI_Lookback( void );
 
 /*
  * Streaming API for TA_NVI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_NVI_Stream TA_NVI_Stream;
 
@@ -12746,7 +12622,6 @@ TA_LIB_API int TA_OBV_Lookback( void );
 
 /*
  * Streaming API for TA_OBV — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_OBV_Stream TA_OBV_Stream;
 
@@ -12837,7 +12712,6 @@ TA_LIB_API int TA_PERCENTILE_Lookback( int           optInTimePeriod, /* From 2 
 
 /*
  * Streaming API for TA_PERCENTILE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PERCENTILE_Stream TA_PERCENTILE_Stream;
 
@@ -12922,7 +12796,6 @@ TA_LIB_API int TA_PERCENTRANK_Lookback( int           optInTimePeriod );  /* Fro
 
 /*
  * Streaming API for TA_PERCENTRANK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PERCENTRANK_Stream TA_PERCENTRANK_Stream;
 
@@ -13011,7 +12884,6 @@ TA_LIB_API int TA_PLUS_DI_Lookback( int           optInTimePeriod );  /* From 1 
 
 /*
  * Streaming API for TA_PLUS_DI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PLUS_DI_Stream TA_PLUS_DI_Stream;
 
@@ -13098,7 +12970,6 @@ TA_LIB_API int TA_PLUS_DM_Lookback( int           optInTimePeriod );  /* From 1 
 
 /*
  * Streaming API for TA_PLUS_DM — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PLUS_DM_Stream TA_PLUS_DM_Stream;
 
@@ -13194,7 +13065,6 @@ TA_LIB_API int TA_PPO_Lookback( int           optInFastPeriod, /* From 2 to 1000
 
 /*
  * Streaming API for TA_PPO — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PPO_Stream TA_PPO_Stream;
 
@@ -13273,7 +13143,6 @@ TA_LIB_API int TA_PVI_Lookback( void );
 
 /*
  * Streaming API for TA_PVI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PVI_Stream TA_PVI_Stream;
 
@@ -13369,7 +13238,6 @@ TA_LIB_API int TA_PVO_Lookback( int           optInFastPeriod, /* From 2 to 1000
 
 /*
  * Streaming API for TA_PVO — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PVO_Stream TA_PVO_Stream;
 
@@ -13448,7 +13316,6 @@ TA_LIB_API int TA_PVT_Lookback( void );
 
 /*
  * Streaming API for TA_PVT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_PVT_Stream TA_PVT_Stream;
 
@@ -13535,7 +13402,6 @@ TA_LIB_API int TA_QSTICK_Lookback( int           optInTimePeriod );  /* From 1 t
 
 /*
  * Streaming API for TA_QSTICK — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_QSTICK_Stream TA_QSTICK_Stream;
 
@@ -13620,7 +13486,6 @@ TA_LIB_API int TA_RMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_RMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_RMA_Stream TA_RMA_Stream;
 
@@ -13705,7 +13570,6 @@ TA_LIB_API int TA_ROC_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_ROC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ROC_Stream TA_ROC_Stream;
 
@@ -13790,7 +13654,6 @@ TA_LIB_API int TA_ROCP_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_ROCP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ROCP_Stream TA_ROCP_Stream;
 
@@ -13875,7 +13738,6 @@ TA_LIB_API int TA_ROCR_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_ROCR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ROCR_Stream TA_ROCR_Stream;
 
@@ -13960,7 +13822,6 @@ TA_LIB_API int TA_ROCR100_Lookback( int           optInTimePeriod );  /* From 1 
 
 /*
  * Streaming API for TA_ROCR100 — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ROCR100_Stream TA_ROCR100_Stream;
 
@@ -14045,7 +13906,6 @@ TA_LIB_API int TA_RSI_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_RSI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_RSI_Stream TA_RSI_Stream;
 
@@ -14136,7 +13996,6 @@ TA_LIB_API int TA_RVI_Lookback( int           optInTimePeriod, /* From 1 to 1000
 
 /*
  * Streaming API for TA_RVI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_RVI_Stream TA_RVI_Stream;
 
@@ -14221,7 +14080,6 @@ TA_LIB_API int TA_RVOL_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_RVOL — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_RVOL_Stream TA_RVOL_Stream;
 
@@ -14314,7 +14172,6 @@ TA_LIB_API int TA_SAR_Lookback( double        optInAcceleration, /* From 0 to 30
 
 /*
  * Streaming API for TA_SAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SAR_Stream TA_SAR_Stream;
 
@@ -14443,7 +14300,6 @@ TA_LIB_API int TA_SAREXT_Lookback( double        optInStartValue, /* From -30000
 
 /*
  * Streaming API for TA_SAREXT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SAREXT_Stream TA_SAREXT_Stream;
 
@@ -14520,7 +14376,6 @@ TA_LIB_API int TA_SIN_Lookback( void );
 
 /*
  * Streaming API for TA_SIN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SIN_Stream TA_SIN_Stream;
 
@@ -14597,7 +14452,6 @@ TA_LIB_API int TA_SINH_Lookback( void );
 
 /*
  * Streaming API for TA_SINH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SINH_Stream TA_SINH_Stream;
 
@@ -14682,7 +14536,6 @@ TA_LIB_API int TA_SMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_SMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SMA_Stream TA_SMA_Stream;
 
@@ -14791,7 +14644,6 @@ TA_LIB_API int TA_SMI_Lookback( int           optInTimePeriod, /* From 2 to 1000
 
 /*
  * Streaming API for TA_SMI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SMI_Stream TA_SMI_Stream;
 
@@ -14868,7 +14720,6 @@ TA_LIB_API int TA_SQRT_Lookback( void );
 
 /*
  * Streaming API for TA_SQRT — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SQRT_Stream TA_SQRT_Stream;
 
@@ -14959,7 +14810,6 @@ TA_LIB_API int TA_STDDEV_Lookback( int           optInTimePeriod, /* From 2 to 1
 
 /*
  * Streaming API for TA_STDDEV — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_STDDEV_Stream TA_STDDEV_Stream;
 
@@ -15073,7 +14923,6 @@ TA_LIB_API int TA_STOCH_Lookback( int           optInFastK_Period, /* From 1 to 
 
 /*
  * Streaming API for TA_STOCH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_STOCH_Stream TA_STOCH_Stream;
 
@@ -15175,7 +15024,6 @@ TA_LIB_API int TA_STOCHF_Lookback( int           optInFastK_Period, /* From 1 to
 
 /*
  * Streaming API for TA_STOCHF — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_STOCHF_Stream TA_STOCHF_Stream;
 
@@ -15279,7 +15127,6 @@ TA_LIB_API int TA_STOCHRSI_Lookback( int           optInTimePeriod, /* From 2 to
 
 /*
  * Streaming API for TA_STOCHRSI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_STOCHRSI_Stream TA_STOCHRSI_Stream;
 
@@ -15358,7 +15205,6 @@ TA_LIB_API int TA_SUB_Lookback( void );
 
 /*
  * Streaming API for TA_SUB — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SUB_Stream TA_SUB_Stream;
 
@@ -15443,7 +15289,6 @@ TA_LIB_API int TA_SUM_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_SUM — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SUM_Stream TA_SUM_Stream;
 
@@ -15540,7 +15385,6 @@ TA_LIB_API int TA_SUPERTREND_Lookback( int           optInTimePeriod, /* From 2 
 
 /*
  * Streaming API for TA_SUPERTREND — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_SUPERTREND_Stream TA_SUPERTREND_Stream;
 
@@ -15631,7 +15475,6 @@ TA_LIB_API int TA_T3_Lookback( int           optInTimePeriod, /* From 1 to 10000
 
 /*
  * Streaming API for TA_T3 — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_T3_Stream TA_T3_Stream;
 
@@ -15708,7 +15551,6 @@ TA_LIB_API int TA_TAN_Lookback( void );
 
 /*
  * Streaming API for TA_TAN — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TAN_Stream TA_TAN_Stream;
 
@@ -15785,7 +15627,6 @@ TA_LIB_API int TA_TANH_Lookback( void );
 
 /*
  * Streaming API for TA_TANH — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TANH_Stream TA_TANH_Stream;
 
@@ -15870,7 +15711,6 @@ TA_LIB_API int TA_TEMA_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_TEMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TEMA_Stream TA_TEMA_Stream;
 
@@ -15951,7 +15791,6 @@ TA_LIB_API int TA_TRANGE_Lookback( void );
 
 /*
  * Streaming API for TA_TRANGE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TRANGE_Stream TA_TRANGE_Stream;
 
@@ -16036,7 +15875,6 @@ TA_LIB_API int TA_TRIMA_Lookback( int           optInTimePeriod );  /* From 1 to
 
 /*
  * Streaming API for TA_TRIMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TRIMA_Stream TA_TRIMA_Stream;
 
@@ -16121,7 +15959,6 @@ TA_LIB_API int TA_TRIX_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_TRIX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TRIX_Stream TA_TRIX_Stream;
 
@@ -16206,7 +16043,6 @@ TA_LIB_API int TA_TSF_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_TSF — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TSF_Stream TA_TSF_Stream;
 
@@ -16297,7 +16133,6 @@ TA_LIB_API int TA_TSI_Lookback( int           optInFirstPeriod, /* From 2 to 100
 
 /*
  * Streaming API for TA_TSI — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TSI_Stream TA_TSI_Stream;
 
@@ -16378,7 +16213,6 @@ TA_LIB_API int TA_TYPPRICE_Lookback( void );
 
 /*
  * Streaming API for TA_TYPPRICE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_TYPPRICE_Stream TA_TYPPRICE_Stream;
 
@@ -16479,7 +16313,6 @@ TA_LIB_API int TA_ULTOSC_Lookback( int           optInTimePeriod1, /* From 1 to 
 
 /*
  * Streaming API for TA_ULTOSC — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ULTOSC_Stream TA_ULTOSC_Stream;
 
@@ -16570,7 +16403,6 @@ TA_LIB_API int TA_VAR_Lookback( int           optInTimePeriod, /* From 1 to 1000
 
 /*
  * Streaming API for TA_VAR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_VAR_Stream TA_VAR_Stream;
 
@@ -16655,7 +16487,6 @@ TA_LIB_API int TA_VHF_Lookback( int           optInTimePeriod );  /* From 2 to 1
 
 /*
  * Streaming API for TA_VHF — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_VHF_Stream TA_VHF_Stream;
 
@@ -16746,7 +16577,6 @@ TA_LIB_API int TA_VORTEX_Lookback( int           optInTimePeriod );  /* From 1 t
 
 /*
  * Streaming API for TA_VORTEX — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_VORTEX_Stream TA_VORTEX_Stream;
 
@@ -16829,7 +16659,6 @@ TA_LIB_API int TA_VWAP_Lookback( void );
 
 /*
  * Streaming API for TA_VWAP — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_VWAP_Stream TA_VWAP_Stream;
 
@@ -16916,7 +16745,6 @@ TA_LIB_API int TA_VWMA_Lookback( int           optInTimePeriod );  /* From 1 to 
 
 /*
  * Streaming API for TA_VWMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_VWMA_Stream TA_VWMA_Stream;
 
@@ -16997,7 +16825,6 @@ TA_LIB_API int TA_WAD_Lookback( void );
 
 /*
  * Streaming API for TA_WAD — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_WAD_Stream TA_WAD_Stream;
 
@@ -17078,7 +16905,6 @@ TA_LIB_API int TA_WCLPRICE_Lookback( void );
 
 /*
  * Streaming API for TA_WCLPRICE — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_WCLPRICE_Stream TA_WCLPRICE_Stream;
 
@@ -17167,7 +16993,6 @@ TA_LIB_API int TA_WILLR_Lookback( int           optInTimePeriod );  /* From 2 to
 
 /*
  * Streaming API for TA_WILLR — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_WILLR_Stream TA_WILLR_Stream;
 
@@ -17252,7 +17077,6 @@ TA_LIB_API int TA_WMA_Lookback( int           optInTimePeriod );  /* From 1 to 1
 
 /*
  * Streaming API for TA_WMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_WMA_Stream TA_WMA_Stream;
 
@@ -17337,7 +17161,6 @@ TA_LIB_API int TA_ZLEMA_Lookback( int           optInTimePeriod );  /* From 1 to
 
 /*
  * Streaming API for TA_ZLEMA — incremental per-bar evaluation.
- * See docs/streaming-api-design.md.
  */
 typedef struct TA_ZLEMA_Stream TA_ZLEMA_Stream;
 

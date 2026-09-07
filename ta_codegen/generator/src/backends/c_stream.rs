@@ -993,7 +993,7 @@ pub fn header_decls(func: &FuncDef, lookup: &dyn streaming::CalleeLookup) -> Str
         advance_signature(func)
     );
     format!(
-        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n * See docs/streaming-api-design.md.\n{note} */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n{}{}{}{}{}",
+        "\n/*\n * Streaming API for TA_{n} — incremental per-bar evaluation.\n{note} */\ntypedef struct TA_{n}_Stream TA_{n}_Stream;\n\n{};\n\n{};\n\n{};\n\n{};\n{}{}{}{}{}",
         open_signature(func),
         update_signature(func),
         peek_signature(func),

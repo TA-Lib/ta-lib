@@ -2944,7 +2944,32 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \n\
          #ifndef TA_DEFS_H\n\
          \x20  #include \"ta_defs.h\"\n\
-         #endif\n\n\n",
+         #endif\n\
+         \n\
+         /* The streaming API: what every TA_<NAME>_Open / Update / Peek / Close\n\
+         \x20* quartet below promises. A stream evaluates one bar at a time and is\n\
+         \x20* bit-identical to the batch function over the same series.\n\
+         \x20*\n\
+         \x20* Open( &stream, inputs..., historyLen, params..., out ) warms up on\n\
+         \x20* historyLen bars and hands back a handle. It needs MORE than\n\
+         \x20* TA_<NAME>_Lookback() bars and answers TA_INSUFFICIENT_HISTORY otherwise --\n\
+         \x20* the one recoverable code, meaning send more bars rather than fix the call.\n\
+         \x20* The handle is written only on TA_SUCCESS, and every handle so obtained must\n\
+         \x20* be closed.\n\
+         \x20*\n\
+         \x20* Update( stream, bar..., out ) commits one CLOSED bar and answers its value.\n\
+         \x20* A bar that is not finite is refused with TA_BAD_PARAM and nothing moves --\n\
+         \x20* re-feed the corrected bar, or call TA_<NAME>_Advance to count it and carry\n\
+         \x20* on.\n\
+         \x20*\n\
+         \x20* Peek( stream, bar..., out ) answers what Update would and commits nothing;\n\
+         \x20* the handle it takes is const.\n\
+         \x20*\n\
+         \x20* Close( stream ) frees the handle.\n\
+         \x20*\n\
+         \x20* The streaming pages on ta-lib.org carry the rest.\n\
+         \x20*/\n\
+\n\n",
     );
 
     // Emit all function prototypes.
