@@ -8568,7 +8568,10 @@ fn emit_csharp_sv_func(
     for (i, i_is_int) in out_is_int.iter().enumerate() {
         for (j, j_is_int) in out_is_int.iter().enumerate().skip(i + 1) {
             if i_is_int != j_is_int {
-                continue; // different element types cannot alias
+                // Expressible — `MemoryMarshal.Cast` lays a `Span<int>` over a
+                // `Span<double>` — but not probed here: SUPERTREND is the
+                // corpus's only mixed-type pair and its own suite covers it.
+                continue;
             }
             let mut aargs = String::new();
             for k in 0..n_out {

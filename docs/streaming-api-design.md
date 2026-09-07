@@ -266,8 +266,9 @@ Shape rules that are not visible in those lines:
   already emits.
 - `OpenAndFill` rejects output↔input and output↔output aliasing by reference
   equality in Java (arrays are identical or disjoint, so that is complete) and by
-  `ReferenceEquals` in C#, which additionally compiles for cross-typed
-  `double[]`/`int[]` output pairs where `==` would not.
+  `Span<T>.Overlaps` in C#, which additionally catches the PARTIAL overlap Java
+  cannot express; a cross-typed `double`/`int` pair goes through
+  `MemoryMarshal.AsBytes`, which is what makes the two comparable at all.
 - `Integer.MIN_VALUE` keeps its batch meaning — use the documented default — in a
   streaming open, and the gate asserts `open(MIN_VALUE) == open(default)`
   bitwise.

@@ -834,17 +834,20 @@ C — and C is the one language where the check is not merely expensive but not
 straightforwardly expressible. Java and Rust satisfy the stronger rule for free by
 making the state unreachable, which is not the same as enforcing it.
 
-**Outputs of different element types: C compares them, the other three cannot.**
-A `double` output and an `int` output can only be the same buffer through a cast,
-and three of the four backends cannot express the comparison at all —
-`double[] == int[]` is "incomparable types" in Java, `*const f64 == *const i32`
-is a type error in Rust, and C#'s `Overlaps` is not defined across element types.
-In C the pair is expressible and **is** checked: the guard compares both through
-`const void *`, which is well defined and is not the `double * == int *`
-constraint violation that reading suggests. C's streaming frames have always done
-this; the batch tier joined them with `SUPERTREND` (#272).
+**Outputs of different element types: C and C# compare them, Java and Rust cannot.**
+A `double` output and an `int` output can only be the same buffer through a
+reinterpreting cast, which two of the four backends can express and check:
+C compares both through `const void *` — well defined, and not the
+`double * == int *` constraint violation that reading suggests — and C# compares
+the byte ranges through `MemoryMarshal.AsBytes`, because `MemoryMarshal.Cast`
+lets a caller lay a `Span<int>` over a `Span<double>` without `unsafe`. The other
+two do not: `double[] == int[]` is "incomparable types" in Java, and Rust has
+nothing to detect — safe code has no `MemoryMarshal.Cast` analogue, so a caller
+cannot lay the two over one allocation to begin with. C's streaming frames have
+always cast; its batch tier joined them with `SUPERTREND` (#272), and both C#
+tiers with #386.
 
-**Why C is allowed to detect more here.** Two claims used to close this paragraph
+**Why C and C# are allowed to detect more here.** Two claims used to close this paragraph
 and both are retired: that nothing in the corpus mixes the two types, and that
 the frames assert nothing does. `SUPERTREND` mixes them, and the frames carry no
 per-function `outIsInteger` flag at all — `ta_variant_frame` indexes `outReal[]`
@@ -855,13 +858,15 @@ pair answers `TA_BAD_PARAM`, and the one pair a caller has to cast to build
 answered `TA_SUCCESS` and wrote through both. Detecting it is the same asymmetry
 C# already carries below for a partial input↔output overlap — a superset of the
 guarantee, kept because the language can answer the question cheaply. **Callers
-must not rely on it**, for the same reason: three backends cannot say it.
+must not rely on it**, for the same reason: Java and Rust cannot say it.
 
-**Still not detected, in any backend:** two outputs of different types that
-*partially* overlap. That is rule N8, and it is not special to mixed types —
-`TA_BBANDS` with its three bands one element apart returns `TA_SUCCESS` and
-writes a wrong upper band on every bar, no cast required. B6 catches buffer
-identity; everything finer is unspecified.
+**Still not detected in C, Java or Rust:** two outputs that *partially* overlap.
+That is rule N8, and it is not special to mixed types — `TA_BBANDS` with its
+three bands one element apart returns `TA_SUCCESS` and writes a wrong upper band
+on every bar, no cast required. B6 catches buffer identity; everything finer is
+unspecified. C# is the exception: `Overlaps` is a range test, so it rejects a
+partial output↔output overlap as well, cross-typed pairs included — the same
+superset it carries for input↔output below, and relied on no more than that one.
 
 **Test coverage:** `checkOutputAliasRejected` (`test_abstract.c`) sweeps every
 ordered output pair of every function, cross-typed pairs included, binding both

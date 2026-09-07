@@ -992,17 +992,10 @@ fn gen_func_inner(
         // A nullable operand is guarded non-NULL first (a dropped output aliases
         // nothing; two NULLs would otherwise compare equal and spuriously reject).
         //
-        // A CROSS-TYPED pair is compared too, through `const void *`. `double * ==
-        // int *` is the constraint violation, not the question: the cast is well
-        // defined, and this backend's own streaming frames have always used it
-        // (`TA_<N>_OpenAndFill`). Java and Rust cannot express the comparison and
-        // C#'s `Overlaps` is not defined across element types, so C detects one
-        // case they cannot — the same asymmetry C# already carries for a partial
-        // input/output overlap, and preferred over letting a caller who points a
-        // `double *` and an `int *` at one buffer get silent corruption where
-        // every same-typed pair gets `TA_BAD_PARAM`. Reachable since SUPERTREND
-        // (#272) made the corpus mix the two. Appendix E of
-        // docs/error-handling-spec.md, #262.
+        // A CROSS-TYPED pair is compared too, through `const void *`: `double * ==
+        // int *` is the constraint violation, not the question, and the cast is
+        // well defined. Reachable since SUPERTREND (#272) made the corpus mix the
+        // two. Appendix E of docs/error-handling-spec.md, #262.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {

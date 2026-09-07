@@ -73,10 +73,10 @@ pub fn stream_type_name(func: &FuncDef) -> String {
 /// The output pairs the distinctness guard (#108) compares: every pair of the
 /// same element type.
 ///
-/// A cross-typed pair is skipped, as the batch emitters and both C# tiers skip
-/// it: `*const f64` and `*const i32` are not comparable, and safe code cannot
-/// lay a `&mut [f64]` over a `&mut [i32]` to begin with. Appendix E of
-/// `docs/error-handling-spec.md`, #262.
+/// A cross-typed pair is skipped because safe code cannot lay a `&mut [f64]`
+/// over a `&mut [i32]` to begin with, so there is nothing to detect — not
+/// because the compare is unspellable (both `as *const u8` would do).
+/// Appendix E of `docs/error-handling-spec.md`, #262.
 fn distinct_output_pairs(func: &FuncDef) -> Vec<(String, String)> {
     let mut pairs = Vec::new();
     for i in 0..func.outputs.len() {

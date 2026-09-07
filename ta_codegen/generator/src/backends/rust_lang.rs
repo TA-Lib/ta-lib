@@ -992,10 +992,11 @@ fn gen_guarded_func(
         for i in 0..func.outputs.len() {
             for j in (i + 1)..func.outputs.len() {
                 let (a, b) = (&func.outputs[i], &func.outputs[j]);
-                // Cross-typed pairs are skipped: `*const f64` and `*const i32`
-                // are not comparable, and safe code cannot lay a `&mut [f64]`
-                // over a `&mut [i32]` to begin with. All four backends now skip
-                // them — Appendix E of `docs/error-handling-spec.md`, #262.
+                // Cross-typed pairs are skipped because safe code cannot lay
+                // a `&mut [f64]` over a `&mut [i32]` to begin with, so there is
+                // nothing to detect — not because the compare is unspellable
+                // (both `as *const u8` would do). Appendix E of
+                // `docs/error-handling-spec.md`, #262.
                 if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
                     continue;
                 }
