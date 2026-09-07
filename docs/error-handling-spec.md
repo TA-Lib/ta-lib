@@ -879,7 +879,10 @@ onto one buffer and requiring `TA_BAD_PARAM`.
 `if (outReal.Overlaps(inReal) && outReal != inReal)`, which rejects a partial
 input↔output overlap while still allowing whole-buffer in place. That is a superset
 of the guarantee, kept because it costs one call on a type that already answers the
-question. **Callers must not rely on it**: the same call is unspecified in C, and
+question. Its `float` overload is stricter again: a `float` input and a `double`
+output are never the same span, so there is no in-place case to carve out and ANY
+overlap between them is rejected, byte range against byte range (#386).
+**Callers must not rely on either**: the same call is unspecified in C, and
 inexpressible in Java and Rust. If uniformity is ever preferred over the extra
 safety, removing it is the change — not adding the check elsewhere.
 

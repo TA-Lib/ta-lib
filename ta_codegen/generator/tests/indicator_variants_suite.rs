@@ -874,10 +874,10 @@ fn metadata_price_setter_validates_before_writing() {
 /// so a half-applied change — one site the emitter moved and one it did not —
 /// fails rather than passing on the half that moved.
 ///
-/// BOTH tiers, because `rust_lang::generate` emits only the batch one: SAR,
-/// SAREXT and STOCH cross-call from their streaming `<N>_OpenImpl` as well, and
-/// those three sites have no other structural cover — their only runtime cover is
-/// a `stream_verify` leg, which a PR run reaches none of.
+/// Both tiers: SAR, SAREXT and STOCH cross-call from their streaming
+/// `<N>_OpenImpl` as well, and those three sites have no other structural cover —
+/// their only runtime cover is a `stream_verify` leg, which a PR run reaches
+/// none of.
 #[test]
 fn rust_cross_calls_target_the_public_tier() {
     use ta_codegen_lib::streaming::CalleeLookup;
@@ -917,7 +917,7 @@ fn rust_cross_calls_target_the_public_tier() {
             continue;
         }
         // `rust_lang::generate` already appends the stream section for a
-        // streamable function, so appending it again double-counted every
+        // streamable function; appending it again double-counted every
         // stream-tier site below and halved what the floor actually demanded.
         let rust = generate_all(&func, &enums).rust;
         callers += 1;

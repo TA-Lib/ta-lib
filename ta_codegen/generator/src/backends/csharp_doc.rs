@@ -27,9 +27,10 @@ use crate::ir::{DocDef, EnumDef, FuncDef, OptInput, Output, ParamType};
 /// a `double` output are never the same span.
 fn aliasing_exception_text(single_precision: bool) -> &'static str {
     if single_precision {
-        "Two output buffers overlap, or an output overlaps an input. No output can \
-         BE an input in this overload — their element types differ — so there is no \
-         in-place case to allow and any overlap at all is rejected."
+        "Two output buffers overlap, or an output overlaps an input. An output and a \
+         real input never share an element type in this overload, so the two can never \
+         be the same span: there is no in-place case to allow, and any overlap of their \
+         byte ranges is rejected."
     } else {
         "Two output buffers overlap, or an output partially overlaps an input. \
          Computing wholly in place (an output that IS an input) is allowed."

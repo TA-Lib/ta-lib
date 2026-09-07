@@ -405,9 +405,10 @@ public partial class Core
    /// it is too short whenever the range produces a value, and fine when it
    /// produces none, and on an output this function documents as declinable it
    /// is how you decline.</exception>
-   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. No output can
-   /// BE an input in this overload — their element types differ — so there is no
-   /// in-place case to allow and any overlap at all is rejected.</exception>
+   /// <exception cref="System.ArgumentException">Two output buffers overlap, or an output overlaps an input. An output and
+   /// a real input never share an element type in this overload, so the two can
+   /// never be the same span: there is no in-place case to allow, and any
+   /// overlap of their byte ranges is rejected.</exception>
    public OutRange PPO( int startIdx,
                         int endIdx,
                         ReadOnlySpan<float> inReal,

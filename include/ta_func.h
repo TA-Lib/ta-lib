@@ -57,11 +57,13 @@ extern "C" {
  * bit-identical to the batch function over the same series.
  *
  * Open( &stream, inputs..., historyLen, params..., out ) warms up on
- * historyLen bars and hands back a handle. It needs MORE than
- * TA_<NAME>_Lookback() bars and answers TA_INSUFFICIENT_HISTORY otherwise --
- * the one recoverable code, meaning send more bars rather than fix the call.
- * The handle is written only on TA_SUCCESS, and every handle so obtained must
- * be closed.
+ * historyLen bars and hands back a handle. It wants at least one bar --
+ * fewer is TA_OUT_OF_RANGE_START_INDEX -- and MORE than
+ * TA_<NAME>_Lookback() of them; short of that it answers
+ * TA_INSUFFICIENT_HISTORY, the one recoverable code, meaning send more bars
+ * rather than fix the call. A handle it returns must be closed; a FAILED
+ * Open sets the handle to NULL rather than leaving it alone, so do not open
+ * into a variable still holding a live one.
  *
  * Update( stream, bar..., out ) commits one CLOSED bar and answers its value.
  * A bar that is not finite is refused with TA_BAD_PARAM and nothing moves --
