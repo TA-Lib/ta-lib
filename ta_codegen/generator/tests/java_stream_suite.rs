@@ -461,48 +461,70 @@ fn test_java_adxr_sub_lag_ring() {
 // Emit ratchet
 // ---------------------------------------------------------------------------
 
-/// Every YAML stream-flagged function emits a Java stream section — the
-/// terminal count is floored (the Rust suite's discovery-floor pattern) so a
-/// silently-skipped tier, or a parser regression dropping `stream` flags, can
-/// never read as green (the server set-parity gate is the runtime twin). A
-/// floor rather than an exact pin: adding a stream function must not fail
-/// this suite.
+/// Every stream-flagged function emits a Java stream section — the sweep names
+/// the first that does not.
+///
+/// Two vacuities, and neither assertion closes the other's. The CORPUS axis is
+/// a floor: a tree that lost most of its YAML must not pass by sweeping three
+/// functions. The PARSER axis is an identity against a count taken WITHOUT
+/// `parse_yaml`, because a regression that stopped setting the flag shrinks the
+/// sweep and both sides of a floor together.
 #[test]
 fn test_java_stream_emit_ratchet() {
     let registry = Registry::from_dir(&input_dir());
     let helpers = HelperRegistry::from_dir(&input_dir());
     let enums = parser::enums::load_enums(&input_dir().join("enums.yaml"));
-    let mut emitted = 0usize;
     let mut total = 0usize;
+    for name in streaming_indicators() {
+        let dir = input_dir().join(&name);
+        let mut func = parser::yaml::parse_yaml(&dir.join(format!("{name}.yaml")));
+        total += 1;
+        let parsed = parser::c_source::parse_c_source(&dir.join(format!("{name}.c")));
+        parser::c_source::wire_parsed_source(&mut func, &parsed);
+        let out = backends::java::generate(&func, &enums, &registry, &helpers);
+        assert!(
+            out.contains("/**** Streaming API *****/"),
+            "{name}: declared streamable but no Java stream section"
+        );
+    }
+
+    let declared = stream_flagged_yaml_count();
+    assert!(declared >= 200, "only {declared} stream-flagged yaml(s) — the corpus shrank");
+    assert_eq!(
+        total, declared,
+        "sweep saw {total} stream-flagged function(s), the yaml declares {declared} — the \
+         flag was dropped on the way through parse_yaml, leaving this suite over a smaller \
+         corpus and calling it clean"
+    );
+}
+
+/// The stream-flagged corpus counted without `parse_yaml`, so it cannot move
+/// with the mapping it is checking. Untyped rather than scanned as text: the
+/// flag list is valid YAML in several shapes, and recognising fewer would red
+/// this suite on an indicator's authoring STYLE.
+fn stream_flagged_yaml_count() -> usize {
+    let mut n = 0usize;
     for entry in std::fs::read_dir(input_dir()).expect("input dir") {
         let dir = entry.expect("entry").path();
         if !dir.is_dir() {
             continue;
         }
         let name = dir.file_name().unwrap().to_string_lossy().to_string();
-        let yaml = dir.join(format!("{name}.yaml"));
-        if !yaml.exists() {
+        let Ok(text) = std::fs::read_to_string(dir.join(format!("{name}.yaml"))) else {
             continue;
-        }
-        let mut func = parser::yaml::parse_yaml(&yaml);
-        if !func.streaming {
-            continue;
-        }
-        total += 1;
-        let parsed = parser::c_source::parse_c_source(&dir.join(format!("{name}.c")));
-        parser::c_source::wire_parsed_source(&mut func, &parsed);
-        let out = backends::java::generate(&func, &enums, &registry, &helpers);
-        if out.contains("/**** Streaming API *****/") {
-            emitted += 1;
-        } else {
-            panic!("{name}: declared streamable but no Java stream section");
+        };
+        let doc: serde_yaml::Value = serde_yaml::from_str(&text)
+            .unwrap_or_else(|e| panic!("{}: {e}", dir.display()));
+        let flags = &doc["flags"];
+        let flagged = flags.as_str() == Some("stream")
+            || flags
+                .as_sequence()
+                .is_some_and(|v| v.iter().any(|f| f.as_str() == Some("stream")));
+        if flagged {
+            n += 1;
         }
     }
-    assert_eq!(emitted, total);
-    assert!(
-        emitted >= 168,
-        "Java stream emit count fell below the 168 floor — a tier or `stream` flag was silently dropped (raise the floor deliberately as the family grows)"
-    );
+    n
 }
 
 // ---------------------------------------------------------------------------
