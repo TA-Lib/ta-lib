@@ -111,10 +111,10 @@ TA_RetCode TA_Shutdown( void );</pre>
 </p>
 <p>For example, here is how to calculate a 30-day simple moving average (SMA) of daily closing prices:</p>
 
-<pre>TA_Real    closePrice[400];
-TA_Real    out[400];
-TA_Integer outBeg;
-TA_Integer outNBElement;
+<pre>double closePrice[400];
+double out[400];
+int    outBeg;
+int    outNBElement;
 
 /* ... initialize your closing price here... */
 
@@ -138,10 +138,10 @@ the first 101 elements of out[] are written; the rest is left untouched.</p>
 <p>Here is another example. This time we calculate a 14-bar exponential moving average
 for a single price bar (say, the last of 300 bars):</p>
 
-<pre>TA_Real    closePrice[300];
-TA_Real    out;
-TA_Integer outBeg;
-TA_Integer outNBElement;
+<pre>double closePrice[300];
+double out;
+int    outBeg;
+int    outNBElement;
 
 /* ... initialize your closing price here... */
 
@@ -154,7 +154,7 @@ retCode = TA_MA( <span class="ta-arg-range">299</span>, <span class="ta-arg-rang
 <p>If you do not provide enough data to calculate even one value, outNBElement will be 0 and outBeg should be ignored.</p>
 <p>If the input and output of a TA function are of the same type, the caller can reuse the input buffer to store <b>one of the outputs</b>. The following example works:</p>
 <pre>#define BUFFER_SIZE 100
-TA_Real buffer[BUFFER_SIZE];
+double buffer[BUFFER_SIZE];
 ...
 retCode = TA_MA( <span class="ta-arg-range">0</span>, <span class="ta-arg-range">BUFFER_SIZE-1</span>,
                  <span class="ta-arg-in">&amp;buffer[0]</span>,

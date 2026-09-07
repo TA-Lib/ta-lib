@@ -52,7 +52,7 @@ TA_SMA_Close( s );
 - **Warm-up.** `Open` succeeds only if `historyLen >= TA_<NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. After `Open`, the history buffer can be freed — the stream keeps everything it needs.
 - **Closed vs forming bar.** `Update` commits state irreversibly, so use it only for **closed** bars. `Peek` returns the exact value `Update` would, but without committing — call it as often as the forming bar ticks.
 - **Parameters are fixed at `Open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are first read at `Open` and must not change during the stream's life.
-- **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. With no concurrent writer, `Peek`, `Value` and `TA_<NAME>_OutRange` read nothing but the handle — `Peek`'s `const` is load-bearing — and may run concurrently, as may `Clone`. Distinct streams — a `Clone` result included — are fully independent.
+- **Threads.** A stream is single-writer: an `Update` or `TA_<NAME>_Advance` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 
 ## Multi-input / multi-output
 
@@ -92,7 +92,7 @@ TA_SMA_Update( s, newClose, &sma );
 | `TA_<NAME>_Value` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `TA_<NAME>_Clone` | any time | an independent fork of the stream, at the same bar |
 | `TA_<NAME>_OutRange` | any time | the bars the stream has an output for — the batch range over the same bars |
-| `TA_<NAME>_Advance` | after a bar you will not feed | counts that bar and nothing else |
+| `TA_<NAME>_Advance` | after a bar you will not feed | advances the OutRange without affecting any other internal state of the stream |
 
 ```c
 double v;
@@ -104,37 +104,6 @@ TA_SMA_Clone( s, &fork );                   /* independent from here on */
 TA_SMA_OutRange( s, &begIdx, &nbElement );  /* the bars s has an output for */
 TA_SMA_Advance( s );                        /* a bar you skipped, counted */
 ```
-
-`Value` hands back what `Open` or the last `Update` already gave you: it recomputes
-nothing and takes no bar. One out-pointer per output, so a multi-output function
-answers all of them at once. `Open` seeds it, an accepted bar replaces it, and a
-bar you skip with `TA_<NAME>_Advance` holds it — a held value is that bar's output
-— while `Peek` and a rejected bar leave it alone. So it always names the bar
-`TA_<NAME>_OutRange` reports. A declinable output
-(MAMA's FAMA) is reported here even when the caller passed `NULL` for it everywhere
-else.
-
-`Clone` gives a second, independent stream at the same bar: its own copy of every
-buffer and every sub-stream, carrying the value and the range verbatim. Both
-streams must be `Close`d. It answers `TA_ALLOC_ERR` if any allocation fails,
-leaving `*clone` NULL and the original untouched. This is the only way to fork a
-live stream — the warm-up history is gone once `Open` returns, so there is
-nothing to replay into a second one — and it is what makes `Value` worth having,
-since a fork has no call that handed you its value.
-
-`TA_<NAME>_OutRange` reports the bars the stream has an output for. A stream
-opened over `historyLen` bars starts at `(lookback, historyLen - lookback)`, and
-every `Update` it accepts adds one. A rejected `Update` adds nothing, and neither
-does `Peek`. So after a stream has been carried over `nbBar` bars, by any mix of
-`Open`, `Update` and `TA_<NAME>_Advance`, this reports what the batch call over
-`(0, nbBar-1)` would. The count saturates at `TA_MAX_INDEX`.
-
-`TA_<NAME>_Advance` is how you count a bar the stream was never fed — one an
-`Update` rejected and that will not be re-fed, or a session with no print. It
-moves the range by one and nothing else: the state is untouched and `Value` keeps
-answering the previous output, which is that bar's output. Without it two streams
-on one feed drift a bar apart the moment one of them skips, so decide at the
-rejection: re-feed the bar with the corrected value, or count it here.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 

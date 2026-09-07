@@ -53,7 +53,7 @@ double provisional = s.peek(formingClose);      // state left unchanged
 - **Warm-up.** `open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
 - **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
-- **Threads.** A stream is single-writer — `update`, `peek`, `value()`, and `clone()` must not race with an `update` on the same stream. With no concurrent `update`, `peek`/`value()`/`clone()` are read-only and safe to call concurrently after safe publication. Distinct streams (including `clone()` results) are fully independent.
+- **Threads.** A stream is single-writer: `update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
 ## Multi-input / multi-output
@@ -115,7 +115,7 @@ The optional parameters and output arrays are exactly the [batch method](/api/ja
 | `stream.value()` / `stream.value(out)` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
 | `stream.outRange()` | any time | the bars the stream has an output for — the batch range over the same bars |
-| `stream.advance()` | after a bar you will not feed | counts that bar and nothing else |
+| `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```java
 Core.SmaStream s = core.smaOpen(history, 30);
@@ -126,32 +126,9 @@ OutRange r = s.outRange();          // the bars s has an output for
 s.advance();                        // a bar you skipped, counted
 ```
 
-`value()` hands back what `open` or the last `update` already gave you: it
-recomputes nothing and takes no bar. A single-output function returns `double`; a
-multi-output one takes a `Core.<Name>Out` and writes every output into it at
-once. `open` seeds it, an accepted bar replaces it, and a bar you skip with
-`advance()` holds it — a held value is that bar's output — while `peek` and a
-rejected bar leave it alone. So it always names the bar `outRange()` reports.
-
-`clone()` gives a second, independent stream at the same bar: arrays are copied and
-sub-streams cloned recursively, and the fork carries the value and the range
-verbatim. The `Core` reference is shared, because a `Core` is immutable for a
-stream's lifetime. It overrides `Object.clone()` but does not use the `Cloneable`
-protocol — the body is a copy constructor, so it needs no marker interface and
-throws no `CloneNotSupportedException`. It is the only way to fork a live stream —
-the warm-up history is gone once `open` returns — and it is what makes `value()`
-worth having, since a fork has no call that handed you its value.
-
-`outRange()` reports the bars the stream has an output for: `(lookback,
-historyLen - lookback)` at `open`, then one more for every bar `update` accepts. A
-rejected `update` adds nothing, and neither does `peek`.
-
-`advance()` counts a bar the stream was never fed — one an `update` rejected and
-that will not be re-fed, or a session with no print. It moves the range by one and
-nothing else: the state is untouched and `value()` keeps answering the previous
-output, which is that bar's output. Without it two streams on one feed drift a bar
-apart the moment one of them skips, so decide at the rejection: re-feed the bar
-with the corrected value, or count it here.
+`clone()` overrides `Object.clone()` but does not use the `Cloneable` protocol —
+the body is a copy constructor, so it needs no marker interface and throws no
+`CloneNotSupportedException`.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 

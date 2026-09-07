@@ -93,7 +93,7 @@ let v = s.update(new_close)?;
 | `stream.value()` | any time | the value(s) at the last bar the stream counted, without recomputing |
 | `stream.clone()` | any time | an independent fork of the stream, at the same bar |
 | `stream.out_range()` | any time | the bars the stream has an output for — the batch range over the same bars |
-| `stream.advance()` | after a bar you will not feed | counts that bar and nothing else |
+| `stream.advance()` | after a bar you will not feed | advances the range without affecting any other internal state of the stream |
 
 ```rust
 let v = s.value();          // the value at the last bar s counted
@@ -101,33 +101,6 @@ let mut fork = s.clone();   // independent from here on
 let r = s.out_range();      // the bars s has an output for
 s.advance();                // a bar you skipped, counted
 ```
-
-`value()` hands back what the opener or the last `update` already gave you: it
-recomputes nothing and takes no bar. It returns exactly what `update` returns —
-`f64` for a single-output function, a tuple for the rest — so a multi-output
-function answers all of them at once. The opener seeds it, an accepted bar
-replaces it, and a bar you skip with `advance()` holds it — a held value is that
-bar's output — while `peek` and a rejected bar leave it alone. So it always names
-the bar `out_range()` reports.
-
-`clone()` gives a second, independent stream at the same bar: it is the derived
-`Clone`, so every buffer and every sub-stream is copied and the fork carries the
-value and the range verbatim. Dropping either closes only that one. It is the only
-way to fork a live stream — the warm-up history is gone once the opener returns —
-and it is what makes `value()` worth having, since a fork has no call that handed
-you its value and `peek` would answer for a bar you have not committed.
-
-`out_range()` reports the bars the stream has an output for. A stream opened over
-`history.len()` bars starts at `(lookback, history.len() - lookback)`, and every
-`update` it accepts adds one. A rejected `update` adds nothing, and neither does
-`peek`.
-
-`advance()` counts a bar the stream was never fed — one an `update` rejected and
-that will not be re-fed, or a session with no print. It moves the range by one and
-nothing else: the state is untouched and `value()` keeps answering the previous
-output, which is that bar's output. Without it two streams on one feed drift a bar
-apart the moment one of them skips, so decide at the rejection: re-feed the bar
-with the corrected value, or count it here.
 
 None of the four returns a `Result`: the first three read what the stream already
 holds and `advance()` moves one number, so there is nothing for any of them to
