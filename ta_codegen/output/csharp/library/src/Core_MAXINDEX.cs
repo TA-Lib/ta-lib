@@ -105,6 +105,9 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         return RetCode.BadParam ;
+      }
       /* Identify the minimum number of price bar needed
        * to identify at least one output over the specified
        * period.
@@ -759,6 +762,9 @@ public partial class Core
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "MAXINDEX openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("MAXINDEX", "openAndFill", inReal.Length, MAXINDEX_Lookback(optInTimePeriod));
       RequireFillLength("MAXINDEX", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         throw StreamFailure("MAXINDEX", "openAndFill", RetCode.BadParam);
+      }
       return MaxindexOpenAndFillInternal(inReal, 0, optInTimePeriod, out _, out _, outInteger);
    }
 }

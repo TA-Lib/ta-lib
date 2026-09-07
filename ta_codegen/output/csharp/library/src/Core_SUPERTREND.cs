@@ -142,7 +142,10 @@ public partial class Core
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) || (outReal.Overlaps(inClose) && outReal != inClose) ) {
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger)) ) {
+         return RetCode.BadParam ;
+      }
+      if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) || (outReal.Overlaps(inClose) && outReal != inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
       outBegIdx = 0;
@@ -342,6 +345,9 @@ public partial class Core
          optInMultiplier = 3e0;
       } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) ) {
          return RetCode.BadParam;
+      }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger)) ) {
+         return RetCode.BadParam ;
       }
       outBegIdx = 0;
       outNBElement = 0;
@@ -1257,7 +1263,7 @@ public partial class Core
       RequireHistoryLength("SUPERTREND", "openAndFill", "inClose", inClose.Length, inHigh.Length);
       RequireFillLength("SUPERTREND", "openAndFill", "outReal", outReal.Length, guardOutLen);
       RequireFillLength("SUPERTREND", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) ) {
+      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger)) ) {
          throw StreamFailure("SUPERTREND", "openAndFill", RetCode.BadParam);
       }
       return SupertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, out _, out _, outReal, outInteger);

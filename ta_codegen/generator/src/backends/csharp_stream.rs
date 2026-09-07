@@ -1695,27 +1695,28 @@ fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
 /// the wrong arm and write through its own input. Rejecting overlap up front is
 /// what keeps those branches sound.
 ///
-/// Cross-typed output pairs (`Span<double>` against `Span<int>`) cannot alias
-/// and are skipped: `Overlaps` is not defined across element types, and the
-/// runtime cannot place them on the same memory anyway.
+/// Cross-typed output pairs (`Span<double>` against `Span<int>`) go through
+/// [`super::common::csharp_overlap_expr`] rather than being skipped —
+/// SUPERTREND is the corpus's only mixed-type output pair today.
 fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     let mut pairs: Vec<String> = Vec::new();
     for out in &outs {
-        // An int output cannot overlap a double input series.
-        if out_is_int(func, out) {
-            continue;
-        }
+        let out_int = out_is_int(func, out);
         for input in inputs {
-            pairs.push(format!("{out}.Overlaps({input})"));
+            // Every declared input is a real series, so a mismatch here is
+            // exactly the int-output-vs-real-input case.
+            pairs.push(super::common::csharp_overlap_expr(out, out_int, input, false));
         }
     }
     for i in 0..outs.len() {
         for b in &outs[i + 1..] {
-            if out_is_int(func, outs[i]) != out_is_int(func, b) {
-                continue;
-            }
-            pairs.push(format!("{}.Overlaps({b})", outs[i]));
+            pairs.push(super::common::csharp_overlap_expr(
+                outs[i],
+                out_is_int(func, outs[i]),
+                b,
+                out_is_int(func, b),
+            ));
         }
     }
     if pairs.is_empty() { None } else { Some(pairs.join(" || ")) }

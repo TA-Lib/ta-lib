@@ -109,6 +109,9 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+         return RetCode.BadParam ;
+      }
       /* Confirmation window countdown (replaces the absolute patternIdx guard)
        * and a cache of the 3rd candle's high/low (replaces inHigh/inLow
        * [patternIdx-1]) so nothing in the per-bar logic references the cursor.
@@ -1020,6 +1023,9 @@ public partial class Core
       RequireHistoryLength("CDLHIKKAKEMOD", "openAndFill", "inLow", inLow.Length, inOpen.Length);
       RequireHistoryLength("CDLHIKKAKEMOD", "openAndFill", "inClose", inClose.Length, inOpen.Length);
       RequireFillLength("CDLHIKKAKEMOD", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+         throw StreamFailure("CDLHIKKAKEMOD", "openAndFill", RetCode.BadParam);
+      }
       return CdlhikkakemodOpenAndFillInternal(inOpen, inHigh, inLow, inClose, 0, out _, out _, outInteger);
    }
 }

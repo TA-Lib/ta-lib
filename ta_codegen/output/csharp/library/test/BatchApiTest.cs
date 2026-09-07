@@ -51,6 +51,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using TALib;
 
 namespace TALib.Test;
@@ -754,6 +755,32 @@ public static class BatchApiTest
         Check(rb.Count > 0, "disjoint outputs still produce values");
     }
 
+    /// <summary>
+    /// #386: the aliasing guard skipped every cross-typed output pair
+    /// (`Span&lt;double&gt;` against `Span&lt;int&gt;`) on the premise that the
+    /// two element types could never share memory. `MemoryMarshal.Cast`
+    /// disproves that without `unsafe`: it reinterprets one array's bytes as a
+    /// different element type, so the two spans below ARE the same memory.
+    /// SUPERTREND is the corpus's only mixed-type output pair.
+    /// </summary>
+    private static void CrossTypedOutputOverlapIsRejected()
+    {
+        var core = new Core();
+        const int n = 64;
+        double[] hlc = Closes(n);
+        double[] shared = new double[n];
+
+        CheckThrows<ArgumentException>(
+            () => core.SUPERTREND(0, n - 1, hlc, hlc, hlc, 10, 3.0,
+                shared.AsSpan(),
+                MemoryMarshal.Cast<double, int>(shared.AsSpan())),
+            "SUPERTREND's int direction output sharing memory with its real trend output is rejected");
+
+        // Disjoint mixed-type outputs are untouched by the guard.
+        OutRange r = core.SUPERTREND(0, n - 1, hlc, hlc, hlc, 10, 3.0, new double[n], new int[n]);
+        Check(r.Count > 0, "disjoint mixed-type outputs still produce values");
+    }
+
     /// <summary>Every failure carries the code C would have returned, and the
     /// mapping back is TOTAL and LOSSLESS.</summary>
     /// <remarks>
@@ -982,6 +1009,7 @@ public static class BatchApiTest
         AnUnreadLegIsCheckedLikeAnyOther();
         AnEndIdxPastTheInputIsRejectedEvenProducingNothing();
         OverlappingBuffersAreRejected();
+        CrossTypedOutputOverlapIsRejected();
         NoUnguardedTierOnThePublicSurface();
         FloatOverloadHasTheSameShape();
         OutRangeValueSemantics();

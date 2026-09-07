@@ -50,6 +50,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using TALib;
 using TALib.Metadata;
 
@@ -412,6 +413,25 @@ public static class StreamApiTest
             _failures++;
             Console.WriteLine("  FAIL: a distinct output array must be accepted (threw " + e.GetType().Name + ")");
         }
+    }
+
+    /// <summary>
+    /// #386: the streaming aliasing guard had the same cross-typed-pair hole as
+    /// the batch one. `MemoryMarshal.Cast` reinterprets one array's bytes as a
+    /// different element type without `unsafe`, so the two spans below are the
+    /// SAME memory. SUPERTREND is the corpus's only mixed-type output pair.
+    /// </summary>
+    private static void CrossTypedOpenAndFillOverlapIsRejected()
+    {
+        var core = new Core();
+        double[] hlc = Closes(64);
+        double[] shared = new double[64];
+
+        CheckThrows<ArgumentException>(
+            () => core.SupertrendOpenAndFill(hlc, hlc, hlc, 10, 3.0,
+                shared.AsSpan(),
+                MemoryMarshal.Cast<double, int>(shared.AsSpan())),
+            "SupertrendOpenAndFill's int direction output sharing memory with its real trend output is rejected");
     }
 
     /// <summary>Empty spans — which is what a null array becomes — are named.</summary>
@@ -1411,6 +1431,7 @@ public static class StreamApiTest
         OutRangeTracksTheBatchRange();
         MisuseThrowsTheDocumentedException();
         OpenAndFillRejectsAliasing();
+        CrossTypedOpenAndFillOverlapIsRejected();
         NullArgumentsAreNamed();
         TheFillOutputBoundFromBothSides();
         ADeclinedFillOutputIsStillComputed();

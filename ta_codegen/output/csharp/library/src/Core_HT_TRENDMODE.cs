@@ -187,6 +187,9 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         return RetCode.BadParam ;
+      }
       a = 0.0962;
       b = 0.5769;
       /* Variable used for the price smoother (a weighted moving average). */
@@ -2579,6 +2582,9 @@ public partial class Core
       if( inReal.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inReal), "HT_TRENDMODE openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
       int guardOutLen = OpenFillCount("HT_TRENDMODE", "openAndFill", inReal.Length, HT_TRENDMODE_Lookback());
       RequireFillLength("HT_TRENDMODE", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
+         throw StreamFailure("HT_TRENDMODE", "openAndFill", RetCode.BadParam);
+      }
       return HtTrendmodeOpenAndFillInternal(inReal, 0, out _, out _, outInteger);
    }
 }

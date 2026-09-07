@@ -909,18 +909,23 @@ fn gen_func_inner(
         // unspellable, since an empty span is how a C# caller declines a nullable
         // output (B6a).
         //
-        // Cross-typed pairs are skipped: `Span<double>` and `Span<int>` cannot
-        // be laid over the same memory, and `Overlaps` is not defined across
-        // element types.
+        // Cross-typed pairs (`Span<double>` against `Span<int>`) go through
+        // `csharp_overlap_expr`'s byte-range compare rather than being
+        // skipped — `Overlaps` is not defined across element types, but a
+        // caller CAN place the two on the same memory (`MemoryMarshal.Cast`,
+        // or any other reinterpretation), so skipping them was a real hole.
+        // SUPERTREND is the corpus's only mixed-type output pair today.
         if func.outputs.len() >= 2 {
             let mut pairs: Vec<String> = Vec::new();
             for i in 0..func.outputs.len() {
                 for j in (i + 1)..func.outputs.len() {
                     let (a, b) = (&func.outputs[i], &func.outputs[j]);
-                    if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
-                        continue;
-                    }
-                    pairs.push(format!("{}.Overlaps({})", a.name, b.name));
+                    pairs.push(super::common::csharp_overlap_expr(
+                        &a.name,
+                        a.param_type == ParamType::Integer,
+                        &b.name,
+                        b.param_type == ParamType::Integer,
+                    ));
                 }
             }
             if !pairs.is_empty() {
@@ -957,13 +962,21 @@ fn gen_func_inner(
                     if single_precision && !i_int {
                         continue;
                     }
-                    if o_int != i_int {
-                        continue;
+                    if o_int == i_int {
+                        cross.push(format!(
+                            "({0}.Overlaps({1}) && {0} != {1})",
+                            o.name, i.name
+                        ));
+                    } else {
+                        // A real/int mismatch can still share memory via
+                        // reinterpretation (`MemoryMarshal.Cast`), and there is
+                        // no legitimate in-place algorithm across the two
+                        // element types, so any overlap here is rejected
+                        // outright — no whole-buffer-identity carve-out (a
+                        // `Span<int>` and a `Span<double>` can never be the
+                        // same span object to begin with).
+                        cross.push(super::common::csharp_overlap_expr(&o.name, o_int, &i.name, i_int));
                     }
-                    cross.push(format!(
-                        "({0}.Overlaps({1}) && {0} != {1})",
-                        o.name, i.name
-                    ));
                 }
             }
             if !cross.is_empty() {

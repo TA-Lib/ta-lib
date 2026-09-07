@@ -127,6 +127,9 @@ public partial class Core
       if( outSwingHigh.Overlaps(outSwingLow) ) {
          return RetCode.BadParam ;
       }
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
+         return RetCode.BadParam ;
+      }
       outBegIdx = 0;
       outNBElement = 0;
       lookbackTotal = FRACTAL_Lookback(optInLeftBars, optInRightBars);
@@ -925,7 +928,7 @@ public partial class Core
       RequireHistoryLength("FRACTAL", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireFillLength("FRACTAL", "openAndFill", "outSwingHigh", outSwingHigh.Length, guardOutLen);
       RequireFillLength("FRACTAL", "openAndFill", "outSwingLow", outSwingLow.Length, guardOutLen);
-      if( outSwingHigh.Overlaps(outSwingLow) ) {
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingHigh).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSwingLow).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || outSwingHigh.Overlaps(outSwingLow) ) {
          throw StreamFailure("FRACTAL", "openAndFill", RetCode.BadParam);
       }
       return FractalOpenAndFillInternal(inHigh, inLow, 0, optInLeftBars, optInRightBars, out _, out _, outSwingHigh, outSwingLow);
