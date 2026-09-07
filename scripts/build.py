@@ -672,6 +672,8 @@ def main():
                         help='check-abi: rewrite ABI.manifest to match the headers')
     parser.add_argument('--require-artifact', action='store_true',
                         help='check-abi: fail if no built library is there to read DT_SONAME from')
+    parser.add_argument('--rebaseline-format', action='store_true',
+                        help='check-abi: allow --update across an ABI.manifest format change')
     parser.add_argument('--help', '-h', action='store_true')
     args = parser.parse_args()
 
@@ -729,7 +731,8 @@ def main():
         sys.exit(subprocess.call(
             [sys.executable, os.path.join(root_dir, 'scripts', 'check_abi.py')]
             + (['--update'] if args.update else [])
-            + (['--require-artifact'] if args.require_artifact else [])))
+            + (['--require-artifact'] if args.require_artifact else [])
+            + (['--rebaseline-format'] if args.rebaseline_format else [])))
 
     if args.target == 'check-mcdc':
         sys.exit(subprocess.call(

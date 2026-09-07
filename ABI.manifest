@@ -1,7 +1,7 @@
 # TA-Lib public C ABI. Regenerate with: scripts/build.py check-abi --update
 # A diff here means the ABI moved. Put it back, or bump
 # TALIB_LIBRARY_VERSION in configure.ac -- see the rules beside it.
-format 6
+format 8
 soname libta-lib.so.1
 released-soname libta-lib.so.0
 version-info 1:0:0
@@ -161,6 +161,17 @@ macro TA_OUT_ZERO = 1024
 macro TA_REAL_DEFAULT = -3.9999999999999998e+37
 macro TA_REAL_MAX = 3.0000000000000002e+37
 macro TA_REAL_MIN = -3.0000000000000002e+37
+typedef Int32 sizeof=4 signed=1 float=0
+typedef Int64 sizeof=8 signed=1 float=0
+typedef TA_FuncFlags sizeof=4 signed=1 float=0
+typedef TA_FuncHandle sizeof=4 signed=0 float=0
+typedef TA_InputFlags sizeof=4 signed=1 float=0
+typedef TA_Integer sizeof=4 signed=1 float=0
+typedef TA_OptInputFlags sizeof=4 signed=1 float=0
+typedef TA_OutputFlags sizeof=4 signed=1 float=0
+typedef TA_Real sizeof=8 signed=1 float=1
+typedef UInt32 sizeof=4 signed=0 float=0
+typedef UInt64 sizeof=8 signed=0 float=0
 callback void (*TA_CallForEachFunc)(const TA_FuncInfo *, void *)
 function TA_RetCode TA_AC(int, int, const double *, const double *, int, int, int, int *, int *, double *)
 function TA_RetCode TA_ACCBANDS(int, int, const double *, const double *, const double *, int, int *, int *, double *, double *, double *)

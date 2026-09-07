@@ -20,6 +20,12 @@ enumerator values come from compiling a probe against the installed headers and
 running it, so padding, a widened `int`, an implicit enumerator and a reordered
 field are all visible. Parsing would see the text and miss all four.
 
+What it cannot see, stated so the claim above is not read as total: reordering
+two parameters of the SAME type. Parameter names are deliberately dropped -- a
+rename is not an ABI change and should not demand a soname bump -- so swapping
+`optInFastPeriod` and `optInSlowPeriod` leaves the recorded signature identical.
+Nothing else in this file is excluded on purpose.
+
 The surface is what the INSTALLED headers declare -- CMake's `LIB_HEADERS`, read
 from CMakeLists.txt rather than listed here -- and specifically the
 `TA_LIB_API`-marked functions. Not the `.so`'s symbol table: nothing passes
@@ -38,7 +44,7 @@ MANIFEST = "ABI.manifest"
 # measured adds surface lines, which is not an ABI change either. A format change rewrites every line,
 # which the surface comparison would otherwise read as "the ABI removed things"
 # and answer with an instruction to bump the soname for nothing.
-FORMAT = 6
+FORMAT = 8
 
 
 def repo_root() -> str:
@@ -50,15 +56,66 @@ def installed_headers(root: str) -> list:
     text = open(os.path.join(root, "CMakeLists.txt")).read()
     at = text.index("set(LIB_HEADERS")
     block = text[at:text.index(")", at)]
-    names = re.findall(r"/include/([A-Za-z0-9_.]+\.h)", block)
+    names = set(re.findall(r"/include/([A-Za-z0-9_.]+\.h)", block))
+    # Anything appended later counts too -- `set(...)` is not the whole list.
+    for m in re.finditer(r"list\s*\(\s*APPEND\s+LIB_HEADERS(.*?)\)", text, re.S):
+        names |= set(re.findall(r"/include/([A-Za-z0-9_.]+\.h)", m.group(1)))
+    # And what autotools installs, which is a separate list in three Makefile.am
+    # files. The two build systems shipping different public headers is the same
+    # class of defect as their shipping different sonames.
+    auto = set()
+    for rel in ("src/ta_abstract/Makefile.am", "src/ta_func/Makefile.am",
+                "src/ta_common/Makefile.am"):
+        path = os.path.join(root, rel)
+        if not os.path.exists(path):
+            continue
+        am = open(path).read().replace("\\\n", " ")
+        for m in re.finditer(r"^\w+_HEADERS\s*=([^\n]*)$", am, re.M):
+            auto |= set(re.findall(r"include/([A-Za-z0-9_.]+\.h)", m.group(1)))
+    if auto and auto != names:
+        sys.exit("check_abi: CMake installs %s but autotools installs %s -- the two "
+                 "build systems disagree about the public headers"
+                 % (sorted(names), sorted(auto)))
     if len(names) < 3:
-        sys.exit("check_abi: LIB_HEADERS parsed to %r -- the parse moved" % names)
-    return names
+        sys.exit("check_abi: LIB_HEADERS parsed to %r -- the parse moved" % sorted(names))
+    return sorted(names)
 
 
 def strip_comments(text: str) -> str:
     text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
     return re.sub(r"//[^\n]*", " ", text)
+
+
+def check_autotools_consumes_triple(root: str) -> None:
+    """The 2018 regression was deleting this one line, and nothing noticed for
+    seven years. CMake's half is checked against the built artifact; autotools'
+    half is only ever exercised on a machine that runs autoreconf, so it is
+    checked as text here."""
+    am = os.path.join(root, "src", "Makefile.am")
+    if not os.path.exists(am):
+        return
+    if "-version-info $(TALIB_LIBRARY_VERSION)" not in open(am).read():
+        sys.exit("check_abi: src/Makefile.am no longer passes "
+                 "`-version-info $(TALIB_LIBRARY_VERSION)`, so the autotools build "
+                 "falls back to libtool's 0:0:0 and ships libta-lib.so.0 while CMake "
+                 "ships what configure.ac declares")
+
+
+def strip_preprocessor(text: str) -> str:
+    """Directive lines blanked, continuations included, newlines kept.
+
+    Declarations are found by splitting on `;`, and a directive carries none --
+    so an unstripped `#define` runs straight into the declaration after it and
+    is recorded as part of its signature.
+    """
+    out, continued = [], False
+    for line in text.split("\n"):
+        if continued or line.lstrip().startswith("#"):
+            continued = line.rstrip().endswith("\\")
+            out.append("")
+        else:
+            out.append(line)
+    return "\n".join(out)
 
 
 def abi_triple(root: str) -> tuple:
@@ -106,10 +163,25 @@ def released_soname(root: str) -> str:
 def public_functions(headers_text: str) -> list:
     """Every TA_LIB_API declaration as return type + parameter TYPES, sorted."""
     out = set()
-    for m in re.finditer(r"TA_LIB_API\s+([^;{]+?)\(([^;{]*?)\)\s*;", headers_text, re.S):
-        head = " ".join(m.group(1).split())
-        args = ", ".join(_drop_param_name(a) for a in m.group(2).split(","))
-        out.add("%s(%s)" % (head, args))
+    # Split on `;` so a declaration is found wherever TA_LIB_API sits in it --
+    # `TA_RetCode TA_LIB_API f(int);` is legal and used to record with its
+    # return type silently dropped.
+    # A brace ends a statement too, or `extern "C" {` joins the declaration
+    # after it and is recorded as part of that signature.
+    for chunk in headers_text.replace("{", ";").replace("}", ";").split(";"):
+        if "TA_LIB_API" not in chunk:
+            continue
+        decl = " ".join(chunk.replace("TA_LIB_API", " ").split())
+        if "(" not in decl:
+            # Exported DATA: no parameter list, still part of the ABI.
+            name = decl.split()[-1].lstrip("*") if decl.split() else ""
+            if name:
+                out.add("%s /* data */" % decl)
+            continue
+        head, _, rest = decl.partition("(")
+        args = rest.rsplit(")", 1)[0]
+        out.add("%s(%s)" % (head.strip(),
+                            ", ".join(_drop_param_name(a) for a in args.split(","))))
     return sorted(out)
 
 
@@ -149,6 +221,19 @@ def public_macros(headers_text: str) -> tuple:
         else:
             skipped.append(name)
     return sorted(set(ints)), sorted(set(floats)), sorted(set(skipped))
+
+
+def public_scalar_typedefs(headers_text: str) -> list:
+    """Public scalar typedefs. Every signature spells `TA_Real`, not `double`,
+    so nothing else in this manifest moves when the typedef is retyped -- and
+    `typedef double TA_Real` -> `long long` changes the argument and return
+    class of all 2449 entry points. Measured, never recorded by name alone."""
+    out = set()
+    for m in re.finditer(r"^\s*typedef\s+((?:unsigned|signed|const)\s+)*"
+                         r"(?:int|char|long|short|float|double)(?:\s+(?:int|long))*\s+"
+                         r"(TA_\w+|U?Int(?:32|64))\s*;", headers_text, re.M):
+        out.add(m.group(2))
+    return sorted(out)
 
 
 def public_callbacks(headers_text: str) -> list:
@@ -210,7 +295,8 @@ def public_types(headers_text: str) -> tuple:
     return structs, enums
 
 
-def measure(root: str, structs: dict, enums: dict, macros: list, fmacros: list) -> list:
+def measure(root: str, structs: dict, enums: dict, macros: list, fmacros: list,
+            typedefs: list) -> list:
     """Compile a probe and read the real sizes, offsets, enumerators and macros."""
     src = ['#include <stdio.h>', '#include <stddef.h>', '#include "ta_libc.h"',
            "int main(void){",
@@ -229,6 +315,12 @@ def measure(root: str, structs: dict, enums: dict, macros: list, fmacros: list) 
         src.append('printf("macro %s = %%lld\\n", (long long)(%s));' % (name, name))
     for name in fmacros:
         src.append('printf("macro %s = %%.17g\\n", (double)(%s));' % (name, name))
+    for name in typedefs:
+        # size, signedness and floatness: enough to separate double from
+        # long long, int from unsigned int, and int from float.
+        src.append('printf("typedef %s sizeof=%%zu signed=%%d float=%%d\\n", sizeof(%s),'
+                   ' (int)((%s)-1 < (%s)0), (int)((%s)1/(%s)2 != (%s)0));'
+                   % (name, name, name, name, name, name, name), )
     src.append("return 0;}")
     with tempfile.TemporaryDirectory() as d:
         c, exe = os.path.join(d, "p.c"), os.path.join(d, "p")
@@ -247,7 +339,7 @@ def measure(root: str, structs: dict, enums: dict, macros: list, fmacros: list) 
         # A probe that died mid-run would otherwise hand back a TRUNCATED
         # surface, and `--update` would write that as the baseline.
         expected = 1 + len(structs) + len(enums) + sum(len(v) for v in enums.values()) \
-                   + len(macros) + len(fmacros)
+                   + len(macros) + len(fmacros) + len(typedefs)
         if run.returncode != 0 or len(lines) != expected:
             sys.exit("check_abi: the probe exited %d with %d of %d expected line(s) -- "
                      "the measurement is incomplete, not a clean ABI"
@@ -256,14 +348,19 @@ def measure(root: str, structs: dict, enums: dict, macros: list, fmacros: list) 
 
 
 def build_manifest(root: str) -> str:
+    check_autotools_consumes_triple(root)
     headers = installed_headers(root)
     text = strip_comments("\n".join(
         open(os.path.join(root, "include", h)).read() for h in headers))
+    # Macros need the directives; declarations and layouts must not see them, or
+    # a `#define` with no `;` runs into the declaration after it.
+    code = strip_preprocessor(text)
     c, r, a, soname = abi_triple(root)
-    structs, enums = public_types(text)
-    funcs = public_functions(text)
+    structs, enums = public_types(code)
+    funcs = public_functions(code)
     macros, fmacros, skipped = public_macros(text)
-    callbacks = public_callbacks(text)
+    callbacks = public_callbacks(code)
+    typedefs = public_scalar_typedefs(code)
     if len(funcs) < 2000 or "TA_FuncInfo" not in structs or "TA_RetCode" not in enums:
         sys.exit("check_abi: surface looks wrong (%d functions, %d structs, %d enums) "
                  "-- the header parse moved" % (len(funcs), len(structs), len(enums)))
@@ -282,7 +379,7 @@ def build_manifest(root: str) -> str:
         "headers %s" % " ".join(sorted(headers)),
         "function-count %d" % len(funcs),
     ]
-    lines += measure(root, structs, enums, macros, fmacros)
+    lines += measure(root, structs, enums, macros, fmacros, typedefs)
     lines += ["callback %s" % c for c in callbacks]
     lines += ["function %s" % f for f in funcs]
     # Named, not dropped: a macro this cannot classify is one the gate does not
@@ -291,7 +388,7 @@ def build_manifest(root: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-SURFACE = ("type ", "enum ", "macro ", "callback ", "function ")
+SURFACE = ("type ", "enum ", "macro ", "callback ", "typedef ", "function ")
 
 
 def _surface(manifest: str) -> set:
@@ -359,8 +456,11 @@ def check_built_soname(root: str, want: str, required: bool = False) -> str:
     neither notices a target property reverted to `SOVERSION ${PROJECT_VERSION}`.
     Only the artifact can say what was actually stamped."""
     import glob
-    libs = sorted(glob.glob(os.path.join(root, "cmake-build", "libta-lib.so.*.*.*")),
-                  key=os.path.getmtime)
+    # The one this soname names, not "the newest": an mtime touch on a stale
+    # artifact must not decide what gets read.
+    major = want.rsplit(".", 1)[-1]
+    libs = sorted(glob.glob(os.path.join(root, "cmake-build",
+                                         "libta-lib.so.%s.*.*" % major)))
     if not libs:
         if required:
             sys.exit("check_abi: --require-artifact was given but cmake-build/ holds no "
@@ -414,11 +514,21 @@ def main() -> int:
 
     if update:
         if not same_format:
-            # Nothing to compare: every line moved because the shape did.
+            # A re-baseline skips the surface comparison, so it cannot be
+            # reachable by editing the committed file: one character in
+            # ABI.manifest would otherwise launder a removal past the bump.
+            if "--rebaseline-format" not in sys.argv:
+                sys.exit(
+                    "check_abi: %s records format %s, this script writes format %d.\n"
+                    "  Re-baselining SKIPS the surface comparison, so it needs saying out\n"
+                    "  loud: re-run with --rebaseline-format. If you did not change the\n"
+                    "  manifest's shape, this line was edited and the ABI is unverified."
+                    % (MANIFEST,
+                       (re.search(r"^format (\d+)$", committed, re.M) or ["", "?"])[1],
+                       FORMAT))
             open(path, "w").write(fresh)
-            print("check_abi: wrote %s -- manifest FORMAT changed, so the surface was "
-                  "re-baselined rather than diffed. The ABI itself is unverified by this "
-                  "run; review the diff." % MANIFEST)
+            print("check_abi: wrote %s -- FORMAT re-baseline, surface NOT diffed. "
+                  "The ABI is unverified by this run; review the diff." % MANIFEST)
             return 0
         what, need = required_bump(committed, fresh)
         have = _triple(fresh)
