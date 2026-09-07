@@ -1323,3 +1323,49 @@ fn no_peek_frame_declares_a_local_nothing_reads() {
         offenders.join("\n")
     );
 }
+
+/// #386 (Clone had no generator-side gate): every heap buffer a handle owns
+/// (`handle_buffers`, the same struct-derived inventory the peek gates above
+/// use) must be named somewhere in `TA_<N>_Clone`'s body, or a fork shares
+/// that buffer with its source instead of duplicating it -- silent
+/// corruption the moment either handle advances, since Update on one
+/// handle then mutates memory the other reads.
+#[test]
+fn every_handle_buffer_is_duplicated_by_clone() {
+    let (mut swept, mut buffers_checked) = (0usize, 0usize);
+    let mut offenders: Vec<String> = Vec::new();
+
+    for name in indicators() {
+        let Some((func, enums)) = load(&name) else { continue };
+        let src = stream_c(&func, &enums);
+        let upper = func.name.to_uppercase();
+        let buffers = handle_buffers(&src, &upper);
+        if buffers.is_empty() {
+            continue;
+        }
+        swept += 1;
+        let Some(clone_body) = body_of(&src, &format!("TA_{upper}_Clone(")) else {
+            offenders.push(format!("{upper}: owns buffers but emits no Clone"));
+            continue;
+        };
+        for buf in &buffers {
+            buffers_checked += 1;
+            if !clone_body.contains(buf.as_str()) {
+                offenders.push(format!("{upper}: Clone never mentions `{buf}`"));
+            }
+        }
+    }
+
+    assert!(
+        swept > 100 && buffers_checked > 150,
+        "{swept} buffer-owning handle(s) over {buffers_checked} buffer(s) -- too few for this \
+         to be measuring anything"
+    );
+    assert!(
+        offenders.is_empty(),
+        "Clone omits a buffer its handle owns, so a fork shares it with the source instead of \
+         duplicating it ({} case(s)):\n{}",
+        offenders.len(),
+        offenders.join("\n")
+    );
+}
