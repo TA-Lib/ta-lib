@@ -318,13 +318,13 @@ static void oc_judge_reject( OcCtx *c, const TA_StreamEntry *e, int minParams,
     * null-check, and 200 of 201 zero the pair there (#386); MAVP's hand-rolled
     * OpenAndFill was the one guard that returned without writing, so this is
     * scoped to that one retCode rather than every rejection. */
-   if( hasOutMeta && rc == TA_INSUFFICIENT_HISTORY && nbElement != 0 )
+   if( hasOutMeta && rc == TA_INSUFFICIENT_HISTORY && ( nbElement != 0 || begIdx != 0 ) )
    {
       if( c->nbReported < 12 )
       {
          c->nbReported++;
-         printf( "  OPEN-CONTRACT TA_%s %s: retCode=%d reported outNBElement=%d\n",
-                 e->name, what, rc, nbElement );
+         printf( "  OPEN-CONTRACT TA_%s %s: retCode=%d reported outBegIdx=%d outNBElement=%d\n",
+                 e->name, what, rc, begIdx, nbElement );
       }
       c->nbCountLeaked++;
    }

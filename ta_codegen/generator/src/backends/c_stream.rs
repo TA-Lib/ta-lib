@@ -2314,8 +2314,7 @@ fn build_composed_open_bodies(
             // early exit (Close(NULL) is a no-op, so one uniform cleanup text is
             // safe on every path). The region's own out-meta writes land on
             // `dummyBegIdx`/`dummyNBElement` (see `composed_open_expr_fn`), so an
-            // INSUFFICIENT_HISTORY exit must ALSO zero the caller's real pair --
-            // #386, the class TA_MAVP_OpenAndFill and TA_ADXR_OpenAndFill shipped.
+            // INSUFFICIENT_HISTORY exit must ALSO zero the caller's real pair.
             Statement::Return { value: Some(Expr::Var(v)) } if matches!(v.as_str(), "SUCCESS" | "TA_SUCCESS") => {
                 Some(Statement::Block {
                     body: vec![

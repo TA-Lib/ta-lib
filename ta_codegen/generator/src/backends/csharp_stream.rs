@@ -1706,7 +1706,7 @@ fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
         for input in inputs {
             // Every declared input is a real series, so a mismatch here is
             // exactly the int-output-vs-real-input case.
-            pairs.push(super::common::csharp_overlap_expr(out, out_int, input, false));
+            pairs.push(super::common::csharp_overlap_expr(out, out_int, input, false, false));
         }
     }
     for i in 0..outs.len() {
@@ -1716,6 +1716,7 @@ fn alias_condition(func: &FuncDef, inputs: &[String]) -> Option<String> {
                 out_is_int(func, outs[i]),
                 b,
                 out_is_int(func, b),
+                false,
             ));
         }
     }

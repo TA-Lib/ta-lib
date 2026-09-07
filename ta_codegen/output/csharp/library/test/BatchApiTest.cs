@@ -781,6 +781,37 @@ public static class BatchApiTest
         Check(r.Count > 0, "disjoint mixed-type outputs still produce values");
     }
 
+    /// <summary>
+    /// #386 follow-up: the FLOAT overload's own aliasing check unconditionally
+    /// skipped every pair once `single_precision` was set, on top of the
+    /// int-vs-real skip above -- so an `int` output aliasing a `float` input
+    /// (also 4 bytes, so `MemoryMarshal.Cast&lt;int,float&gt;` genuinely aliases
+    /// them) went unchecked even after the double-overload fix.
+    /// </summary>
+    private static void FloatOverloadCrossTypedInputOutputOverlapIsRejected()
+    {
+        const int n = 64;
+        var core = new Core();
+        int[] shared = new int[n];
+
+        CheckThrows<ArgumentException>(
+            () => core.SUPERTREND(0, n - 1,
+                MemoryMarshal.Cast<int, float>(shared),
+                MemoryMarshal.Cast<int, float>(shared),
+                MemoryMarshal.Cast<int, float>(shared),
+                10, 3.0, new double[n], shared),
+            "the float overload's int output sharing memory with its float input is rejected");
+
+        // Disjoint float-overload mixed-type operands are untouched by the guard.
+        float[] disjointF = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            disjointF[i] = 100.0f + 10.0f * MathF.Sin(i / 7.0f);
+        }
+        OutRange r = core.SUPERTREND(0, n - 1, disjointF, disjointF, disjointF, 10, 3.0, new double[n], new int[n]);
+        Check(r.Count > 0, "disjoint float-overload mixed-type operands still produce values");
+    }
+
     /// <summary>Every failure carries the code C would have returned, and the
     /// mapping back is TOTAL and LOSSLESS.</summary>
     /// <remarks>
@@ -1010,6 +1041,7 @@ public static class BatchApiTest
         AnEndIdxPastTheInputIsRejectedEvenProducingNothing();
         OverlappingBuffersAreRejected();
         CrossTypedOutputOverlapIsRejected();
+        FloatOverloadCrossTypedInputOutputOverlapIsRejected();
         NoUnguardedTierOnThePublicSurface();
         FloatOverloadHasTheSameShape();
         OutRangeValueSemantics();

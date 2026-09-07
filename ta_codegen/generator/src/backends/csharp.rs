@@ -925,6 +925,7 @@ fn gen_func_inner(
                         a.param_type == ParamType::Integer,
                         &b.name,
                         b.param_type == ParamType::Integer,
+                        false,
                     ));
                 }
             }
@@ -955,28 +956,17 @@ fn gen_func_inner(
             for o in &func.outputs {
                 let o_int = o.param_type == ParamType::Integer;
                 for i in &func.inputs {
-                    // The float overload widens on read, so its inputs are a
-                    // different element type from the double outputs and cannot
-                    // share memory.
+                    // The float overload widens a REAL input on read, so it is a
+                    // different (and differently-sized) element type from a
+                    // double output and cannot share memory with one. An int
+                    // output is a different story: int and float are both 4
+                    // bytes, so `MemoryMarshal.Cast<float,int>` CAN alias them —
+                    // this skip must not blind that pair too (#386 follow-up).
                     let i_int = i.param_type == ParamType::Integer;
-                    if single_precision && !i_int {
+                    if single_precision && !i_int && !o_int {
                         continue;
                     }
-                    if o_int == i_int {
-                        cross.push(format!(
-                            "({0}.Overlaps({1}) && {0} != {1})",
-                            o.name, i.name
-                        ));
-                    } else {
-                        // A real/int mismatch can still share memory via
-                        // reinterpretation (`MemoryMarshal.Cast`), and there is
-                        // no legitimate in-place algorithm across the two
-                        // element types, so any overlap here is rejected
-                        // outright — no whole-buffer-identity carve-out (a
-                        // `Span<int>` and a `Span<double>` can never be the
-                        // same span object to begin with).
-                        cross.push(super::common::csharp_overlap_expr(&o.name, o_int, &i.name, i_int));
-                    }
+                    cross.push(super::common::csharp_overlap_expr(&o.name, o_int, &i.name, i_int, true));
                 }
             }
             if !cross.is_empty() {
