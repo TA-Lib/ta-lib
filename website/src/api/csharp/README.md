@@ -27,8 +27,9 @@ The C# API is not yet released. Estimated release: **Q1 2027**.
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
 <a href="#input_type">4.4 Input Type: float vs. double</a><br>
-<a href="#multithreading">4.5 Threading</a><br>
-<a href="#aot">4.6 Trimming and NativeAOT</a></p>
+<a href="#index_range">4.5 Index Range</a><br>
+<a href="#multithreading">4.6 Threading</a><br>
+<a href="#aot">4.7 Trimming and NativeAOT</a></p>
 </blockquote>
 
 <p><a href="#docs">5.0 Documentation</a></p>
@@ -200,11 +201,15 @@ var core = Core.Builder()
 
 Every indicator also has a `ReadOnlySpan<float>` overload (`float[]` converts implicitly), for callers who store series at single precision; the arithmetic is `double` either way, so both overloads produce the same output, bit-for-bit.
 
-### 4.5 Threading {#multithreading}
+### 4.5 Index Range {#index_range}
+
+`Core.MAX_INDEX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+
+### 4.6 Threading {#multithreading}
 
 A `Core` is immutable once built, so it is safe to share read-only across threads and call any indicator concurrently — no locking, and no setup ordering to respect. To change a setting, build another `Core` with `Core.Builder()`.
 
-### 4.6 Trimming and NativeAOT {#aot}
+### 4.7 Trimming and NativeAOT {#aot}
 
 The library is annotated `IsAotCompatible`, uses no reflection, and publishes clean under `PublishAot` with `TrimMode=full`.
 

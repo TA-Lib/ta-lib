@@ -26,7 +26,8 @@ The Rust API is not yet released. Estimated release: **Q1 2027**.
 <p><a href="#abstract">4.1 Abstraction Layer</a><br>
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
-<a href="#multithreading">4.4 Threading</a><br></p>
+<a href="#index_range">4.4 Index Range</a><br>
+<a href="#multithreading">4.5 Threading</a><br></p>
 </blockquote>
 
 <p><a href="#docs">5.0 Documentation</a></p>
@@ -182,8 +183,6 @@ Indexing is safe throughout: the crate is `#![forbid(unsafe_code)]`, so nothing 
 use ta_lib::abstract_api::{for_each_func, get_func_handle};
 
 // Look one up by name, or walk them all (FuncId::COUNT of them).
-// The name is matched under an ASCII case fold, so "SMA", "sma" and "Sma"
-// all resolve; `info.name` is still the canonical "SMA".
 let id = get_func_handle("SMA").expect("unknown function");
 let info = id.info();
 
@@ -246,7 +245,11 @@ let core = Core::builder()
     .build()?;
 ```
 
-### 4.4 Threading {#multithreading}
+### 4.4 Index Range {#index_range}
+
+`Core::MAX_INDEX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+
+### 4.5 Threading {#multithreading}
 
 A `Core` cannot change after `build()`, so it is `Send + Sync`. Share one read-only `Core` across threads (behind an `Arc`, say) and call indicators concurrently — no locking, and no setup ordering to respect.
 

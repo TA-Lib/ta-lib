@@ -23,7 +23,8 @@ toc: false
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
 <a href="#input_type">4.4 Input Type: float vs. double</a><br>
-<a href="#multithreading">4.5 High-performance Multi-threading</a></p>
+<a href="#index_range">4.5 Index Range</a><br>
+<a href="#multithreading">4.6 High-performance Multi-threading</a></p>
 </blockquote>
 
 ## 1.0 Introduction {#intro}
@@ -69,7 +70,7 @@ For Windows, look into <b>C:\Program Files\TA-Lib</b> for 64-bit and <b>C:\Progr
 
 ## 3.0 Calling into TA-Lib {#ta_func}
 
-<p>All of TA-Lib's public functions are declared in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include">the include/*.h headers</a>.</p>
+<p>All of TA-Lib's public functions are declared in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include">headers</a>.</p>
 
 ### 3.1 Initialize and Shutdown {#init}
 
@@ -210,28 +211,17 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 
 <p>The <a href="#output_size">TA_XXXX_Lookback</a> functions are the exception to the pattern: they return an int rather than a TA_RetCode, and answer <b>-1</b> when a parameter is out of range. Check for that before using the value as an allocation size.</p>
 
-### 3.5 Index Range {#index_range}
-
-<p><b>TA_MAX_INDEX</b> is the largest value startIdx or endIdx may take: <b>100,000,000</b>. A call outside the range is rejected rather than computed:</p>
-
-| Condition | Return code |
-|-----------|-------------|
-| `startIdx < 0` or `startIdx > TA_MAX_INDEX` | `TA_OUT_OF_RANGE_START_INDEX` |
-| `endIdx < 0`, `endIdx > TA_MAX_INDEX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
-
-<p>The limit is the same number in every language binding — <code>TA_MAX_INDEX</code> in C, <code>Core::MAX_INDEX</code> in Rust, <code>Core.MAX_INDEX</code> in Java and C# — so a call is accepted or rejected identically whichever you use. It is a constant rather than a buffer length, so the check costs two comparisons and is done before anything is read.</p>
-
-<p>For context on the size: 100 million one-minute bars is about 190 years of 24/7 data, or a century of a regular equity session. Series that long are usually tick data, where the <a href="/api/stream/">streaming API</a> is the better tool anyway.</p>
-
-<p><b>This bounds the API domain and nothing else.</b> In particular it is not a promise about accuracy. A handful of functions accumulate rounding error as the series grows, and the worst of them have lost several digits well before this limit — WMA, HMA, CORREL and the LINEARREG family are the ones to know about. No single index cap can express that, because the error depends on the data and on the period, not on the index alone. It is also unrelated to the <a href="#numerical_stability">numerical-stability categories</a>, which answer a different question: whether a value converges as history grows, not how rounding accumulates within it.</p>
-
-<p>Raising this limit later would only admit calls that are rejected today, so it is safe to treat 100,000,000 as a floor rather than a fixed contract.</p>
-
 ## 4.0 Advanced Features {#advanced}
 
 ### 4.1 Abstraction Layer {#abstract}
 
-<p>Instead of hard-coding calls to specific TA functions, an app can drive them all dynamically through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a> — looking functions up by name at runtime (the name is matched under an ASCII case fold, so <code>"SMA"</code>, <code>"sma"</code> and <code>"Sma"</code> all resolve to the same function; the name reported back stays the canonical <code>"SMA"</code>). For any function it reports the inputs it takes, its optional parameters with their valid ranges, and the outputs it produces — so you can call a function whose signature was unknown at compile time.</p>
+<p>Instead of hard-coding calls to specific TA functions, an app can look them up by name at runtime through the interface in <a href="https://github.com/TA-Lib/ta-lib/blob/main/include/ta_abstract.h">ta_abstract.h</a>. For any function it reports:</p>
+<ul>
+  <li>the inputs it takes,</li>
+  <li>its optional parameters with their valid ranges,</li>
+  <li>the outputs it produces, and</li>
+  <li>metadata about numerical properties and suggested default, range and display hints.</li>
+</ul>
 <p>This is what you want when the function or its parameters are not fixed in your code. Typical uses:</p>
 <ul>
   <li>Generating glue code or wrappers for higher-level languages.</li>
@@ -280,7 +270,20 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 <p>Some apps already hold their price data as float. The TA_S_XXXX functions consume such arrays directly (no conversion copy needed) while keeping every intermediate calculation in double.
 </p>
 
-### 4.5 High-performance Multi-threading {#multithreading}
+### 4.5 Index Range {#index_range}
+
+<p><b>TA_MAX_INDEX</b> is the largest value startIdx or endIdx may take: <b>100,000,000</b>. A call outside the range is rejected rather than computed:</p>
+
+| Condition | Return code |
+|-----------|-------------|
+| `startIdx < 0` or `startIdx > TA_MAX_INDEX` | `TA_OUT_OF_RANGE_START_INDEX` |
+| `endIdx < 0`, `endIdx > TA_MAX_INDEX`, or `endIdx < startIdx` | `TA_OUT_OF_RANGE_END_INDEX` |
+
+<p>For context on the size: 100 million one-minute bars is about 190 years of 24/7 data, or over a millennium of a regular equity session (6.5 hours/day, 252 sessions/year).</p>
+
+<p><code>TA_MAX_INDEX</code> is a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.</p>
+
+### 4.6 High-performance Multi-threading {#multithreading}
 
 <p>TA-Lib is multi-thread safe where it matters most for performance: calling the TA functions themselves (TA_SMA, TA_RSI, ...).</p>
 

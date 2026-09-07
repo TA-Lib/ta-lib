@@ -27,7 +27,8 @@ The Java API is not yet released. Estimated release: **Q1 2027**.
 <a href="#numerical_stability">4.2 Numerical Stability</a><br>
 <a href="#candle_settings">4.3 Candlestick Settings</a><br>
 <a href="#input_type">4.4 Input Type: float vs. double</a><br>
-<a href="#multithreading">4.5 Threading</a></p>
+<a href="#index_range">4.5 Index Range</a><br>
+<a href="#multithreading">4.6 Threading</a></p>
 </blockquote>
 
 <p><a href="#docs">5.0 Documentation</a></p>
@@ -151,10 +152,9 @@ The `io.github.talib.metadata` package describes every function at run time and 
 import io.github.talib.metadata.FunctionInfo;
 import io.github.talib.metadata.Functions;
 
-FunctionInfo f = Functions.byName("SMA");  // or "sma", or "Sma" -- matched
-                                           // under an ASCII case fold
+FunctionInfo f = Functions.byName("SMA");
 
-f.name();       // "SMA" -- always the canonical spelling
+f.name();       // "SMA"
 f.group();      // "Overlap Studies"
 f.hint();       // one-line description
 f.inputs();     // List<InputInfo>    -- one entry per input
@@ -214,7 +214,11 @@ Every indicator is overloaded for `float[]` inputs as well as `double[]` — the
 
 Because the two overloads differ only in the input array type, a bare `null` argument is ambiguous; cast it (`(double[]) null`) if you ever need to pass one.
 
-### 4.5 Threading {#multithreading}
+### 4.5 Index Range {#index_range}
+
+`Core.MAX_INDEX` is the largest value `startIdx` or `endIdx` may take: **100,000,000**. It's a sanity bound. Past it, a call is more likely a caller bug than a real need, and it's also untested territory for overflow and rounding error.
+
+### 4.6 Threading {#multithreading}
 
 **`Core` is immutable.** Every field is final and the settings it carries are deeply immutable, so one instance is safe to share across any number of threads with no synchronization — even when published racily (JLS 17.5 final-field semantics). There are no locks on any call path.
 
