@@ -40,7 +40,7 @@ fn load(name: &str) -> (ir::FuncDef, HashMap<String, ir::EnumDef>) {
 fn stream_c(name: &str) -> String {
     let (func, enums) = load(name);
     let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+    let helpers = HelperRegistry::from_dir(&input_dir());
     c_stream::generate(&func, &enums, &registry, &helpers)
 }
 

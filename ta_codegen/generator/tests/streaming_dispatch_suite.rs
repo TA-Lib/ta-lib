@@ -294,32 +294,19 @@ fn panic_message(err: &Box<dyn std::any::Any + Send>) -> String {
         .unwrap_or_default()
 }
 
-/// Rule B6, Appendix E: a **cross-typed** output pair is out of scope, so the
-/// distinctness guard skips it in every backend.
-///
-/// Not reachable from a fixture, which is why it is a render pin. Three of the
-/// four backends cannot even compile such a term — `double * == int *` is a
-/// constraint violation in C, `double[] == int[]` is "incomparable types" in
-/// Java, `*const f64 == *const i32` is a type error in Rust — and C# has always
-/// skipped them because `Overlaps` is not defined across element types.
-/// SYNTH12 does declare a mixed-type function now, but it cannot stand in for
-/// this pin: its cross-typed pairs are exactly the ones the emitters drop, so
-/// the fixture shows the term ABSENT and never shows it absent *for this
-/// reason*. Re-typing an output here is what makes the omission attributable.
-///
-/// MINMAXINDEX is the vehicle: two integer outputs, one of them re-typed here,
-/// which turns its single same-typed pair into a single cross-typed one. The
-/// guard must then disappear entirely rather than emit an uncompilable term.
 /// The two frame emitters subscript `outReal[]` / `outInteger[]` by the output's
 /// DECLARATION position, and describe each output's type in a per-output
 /// `TA_VOutIsInt_<N>[]`.
 ///
-/// Nothing else on the PR gate can see either property. On a type-homogeneous
-/// corpus the declaration index and a per-kind packed counter emit byte-identical
-/// text, so `regen-check` is blind to a revert, and the harnesses that would
-/// mis-read the table only run under the nightly synth gate. So this pins both
-/// against a mixed function built here — the shape SYNTH12 carries, reached
-/// without depending on the fixture, which lives outside `input/`.
+/// MINMAXINDEX is the vehicle: two integer outputs, one of them re-typed here,
+/// which is the mixed shape the property needs. SYNTH12 carries that shape too,
+/// but it lives outside `input/` and only runs under the nightly synth gate, so
+/// re-typing here is what puts the pin on the PR gate.
+///
+/// Nothing else there can see it: on a type-homogeneous corpus the declaration
+/// index and a per-kind packed counter emit byte-identical text, so
+/// `regen-check` is blind to a revert, and the harnesses that would mis-read the
+/// table are the nightly ones.
 #[test]
 fn test_frames_index_outputs_by_declaration_position() {
     let (mut func, enums) = load_indicator("minmaxindex");
@@ -361,51 +348,98 @@ fn test_frames_index_outputs_by_declaration_position() {
     );
 }
 
+/// A cross-typed output pair is compared where the language can express the
+/// comparison, and the guard vanishes whole where it cannot.
+///
+/// Two of the four can: C casts both to `const void *`, C# reinterprets both as
+/// `Span<byte>`. Java's `double[] == int[]` is "incomparable types" and Rust's
+/// `*const f64 == *const i32` is a type error, so those two emit no guard at all
+/// rather than an empty one.
+///
+/// Counted per SITE, against the same-typed rendering of the same function, and
+/// that is the whole strength of it: each backend emits the pair at more than one
+/// site, so a needle that only asks "is it compared somewhere" reads green while
+/// one site silently drops it — which is exactly what the check this replaced did
+/// after C# learned the byte-range compare (#386). The same-typed pass is also
+/// the non-vacuity floor: a backend that had stopped emitting the guard entirely
+/// would otherwise satisfy every absence below.
 #[test]
-fn test_cross_typed_output_pairs_are_not_compared() {
+fn cross_typed_output_pairs_are_compared_where_the_language_can_express_it() {
     let (mut func, enums) = load_indicator("minmaxindex");
     assert_eq!(func.outputs.len(), 2, "MINMAXINDEX declares two outputs");
     assert!(
         func.outputs.iter().all(|o| o.param_type == ir::ParamType::Integer),
-        "both are integer outputs, so the control below is a real control"
+        "both are integer outputs, so the same-typed pass is a real control"
     );
     let (a, b) = (func.outputs[0].name.clone(), func.outputs[1].name.clone());
     let registry = make_registry();
     let helpers = HelperRegistry::empty();
+    let as_bytes = |x: &str| format!("System.Runtime.InteropServices.MemoryMarshal.AsBytes({x})");
+    // Per backend: the plain spelling, and the reinterpreting one where the
+    // language has it. `None` is "cannot express a cross-typed comparison".
+    let plain = [
+        format!("{a} == {b}"),
+        format!("{a} == {b}"),
+        format!("{a}.as_ptr() == {b}.as_ptr()"),
+        format!("{a}.Overlaps({b})"),
+    ];
+    let cast = [
+        Some(format!("(const void *){a} == (const void *){b}")),
+        None,
+        None,
+        Some(format!("{}.Overlaps({})", as_bytes(&a), as_bytes(&b))),
+    ];
+    let render = |f: &ir::FuncDef| {
+        [
+            backends::c::generate(f, &enums, &registry, &helpers),
+            backends::java::generate(f, &enums, &registry, &helpers),
+            backends::rust_lang::generate(f, &enums, &registry, &helpers),
+            backends::csharp::generate(f, &enums, &registry, &helpers),
+        ]
+    };
+    let langs = ["C", "Java", "Rust", "C#"];
+    // C's own streaming frames have always cast, so a site count is plain PLUS
+    // cast in both passes — what must not move is the total.
+    let sites = |out: &str, i: usize| {
+        out.matches(&plain[i]).count()
+            + cast[i].as_ref().map_or(0, |c| out.matches(c.as_str()).count())
+    };
 
-    // Control: same-typed, so every backend compares the pair.
-    for (lang, out, needle) in [
-        ("C", backends::c::generate(&func, &enums, &registry, &helpers), format!("{a} == {b}")),
-        ("Java", backends::java::generate(&func, &enums, &registry, &helpers), format!("{a} == {b}")),
-        ("Rust", backends::rust_lang::generate(&func, &enums, &registry, &helpers), format!("{a}.as_ptr() == {b}.as_ptr()")),
-        ("C#", backends::csharp::generate(&func, &enums, &registry, &helpers), format!("{a}.Overlaps({b})")),
-    ] {
-        assert!(out.contains(&needle), "{lang}: a same-typed pair must be compared ({needle})");
-    }
-
-    // Re-type the second output. The pair is now cross-typed and must vanish.
+    let same = render(&func);
     func.outputs[1].param_type = ir::ParamType::Real;
-    for (lang, out) in [
-        ("C", backends::c::generate(&func, &enums, &registry, &helpers)),
-        ("Java", backends::java::generate(&func, &enums, &registry, &helpers)),
-        ("Rust", backends::rust_lang::generate(&func, &enums, &registry, &helpers)),
-        ("C#", backends::csharp::generate(&func, &enums, &registry, &helpers)),
-    ] {
-        for needle in [
-            format!("{a} == {b}"),
-            format!("{a}.as_ptr() == {b}.as_ptr()"),
-            format!("{a}.Overlaps({b})"),
-        ] {
-            assert!(
-                !out.contains(&needle),
-                "{lang}: a cross-typed pair must not be compared ({needle})"
-            );
+    let cross = render(&func);
+
+    for (i, lang) in langs.iter().enumerate() {
+        let (n_same, n_cross) = (sites(&same[i], i), sites(&cross[i], i));
+        assert!(n_same > 0, "{lang}: the same-typed pair is compared nowhere — the control is dead");
+        match &cast[i] {
+            Some(_) => {
+                assert_eq!(
+                    n_cross, n_same,
+                    "{lang}: re-typing one output dropped the pair at {} of {n_same} site(s); \
+                     every site that compares a same-typed pair must compare a cross-typed one",
+                    n_same.abs_diff(n_cross)
+                );
+                assert_eq!(
+                    cross[i].matches(&plain[i]).count(),
+                    0,
+                    "{lang}: a cross-typed pair must go through the reinterpreting cast, \
+                     never the plain spelling"
+                );
+            }
+            None => {
+                assert_eq!(
+                    n_cross, 0,
+                    "{lang}: cannot express a cross-typed comparison, so it must emit none"
+                );
+                // And nothing is left behind: no empty `if( )` where the guard was.
+                assert!(
+                    !cross[i].contains("if(  )") && !cross[i].contains("if  {"),
+                    "{lang}: dropping the only pair must drop the whole guard, not leave an \
+                     empty one"
+                );
+            }
         }
-        // And nothing is left behind: no empty `if( )` where the guard was.
-        assert!(
-            !out.contains("if(  )") && !out.contains("if  {"),
-            "{lang}: dropping the only pair must drop the whole guard, not leave an empty one"
-        );
     }
 }
 
@@ -1744,7 +1778,7 @@ fn test_c_back_offset_ring_writes_the_current_bar_once() {
     // possible in the first place.
     let (mut func, enums) = load_indicator("cdlonneck");
     func.streaming = true;
-    let c = backends::c::generate(&func, &enums, &make_registry(), &HelperRegistry::empty());
+    let c = backends::c::generate(&func, &enums, &make_registry(), &common::make_helpers());
     let step = step_impl_body(&c);
 
     // The ring is found by its POSITION variable, not by a hardcoded name. The
@@ -1939,7 +1973,7 @@ fn test_c_adxr_open_frees_withheld_buffer_on_oom_paths() {
     let (mut func, enums) = load_indicator("adxr");
     func.streaming = true;
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let c = backends::c::generate(&func, &enums, &registry, &helpers);
     let open = &c[c.find("TA_RetCode TA_ADXR_Open").expect("ADXR Open")..];
     for guard in [
@@ -1981,7 +2015,7 @@ fn test_c_composed_open_emits_one_null_check_per_intermediate() {
         let (mut func, enums) = load_indicator(indicator);
         func.streaming = true;
         let registry = make_registry();
-        let helpers = HelperRegistry::empty();
+        let helpers = common::make_helpers();
         let c = backends::c::generate(&func, &enums, &registry, &helpers);
         let upper = indicator.to_uppercase();
         let open_at = c

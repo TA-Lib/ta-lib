@@ -53,10 +53,8 @@ enum Lang {
 
 /// Generated source for one indicator, in one backend.
 ///
-/// `HelperRegistry::from_dir` appends `helpers` itself and fails open to an
-/// EMPTY registry on a bad path, so it takes `input/`, not `input/helpers`.
-/// With an empty registry nothing hoists and the helper-body arms — one of the
-/// five #217 source texts — would go uncovered here.
+/// `HelperRegistry::from_dir` appends `helpers` itself, so it takes `input/`,
+/// not `input/helpers`.
 fn generated(name: &str, lang: Lang) -> String {
     let (func, enums) = load_indicator(name);
     let registry = Registry::from_dir(&input_dir());

@@ -10,30 +10,50 @@ pub struct HelperRegistry {
 }
 
 impl HelperRegistry {
-    /// Build the registry by scanning `base_dir/helpers/*.c`.
+    /// Build the registry by scanning `base_dir/helpers/*.c`. `base_dir` is the
+    /// input ROOT — this appends `helpers` itself.
+    ///
+    /// Empty is never inferred: an un-inlined helper call still renders, so a
+    /// registry that quietly came up empty yields text that compiles, sweeps
+    /// and diffs cleanly while being nothing the tree ships. Say `empty()` to
+    /// mean it.
     pub fn from_dir(base_dir: &Path) -> Self {
         let mut helpers = HashMap::new();
         let helpers_dir = base_dir.join("helpers");
+        assert!(
+            helpers_dir.is_dir(),
+            "no helper directory under {} — from_dir takes the input root, not the \
+             helper directory; say HelperRegistry::empty() to mean no helpers",
+            base_dir.display()
+        );
 
-        if let Ok(entries) = std::fs::read_dir(&helpers_dir) {
-            for entry in entries.filter_map(Result::ok) {
-                let path = entry.path();
-                if path.extension().and_then(|e| e.to_str()) == Some("c") {
-                    let parsed = parse_helper_file(&path);
-                    for helper in parsed {
-                        // Report rather than overwrite: the loser of a silent
-                        // overwrite is decided by `read_dir` order, so the wrong
-                        // body would be inlined non-deterministically.
-                        let name = helper.name.clone();
-                        assert!(
-                            helpers.insert(name.clone(), helper).is_none(),
-                            "duplicate helper `{name}` in {}",
-                            helpers_dir.display()
-                        );
-                    }
+        let entries = std::fs::read_dir(&helpers_dir)
+            .unwrap_or_else(|e| panic!("cannot read {}: {e}", helpers_dir.display()));
+        for entry in entries.map(|e| {
+            e.unwrap_or_else(|err| panic!("cannot read an entry of {}: {err}", helpers_dir.display()))
+        }) {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) == Some("c") {
+                let parsed = parse_helper_file(&path);
+                for helper in parsed {
+                    // Report rather than overwrite: the loser of a silent
+                    // overwrite is decided by `read_dir` order, so the wrong
+                    // body would be inlined non-deterministically.
+                    let name = helper.name.clone();
+                    assert!(
+                        helpers.insert(name.clone(), helper).is_none(),
+                        "duplicate helper `{name}` in {}",
+                        helpers_dir.display()
+                    );
                 }
             }
         }
+
+        assert!(
+            !helpers.is_empty(),
+            "{} holds no helper .c file",
+            helpers_dir.display()
+        );
 
         HelperRegistry { helpers }
     }
@@ -546,10 +566,6 @@ mod tests {
     fn test_from_dir_loads_helpers() {
         // Use the real ta_codegen/input directory (relative to CARGO_MANIFEST_DIR).
         let base = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ta_codegen/input");
-        if !base.join("helpers").exists() {
-            // Skip if not available in CI
-            return;
-        }
         let reg = HelperRegistry::from_dir(&base);
         // The candlestick helpers file should contain at least one helper.
         // We just verify the registry is non-empty and can look up something.
@@ -562,9 +578,9 @@ mod tests {
     }
 
     #[test]
-    fn test_from_dir_nonexistent_is_empty() {
-        let reg = HelperRegistry::from_dir(Path::new("/nonexistent/path"));
-        assert!(reg.get("anything").is_none());
+    #[should_panic(expected = "from_dir takes the input root")]
+    fn test_from_dir_without_a_helper_dir_panics() {
+        let _ = HelperRegistry::from_dir(Path::new("/nonexistent/path"));
     }
 
     // -----------------------------------------------------------------------

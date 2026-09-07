@@ -50,7 +50,7 @@ fn rust_stream_section(name: &str) -> String {
     let (func, enums) = load_indicator(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
     let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::empty();
+    let helpers = HelperRegistry::from_dir(&input_dir());
     let full = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
     let start = full
         .find("/**** Streaming API *****/")

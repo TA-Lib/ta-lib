@@ -12,7 +12,6 @@ use common::{
 };
 use std::collections::BTreeSet;
 use ta_codegen_lib::backends;
-use ta_codegen_lib::helper_registry::HelperRegistry;
 use ta_codegen_lib::ir;
 use ta_codegen_lib::streaming;
 
@@ -38,7 +37,7 @@ fn test_composed_open_fuses_every_sub_call() {
         "stoch", "stochf", "adxr", "stochrsi", "apo",
     ];
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let mut fused_total = 0usize;
     let mut unfused_total = 0usize;
 
@@ -120,7 +119,7 @@ fn test_composed_open_fuses_every_sub_call() {
 #[test]
 fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let enums = load_enums();
     let mut checked = 0usize;
 
@@ -231,7 +230,7 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
 #[test]
 fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let enums = load_enums();
     let mut checked = 0usize;
 
@@ -350,7 +349,7 @@ fn csharp_public_openers_reject_an_empty_history_as_an_index_fault() {
 #[test]
 fn java_public_openers_check_arguments_then_the_index_pair() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let enums = load_enums();
     let mut checked = 0usize;
 
@@ -490,7 +489,7 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
 #[test]
 fn an_opener_never_answers_the_code_its_sub_call_handed_back() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let enums = load_enums();
 
     // The definition keyword that tells a definition from a call site, the
@@ -674,7 +673,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
     }
 
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let enums = load_enums();
 
     // guard text, the emptiness check it must follow, and the signature marker
@@ -785,7 +784,7 @@ fn every_open_pass_rejects_an_anchor_past_the_history() {
 #[test]
 fn every_declared_input_is_checked_in_every_backend() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
 
     let mut scanned = 0usize;
     let mut no_inputs = 0usize;
@@ -928,7 +927,7 @@ fn every_declared_input_is_checked_in_every_backend() {
 #[test]
 fn a_stream_handle_carries_only_the_settings_its_step_reads() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
 
     // (indicator, handle, the settings its step reads, in field order)
     let cases: [(&str, &str, &[&str]); 3] = [
@@ -1001,7 +1000,7 @@ fn a_stream_handle_carries_only_the_settings_its_step_reads() {
 #[test]
 fn a_stream_step_reads_candle_settings_from_its_parameters() {
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let (func, enums) = load_indicator("cdldoji");
     let rust = backends::rust_lang::generate(&func, &enums, &registry, &helpers);
 
@@ -1195,7 +1194,7 @@ fn no_csharp_peek_copies_the_handle() {
     }
 
     let registry = make_registry();
-    let helpers = HelperRegistry::empty();
+    let helpers = common::make_helpers();
     let (mut swept, mut frames, mut writes) = (0usize, 0usize, 0usize);
     let mut fully_shadowed: BTreeSet<String> = BTreeSet::new();
     let mut offenders: Vec<String> = Vec::new();

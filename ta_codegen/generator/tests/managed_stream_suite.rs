@@ -51,10 +51,10 @@ fn streaming_funcs() -> Vec<String> {
 fn section(name: &str, lang: &str) -> String {
     let (func, enums) = load(name);
     let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+    let helpers = HelperRegistry::from_dir(&input_dir());
     let full = match lang {
         "c" => backends::c_stream::generate(&func, &enums, &registry, &helpers),
-        "rust" => backends::rust_lang::generate(&func, &enums, &registry, &HelperRegistry::empty()),
+        "rust" => backends::rust_lang::generate(&func, &enums, &registry, &helpers),
         "java" => backends::java::generate(&func, &enums, &registry, &helpers),
         "csharp" => backends::csharp::generate(&func, &enums, &registry, &helpers),
         other => panic!("unknown backend {other}"),

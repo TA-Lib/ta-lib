@@ -919,7 +919,7 @@ fn rust_cross_calls_target_the_public_tier() {
         let mut rust = generate_all(&func, &enums).rust;
         if func.streaming && backends::rust_stream::emits_stream(&func, &registry) {
             rust.push_str(&backends::rust_stream::generate(
-                &func, &enums, &registry, &HelperRegistry::empty(),
+                &func, &enums, &registry, &common::make_helpers(),
             ));
         }
         callers += 1;

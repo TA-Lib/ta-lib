@@ -52,7 +52,7 @@ fn java_stream_section(name: &str) -> String {
     let (func, enums) = load_indicator(name);
     assert!(func.streaming, "{name}: yaml must carry the stream flag");
     let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+    let helpers = HelperRegistry::from_dir(&input_dir());
     let full = backends::java::generate(&func, &enums, &registry, &helpers);
     let start = full
         .find("/**** Streaming API *****/")
@@ -405,7 +405,7 @@ fn test_java_composed_sub_open_elides_only_whole_array_copies() {
     // genuine sub-ranges are still there (a blanket elision would pass the
     // first half alone).
     let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+    let helpers = HelperRegistry::from_dir(&input_dir());
     let enums = parser::enums::load_enums(&input_dir().join("enums.yaml"));
     let mut retained = 0usize;
     for entry in std::fs::read_dir(input_dir()).expect("input dir") {
@@ -470,7 +470,7 @@ fn test_java_adxr_sub_lag_ring() {
 #[test]
 fn test_java_stream_emit_ratchet() {
     let registry = Registry::from_dir(&input_dir());
-    let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+    let helpers = HelperRegistry::from_dir(&input_dir());
     let enums = parser::enums::load_enums(&input_dir().join("enums.yaml"));
     let mut emitted = 0usize;
     let mut total = 0usize;
@@ -837,7 +837,7 @@ fn no_java_peek_copies_the_handle() {
     for name in streaming_indicators() {
         let (func, enums) = load_indicator(&name);
         let registry = Registry::from_dir(&input_dir());
-        let helpers = HelperRegistry::from_dir(&input_dir().join("helpers"));
+        let helpers = HelperRegistry::from_dir(&input_dir());
         let batch = backends::java::generate(&func, &enums, &registry, &helpers);
         let s = java_stream_section(&name);
         let Some(at) = s.find(" peek( ") else { continue };
