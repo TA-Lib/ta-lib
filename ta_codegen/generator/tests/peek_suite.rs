@@ -105,9 +105,15 @@ fn handle_buffers(src: &str, upper: &str) -> BTreeSet<String> {
         if name.is_empty() || !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
             continue;
         }
-        // A sub-stream handle is a pointer too, and peek routes into it by
-        // calling its own Peek — it is not a buffer this frame indexes.
-        if ty.contains("_Stream") {
+        // A real data buffer is always `double *` or `int *` in this corpus —
+        // an allowlist, not a denylist, so a pointer this doesn't recognize is
+        // excluded rather than silently swept in as a buffer. That is what a
+        // sub-stream handle is too (a `_Stream *`, or the Dispatch tier's one
+        // `void *sub`, type-erased and tagged by optInMAType): peek routes into
+        // it by calling its own Peek, and Clone by calling its own Clone —
+        // neither treats it as a buffer this frame indexes or memcpy's.
+        let ty = ty.trim();
+        if ty != "double" && ty != "int" {
             continue;
         }
         out.insert(name.to_string());
@@ -1350,8 +1356,21 @@ fn every_handle_buffer_is_duplicated_by_clone() {
         };
         for buf in &buffers {
             buffers_checked += 1;
-            if !clone_body.contains(buf.as_str()) {
-                offenders.push(format!("{upper}: Clone never mentions `{buf}`"));
+            // Not just "mentioned" -- actually memcpy'd from the source into the
+            // fork's own allocation, not just assigned or nulled. Matched per
+            // LINE rather than as one fixed-spacing literal, so a reformat of
+            // the emitter's call layout (space after `(`, before `,`, ...)
+            // cannot make every buffer in the corpus a false offender. The
+            // trailing `,` is load-bearing, not decorative: without it a
+            // buffer whose name is a PREFIX of a sibling's (`ring` vs `ring2`)
+            // would read `sp->ring2,`'s line as proof `ring` was copied too.
+            let copied = clone_body.lines().any(|line| {
+                line.contains("memcpy(")
+                    && line.contains(&format!("sp->{buf},"))
+                    && line.contains(&format!("stream->{buf},"))
+            });
+            if !copied {
+                offenders.push(format!("{upper}: Clone never memcpy's `{buf}` from the source"));
             }
         }
     }
