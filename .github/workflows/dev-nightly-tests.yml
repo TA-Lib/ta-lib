@@ -1125,6 +1125,23 @@ jobs:
             exit 1
           fi
 
+      # The PR gate runs this too, in the job that has the C toolchain. It is
+      # repeated here for the same reason regen-check is: most commits reach dev
+      # as direct pushes, which `on: pull_request` never sees, so a header edit
+      # pushed straight to dev would otherwise meet no ABI gate at all.
+      - name: Public C ABI matches ABI.manifest
+        shell: bash
+        run: |
+          # Built first, and --require-artifact: half this gate reads DT_SONAME off
+          # the library, and that is the half that catches a SOVERSION reverted to
+          # the release version -- a change touching no header, which the manifest
+          # comparison alone would pass green.
+          python3 scripts/build.py
+          if ! python3 scripts/build.py check-abi --require-artifact; then
+            echo "::error::The public C ABI changed. If intended, bump TALIB_LIBRARY_VERSION in configure.ac by the rules beside it, run 'scripts/build.py check-abi --update' and commit ABI.manifest."
+            exit 1
+          fi
+
       # Static: it reads the generated `src/ta_func/ta_CDL*.c` as TEXT, so it
       # builds and runs nothing. It sits here rather than on the PR because the
       # PR gate is deliberately a fast, lightweight one; systematic checks live

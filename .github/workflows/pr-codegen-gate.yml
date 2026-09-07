@@ -243,6 +243,19 @@ jobs:
             exit 1
           fi
 
+      # The SONAME is the only thing telling a loader that one build can stand in
+      # for another, and nothing enforces it -- a removed symbol fails loudly at
+      # load, but a moved struct field resolves and then reads the wrong bytes.
+      # Here rather than in regen-check because it measures sizes and offsets
+      # with a probe, so it needs the C toolchain this job already has.
+      - name: Public C ABI matches ABI.manifest
+        shell: bash
+        run: |
+          if ! python3 scripts/build.py check-abi --require-artifact; then
+            echo "::error::The public C ABI changed. If that is intended it is an ABI change: bump TALIB_LIBRARY_VERSION in configure.ac by the rules beside it, run 'scripts/build.py check-abi --update' and commit ABI.manifest. If it is not intended, put the header back."
+            exit 1
+          fi
+
   # Clippy runs here as its own job, concurrently with regen-check, so it costs
   # the PR no wall-clock: ~50s finishing well inside that job's ~4m. That is
   # also why there is no `paths` filter on Rust — a filter would only save

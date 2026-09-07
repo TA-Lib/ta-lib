@@ -138,6 +138,12 @@ def show_help():
                         their manifests (resolve only, no build). Also the
                         first thing regen-check does, because any later cargo
                         call repairs a stale lock silently.
+    check-abi           Verify the public C ABI still matches ABI.manifest, and
+                        say which symbol, struct offset or enumerator moved when
+                        it does. `--update` rewrites the manifest, which is how
+                        an intentional ABI change is recorded -- along with the
+                        TALIB_LIBRARY_VERSION bump it forces. Needs a C compiler:
+                        sizes and offsets are measured by a probe, not parsed.
     check-mcdc          Verify each MC/DC builder's pb_conditions(N) matches the
                         conjunct count of the indicator it tests (no build; pure
                         text check). Catches a builder that under-declares, and
@@ -662,6 +668,10 @@ def main():
                         help='c,rust,java,csharp — limit which servers are built')
     parser.add_argument('--sanitize', action='store_true',
                         help='Build with AddressSanitizer + UBSan into cmake-build-asan (issue #94)')
+    parser.add_argument('--update', action='store_true',
+                        help='check-abi: rewrite ABI.manifest to match the headers')
+    parser.add_argument('--require-artifact', action='store_true',
+                        help='check-abi: fail if no built library is there to read DT_SONAME from')
     parser.add_argument('--help', '-h', action='store_true')
     args = parser.parse_args()
 
@@ -714,6 +724,12 @@ def main():
 
     if args.target == 'check-stream-retcodes':
         sys.exit(0 if check_stream_retcodes(root_dir) else 1)
+
+    if args.target == 'check-abi':
+        sys.exit(subprocess.call(
+            [sys.executable, os.path.join(root_dir, 'scripts', 'check_abi.py')]
+            + (['--update'] if args.update else [])
+            + (['--require-artifact'] if args.require_artifact else [])))
 
     if args.target == 'check-mcdc':
         sys.exit(subprocess.call(

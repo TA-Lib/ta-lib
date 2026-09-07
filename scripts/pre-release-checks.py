@@ -178,4 +178,26 @@ if __name__ == "__main__":
 
     print(f"Draft release notes written to {release_notes_path}")
 
+    # The ABI gate measures "does this need a soname bump?" from the last
+    # RELEASED soname, so that two ABI-breaking commits in one cycle cost one
+    # bump rather than two. That only works if the release reconciles the two.
+    # Left undone, the gate silently stops requiring a bump from here on.
+    manifest_path = path_join(root_dir, 'ABI.manifest')
+    if os.path.exists(manifest_path):
+        manifest = open(manifest_path).read()
+        cur = re.search(r"^soname (\S+)$", manifest, re.M)
+        rel = re.search(r"^released-soname (\S+)$", manifest, re.M)
+        if not cur or not rel:
+            print("Error: ABI.manifest is missing its soname lines. "
+                  "Run 'scripts/build.py check-abi --update'.")
+            exit(1)
+        if cur.group(1) != rel.group(1):
+            print(f"Error: ABI.manifest still records released-soname "
+                  f"{rel.group(1)} while this release ships {cur.group(1)}.\n"
+                  f"  This release changes the SONAME. Set 'released-soname' to "
+                  f"{cur.group(1)} in ABI.manifest and commit it, so the ABI gate "
+                  f"measures the next cycle from what actually shipped.")
+            exit(1)
+        print(f"ABI manifest soname reconciled ({cur.group(1)}).")
+
     print("pre-release checks completed successfully.")
