@@ -34,6 +34,8 @@ import argparse
 import copy
 from multiprocessing.context import _force_start_method
 import os
+import re
+import tempfile
 import shlex
 import subprocess
 import sys
@@ -338,6 +340,82 @@ def package_windows_msi(root_dir: str, asset_file_name: str, version: str, sourc
     result["copied"] = package_copied
     return result
 
+def verify_deb_payload(root_dir: str, deb_file: str) -> str:
+    # Check the built .deb actually ships the ABI generation the tree declares.
+    # Returns "" when it does, else the reason it does not.
+    #
+    # The SONAME is the whole contract a consumer links against, and every way of
+    # getting it wrong is silent: the package installs, `pkg-config` answers, the
+    # link succeeds, and the failure is a missing .so at somebody else's runtime.
+    try:
+        with open(path_join(root_dir, 'ABI.manifest')) as f:
+            m = re.search(r'^soname (\S+)$', f.read(), re.M)
+        if not m:
+            return "ABI.manifest has no soname line"
+        soname = m.group(1)
+
+        listing = subprocess.run(['dpkg-deb', '-c', deb_file],
+                                 capture_output=True, text=True, check=True).stdout
+
+        # Derive the install prefix from the payload rather than assuming it: the
+        # whole property being checked is that ta-lib.pc describes where the files
+        # LAND, so reading the destination from the same place it is asserted
+        # against would be circular.
+        at = re.search(r'\s(\S*)/lib/' + re.escape(soname) + r' -> ', listing)
+        if not at:
+            return f"payload has no /lib/{soname} symlink"
+        prefix = '/' + at.group(1).strip('./')
+        if prefix != '/usr':
+            return f"installs into {prefix}, but a released .deb must use /usr"
+
+        for required in (f'{prefix}/lib/libta-lib.so -> ',   # the dev symlink
+                         f'{prefix}/lib/pkgconfig/ta-lib.pc',
+                         f'{prefix}/include/ta-lib/ta_libc.h'):
+            if required not in listing:
+                return f"payload is missing {required}"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(['dpkg-deb', '-x', deb_file, tmp], check=True)
+            # Read the soname off the SYMLINK, never off a spelled-out file name:
+            # the real file is <soversion>.<age>.<revision>, so it moves on any
+            # libtool bump that deliberately keeps the soname. Resolve it first --
+            # dpkg-deb -x preserves an ABSOLUTE link verbatim, and following one
+            # would inspect the build host's installed TA-Lib and pass a package
+            # whose own library was never opened.
+            root = os.path.realpath(tmp)
+            link = path_join(root, prefix.lstrip('/'), 'lib', soname)
+            target = os.path.realpath(link)
+            if os.path.commonpath([target, root]) != root:
+                return f"{soname} resolves to {target}, outside the package"
+            # readelf reads foreign-arch ELF, so this works on the arm64/i386 legs.
+            dyn = subprocess.run(['readelf', '-d', target],
+                                 capture_output=True, text=True, check=True,
+                                 env={**os.environ, 'LC_ALL': 'C'}).stdout
+            built = re.search(r'Library soname: \[([^\]]+)\]', dyn)
+            if not built:
+                return f"{soname} declares no DT_SONAME"
+            if built.group(1) != soname:
+                return f"the library declares soname {built.group(1)}, expected {soname}"
+
+            # The .pc has to name the prefix the payload actually populates -- it
+            # is generated from CMAKE_INSTALL_PREFIX for a plain build and from
+            # CPACK_PACKAGING_INSTALL_PREFIX here, and nothing else notices when
+            # the two diverge. Anchored: an unanchored `prefix=` clause matches
+            # inside the `exec_prefix=` line and checks nothing.
+            with open(path_join(root, prefix.lstrip('/'), 'lib', 'pkgconfig',
+                                'ta-lib.pc')) as f:
+                pc = f.read()
+            for required in (f'prefix={prefix}', f'libdir={prefix}/lib',
+                             f'includedir={prefix}/include/ta-lib'):
+                if not re.search('^' + re.escape(required) + '$', pc, re.M):
+                    return f"ta-lib.pc does not say {required}"
+    except (subprocess.CalledProcessError, OSError, ValueError) as e:
+        # The contract is a reason string; a missing dpkg-deb/readelf or an
+        # unreadable payload must not surface as a traceback mid-release.
+        return f"could not be inspected: {e}"
+    return ""
+
+
 def package_deb(root_dir: str, asset_file_name: str, version: str, sources_digest: str, builder_id: str, sudo_pwd: str, toolchain: str, force_build: bool) -> dict:
     # Create .deb packaging to be installed with apt or dpkg (Debian-based systems).
     #
@@ -378,7 +456,10 @@ def package_deb(root_dir: str, asset_file_name: str, version: str, sources_diges
         return result
 
     # Build the libraries
-    configure_options = '-DCPACK_GENERATOR=DEB -DBUILD_DEV_TOOLS=OFF'
+    # CMAKE_INSTALL_PREFIX must match where CPack stages the payload (/usr for
+    # DEB), because ta-lib.pc is generated from it. Left at its /usr/local
+    # default the .deb shipped a .pc naming a prefix it never populated.
+    configure_options = '-DCPACK_GENERATOR=DEB -DBUILD_DEV_TOOLS=OFF -DCMAKE_INSTALL_PREFIX=/usr'
 
     if toolchain:
         cmake_dir = path_join(root_dir, 'cmake')
@@ -409,7 +490,10 @@ def package_deb(root_dir: str, asset_file_name: str, version: str, sources_diges
         print(f"Error: {test_file_path} not found.")
         return result
 
-    # TODO Add some real "end-user installation" testing. Now just pretend is is OK...
+    reason = verify_deb_payload(root_dir, deb_file)
+    if reason:
+        print(f"Error: {asset_file_name} {reason}")
+        return result
     result["dist_test_pass"] = True
 
     # Copy the .deb file into dist, but only if it is binary different

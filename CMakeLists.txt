@@ -628,10 +628,17 @@ if(UNIX)
 	)
 	install(SCRIPT "${CMAKE_BINARY_DIR}/warn-stale-installs.cmake")
 
-    set(prefix ${CMAKE_INSTALL_PREFIX})
-    set(exec_prefix ${CMAKE_INSTALL_PREFIX}/bin)
-    set(libdir ${CMAKE_INSTALL_PREFIX}/lib)
-    set(includedir ${CMAKE_INSTALL_PREFIX}/include)
+    # The .pc must describe where these files END UP. A CPack package stages
+    # under CPACK_PACKAGING_INSTALL_PREFIX (/usr for DEB) rather than here, so a
+    # packaging build has to be configured with a matching CMAKE_INSTALL_PREFIX
+    # -- scripts/package.py passes it, and verify_deb_payload fails the run if
+    # the shipped .pc and the shipped payload ever disagree again. Quoted: an
+    # unquoted prefix containing a space becomes a CMake list, and `libdir` then
+    # reads `/opt/ta;lib/lib`.
+    set(prefix "${CMAKE_INSTALL_PREFIX}")
+    set(exec_prefix "${prefix}")
+    set(libdir "${prefix}/lib")
+    set(includedir "${prefix}/include")
     set(PACKAGE_VERSION ${PROJECT_VERSION})
     if(NOT WIN32)
         set(LIBM "-lm")
@@ -906,7 +913,7 @@ set(CPACK_BUILD_CONFIG "${CMAKE_BUILD_TYPE}")
 # Set common package metadata
 set(CPACK_PACKAGE_VERSION_MAJOR ${TA_LIB_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${TA_LIB_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${TA_LIB_VERSION_BUILD})
+set(CPACK_PACKAGE_VERSION_PATCH ${TA_LIB_VERSION_PATCH})
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 
 set(CPACK_PACKAGE_VENDOR "ta-lib.org")
