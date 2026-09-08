@@ -61,6 +61,16 @@ if __name__ == "__main__":
         print(f"Error: {pom_path} <description> does not say '200+ indicators'.")
         exit(1)
 
+    # Nothing else takes this banner down, and the page is hand-written, so
+    # regen-check cannot see it. Named explicitly rather than globbed: the
+    # per-language pages carry the same banner and it is still true there.
+    stream_page = path_join(root_dir, 'website', 'src', 'api', 'stream', 'README.md')
+    with open(stream_page, 'r') as f:
+        if '::: warning Not yet released' in f.read():
+            print(f"Error: {stream_page} still says the C streaming API is unreleased.")
+            print("       Remove the banner block; this release ships it.")
+            exit(1)
+
     sources_digest = check_sources_digest(root_dir)
     if not sources_digest:
         print("Error: Source digest inconsistencies found. Did you forget to run scripts/sync.py?")

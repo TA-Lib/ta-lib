@@ -77,8 +77,8 @@ def get_version_string(root_dir: str) -> str:
     One number, every backend. C, the Rust crate and the Java artifact all carry
     this version, because a release in practice changes something all of them
     share — they are one generated library, not four that happen to ship
-    together. So a release publishes them together too: crates.io and Maven
-    Central are part of cutting a release, not a separate occasional errand.
+    together. Publishing is not in lockstep, though: cutting a release ships the
+    C assets, and each binding goes out on its own path.
 
     The obligation that buys: **bump MINOR whenever any backend breaks its API**,
     even if the change that motivated the release was a C patch. Cargo reads 0.x

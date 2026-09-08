@@ -3,9 +3,9 @@
 **Status:** `ta-lib-dispatch` 0.1.2 published 2026-08-12. `ta-lib` not yet published; the
 remaining blockers are tracked in issue #179.
 
-This is a **per-release** procedure, not a one-off. The crate version is locked to the repo
-`VERSION`, and a release in practice changes something every backend shares, so crates.io
-publication is part of cutting a release the same way the source tarball is.
+This is a **per-release** procedure, not a one-off: the crate version is locked to the repo
+`VERSION`, and a release in practice changes something every backend shares. It runs on its
+own path, though — cutting a release publishes the C assets and nothing else.
 
 ---
 
