@@ -800,7 +800,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -832,9 +831,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -1819,7 +1817,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -1854,9 +1851,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -1928,7 +1924,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( AccbandsOut out ) {
              requireArgument("ACCBANDS value", "out", out);
@@ -2537,7 +2533,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -2569,9 +2564,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -3056,7 +3050,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -3088,9 +3081,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -3569,7 +3561,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -3601,9 +3592,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -4293,7 +4283,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -4325,9 +4314,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -5079,7 +5067,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -5111,9 +5098,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -6247,7 +6233,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -6279,9 +6264,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -7300,7 +7284,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -7332,9 +7315,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -8078,7 +8060,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -8110,9 +8091,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -8905,7 +8885,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -8937,9 +8916,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -9659,7 +9637,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -9693,9 +9670,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -9767,7 +9743,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( AroonOut out ) {
              requireArgument("AROON value", "out", out);
@@ -10574,7 +10550,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -10606,9 +10581,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -11266,7 +11240,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -11298,9 +11271,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -11699,7 +11671,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -11731,9 +11702,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -12423,7 +12393,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -12455,9 +12424,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -13148,7 +13116,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -13180,9 +13147,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -13690,7 +13656,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -13722,9 +13687,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -14761,7 +14725,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -14796,9 +14759,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -14838,7 +14800,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( BbandsOut out ) {
              requireArgument("BBANDS value", "out", out);
@@ -16000,7 +15962,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -16032,9 +15993,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -17229,7 +17189,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -17261,9 +17220,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -17949,7 +17907,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -17981,9 +17938,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -18768,7 +18724,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -18800,9 +18755,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -19541,7 +19495,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -19573,9 +19526,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -20370,7 +20322,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -20402,9 +20353,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -21199,7 +21149,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -21231,9 +21180,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -21933,7 +21881,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -21965,9 +21912,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -22787,7 +22733,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -22819,9 +22764,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -23877,7 +23821,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -23909,9 +23852,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -24929,7 +24871,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -24961,9 +24902,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -26033,7 +25973,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -26065,9 +26004,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -27047,7 +26985,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -27079,9 +27016,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -27841,7 +27777,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -27873,9 +27808,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -28665,7 +28599,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -28697,9 +28630,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -29451,7 +29383,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -29483,9 +29414,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -30274,7 +30204,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -30306,9 +30235,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -31074,7 +31002,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -31106,9 +31033,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -31780,7 +31706,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -31812,9 +31737,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -32533,7 +32457,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -32565,9 +32488,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -33341,7 +33263,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -33373,9 +33294,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -34048,7 +33968,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -34080,9 +33999,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -34876,7 +34794,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -34908,9 +34825,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -35808,7 +35724,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -35840,9 +35755,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -36661,7 +36575,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -36693,9 +36606,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -37485,7 +37397,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -37517,9 +37428,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -38354,7 +38264,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -38386,9 +38295,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -39336,7 +39244,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -39368,9 +39275,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -40253,7 +40159,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -40285,9 +40190,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -41119,7 +41023,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -41151,9 +41054,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -41952,7 +41854,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -41984,9 +41885,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -42739,7 +42639,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -42771,9 +42670,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -43623,7 +43521,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -43655,9 +43552,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -44511,7 +44407,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -44543,9 +44438,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -45360,7 +45254,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -45392,9 +45285,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -46223,7 +46115,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -46255,9 +46146,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -47065,7 +46955,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -47097,9 +46986,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -47926,7 +47814,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -47958,9 +47845,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -48769,7 +48655,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -48801,9 +48686,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -49579,7 +49463,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -49611,9 +49494,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -50363,7 +50245,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -50395,9 +50276,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -51117,7 +50997,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -51149,9 +51028,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -51882,7 +51760,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -51914,9 +51791,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -52618,7 +52494,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -52650,9 +52525,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -53458,7 +53332,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -53490,9 +53363,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -54436,7 +54308,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -54468,9 +54339,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -55373,7 +55243,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -55405,9 +55274,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -56219,7 +56087,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -56251,9 +56118,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -56992,7 +56858,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -57024,9 +56889,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -57798,7 +57662,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -57830,9 +57693,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -58704,7 +58566,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -58736,9 +58597,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -59638,7 +59498,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -59670,9 +59529,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -60536,7 +60394,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -60568,9 +60425,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -61368,7 +61224,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -61400,9 +61255,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -62082,7 +61936,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -62114,9 +61967,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -62949,7 +62801,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -62981,9 +62832,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -63850,7 +63700,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -63882,9 +63731,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -64653,7 +64501,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -64685,9 +64532,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -65454,7 +65300,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -65486,9 +65331,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -66263,7 +66107,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -66295,9 +66138,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -67048,7 +66890,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -67080,9 +66921,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -67851,7 +67691,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -67883,9 +67722,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -68691,7 +68529,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -68723,9 +68560,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -69436,7 +69272,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -69468,9 +69303,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -69970,7 +69804,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -70002,9 +69835,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -70704,7 +70536,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -70736,9 +70567,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -71598,7 +71428,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -71630,9 +71459,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -72511,7 +72339,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -72543,9 +72370,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -73618,7 +73444,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -73650,9 +73475,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -74871,7 +74695,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -74903,9 +74726,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -75882,7 +75704,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -75914,9 +75735,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -76314,7 +76134,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -76346,9 +76165,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -76793,7 +76611,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -76825,9 +76642,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -77501,7 +77317,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -77533,9 +77348,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -78295,7 +78109,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -78327,9 +78140,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -78892,7 +78704,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -78924,9 +78735,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -79599,7 +79409,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -79634,9 +79443,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -79707,7 +79515,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( DonchianOut out ) {
              requireArgument("DONCHIAN value", "out", out);
@@ -80447,7 +80255,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -80479,9 +80286,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -81537,7 +81343,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -81569,9 +81374,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -82621,7 +82425,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -82653,9 +82456,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -83410,7 +83212,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -83442,9 +83243,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -84199,7 +83999,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -84231,9 +84030,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -85097,7 +84895,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -85131,9 +84928,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -85171,7 +84967,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( EriOut out ) {
              requireArgument("ERI value", "out", out);
@@ -85744,7 +85540,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -85776,9 +85571,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -86174,7 +85968,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -86206,9 +85999,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -86868,7 +86660,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -86900,9 +86691,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -87768,7 +87558,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -87802,9 +87591,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -87873,7 +87661,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( FractalOut out ) {
              requireArgument("FRACTAL value", "out", out);
@@ -88712,7 +88500,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -88748,9 +88535,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -88809,7 +88595,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( HaOut out ) {
              requireArgument("HA value", "out", out);
@@ -90105,7 +89891,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -90137,9 +89922,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -92127,7 +91911,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -92159,9 +91942,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -94082,7 +93864,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -94114,9 +93895,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -96109,7 +95889,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -96143,9 +95922,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -96280,7 +96058,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( HtPhasorOut out ) {
              requireArgument("HT_PHASOR value", "out", out);
@@ -98065,7 +97843,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -98099,9 +97876,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -98347,7 +98123,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( HtSineOut out ) {
              requireArgument("HT_SINE value", "out", out);
@@ -100187,7 +99963,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -100219,9 +99994,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -102432,7 +102206,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -102464,9 +102237,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -104081,7 +103853,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -104113,9 +103884,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -105063,7 +104833,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -105095,9 +104864,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -106146,7 +105914,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -106181,9 +105948,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -106217,7 +105983,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( KcOut out ) {
              requireArgument("KC value", "out", out);
@@ -107015,7 +106781,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -107050,10 +106815,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -107083,7 +106846,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( KdjOut out ) {
              requireArgument("KDJ value", "out", out);
@@ -107883,7 +107646,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -107915,9 +107677,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -109010,7 +108771,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -109042,9 +108802,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -110129,7 +109888,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -110161,9 +109919,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -111244,7 +111001,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -111276,9 +111032,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -112060,7 +111815,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -112092,9 +111846,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -112498,7 +112251,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -112530,9 +112282,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -113333,7 +113084,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -113365,10 +113115,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -114676,7 +114424,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -114711,9 +114458,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -114751,7 +114497,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( MacdOut out ) {
              requireArgument("MACD value", "out", out);
@@ -115778,7 +115524,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -115813,9 +115558,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -115847,7 +115591,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( MacdextOut out ) {
              requireArgument("MACDEXT value", "out", out);
@@ -116740,7 +116484,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -116775,9 +116518,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -116815,7 +116557,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( MacdfixOut out ) {
              requireArgument("MACDFIX value", "out", out);
@@ -118268,7 +118010,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -118302,9 +118043,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -118476,7 +118216,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( MamaOut out ) {
              requireArgument("MAMA value", "out", out);
@@ -119581,7 +119321,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -119613,9 +119352,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -120444,7 +120182,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -120476,9 +120213,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -121579,7 +121315,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -121611,9 +121346,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -122384,7 +122118,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -122416,9 +122149,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -123099,7 +122831,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -123131,9 +122862,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -123679,7 +123409,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -123711,9 +123440,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -124473,7 +124201,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -124505,9 +124232,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -125501,7 +125227,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -125533,9 +125258,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -126488,7 +126212,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -126520,9 +126243,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -127386,7 +127108,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -127418,9 +127139,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -128099,7 +127819,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -128131,9 +127850,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -129003,7 +128721,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -129037,9 +128754,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -129103,7 +128819,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( MinmaxOut out ) {
              requireArgument("MINMAX value", "out", out);
@@ -129887,7 +129603,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -129921,9 +129636,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -129987,7 +129701,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( MinmaxindexOut out ) {
              requireArgument("MINMAXINDEX value", "out", out);
@@ -131093,7 +130807,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -131125,9 +130838,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -132478,7 +132190,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -132510,9 +132221,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -133395,7 +133105,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -133427,9 +133136,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -133927,7 +133635,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -133959,9 +133666,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -134730,7 +134436,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -134762,9 +134467,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -135525,7 +135229,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -135557,9 +135260,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -136102,7 +135804,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -136134,9 +135835,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -136862,7 +136562,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -136894,9 +136593,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -137617,7 +137315,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -137649,9 +137346,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -138692,7 +138388,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -138724,9 +138419,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -140076,7 +139770,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -140108,9 +139801,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -141083,7 +140775,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -141115,9 +140806,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -141718,7 +141408,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -141750,9 +141439,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -142449,7 +142137,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -142481,9 +142168,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -143061,7 +142747,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -143093,9 +142778,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -143688,7 +143372,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -143720,9 +143403,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -144429,7 +144111,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -144461,9 +144142,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -145053,7 +144733,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -145085,9 +144764,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -145701,7 +145379,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -145733,9 +145410,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -146352,7 +146028,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -146384,9 +146059,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -147005,7 +146679,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -147037,9 +146710,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -147845,7 +147517,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -147877,9 +147548,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -149067,7 +148737,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -149099,9 +148768,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -150040,7 +149708,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -150072,9 +149739,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -151001,7 +150667,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -151033,9 +150698,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -152604,7 +152268,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -152636,9 +152299,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -153623,7 +153285,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -153655,9 +153316,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -154053,7 +153713,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -154085,9 +153744,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -154608,7 +154266,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -154640,9 +154297,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -155797,7 +155453,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -155831,9 +155486,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -155939,7 +155593,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( SmiOut out ) {
              requireArgument("SMI value", "out", out);
@@ -156731,7 +156385,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -156763,9 +156416,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -157286,7 +156938,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -157318,9 +156969,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -158321,7 +157971,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -158355,9 +158004,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -158448,7 +158096,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( StochOut out ) {
              requireArgument("STOCH value", "out", out);
@@ -159632,7 +159280,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -159666,9 +159313,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -159758,7 +159404,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( StochfOut out ) {
              requireArgument("STOCHF value", "out", out);
@@ -160728,7 +160374,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -160762,10 +160407,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies no buffer: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period. It does allocate a small bounded amount
-           * per call — a size fixed by the indicator, never by the period.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -160793,7 +160436,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( StochrsiOut out ) {
              requireArgument("STOCHRSI value", "out", out);
@@ -161318,7 +160961,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -161350,9 +160992,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -161856,7 +161497,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -161888,9 +161528,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -162799,7 +162438,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -162833,9 +162471,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -162923,7 +162560,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( SupertrendOut out ) {
              requireArgument("SUPERTREND value", "out", out);
@@ -163945,7 +163582,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -163977,9 +163613,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -164587,7 +164222,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -164619,9 +164253,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -165019,7 +164652,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -165051,9 +164683,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -165719,7 +165350,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -165751,9 +165381,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -166438,7 +166067,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -166470,9 +166098,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -167391,7 +167018,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -167423,9 +167049,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -168603,7 +168228,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -168635,9 +168259,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -169474,7 +169097,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -169506,9 +169128,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -170652,7 +170273,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -170684,9 +170304,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -171303,7 +170922,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -171335,9 +170953,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -172340,7 +171957,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -172372,9 +171988,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -173604,7 +173219,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -173636,9 +173250,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -174615,7 +174228,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -174647,9 +174259,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -175585,7 +175196,6 @@ class Core {
 
           /**
            * Commit one closed bar, writing the new current values into the {@code out} the CALLER owns.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -175619,9 +175229,8 @@ class Core {
            * next {@code update} with the same bar would write — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -175749,7 +175358,7 @@ class Core {
            * The value at the last bar this stream counted — the bar
            * {@link #outRange()} ends on. The last history bar right after open,
            * then whatever the latest accepted {@code update} wrote.
-           * A pure field read; {@code peek} does not change it. Overwrites {@code out}, allocating nothing.
+           * A pure field read; {@code peek} does not change it. Overwrites {@code out}.
            */
           public void value( VortexOut out ) {
              requireArgument("VORTEX value", "out", out);
@@ -176670,7 +176279,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -176702,9 +176310,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -177616,7 +177223,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -177648,9 +177254,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -178391,7 +177996,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -178423,9 +178027,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -178956,7 +178559,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -178988,9 +178590,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -179813,7 +179414,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -179845,9 +179445,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -180817,7 +180416,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -180849,9 +180447,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -181864,7 +181461,6 @@ class Core {
 
           /**
            * Commit one closed bar, returning the new current value.
-           * Never allocates handle state.
            * <p>Throws {@link IllegalArgumentException} if any bar value is not
            * finite (NaN or an infinity). That check runs before anything is
            * written, so nothing moves — {@link #outRange()} included — and
@@ -181896,9 +181492,8 @@ class Core {
            * next {@code update} with the same bar would return — the same
            * transition, with every store it would make carried in a local instead.
            * Never writes this handle, so peeks may
-           * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
-           * buffers and storing what the step would commit into locals, so the cost
-           * does not grow with the period and {@code peek} never allocates.
+           * run concurrently with each other, and its cost does not grow with the
+           * period.
            * <p>It counts no bar, so it keeps answering past the
            * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
@@ -182174,7 +181769,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "854b585951e2c854";
+    static final String SPLICED_GENCODE_DIGEST = "63ddd3a1e106b304";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

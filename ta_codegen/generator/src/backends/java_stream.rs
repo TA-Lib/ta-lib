@@ -967,7 +967,6 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
         o,
         "\n      /**\n\
          \x20      * Commit one closed bar, {answers}.\n\
-         \x20      * Never allocates handle state.\n\
          \x20      * <p>Throws {{@link IllegalArgumentException}} if any bar value is not\n\
          \x20      * finite (NaN or an infinity). That check runs before anything is\n\
          \x20      * written, so nothing moves — {{@link #outRange()}} included — and\n\
@@ -1021,24 +1020,6 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&PeekFrame>) {
     let verb = if multi { "write" } else { "return" };
 
     // What still allocates per call is the sink a COMPOSED frame hands its
-    // multi-output sub-handle (#325), and an accumulator a frame had to clone —
-    // no shipped one does, and the branch is the fallback. Read off the frame
-    // rather than off the output count: the outputs go to the caller's own sink
-    // now, so the count says nothing about what a peek allocates.
-    let allocates = frame.is_some_and(|f| {
-        f.body.contains(".clone()")
-            || f.body.lines().any(|l| l.contains(" = new ") && l.trim_end().ends_with("Out();"))
-    });
-    let cost = if allocates {
-        "It copies no buffer: the frame runs against this handle, reading its\n\
-         \x20      * buffers and storing what the step would commit into locals, so the cost\n\
-         \x20      * does not grow with the period. It does allocate a small bounded amount\n\
-         \x20      * per call — a size fixed by the indicator, never by the period."
-    } else {
-        "It copies nothing: the frame runs against this handle, reading its\n\
-         \x20      * buffers and storing what the step would commit into locals, so the cost\n\
-         \x20      * does not grow with the period and {@code peek} never allocates."
-    };
     let _ = writeln!(
         o,
         "\n      /**\n\
@@ -1046,7 +1027,8 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&PeekFrame>) {
          \x20      * next {{@code update}} with the same bar would {verb} — the same\n\
          \x20      * transition, with every store it would make carried in a local instead.\n\
          \x20      * Never writes this handle, so peeks may\n\
-         \x20      * run concurrently with each other. {cost}\n\
+         \x20      * run concurrently with each other, and its cost does not grow with the\n\
+         \x20      * period.\n\
          \x20      * <p>It counts no bar, so it keeps answering past the\n\
          \x20      * {{@link Core#MAX_INDEX}} ceiling {{@code update}} stops at.\n\
          \x20      */"
@@ -1079,7 +1061,7 @@ fn emit_value_method(o: &mut String, func: &FuncDef) {
     };
     let sink = if multi { format!(" {} out ", out_class_name(func)) } else { String::new() };
     let (past_verb, write_note) = if multi {
-        ("wrote", " Overwrites {@code out}, allocating nothing.")
+        ("wrote", " Overwrites {@code out}.")
     } else {
         ("returned", "")
     };
