@@ -184,10 +184,8 @@
     * Returns the absolute index of the lowest value within a rolling window of
     * the given period. Same scan as MIN but outputs the position of the minimum
     * rather than its value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -249,10 +247,8 @@
     * Returns the absolute index of the lowest value within a rolling window of
     * the given period. Same scan as MIN but outputs the position of the minimum
     * rather than its value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>

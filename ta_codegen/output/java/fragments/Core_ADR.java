@@ -192,11 +192,8 @@
     * family as ATR, and deliberately the narrower member: the range excludes
     * the overnight gap, so on a gapping instrument ADR is systematically
     * smaller than ATR. Having both is the point.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adr">ta-lib.org/functions/adr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
@@ -275,11 +272,8 @@
     * family as ATR, and deliberately the narrower member: the range excludes
     * the overnight gap, so on a gapping instrument ADR is systematically
     * smaller than ATR. Having both is the point.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adr">ta-lib.org/functions/adr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>

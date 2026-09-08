@@ -294,6 +294,10 @@ public partial class Core
    /// (rising) or bearish (falling) continuation signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlrisefall3methods">ta-lib.org/functions/cdlrisefall3methods</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</description></item>
    /// <item><description>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</description></item>
@@ -365,6 +369,10 @@ public partial class Core
    /// (rising) or bearish (falling) continuation signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlrisefall3methods">ta-lib.org/functions/cdlrisefall3methods</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</description></item>
    /// <item><description>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</description></item>

@@ -269,6 +269,10 @@ public partial class Core
    /// not verify a prior trend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlgapsidesidewhite">ta-lib.org/functions/cdlgapsidesidewhite</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the continuation signal classically assumes.</description></item>
    /// <item><description>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<see href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</see>)</description></item>
@@ -339,6 +343,10 @@ public partial class Core
    /// not verify a prior trend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlgapsidesidewhite">ta-lib.org/functions/cdlgapsidesidewhite</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the continuation signal classically assumes.</description></item>
    /// <item><description>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<see href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</see>)</description></item>

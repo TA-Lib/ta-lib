@@ -404,16 +404,8 @@
     * the lower band while it is up and the upper band while it is down, so the
     * line is usually below price in an uptrend and above it in a downtrend, and
     * the flip is the signal. Attributed to Olivier Seban.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Median = (High + Low) / 2
-    * BasicUpper = Median + Multiplier * ATR(TimePeriod)
-    * BasicLower = Median - Multiplier * ATR(TimePeriod)
-    * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
-    * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
-    * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
-    * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
@@ -496,16 +488,8 @@
     * the lower band while it is up and the upper band while it is down, so the
     * line is usually below price in an uptrend and above it in a downtrend, and
     * the flip is the signal. Attributed to Olivier Seban.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Median = (High + Low) / 2
-    * BasicUpper = Median + Multiplier * ATR(TimePeriod)
-    * BasicLower = Median - Multiplier * ATR(TimePeriod)
-    * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
-    * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
-    * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
-    * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>

@@ -127,10 +127,10 @@ public partial class Core
    /// Element-wise arc cosine of the input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = acos(inReal[i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/acos">ta-lib.org/functions/acos</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</description></item>
    /// </list>
@@ -185,10 +185,10 @@ public partial class Core
    /// Element-wise arc cosine of the input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = acos(inReal[i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/acos">ta-lib.org/functions/acos</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</description></item>
    /// </list>

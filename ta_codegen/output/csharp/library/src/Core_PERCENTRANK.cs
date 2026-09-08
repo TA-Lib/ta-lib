@@ -210,13 +210,10 @@ public partial class Core
    /// applied there to one-day returns rather than to price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t, over the previous optInTimePeriod values:
-   /// count = number of j in [t-optInTimePeriod, t-1] with inReal[j] &lt; inReal[t]
-   /// PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-   /// The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's <c>ta.percentrank</c> counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</description></item>
    /// <item><description>+0.0 and -0.0 compare equal, so a sign-only difference never contributes to the count.</description></item>
@@ -287,13 +284,10 @@ public partial class Core
    /// applied there to one-day returns rather than to price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t, over the previous optInTimePeriod values:
-   /// count = number of j in [t-optInTimePeriod, t-1] with inReal[j] &lt; inReal[t]
-   /// PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-   /// The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's <c>ta.percentrank</c> counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</description></item>
    /// <item><description>+0.0 and -0.0 compare equal, so a sign-only difference never contributes to the count.</description></item>

@@ -251,14 +251,10 @@ public partial class Core
    /// encodes candle color, not bullish/bearish sentiment.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle at i, all three:
-   /// - short real body: real body &lt; the BodyShort average
-   /// - short upper shadow: upper shadow &lt; the ShadowShort average
-   /// - short lower shadow: lower shadow &lt; the ShadowShort average
-   /// If matched: output = candle color * 100 (+100 white, -100 black); else 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlshortline">ta-lib.org/functions/cdlshortline</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -322,14 +318,10 @@ public partial class Core
    /// encodes candle color, not bullish/bearish sentiment.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle at i, all three:
-   /// - short real body: real body &lt; the BodyShort average
-   /// - short upper shadow: upper shadow &lt; the ShadowShort average
-   /// - short lower shadow: lower shadow &lt; the ShadowShort average
-   /// If matched: output = candle color * 100 (+100 white, -100 black); else 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlshortline">ta-lib.org/functions/cdlshortline</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

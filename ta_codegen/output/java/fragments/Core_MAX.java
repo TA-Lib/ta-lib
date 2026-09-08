@@ -295,10 +295,8 @@
    /**
     * Highest input value over a rolling window of the last optInTimePeriod
     * bars. A moving-window maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/max">ta-lib.org/functions/max</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -353,10 +351,8 @@
    /**
     * Highest input value over a rolling window of the last optInTimePeriod
     * bars. A moving-window maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/max">ta-lib.org/functions/max</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

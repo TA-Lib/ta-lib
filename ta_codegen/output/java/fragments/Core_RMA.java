@@ -210,12 +210,8 @@
     * travels under five names for one object: RMA (TradingView, pandas-ta),
     * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
     * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
-    * seed at bar N-1:  RMA = ( x[0] + x[1] + ... + x[N-1] ) / N
-    * for i >= N:       RMA[i] = alpha * x[i] + beta * RMA[i-1]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rma">ta-lib.org/functions/rma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's own writing uses a period of 14, and pandas-ta defaults to 10. The default here is the one the rest of the moving-average family carries, so a call that swaps one MA for another keeps its period.</li>
@@ -298,12 +294,8 @@
     * travels under five names for one object: RMA (TradingView, pandas-ta),
     * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
     * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
-    * seed at bar N-1:  RMA = ( x[0] + x[1] + ... + x[N-1] ) / N
-    * for i >= N:       RMA[i] = alpha * x[i] + beta * RMA[i-1]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rma">ta-lib.org/functions/rma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's own writing uses a period of 14, and pandas-ta defaults to 10. The default here is the one the rest of the moving-average family carries, so a call that swaps one MA for another keeps its period.</li>

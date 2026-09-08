@@ -162,10 +162,10 @@ public partial class Core
    /// direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// OBV[i] = OBV[i-1] + (inReal[i] &gt; inReal[i-1] ? V[i] : inReal[i] &lt; inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -222,10 +222,10 @@ public partial class Core
    /// direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// OBV[i] = OBV[i-1] + (inReal[i] &gt; inReal[i-1] ? V[i] : inReal[i] &lt; inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

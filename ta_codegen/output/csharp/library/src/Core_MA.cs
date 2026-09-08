@@ -435,10 +435,10 @@ public partial class Core
    /// TA-Lib moving averages.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ma">ta-lib.org/functions/ma</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</description></item>
    /// <item><description><c>TA_MAType_DISABLED</c> bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</description></item>
@@ -505,10 +505,10 @@ public partial class Core
    /// TA-Lib moving averages.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ma">ta-lib.org/functions/ma</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</description></item>
    /// <item><description><c>TA_MAType_DISABLED</c> bypasses smoothing explicitly, for any period: the output is a copy of the input with a lookback of 0. Every function that takes an MAType parameter accepts it.</description></item>

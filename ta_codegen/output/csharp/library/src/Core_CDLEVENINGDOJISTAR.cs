@@ -317,6 +317,10 @@ public partial class Core
    /// Hit (-100) signals a bearish top reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdleveningdojistar">ta-lib.org/functions/cdleveningdojistar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// </list>
@@ -387,6 +391,10 @@ public partial class Core
    /// Hit (-100) signals a bearish top reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdleveningdojistar">ta-lib.org/functions/cdleveningdojistar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// </list>

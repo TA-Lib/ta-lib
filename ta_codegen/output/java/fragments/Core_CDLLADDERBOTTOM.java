@@ -183,6 +183,8 @@
     * white candle that opens above the prior open and closes above the prior
     * high. A hit is a bullish reversal signal, most meaningful after a
     * downtrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlladderbottom">ta-lib.org/functions/cdlladderbottom</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
@@ -252,6 +254,8 @@
     * white candle that opens above the prior open and closes above the prior
     * high. A hit is a bullish reversal signal, most meaningful after a
     * downtrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlladderbottom">ta-lib.org/functions/cdlladderbottom</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>

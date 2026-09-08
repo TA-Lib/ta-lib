@@ -263,10 +263,10 @@ public partial class Core
    /// itself verify.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles. Candle 1: long real body (realbody &gt; BodyLong average). Candle 2: doji (realbody &lt;= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldojistar">ta-lib.org/functions/cdldojistar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. (<see href="https://thepatternsite.com/DojiStarBull.html">thepatternsite.com</see>)</description></item>
@@ -338,10 +338,10 @@ public partial class Core
    /// itself verify.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles. Candle 1: long real body (realbody &gt; BodyLong average). Candle 2: doji (realbody &lt;= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldojistar">ta-lib.org/functions/cdldojistar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. (<see href="https://thepatternsite.com/DojiStarBull.html">thepatternsite.com</see>)</description></item>

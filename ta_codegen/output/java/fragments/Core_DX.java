@@ -546,10 +546,8 @@
     * -DI. Measures the strength of directional (trending) movement,
     * irrespective of direction. Higher DX = stronger trend (either direction);
     * low DX = ranging market.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then Wilder-smooth each: X = X - X/period + today. +DI = 100*(+DM14/TR14), -DI = 100*(-DM14/TR14). DX = 100 * |(-DI) - (+DI)| / ((-DI) + (+DI)).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dx">ta-lib.org/functions/dx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it can be unreliable when values are near 1).</li>
@@ -621,10 +619,8 @@
     * -DI. Measures the strength of directional (trending) movement,
     * irrespective of direction. Higher DX = stronger trend (either direction);
     * low DX = ranging market.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then Wilder-smooth each: X = X - X/period + today. +DI = 100*(+DM14/TR14), -DI = 100*(-DM14/TR14). DX = 100 * |(-DI) - (+DI)| / ((-DI) + (+DI)).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dx">ta-lib.org/functions/dx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it can be unreliable when values are near 1).</li>

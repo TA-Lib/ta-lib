@@ -248,11 +248,10 @@ public partial class Core
    /// smaller than ATR. Having both is the point.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
-   /// The average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adr">ta-lib.org/functions/adr</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The mean of the ranges, not the difference of the means. <c>SMA(high) - SMA(low)</c> is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's <c>AVG(H-L, x)</c> and kand's <c>SMA(High-Low, period)</c> spell the form implemented here.</description></item>
    /// <item><description>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes <i>are</i> the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</description></item>
@@ -329,11 +328,10 @@ public partial class Core
    /// smaller than ATR. Having both is the point.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
-   /// The average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adr">ta-lib.org/functions/adr</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The mean of the ranges, not the difference of the means. <c>SMA(high) - SMA(low)</c> is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's <c>AVG(H-L, x)</c> and kand's <c>SMA(High-Low, period)</c> spell the form implemented here.</description></item>
    /// <item><description>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes <i>are</i> the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</description></item>

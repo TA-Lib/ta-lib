@@ -347,6 +347,10 @@ public partial class Core
    /// but the function does not verify prior trend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior downtrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<see href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</see>)</description></item>
@@ -416,6 +420,10 @@ public partial class Core
    /// but the function does not verify prior trend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior downtrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<see href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</see>)</description></item>

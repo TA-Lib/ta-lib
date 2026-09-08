@@ -266,6 +266,10 @@ public partial class Core
    /// downtrend, which the function does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlunique3river">ta-lib.org/functions/cdlunique3river</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<see href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -333,6 +337,10 @@ public partial class Core
    /// downtrend, which the function does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlunique3river">ta-lib.org/functions/cdlunique3river</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<see href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</see>)</description></item>
    /// </list>

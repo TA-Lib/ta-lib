@@ -579,13 +579,8 @@
     * weighted average. Blends short-, medium-, and long-term momentum to damp
     * single-period noise. Ranges 0-100; conventionally &gt;70 overbought,
     * &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * trueLow = min(low, prevClose);  BP = close - trueLow
-    * TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    * avg_n = (sum BP over n bars) / (sum TR over n bars)
-    * ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>
@@ -659,13 +654,8 @@
     * weighted average. Blends short-, medium-, and long-term momentum to damp
     * single-period noise. Ranges 0-100; conventionally &gt;70 overbought,
     * &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * trueLow = min(low, prevClose);  BP = close - trueLow
-    * TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    * avg_n = (sum BP over n bars) / (sum TR over n bars)
-    * ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>

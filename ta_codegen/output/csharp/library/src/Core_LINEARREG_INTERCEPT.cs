@@ -389,12 +389,10 @@ public partial class Core
    /// (LINEARREG, SLOPE, ANGLE, TSF).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-   /// m = (period·SumXY − SumX·SumY) / Divisor
-   /// b = (SumY − m·SumX) / period   ← output
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -451,12 +449,10 @@ public partial class Core
    /// (LINEARREG, SLOPE, ANGLE, TSF).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-   /// m = (period·SumXY − SumX·SumY) / Divisor
-   /// b = (SumY − m·SumX) / period   ← output
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

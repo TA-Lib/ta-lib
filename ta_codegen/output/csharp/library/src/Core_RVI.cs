@@ -623,14 +623,10 @@ public partial class Core
    /// only while it is below.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
-   /// U[i] = S[i] if C[i] &gt; C[i-1], else 0
-   /// D[i] = S[i] if C[i] &lt; C[i-1], else 0
-   /// RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
-   /// `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</description></item>
    /// <item><description>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed <c>S</c> instead of <c>U + D</c> are counting ties as down bars, which is a different indicator.</description></item>
@@ -704,14 +700,10 @@ public partial class Core
    /// only while it is below.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
-   /// U[i] = S[i] if C[i] &gt; C[i-1], else 0
-   /// D[i] = S[i] if C[i] &lt; C[i-1], else 0
-   /// RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
-   /// `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</description></item>
    /// <item><description>A tie contributes to neither bucket, matching RSI's treatment of an unchanged close. Descriptions that write the denominator as a smoothed <c>S</c> instead of <c>U + D</c> are counting ties as down bars, which is a different indicator.</description></item>

@@ -218,13 +218,8 @@
     * which is the smoother the original formula language specifies; selecting a
     * simple moving average for both reproduces the classic Slow Stochastic with
     * a J line attached.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * K = MA(RSV, SlowK_Period, SlowK_MAType)
-    * D = MA(K, SlowD_Period, SlowD_MAType)
-    * J = 3*K - 2*D
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
@@ -328,13 +323,8 @@
     * which is the smoother the original formula language specifies; selecting a
     * simple moving average for both reproduces the classic Slow Stochastic with
     * a J line attached.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * K = MA(RSV, SlowK_Period, SlowK_MAType)
-    * D = MA(K, SlowD_Period, SlowD_MAType)
-    * J = 3*K - 2*D
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>

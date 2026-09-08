@@ -137,10 +137,8 @@
     * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
     * buying vs. selling pressure. Rising line = accumulation (buying pressure);
     * falling = distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volume_t (running sum, seeded at 0)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ad">ta-lib.org/functions/ad</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -202,10 +200,8 @@
     * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
     * buying vs. selling pressure. Rising line = accumulation (buying pressure);
     * falling = distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volume_t (running sum, seeded at 0)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ad">ta-lib.org/functions/ad</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -269,6 +269,10 @@ public partial class Core
    /// though its trend context is not checked).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlcounterattack">ta-lib.org/functions/cdlcounterattack</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<see href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</see>)</description></item>
@@ -337,6 +341,10 @@ public partial class Core
    /// though its trend context is not checked).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlcounterattack">ta-lib.org/functions/cdlcounterattack</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the reversal signal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<see href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</see>)</description></item>

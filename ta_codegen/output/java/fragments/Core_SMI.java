@@ -618,13 +618,8 @@
     * the close is above the midpoint of its range, negative below. Extreme
     * readings mark overbought and oversold conditions, and crossings of the
     * signal line are the usual trade trigger.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    * num = close - 0.5 * (HH + LL);  den = HH - LL
-    * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    * Signal = EMA(SMI, signalPeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -715,13 +710,8 @@
     * the close is above the midpoint of its range, negative below. Extreme
     * readings mark overbought and oversold conditions, and crossings of the
     * signal line are the usual trade trigger.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    * num = close - 0.5 * (HH + LL);  den = HH - LL
-    * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    * Signal = EMA(SMI, signalPeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>

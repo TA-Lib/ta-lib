@@ -261,10 +261,10 @@ public partial class Core
    /// the code does not verify the assumed prior downtrend.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles. 1st: black (close&lt;open) with long real body (realbody &gt; BodyLong average). 2nd: white (close&gt;=open); open &lt; prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) &lt;= close2 &lt;= (prior_low + EqualAvg).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlonneck">ta-lib.org/functions/cdlonneck</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The bearish-continuation reading assumes a prior downtrend, which is not verified.</description></item>
    /// <item><description>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<see href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</see>)</description></item>
@@ -333,10 +333,10 @@ public partial class Core
    /// the code does not verify the assumed prior downtrend.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles. 1st: black (close&lt;open) with long real body (realbody &gt; BodyLong average). 2nd: white (close&gt;=open); open &lt; prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) &lt;= close2 &lt;= (prior_low + EqualAvg).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlonneck">ta-lib.org/functions/cdlonneck</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The bearish-continuation reading assumes a prior downtrend, which is not verified.</description></item>
    /// <item><description>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<see href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</see>)</description></item>

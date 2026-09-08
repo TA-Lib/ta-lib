@@ -266,13 +266,8 @@
     * four-week rule — generally credited as the first published systematic
     * trend-following system — buys a break above the high of the preceding
     * weeks and sells a break below their low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Window = the optInTimePeriod bars ending at the current bar
-    * Upper  = Highest High of Window
-    * Lower  = Lowest  Low  of Window
-    * Middle = (Upper + Lower) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
@@ -346,13 +341,8 @@
     * four-week rule — generally credited as the first published systematic
     * trend-following system — buys a break above the high of the preceding
     * weeks and sells a break below their low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Window = the optInTimePeriod bars ending at the current bar
-    * Upper  = Highest High of Window
-    * Lower  = Lowest  Low  of Window
-    * Middle = (Upper + Lower) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>

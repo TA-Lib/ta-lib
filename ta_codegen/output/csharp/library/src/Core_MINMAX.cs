@@ -429,11 +429,10 @@ public partial class Core
    /// and MAX that computes both extrema in one pass.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
-   /// outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minmax">ta-lib.org/functions/minmax</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -494,11 +493,10 @@ public partial class Core
    /// and MAX that computes both extrema in one pass.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
-   /// outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minmax">ta-lib.org/functions/minmax</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

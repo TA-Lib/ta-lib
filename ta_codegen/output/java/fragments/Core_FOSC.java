@@ -282,10 +282,8 @@
     * below; the value oscillates around zero and crosses it whenever price
     * meets its own forecast. Persistent readings far from zero say the trend is
     * running ahead of, or lagging, its regression line.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Forecast fitted over the N bars ending at t-1 and evaluated one x-step beyond that window — the forecast for bar t made without seeing it.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
@@ -349,10 +347,8 @@
     * below; the value oscillates around zero and crosses it whenever price
     * meets its own forecast. Persistent readings far from zero say the trend is
     * running ahead of, or lagging, its regression line.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Forecast fitted over the N bars ending at t-1 and evaluated one x-step beyond that window — the forecast for bar t made without seeing it.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>

@@ -170,10 +170,8 @@
     * closes (within a tolerance). Treated as a bullish reversal signal. A hit
     * signals a potential bullish reversal (shared support close after two down
     * candles).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
@@ -240,10 +238,8 @@
     * closes (within a tolerance). Treated as a bullish reversal signal. A hit
     * signals a potential bullish reversal (shared support close after two down
     * candles).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>

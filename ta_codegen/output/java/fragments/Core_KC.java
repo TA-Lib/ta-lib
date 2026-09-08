@@ -255,14 +255,8 @@
     * multiple of the Average True Range above and below it. The band width
     * tracks volatility, so the channel widens in fast markets and narrows in
     * quiet ones.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High + Low + Close) / 3
-    * Middle = EMA(TP, N)
-    * Band = ATR(M)
-    * Upper = Middle + Deviations * Band
-    * Lower = Middle - Deviations * Band
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
@@ -350,14 +344,8 @@
     * multiple of the Average True Range above and below it. The band width
     * tracks volatility, so the channel widens in fast markets and narrows in
     * quiet ones.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High + Low + Close) / 3
-    * Middle = EMA(TP, N)
-    * Band = ATR(M)
-    * Upper = Middle + Deviations * Band
-    * Lower = Middle - Deviations * Band
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>

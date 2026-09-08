@@ -45,14 +45,11 @@ pub fn guarded_docs(
 
     d.paragraph(&summary_text(func, doc));
 
-    // The site builds flat files (`dist/functions/sma.html`), so the slug is the
-    // lower-cased name and carries no trailing slash: `/functions/SMA` and
-    // `/functions/sma/` both 404. Same rule as `docs_site::generate`, which is
-    // what names the page.
-    let slug = func.name.to_lowercase();
+    let url = doc_meta::function_page_url(&func.name);
     d.blank();
     d.paragraph(&format!(
-        "Formula and more info at [ta-lib.org/functions/{slug}](https://ta-lib.org/functions/{slug})."
+        "Formula and more info at [{}]({url}).",
+        url.trim_start_matches("https://")
     ));
 
     d.blank();

@@ -214,6 +214,10 @@ public partial class Core
    /// downtrend (bullish) or uptrend (bearish), which the code does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlengulfing">ta-lib.org/functions/cdlengulfing</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. (<see href="https://thepatternsite.com/BearEngulfing.html">thepatternsite.com</see>)</description></item>
@@ -284,6 +288,10 @@ public partial class Core
    /// downtrend (bullish) or uptrend (bearish), which the code does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlengulfing">ta-lib.org/functions/cdlengulfing</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. (<see href="https://thepatternsite.com/BearEngulfing.html">thepatternsite.com</see>)</description></item>

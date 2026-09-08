@@ -492,10 +492,10 @@ public partial class Core
    /// = close at period low (oversold).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -559,10 +559,10 @@ public partial class Core
    /// = close at period low (oversold).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

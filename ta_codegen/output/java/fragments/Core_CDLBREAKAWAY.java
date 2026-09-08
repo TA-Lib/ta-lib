@@ -192,6 +192,8 @@
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
     * reversal).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
@@ -261,6 +263,8 @@
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
     * reversal).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>

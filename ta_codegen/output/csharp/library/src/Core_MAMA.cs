@@ -858,13 +858,10 @@ public partial class Core
    /// FAMA is bullish; crossing below is bearish.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-   /// alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase&gt;1 else fastLimit
-   /// MAMA = alpha*price + (1-alpha)*MAMA_prev
-   /// FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -931,13 +928,10 @@ public partial class Core
    /// FAMA is bullish; crossing below is bearish.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-   /// alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase&gt;1 else fastLimit
-   /// MAMA = alpha*price + (1-alpha)*MAMA_prev
-   /// FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

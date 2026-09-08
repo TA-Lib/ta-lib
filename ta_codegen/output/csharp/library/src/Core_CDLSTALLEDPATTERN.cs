@@ -351,6 +351,10 @@ public partial class Core
    /// advance. A hit (-100) is bearish: the uptrend is stalling and may reverse.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlstalledpattern">ta-lib.org/functions/cdlstalledpattern</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</description></item>
    /// <item><description>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. (<see href="https://thepatternsite.com/Deliberation.html">thepatternsite.com</see>)</description></item>
@@ -418,6 +422,10 @@ public partial class Core
    /// advance. A hit (-100) is bearish: the uptrend is stalling and may reverse.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlstalledpattern">ta-lib.org/functions/cdlstalledpattern</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</description></item>
    /// <item><description>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. (<see href="https://thepatternsite.com/Deliberation.html">thepatternsite.com</see>)</description></item>

@@ -342,12 +342,8 @@
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
     * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
     * period. Signal-line crossovers and histogram sign flag momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_12 - EMA_26   (fixed k: 0.15 for 12, 0.075 for 26)
-    * Signal = EMA(MACD, signalPeriod),  k = 2/(signalPeriod+1)
-    * Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdfix">ta-lib.org/functions/macdfix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</li>
@@ -416,12 +412,8 @@
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
     * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
     * period. Signal-line crossovers and histogram sign flag momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_12 - EMA_26   (fixed k: 0.15 for 12, 0.075 for 26)
-    * Signal = EMA(MACD, signalPeriod),  k = 2/(signalPeriod+1)
-    * Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdfix">ta-lib.org/functions/macdfix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</li>

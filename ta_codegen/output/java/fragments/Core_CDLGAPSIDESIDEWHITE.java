@@ -213,6 +213,8 @@
     * first candle's real body and open at about the same level. It is a
     * continuation signal whose sign reports the gap direction; the code does
     * not verify a prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgapsidesidewhite">ta-lib.org/functions/cdlgapsidesidewhite</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
@@ -282,6 +284,8 @@
     * first candle's real body and open at about the same level. It is a
     * continuation signal whose sign reports the gap direction; the code does
     * not verify a prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgapsidesidewhite">ta-lib.org/functions/cdlgapsidesidewhite</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>

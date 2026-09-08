@@ -250,10 +250,10 @@ public partial class Core
    /// bearish (black) reversal/strength signal per the body color.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle at i. Match when: realbody(i) &gt; BodyLong average AND upperShadow(i) &lt; ShadowVeryShort average AND lowerShadow(i) &lt; ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close&gt;=open, -100 black when close&lt;open); else 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmarubozu">ta-lib.org/functions/cdlmarubozu</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<see href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -320,10 +320,10 @@ public partial class Core
    /// bearish (black) reversal/strength signal per the body color.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle at i. Match when: realbody(i) &gt; BodyLong average AND upperShadow(i) &lt; ShadowVeryShort average AND lowerShadow(i) &lt; ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close&gt;=open, -100 black when close&lt;open); else 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmarubozu">ta-lib.org/functions/cdlmarubozu</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<see href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</see>)</description></item>
    /// </list>

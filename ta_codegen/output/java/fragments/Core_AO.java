@@ -269,12 +269,8 @@
     * Profitunity system, alongside the Alligator and the
     * Accelerator/Decelerator (<a
     * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -349,12 +345,8 @@
     * Profitunity system, alongside the Alligator and the
     * Accelerator/Decelerator (<a
     * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

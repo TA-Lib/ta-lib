@@ -223,10 +223,10 @@ public partial class Core
    /// deviations multiplier. Delegates to VAR, then takes the square root.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</description></item>
    /// </list>
@@ -288,10 +288,10 @@ public partial class Core
    /// deviations multiplier. Delegates to VAR, then takes the square root.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</description></item>
    /// </list>

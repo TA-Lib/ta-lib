@@ -324,10 +324,8 @@
     * average up-moves and down-moves. Identical to RSI except the numerator
     * uses (gain-loss) instead of gain. Bounded in [-100,+100]; positive = net
     * upward momentum, negative = net downward.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmo">ta-lib.org/functions/cmo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</li>
@@ -386,10 +384,8 @@
     * average up-moves and down-moves. Identical to RSI except the numerator
     * uses (gain-loss) instead of gain. Bounded in [-100,+100]; positive = net
     * upward momentum, negative = net downward.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmo">ta-lib.org/functions/cmo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</li>

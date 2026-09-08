@@ -295,6 +295,8 @@
     * closes where the third loses momentum (a small body riding on the shoulder
     * of the second's long body). It is a bearish reversal signal of a stalling
     * advance. A hit (-100) is bearish: the uptrend is stalling and may reverse.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlstalledpattern">ta-lib.org/functions/cdlstalledpattern</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
@@ -363,6 +365,8 @@
     * closes where the third loses momentum (a small body riding on the shoulder
     * of the second's long body). It is a bearish reversal signal of a stalling
     * advance. A hit (-100) is bearish: the uptrend is stalling and may reverse.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlstalledpattern">ta-lib.org/functions/cdlstalledpattern</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>

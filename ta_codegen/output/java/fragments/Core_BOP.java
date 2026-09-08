@@ -105,10 +105,8 @@
     * normalized by the bar's high-low range. A per-bar oscillator with no
     * smoothing. Positive: close above open (buyers dominated); negative:
     * sellers dominated.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * BOP = (Close - Open) / (High - Low)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bop">ta-lib.org/functions/bop</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -167,10 +165,8 @@
     * normalized by the bar's high-low range. A per-bar oscillator with no
     * smoothing. Positive: close above open (buyers dominated); negative:
     * sellers dominated.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * BOP = (Close - Open) / (High - Low)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bop">ta-lib.org/functions/bop</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

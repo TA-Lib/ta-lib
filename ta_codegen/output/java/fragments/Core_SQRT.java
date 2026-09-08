@@ -71,10 +71,8 @@
    }
    /**
     * Element-wise square root of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sqrt(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A negative input has no real square root, so those elements come out NaN.</li>
@@ -125,10 +123,8 @@
    }
    /**
     * Element-wise square root of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sqrt(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A negative input has no real square root, so those elements come out NaN.</li>

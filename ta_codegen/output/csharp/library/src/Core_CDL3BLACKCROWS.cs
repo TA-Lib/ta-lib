@@ -254,6 +254,10 @@ public partial class Core
    /// signals a bearish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3blackcrows">ta-lib.org/functions/cdl3blackcrows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior mature uptrend the pattern classically assumes for significance.</description></item>
    /// </list>
@@ -320,6 +324,10 @@ public partial class Core
    /// signals a bearish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3blackcrows">ta-lib.org/functions/cdl3blackcrows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior mature uptrend the pattern classically assumes for significance.</description></item>
    /// </list>

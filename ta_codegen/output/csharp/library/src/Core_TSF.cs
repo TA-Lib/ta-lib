@@ -395,10 +395,10 @@ public partial class Core
    /// as LINEARREG but evaluated at x=period instead of x=period-1.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSqr), b = (SumY - m*SumX)/N; output = b + m*N. With SumX=N(N-1)/2, SumXSqr=N(N-1)(2N-1)/6.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/tsf">ta-lib.org/functions/tsf</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -455,10 +455,10 @@ public partial class Core
    /// as LINEARREG but evaluated at x=period instead of x=period-1.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSqr), b = (SumY - m*SumX)/N; output = b + m*N. With SumX=N(N-1)/2, SumXSqr=N(N-1)(2N-1)/6.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/tsf">ta-lib.org/functions/tsf</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

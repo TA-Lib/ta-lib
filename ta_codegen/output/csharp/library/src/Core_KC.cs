@@ -310,14 +310,10 @@ public partial class Core
    /// quiet ones.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP = (High + Low + Close) / 3
-   /// Middle = EMA(TP, N)
-   /// Band = ATR(M)
-   /// Upper = Middle + Deviations * Band
-   /// Lower = Middle - Deviations * Band
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</description></item>
    /// <item><description>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</description></item>
@@ -402,14 +398,10 @@ public partial class Core
    /// quiet ones.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP = (High + Low + Close) / 3
-   /// Middle = EMA(TP, N)
-   /// Band = ATR(M)
-   /// Upper = Middle + Deviations * Band
-   /// Lower = Middle - Deviations * Band
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</description></item>
    /// <item><description>Chester Keltner's 1960 original smooths the typical price with a simple moving average and takes the band from the plain daily range; the widely charted modern variant centres on the close instead. Expect a visible difference against a package plotting either.</description></item>

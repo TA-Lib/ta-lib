@@ -71,10 +71,8 @@
    }
    /**
     * Element-wise base-10 logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log10(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/log10">ta-lib.org/functions/log10</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
@@ -128,10 +126,8 @@
    }
    /**
     * Element-wise base-10 logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log10(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/log10">ta-lib.org/functions/log10</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>

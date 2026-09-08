@@ -697,10 +697,10 @@ public partial class Core
    /// says nothing about direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adx">ta-lib.org/functions/adx</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied.</description></item>
    /// </list>
@@ -768,10 +768,10 @@ public partial class Core
    /// says nothing about direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adx">ta-lib.org/functions/adx</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied.</description></item>
    /// </list>

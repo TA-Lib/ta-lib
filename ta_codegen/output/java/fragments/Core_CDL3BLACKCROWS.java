@@ -198,6 +198,8 @@
     * (down) candles with successively lower closes, each opening inside the
     * prior black's real body. It is a bearish reversal signal. A hit (-100)
     * signals a bearish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3blackcrows">ta-lib.org/functions/cdl3blackcrows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>
@@ -264,6 +266,8 @@
     * (down) candles with successively lower closes, each opening inside the
     * prior black's real body. It is a bearish reversal signal. A hit (-100)
     * signals a bearish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3blackcrows">ta-lib.org/functions/cdl3blackcrows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>

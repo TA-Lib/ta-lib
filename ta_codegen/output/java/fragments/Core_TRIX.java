@@ -267,10 +267,8 @@
     * oscillator that filters out price moves shorter than the chosen period.
     * Oscillates around zero; sign, zero-crossings and slope signal momentum
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
@@ -333,10 +331,8 @@
     * oscillator that filters out price moves shorter than the chosen period.
     * Oscillates around zero; sign, zero-crossings and slope signal momentum
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>

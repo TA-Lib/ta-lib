@@ -363,10 +363,8 @@
     * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
     * positive vs negative money flow over a period. A volume-based analog of
     * RSI. &gt;80 overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative if TP<prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mfi">ta-lib.org/functions/mfi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</li>
@@ -436,10 +434,8 @@
     * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
     * positive vs negative money flow over a period. A volume-based analog of
     * RSI. &gt;80 overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative if TP<prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mfi">ta-lib.org/functions/mfi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</li>

@@ -196,16 +196,10 @@ public partial class Core
    /// proxy for that cohort's positioning.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// NVI[startIdx] = 1000
-   /// For each subsequent bar i:
-   /// NVI[i] = NVI[i-1] + ( inVolume[i] &lt; inVolume[i-1]
-   /// ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * NVI[i-1]
-   /// : 0 )
-   /// The index carries forward unchanged on bars whose volume did not fall (and on the
-   /// degenerate case of a zero previous close, which would otherwise divide by zero).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</description></item>
    /// </list>
@@ -267,16 +261,10 @@ public partial class Core
    /// proxy for that cohort's positioning.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// NVI[startIdx] = 1000
-   /// For each subsequent bar i:
-   /// NVI[i] = NVI[i-1] + ( inVolume[i] &lt; inVolume[i-1]
-   /// ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * NVI[i-1]
-   /// : 0 )
-   /// The index carries forward unchanged on bars whose volume did not fall (and on the
-   /// degenerate case of a zero previous close, which would otherwise divide by zero).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</description></item>
    /// </list>

@@ -466,16 +466,10 @@ public partial class Core
    /// the flip is the signal. Attributed to Olivier Seban.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Median = (High + Low) / 2
-   /// BasicUpper = Median + Multiplier * ATR(TimePeriod)
-   /// BasicLower = Median - Multiplier * ATR(TimePeriod)
-   /// Upper = BasicUpper, when BasicUpper &lt; previous Upper or previous Close &gt; previous Upper; otherwise the previous Upper
-   /// Lower = BasicLower, when BasicLower &gt; previous Lower or previous Close &lt; previous Lower; otherwise the previous Lower
-   /// SuperTrend = Lower while the trend is up, until Close &lt; Lower flips it down
-   /// SuperTrend = Upper while the trend is down, until Close &gt; Upper flips it up
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</description></item>
    /// <item><description>The recurrence has no value before the first bar it can be computed on, so the trend is seeded up there and both bands take their unclamped value. Published implementations are split on that seed; this is ta4j's. The choice stays visible for as long as the first trend lasts, it never washes out on a series whose close never leaves the band, and it is why the same bar computed from a later start index can differ.</description></item>
@@ -556,16 +550,10 @@ public partial class Core
    /// the flip is the signal. Attributed to Olivier Seban.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Median = (High + Low) / 2
-   /// BasicUpper = Median + Multiplier * ATR(TimePeriod)
-   /// BasicLower = Median - Multiplier * ATR(TimePeriod)
-   /// Upper = BasicUpper, when BasicUpper &lt; previous Upper or previous Close &gt; previous Upper; otherwise the previous Upper
-   /// Lower = BasicLower, when BasicLower &gt; previous Lower or previous Close &lt; previous Lower; otherwise the previous Lower
-   /// SuperTrend = Lower while the trend is up, until Close &lt; Lower flips it down
-   /// SuperTrend = Upper while the trend is down, until Close &gt; Upper flips it up
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</description></item>
    /// <item><description>The recurrence has no value before the first bar it can be computed on, so the trend is seeded up there and both bands take their unclamped value. Published implementations are split on that seed; this is ta4j's. The choice stays visible for as long as the first trend lasts, it never washes out on a series whose close never leaves the band, and it is why the same bar computed from a later start index can differ.</description></item>

@@ -230,6 +230,8 @@
     * Two-candle pattern: a long real body followed by a short real body
     * contained within the first candle's real body. A reversal signal whose
     * direction is the opposite of the first candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharami">ta-lib.org/functions/cdlharami</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
@@ -297,6 +299,8 @@
     * Two-candle pattern: a long real body followed by a short real body
     * contained within the first candle's real body. A reversal signal whose
     * direction is the opposite of the first candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharami">ta-lib.org/functions/cdlharami</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>

@@ -318,6 +318,10 @@ public partial class Core
    /// which this function does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</description></item>
    /// <item><description>A prior downtrend is not verified.</description></item>
@@ -390,6 +394,10 @@ public partial class Core
    /// which this function does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</description></item>
    /// <item><description>A prior downtrend is not verified.</description></item>

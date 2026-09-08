@@ -266,6 +266,8 @@
     * upper shadow, sitting at or near the highs of the prior candle. Bearish
     * reversal signal. A hit is a bearish reversal signal (meaningful at the top
     * of an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhangingman">ta-lib.org/functions/cdlhangingman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
@@ -334,6 +336,8 @@
     * upper shadow, sitting at or near the highs of the prior candle. Bearish
     * reversal signal. A hit is a bearish reversal signal (meaningful at the top
     * of an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhangingman">ta-lib.org/functions/cdlhangingman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>

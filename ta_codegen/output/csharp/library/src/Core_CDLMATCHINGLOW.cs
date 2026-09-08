@@ -226,10 +226,10 @@ public partial class Core
    /// candles).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles i-1, i. Candle i-1: black (close&lt;open). Candle i: black (close&lt;open). Equal closes: close[i-1]-E &lt;= close[i] &lt;= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The bullish-reversal reading assumes a prior downtrend, which is not verified.</description></item>
    /// <item><description>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. (<see href="https://thepatternsite.com/MatchingLow.html">thepatternsite.com</see>)</description></item>
@@ -298,10 +298,10 @@ public partial class Core
    /// candles).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles i-1, i. Candle i-1: black (close&lt;open). Candle i: black (close&lt;open). Equal closes: close[i-1]-E &lt;= close[i] &lt;= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The bullish-reversal reading assumes a prior downtrend, which is not verified.</description></item>
    /// <item><description>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. (<see href="https://thepatternsite.com/MatchingLow.html">thepatternsite.com</see>)</description></item>

@@ -265,6 +265,8 @@
     * Single-candle pattern: a small real body at the top of the range with a
     * long lower shadow and little or no upper shadow, sitting at or near the
     * prior candle's low. A hit flags a potential bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhammer">ta-lib.org/functions/cdlhammer</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
@@ -332,6 +334,8 @@
     * Single-candle pattern: a small real body at the top of the range with a
     * long lower shadow and little or no upper shadow, sitting at or near the
     * prior candle's low. A hit flags a potential bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhammer">ta-lib.org/functions/cdlhammer</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>

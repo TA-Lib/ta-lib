@@ -566,10 +566,10 @@ public partial class Core
    /// (clamped) period given by inPeriods.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/mavp">ta-lib.org/functions/mavp</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</description></item>
    /// <item><description>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</description></item>
@@ -641,10 +641,10 @@ public partial class Core
    /// (clamped) period given by inPeriods.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/mavp">ta-lib.org/functions/mavp</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</description></item>
    /// <item><description>Period values of 1 perform no smoothing (the bar's output equals its input); the minimum allowed period is 1 since 0.6.5.</description></item>

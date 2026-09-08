@@ -71,10 +71,8 @@
    }
    /**
     * Element-wise arc cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = acos(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/acos">ta-lib.org/functions/acos</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</li>
@@ -129,10 +127,8 @@
    }
    /**
     * Element-wise arc cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = acos(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/acos">ta-lib.org/functions/acos</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</li>

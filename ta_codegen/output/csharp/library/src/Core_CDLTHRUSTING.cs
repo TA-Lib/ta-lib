@@ -264,6 +264,10 @@ public partial class Core
    /// down move.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlthrusting">ta-lib.org/functions/cdlthrusting</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</description></item>
    /// <item><description>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</description></item>
@@ -333,6 +337,10 @@ public partial class Core
    /// down move.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlthrusting">ta-lib.org/functions/cdlthrusting</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</description></item>
    /// <item><description>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</description></item>

@@ -322,10 +322,10 @@ public partial class Core
    /// direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</description></item>
    /// </list>
@@ -386,10 +386,10 @@ public partial class Core
    /// direction.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</description></item>
    /// </list>

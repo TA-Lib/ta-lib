@@ -237,11 +237,10 @@ public partial class Core
    /// it is comparable across time only for one instrument.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-   /// DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it <c>t</c> bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts <c>outReal</c> itself.</description></item>
    /// <item><description>A causal variant, <c>P[i] - SMA(P, optInTimePeriod)[i - t]</c>, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</description></item>
@@ -307,11 +306,10 @@ public partial class Core
    /// it is comparable across time only for one instrument.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-   /// DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it <c>t</c> bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts <c>outReal</c> itself.</description></item>
    /// <item><description>A causal variant, <c>P[i] - SMA(P, optInTimePeriod)[i - t]</c>, displaces the average instead of the price. It is a genuinely different series, not a re-indexing of this one, and is not implemented here.</description></item>

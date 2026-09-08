@@ -165,11 +165,10 @@ public partial class Core
    /// price rises is the classic bearish divergence.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-   /// The series starts at zero on the first bar of the requested range.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</description></item>
    /// <item><description>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</description></item>
@@ -237,11 +236,10 @@ public partial class Core
    /// price rises is the classic bearish divergence.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-   /// The series starts at zero on the first bar of the requested range.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</description></item>
    /// <item><description>Some libraries scale the per-bar term by 100. This implementation follows the fractional definition, which every primary reference below states.</description></item>

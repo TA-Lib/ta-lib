@@ -354,6 +354,8 @@
     * bodies and/or lengthening upper shadows). Signals that an uptrend's
     * advance is being blocked. A hit (-100) is bearish: the advance is
     * stalling/blocked; meaningful mainly within an existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdladvanceblock">ta-lib.org/functions/cdladvanceblock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
@@ -422,6 +424,8 @@
     * bodies and/or lengthening upper shadows). Signals that an uptrend's
     * advance is being blocked. A hit (-100) is bearish: the advance is
     * stalling/blocked; meaningful mainly within an existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdladvanceblock">ta-lib.org/functions/cdladvanceblock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>

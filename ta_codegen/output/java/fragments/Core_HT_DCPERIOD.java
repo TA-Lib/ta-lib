@@ -663,6 +663,8 @@
     * Hilbert Transform estimate of the dominant cycle period (in bars) of the
     * price series. Outputs the smoothed instantaneous cycle period. Output is
     * the estimated dominant cycle length in bars (clamped to 6-50).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_dcperiod">ta-lib.org/functions/ht_dcperiod</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -718,6 +720,8 @@
     * Hilbert Transform estimate of the dominant cycle period (in bars) of the
     * price series. Outputs the smoothed instantaneous cycle period. Output is
     * the estimated dominant cycle length in bars (clamped to 6-50).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_dcperiod">ta-lib.org/functions/ht_dcperiod</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

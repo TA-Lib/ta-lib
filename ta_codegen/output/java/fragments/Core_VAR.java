@@ -347,10 +347,8 @@
     * Rolling population variance of a real series over a given period. Measures
     * dispersion of values around their mean. Higher values indicate greater
     * dispersion; 0 means constant input.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</li>
@@ -412,10 +410,8 @@
     * Rolling population variance of a real series over a given period. Measures
     * dispersion of values around their mean. Higher values indicate greater
     * dispersion; 0 means constant input.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</li>

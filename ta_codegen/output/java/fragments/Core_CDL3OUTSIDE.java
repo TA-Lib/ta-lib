@@ -144,6 +144,8 @@
     * candle 1's body) followed by a third candle that confirms in the engulfing
     * direction. Signals a bullish reversal (Three Outside Up) or bearish
     * reversal (Three Outside Down).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3outside">ta-lib.org/functions/cdl3outside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
@@ -213,6 +215,8 @@
     * candle 1's body) followed by a third candle that confirms in the engulfing
     * direction. Signals a bullish reversal (Three Outside Up) or bearish
     * reversal (Three Outside Down).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3outside">ta-lib.org/functions/cdl3outside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>

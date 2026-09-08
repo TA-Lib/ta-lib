@@ -180,6 +180,8 @@
     * and closes down inside the first white body. A hit (-100) signals a
     * bearish reversal; significant in an uptrend, which this function does not
     * verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl2crows">ta-lib.org/functions/cdl2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
@@ -248,6 +250,8 @@
     * and closes down inside the first white body. A hit (-100) signals a
     * bearish reversal; significant in an uptrend, which this function does not
     * verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl2crows">ta-lib.org/functions/cdl2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>

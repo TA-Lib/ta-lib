@@ -71,10 +71,8 @@
    }
    /**
     * Element-wise natural logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ln">ta-lib.org/functions/ln</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
@@ -129,10 +127,8 @@
    }
    /**
     * Element-wise natural logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ln">ta-lib.org/functions/ln</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>

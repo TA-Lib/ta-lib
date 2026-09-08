@@ -599,25 +599,8 @@
     * Bollinger Bands: a moving-average middle band with upper and lower bands
     * offset by a multiple of the standard deviation. Used to gauge relative
     * price volatility.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
-    * \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
-    * \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-    * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
-    * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-    * lower deviation multipliers.
-    * <p><b>Notes</b>
-    * <ul>
-    * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
-    * <li>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</li>
-    * </ul>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -693,25 +676,8 @@
     * Bollinger Bands: a moving-average middle band with upper and lower bands
     * offset by a multiple of the standard deviation. Used to gauge relative
     * price volatility.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
-    * \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
-    * \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-    * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
-    * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-    * lower deviation multipliers.
-    * <p><b>Notes</b>
-    * <ul>
-    * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
-    * <li>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</li>
-    * </ul>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

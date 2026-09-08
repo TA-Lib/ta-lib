@@ -288,12 +288,8 @@
     * Acceleration Bands: three overlap lines around price. The middle band is
     * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
     * by an intraday-range factor.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 4*(H-L)/(H+L)
-    * upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
-    * Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/accbands">ta-lib.org/functions/accbands</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -362,12 +358,8 @@
     * Acceleration Bands: three overlap lines around price. The middle band is
     * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
     * by an intraday-range factor.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 4*(H-L)/(H+L)
-    * upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
-    * Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/accbands">ta-lib.org/functions/accbands</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -86,10 +86,8 @@
    /**
     * Median Price: the midpoint of each bar's high and low. A price-transform
     * overlay.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $MEDPRICE_i = (High_i + Low_i) / 2$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/medprice">ta-lib.org/functions/medprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -145,10 +143,8 @@
    /**
     * Median Price: the midpoint of each bar's high and low. A price-transform
     * overlay.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $MEDPRICE_i = (High_i + Low_i) / 2$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/medprice">ta-lib.org/functions/medprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

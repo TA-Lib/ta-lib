@@ -285,13 +285,10 @@ public partial class Core
    /// ...).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// lag = Integer( (n - 1) / 2 )
-   /// d = 2 * Price - Price[lag bars ago]
-   /// ZLEMA(n) = EMA( d, n )
-   /// The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the <c>(n-1)/2</c> lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</description></item>
    /// <item><description><c>lag</c> <b>truncates</b>: <c>Integer((n-1)/2)</c>. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</description></item>
@@ -370,13 +367,10 @@ public partial class Core
    /// ...).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// lag = Integer( (n - 1) / 2 )
-   /// d = 2 * Price - Price[lag bars ago]
-   /// ZLEMA(n) = EMA( d, n )
-   /// The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the <c>(n-1)/2</c> lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</description></item>
    /// <item><description><c>lag</c> <b>truncates</b>: <c>Integer((n-1)/2)</c>. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</description></item>

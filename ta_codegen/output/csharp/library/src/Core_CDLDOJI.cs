@@ -220,10 +220,10 @@ public partial class Core
    /// bearish on its own.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -286,10 +286,10 @@ public partial class Core
    /// bearish on its own.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

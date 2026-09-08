@@ -807,6 +807,8 @@
     * and emits its sine plus a 45-degree-lead sine. The two curves cross near
     * cycle turning points. outSine and outLeadSine crossing marks cycle turning
     * points.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_sine">ta-lib.org/functions/ht_sine</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -866,6 +868,8 @@
     * and emits its sine plus a 45-degree-lead sine. The two curves cross near
     * cycle turning points. outSine and outLeadSine crossing marks cycle turning
     * points.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_sine">ta-lib.org/functions/ht_sine</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

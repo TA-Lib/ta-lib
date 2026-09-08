@@ -284,6 +284,8 @@
     * range. Bullish or bearish reversal signal. Bullish (+) or bearish (-)
     * reversal; per the code's note it is significant in a downtrend (bull) or
     * uptrend (bear), context the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhikkakemod">ta-lib.org/functions/cdlhikkakemod</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>
@@ -350,6 +352,8 @@
     * range. Bullish or bearish reversal signal. Bullish (+) or bearish (-)
     * reversal; per the code's note it is significant in a downtrend (bull) or
     * uptrend (bear), context the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhikkakemod">ta-lib.org/functions/cdlhikkakemod</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>

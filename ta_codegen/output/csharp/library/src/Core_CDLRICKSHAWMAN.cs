@@ -289,6 +289,10 @@ public partial class Core
    /// indecision/uncertainty; neutral, neither bullish nor bearish.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<see href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -356,6 +360,10 @@ public partial class Core
    /// indecision/uncertainty; neutral, neither bullish nor bearish.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<see href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</see>)</description></item>
    /// </list>

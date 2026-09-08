@@ -268,6 +268,10 @@ public partial class Core
    /// bearish reversal signal, most meaningful in an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</description></item>
    /// <item><description>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<see href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</see>)</description></item>
@@ -336,6 +340,10 @@ public partial class Core
    /// bearish reversal signal, most meaningful in an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</description></item>
    /// <item><description>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<see href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</see>)</description></item>

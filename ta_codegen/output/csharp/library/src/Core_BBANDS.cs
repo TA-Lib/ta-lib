@@ -647,24 +647,10 @@ public partial class Core
    /// price volatility.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $$
-   /// \begin{aligned}
-   /// \text{middle}_t &amp;= \operatorname{MA}(X, n, \text{matype})_t \\
-   /// \sigma_t &amp;= \operatorname{STDDEV}(X, n)_t \\
-   /// \text{upper}_t &amp;= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-   /// \text{lower}_t &amp;= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-   /// \end{aligned}
-   /// $$
-   /// </code>
-   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the
-   /// moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-   /// lower deviation multipliers.
-   /// <list type="bullet">
-   /// <item><description>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</description></item>
-   /// <item><description>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</description></item>
-   /// </list>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -740,24 +726,10 @@ public partial class Core
    /// price volatility.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $$
-   /// \begin{aligned}
-   /// \text{middle}_t &amp;= \operatorname{MA}(X, n, \text{matype})_t \\
-   /// \sigma_t &amp;= \operatorname{STDDEV}(X, n)_t \\
-   /// \text{upper}_t &amp;= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-   /// \text{lower}_t &amp;= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-   /// \end{aligned}
-   /// $$
-   /// </code>
-   /// where $X$ is the input series, $n$ the period, $\text{matype}$ the
-   /// moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-   /// lower deviation multipliers.
-   /// <list type="bullet">
-   /// <item><description>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</description></item>
-   /// <item><description>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</description></item>
-   /// </list>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

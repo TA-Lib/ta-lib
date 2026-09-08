@@ -167,10 +167,8 @@
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>
@@ -232,10 +230,8 @@
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>

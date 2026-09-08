@@ -369,10 +369,10 @@ public partial class Core
    /// from EMA3, also called "triple EMA" in the literature.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/tema">ta-lib.org/functions/tema</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</description></item>
    /// </list>
@@ -431,10 +431,10 @@ public partial class Core
    /// from EMA3, also called "triple EMA" in the literature.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/tema">ta-lib.org/functions/tema</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</description></item>
    /// </list>

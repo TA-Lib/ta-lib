@@ -3,9 +3,9 @@
 //! `docs/ta_codegen_input_doc.md` splits the two halves of a function's documentation:
 //! prose lives in `<name>.md` and **numbers live only in `<name>.yaml`**, injected when
 //! the page is rendered. This module is the injection half — the single place that
-//! resolves an [`OptInput`] into presentable facts, so the two render targets
-//! ([`super::rust_doc`] and [`super::docs_site`]) can never disagree about a default
-//! or a range. Each target assembles the pieces into its own markup.
+//! resolves an [`OptInput`] into presentable facts, so no two render targets can
+//! disagree about a default or a range. Each assembles the pieces into its own
+//! markup.
 //!
 //! Two resolutions are the reason this is not a formatting one-liner:
 //!
@@ -163,10 +163,73 @@ pub fn ensure_period(s: &str) -> String {
     }
 }
 
+/// The function's page on ta-lib.org — the one target that renders the authored
+/// `## Formula`. Every API doc links here instead of restating it.
+///
+/// The site builds flat files (`dist/functions/sma.html`), so the slug is the
+/// lower-cased name and carries no trailing slash: `/functions/SMA` and
+/// `/functions/sma/` both 404. Same rule as `docs_site::generate`, which is what
+/// names the page.
+#[must_use]
+pub fn function_page_url(name: &str) -> String {
+    format!("https://ta-lib.org/functions/{}", name.to_lowercase())
+}
+
+/// The `## Notes` bullets a markup target may render.
+///
+/// Drops any bullet carrying TeX, which javadoc and the C# XML doc render as the
+/// literal source it is written in, and which neither `-Xdoclint` nor
+/// `csc -warnaserror` reports. Per bullet, so the prose ones still ship, and the
+/// ta-lib.org link above the list is where the dropped one stays readable.
+///
+/// TeX is a `\command`, or a `$` opening a math span. A `$` on a digit or a
+/// space is money — the corpus prices instruments in prose — so the rule reads
+/// the character after the delimiter rather than banning the delimiter. Unpaired
+/// still counts: one opener is enough, and an author can tell from the bullet
+/// alone. Notation belongs in `## Formula`, which renders on ta-lib.org only.
+#[must_use]
+pub fn renderable_notes(notes: &[String]) -> Vec<&str> {
+    notes
+        .iter()
+        .map(String::as_str)
+        .filter(|n| {
+            !n.as_bytes().windows(2).any(|w| {
+                (w[0] == b'\\' && w[1].is_ascii_alphabetic())
+                    || (w[0] == b'$' && !w[1].is_ascii_digit() && !w[1].is_ascii_whitespace())
+            })
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ir::EnumVariant;
+
+    /// Per bullet, not per section: the TeX ones go and their neighbours ship.
+    /// BBANDS is the only function carrying any today, and both of its notes
+    /// carry it, so the corpus cannot show the two halves apart.
+    #[test]
+    fn renderable_notes_drops_only_the_tex_bullet() {
+        let notes: Vec<String> = [
+            "Uses the population form.",
+            "$\\sigma$ depends only on the price window.",
+            "A \\frac{1}{2} carries no dollars and is still TeX.",
+            "The band sits at 4*ATR — prose keeps its asterisks.",
+            "A $100 instrument: money is not math.",
+        ]
+        .iter()
+        .map(|s| (*s).to_string())
+        .collect();
+        assert_eq!(
+            renderable_notes(&notes),
+            vec![
+                "Uses the population form.",
+                "The band sits at 4*ATR — prose keeps its asterisks.",
+                "A $100 instrument: money is not math."
+            ]
+        );
+    }
 
     fn opt(name: &str, pt: ParamType, range: Option<(f64, f64)>, default: f64) -> OptInput {
         OptInput {

@@ -323,6 +323,10 @@ public partial class Core
    /// into the first body. Bullish (bottom) or bearish (top) reversal signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<see href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</see>)</description></item>
@@ -393,6 +397,10 @@ public partial class Core
    /// into the first body. Bullish (bottom) or bearish (top) reversal signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<see href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</see>)</description></item>

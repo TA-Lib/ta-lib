@@ -165,10 +165,8 @@
    /**
     * Simple Moving Average: the unweighted arithmetic mean of the last N input
     * values. Used to smooth a series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sma">ta-lib.org/functions/sma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -229,10 +227,8 @@
    /**
     * Simple Moving Average: the unweighted arithmetic mean of the last N input
     * values. Used to smooth a series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sma">ta-lib.org/functions/sma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>

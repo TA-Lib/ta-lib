@@ -256,6 +256,8 @@
     * hold within the first body, and a final white candle closing above the
     * reaction days' highs. Signals continuation of the prior uptrend. Hit =
     * bullish continuation of the existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
@@ -328,6 +330,8 @@
     * hold within the first body, and a final white candle closing above the
     * reaction days' highs. Signals continuation of the prior uptrend. Hit =
     * bullish continuation of the existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>

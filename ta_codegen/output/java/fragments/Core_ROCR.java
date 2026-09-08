@@ -170,10 +170,8 @@
     * Rate of Change Ratio: the ratio of the current price to the price
     * optInTimePeriod bars ago. A momentum measure centered at 1. Always
     * positive, centered at 1: &gt;1 rising, &lt;1 falling.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCR = price / price[t - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -231,10 +229,8 @@
     * Rate of Change Ratio: the ratio of the current price to the price
     * optInTimePeriod bars ago. A momentum measure centered at 1. Always
     * positive, centered at 1: &gt;1 rising, &lt;1 falling.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCR = price / price[t - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

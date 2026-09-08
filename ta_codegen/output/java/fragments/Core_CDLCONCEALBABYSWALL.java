@@ -196,6 +196,8 @@
     * A four-candle pattern: two black marubozus, then a black candle that gaps
     * down but pokes its upper shadow into the prior body, then a larger black
     * candle fully engulfing the third. A hit signals a bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlconcealbabyswall">ta-lib.org/functions/cdlconcealbabyswall</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
@@ -262,6 +264,8 @@
     * A four-candle pattern: two black marubozus, then a black candle that gaps
     * down but pokes its upper shadow into the prior body, then a larger black
     * candle fully engulfing the third. A hit signals a bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlconcealbabyswall">ta-lib.org/functions/cdlconcealbabyswall</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>

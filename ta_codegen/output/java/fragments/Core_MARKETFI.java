@@ -122,11 +122,8 @@
     * fake / squat) derived from the signs of the bar-to-bar change in this
     * index and in volume. That is an interpretive layer on top of the series,
     * not part of it; {@code outReal} is the scalar only.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MARKETFI_t = (high_t - low_t) / volume_t
-    * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -195,11 +192,8 @@
     * fake / squat) derived from the signs of the bar-to-bar change in this
     * index and in volume. That is an interpretive layer on top of the series,
     * not part of it; {@code outReal} is the scalar only.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MARKETFI_t = (high_t - low_t) / volume_t
-    * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

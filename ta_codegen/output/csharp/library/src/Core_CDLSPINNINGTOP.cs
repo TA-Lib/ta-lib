@@ -220,10 +220,10 @@ public partial class Core
    /// classify it as bullish or bearish.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle where: upper shadow &gt; real body AND lower shadow &gt; real body AND real body &lt; the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -287,10 +287,10 @@ public partial class Core
    /// classify it as bullish or bearish.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle where: upper shadow &gt; real body AND lower shadow &gt; real body AND real body &lt; the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

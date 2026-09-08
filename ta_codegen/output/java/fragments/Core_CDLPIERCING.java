@@ -186,6 +186,8 @@
     * that opens below the prior low and closes back above the midpoint of the
     * prior black body. Bullish reversal signal. A hit (+100) is a bullish
     * reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlpiercing">ta-lib.org/functions/cdlpiercing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior downtrend is not verified.</li>
@@ -253,6 +255,8 @@
     * that opens below the prior low and closes back above the midpoint of the
     * prior black body. Bullish reversal signal. A hit (+100) is a bullish
     * reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlpiercing">ta-lib.org/functions/cdlpiercing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior downtrend is not verified.</li>

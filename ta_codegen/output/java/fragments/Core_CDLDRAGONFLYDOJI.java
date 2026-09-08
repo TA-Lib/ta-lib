@@ -200,10 +200,8 @@
     * trend (the code does not judge direction). A hit marks a dragonfly doji;
     * treated as a potential reversal, but direction (bullish/bearish) must be
     * read from the trend it appears in.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < ShadowVeryShort average (no/very short upper shadow) AND lower shadow > ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldragonflydoji">ta-lib.org/functions/cdldragonflydoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -275,10 +273,8 @@
     * trend (the code does not judge direction). A hit marks a dragonfly doji;
     * treated as a potential reversal, but direction (bullish/bearish) must be
     * read from the trend it appears in.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < ShadowVeryShort average (no/very short upper shadow) AND lower shadow > ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldragonflydoji">ta-lib.org/functions/cdldragonflydoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>

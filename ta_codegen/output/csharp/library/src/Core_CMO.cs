@@ -381,10 +381,10 @@ public partial class Core
    /// upward momentum, negative = net downward.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cmo">ta-lib.org/functions/cmo</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</description></item>
    /// </list>
@@ -445,10 +445,10 @@ public partial class Core
    /// upward momentum, negative = net downward.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cmo">ta-lib.org/functions/cmo</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</description></item>
    /// </list>

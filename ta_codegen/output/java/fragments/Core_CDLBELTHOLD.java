@@ -201,10 +201,8 @@
     * lower shadow; a bearish belt-hold is a long black candle with no/very
     * short upper shadow. A white hit is bullish (opens at the low, closes
     * strong); a black hit is bearish (opens at the high, closes weak).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
@@ -274,10 +272,8 @@
     * lower shadow; a bearish belt-hold is a long black candle with no/very
     * short upper shadow. A white hit is bullish (opens at the low, closes
     * strong); a black hit is bearish (opens at the high, closes weak).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>

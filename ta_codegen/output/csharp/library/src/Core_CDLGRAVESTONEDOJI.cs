@@ -256,10 +256,10 @@ public partial class Core
    /// function does not check.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Detected when all hold: (1) doji body: realbody |close-open| &lt;= BodyDoji average; (2) very short/absent lower shadow: lowerShadow &lt; ShadowVeryShort average; (3) non-short upper shadow: upperShadow &gt; ShadowVeryShort average (open/close at the low with an upper shadow).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
    /// <item><description>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. (<see href="https://thepatternsite.com/Gravestone.html">thepatternsite.com</see>)</description></item>
@@ -330,10 +330,10 @@ public partial class Core
    /// function does not check.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Detected when all hold: (1) doji body: realbody |close-open| &lt;= BodyDoji average; (2) very short/absent lower shadow: lowerShadow &lt; ShadowVeryShort average; (3) non-short upper shadow: upperShadow &gt; ShadowVeryShort average (open/close at the low with an upper shadow).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
    /// <item><description>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. (<see href="https://thepatternsite.com/Gravestone.html">thepatternsite.com</see>)</description></item>

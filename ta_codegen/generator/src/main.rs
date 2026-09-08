@@ -1861,10 +1861,8 @@ fn javadoc_notice_present(bin_dir: &Path, javadoc_jar: &Path) -> bool {
 /// thing a user copies, and a published javadoc jar cannot be corrected, so they
 /// are compiled like any other source.
 ///
-/// Scope is the hand-written scaffolding plus the two package pages, listed in
-/// `DOC_EXAMPLE_FILES`. `Core.java` contributes only its hand-written region:
-/// the 233 blocks inside the GENCODE markers are each function's **Formula**
-/// from its canonical `.md`, which is algebra and deliberately not Java.
+/// Scope is `Core.java` plus the hand-written scaffolding and the two package
+/// pages listed in `DOC_EXAMPLE_FILES`.
 ///
 /// A snippet may use `close` and `out`; anything else fails, which is the point
 /// — the alternative is a preamble that quietly grows until the gate compiles
@@ -1877,7 +1875,6 @@ fn check_java_doc_examples(src_root: &Path, jar_path: &Path, bin_dir: &Path) -> 
         "main/java/io/github/talib/metadata/Functions.java",
         "main/java/io/github/talib/metadata/ParamHolder.java",
     ];
-    const CORE_GENCODE_START: &str = "/**** START GENCODE SECTION 1";
 
     let mut snippets: Vec<(String, String)> = Vec::new();
     for rel in DOC_EXAMPLE_FILES {
@@ -1890,12 +1887,10 @@ fn check_java_doc_examples(src_root: &Path, jar_path: &Path, bin_dir: &Path) -> 
             snippets.push((format!("{rel}#{i}"), body));
         }
     }
-    // Core.java: everything before the generated section.
     let core_path = src_root.join("main/java/io/github/talib/Core.java");
     if let Ok(text) = std::fs::read_to_string(&core_path) {
-        let head = text.split(CORE_GENCODE_START).next().unwrap_or("");
-        for (i, body) in extract_doc_code_blocks(head).into_iter().enumerate() {
-            snippets.push((format!("Core.java(hand-written)#{i}"), body));
+        for (i, body) in extract_doc_code_blocks(&text).into_iter().enumerate() {
+            snippets.push((format!("Core.java#{i}"), body));
         }
     }
 

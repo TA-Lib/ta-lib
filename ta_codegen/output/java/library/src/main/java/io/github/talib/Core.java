@@ -864,12 +864,8 @@ public final class Core {
     * more than the level. The oscillator is one leg of Williams' Profitunity
     * system, alongside the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * AC_t = AO_t − SMA(AO, signal)_t
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -954,12 +950,8 @@ public final class Core {
     * more than the level. The oscillator is one leg of Williams' Profitunity
     * system, alongside the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * AC_t = AO_t − SMA(AO, signal)_t
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -1912,12 +1904,8 @@ public final class Core {
     * Acceleration Bands: three overlap lines around price. The middle band is
     * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
     * by an intraday-range factor.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 4*(H-L)/(H+L)
-    * upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
-    * Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/accbands">ta-lib.org/functions/accbands</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -1986,12 +1974,8 @@ public final class Core {
     * Acceleration Bands: three overlap lines around price. The middle band is
     * an SMA of the close; the upper/lower bands are SMAs of the high/low scaled
     * by an intraday-range factor.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 4*(H-L)/(H+L)
-    * upperRaw = H*(1+factor), lowerRaw = L*(1-factor)
-    * Upper = SMA(upperRaw, N), Middle = SMA(Close, N), Lower = SMA(lowerRaw, N)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/accbands">ta-lib.org/functions/accbands</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -2682,10 +2666,8 @@ public final class Core {
    }
    /**
     * Element-wise arc cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = acos(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/acos">ta-lib.org/functions/acos</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</li>
@@ -2740,10 +2722,8 @@ public final class Core {
    }
    /**
     * Element-wise arc cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = acos(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/acos">ta-lib.org/functions/acos</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Outside [-1, 1] there is no angle whose cosine is that value, so those elements come out NaN.</li>
@@ -3188,10 +3168,8 @@ public final class Core {
     * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
     * buying vs. selling pressure. Rising line = accumulation (buying pressure);
     * falling = distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volume_t (running sum, seeded at 0)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ad">ta-lib.org/functions/ad</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -3253,10 +3231,8 @@ public final class Core {
     * indicator. Sums a volume-weighted money-flow multiplier per bar to gauge
     * buying vs. selling pressure. Rising line = accumulation (buying pressure);
     * falling = distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MFM = ((close-low) - (high-close)) / (high-low); AD_t = AD_{t-1} + MFM_t * volume_t (running sum, seeded at 0)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ad">ta-lib.org/functions/ad</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -3716,10 +3692,8 @@ public final class Core {
    }
    /**
     * Element-wise addition of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] + inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/add">ta-lib.org/functions/add</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -3773,10 +3747,8 @@ public final class Core {
    }
    /**
     * Element-wise addition of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] + inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/add">ta-lib.org/functions/add</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -4391,13 +4363,8 @@ public final class Core {
     * the Accumulation/Distribution line. Highlights momentum in
     * accumulation/distribution volume flow. Positive/rising suggests
     * accumulation; negative/falling suggests distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ad += ((close-low)-(high-close))/(high-low) * volume   (only when high>low)
-    * fastEMA = fastk*ad + (1-fastk)*fastEMA,  fastk = 2/(optInFastPeriod+1)
-    * slowEMA = slowk*ad + (1-slowk)*slowEMA,  slowk = 2/(optInSlowPeriod+1)
-    * ADOSC = fastEMA - slowEMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adosc">ta-lib.org/functions/adosc</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -4465,13 +4432,8 @@ public final class Core {
     * the Accumulation/Distribution line. Highlights momentum in
     * accumulation/distribution volume flow. Positive/rising suggests
     * accumulation; negative/falling suggests distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ad += ((close-low)-(high-close))/(high-low) * volume   (only when high>low)
-    * fastEMA = fastk*ad + (1-fastk)*fastEMA,  fastk = 2/(optInFastPeriod+1)
-    * slowEMA = slowk*ad + (1-slowk)*slowEMA,  slowk = 2/(optInSlowPeriod+1)
-    * ADOSC = fastEMA - slowEMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adosc">ta-lib.org/functions/adosc</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -5171,11 +5133,8 @@ public final class Core {
     * family as ATR, and deliberately the narrower member: the range excludes
     * the overnight gap, so on a gapping instrument ADR is systematically
     * smaller than ATR. Having both is the point.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adr">ta-lib.org/functions/adr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
@@ -5254,11 +5213,8 @@ public final class Core {
     * family as ATR, and deliberately the narrower member: the range excludes
     * the overnight gap, so on a gapping instrument ADR is systematically
     * smaller than ATR. Having both is the point.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adr">ta-lib.org/functions/adr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
@@ -6344,10 +6300,8 @@ public final class Core {
     * strongly a market is trending, regardless of direction. Higher values
     * indicate a stronger trend (a common convention treats &gt;25 as trending);
     * says nothing about direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adx">ta-lib.org/functions/adx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied.</li>
@@ -6420,10 +6374,8 @@ public final class Core {
     * strongly a market is trending, regardless of direction. Higher values
     * indicate a stronger trend (a common convention treats &gt;25 as trending);
     * says nothing about direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adx">ta-lib.org/functions/adx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied.</li>
@@ -7410,10 +7362,8 @@ public final class Core {
     * value from (period-1) bars earlier. Further damps ADX to gauge trend
     * strength. Higher values mean a stronger trend; smoother and more lagging
     * than ADX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>
@@ -7482,10 +7432,8 @@ public final class Core {
     * value from (period-1) bars earlier. Further damps ADX to gauge trend
     * strength. Higher values mean a stronger trend; smoother and more lagging
     * than ADX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>
@@ -8172,12 +8120,8 @@ public final class Core {
     * Profitunity system, alongside the Alligator and the
     * Accelerator/Decelerator (<a
     * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -8252,12 +8196,8 @@ public final class Core {
     * Profitunity system, alongside the Alligator and the
     * Accelerator/Decelerator (<a
     * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -9007,11 +8947,8 @@ public final class Core {
     * average of the input, in price units. Measures short- vs long-term
     * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
     * otherwise.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
-    * The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/apo">ta-lib.org/functions/apo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
@@ -9083,11 +9020,8 @@ public final class Core {
     * average of the input, in price units. Measures short- vs long-term
     * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
     * otherwise.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
-    * The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/apo">ta-lib.org/functions/apo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
@@ -9756,10 +9690,8 @@ public final class Core {
     * Indicates trend strength and direction. Up near 100 = a very recent new
     * high (strong uptrend); Down near 100 = a very recent new low. Up/Down
     * crossovers signal trend shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx))/period, where highestIdx/lowestIdx index the highest high / lowest low over the window [today-period .. today].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/aroon">ta-lib.org/functions/aroon</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -9827,10 +9759,8 @@ public final class Core {
     * Indicates trend strength and direction. Up near 100 = a very recent new
     * high (strong uptrend); Down near 100 = a very recent new low. Up/Down
     * crossovers signal trend shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Up = 100*(period-(today-highestIdx))/period; Down = 100*(period-(today-lowestIdx))/period, where highestIdx/lowestIdx index the highest high / lowest low over the window [today-period .. today].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/aroon">ta-lib.org/functions/aroon</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -10680,14 +10610,8 @@ public final class Core {
     * trend direction and strength on a -100..+100 scale. Positive when the high
     * is more recent than the low (up-trend); negative when the low is more
     * recent (down-trend).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 100 / optInTimePeriod
-    * AroonUp   = factor * (period - (today - highestIdx))
-    * AroonDown = factor * (period - (today - lowestIdx))
-    * AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-    * highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -10747,14 +10671,8 @@ public final class Core {
     * trend direction and strength on a -100..+100 scale. Positive when the high
     * is more recent than the low (up-trend); negative when the low is more
     * recent (down-trend).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 100 / optInTimePeriod
-    * AroonUp   = factor * (period - (today - highestIdx))
-    * AroonDown = factor * (period - (today - lowestIdx))
-    * AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-    * highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -11409,10 +11327,8 @@ public final class Core {
    }
    /**
     * Element-wise arcsine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = asin(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/asin">ta-lib.org/functions/asin</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Outside [-1, 1] there is no angle whose sine is that value, so those elements come out NaN.</li>
@@ -11468,10 +11384,8 @@ public final class Core {
    }
    /**
     * Element-wise arcsine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = asin(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/asin">ta-lib.org/functions/asin</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Outside [-1, 1] there is no angle whose sine is that value, so those elements come out NaN.</li>
@@ -11852,10 +11766,8 @@ public final class Core {
    }
    /**
     * Element-wise arctangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/atan">ta-lib.org/functions/atan</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -11906,10 +11818,8 @@ public final class Core {
    }
    /**
     * Element-wise arctangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = atan(inReal[i])  (radians, range (-pi/2, pi/2))
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/atan">ta-lib.org/functions/atan</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -12540,12 +12450,8 @@ public final class Core {
     * Wilder-smoothed average of the True Range over a period, measuring price
     * volatility regardless of direction. Higher ATR means greater volatility;
     * no directional bias.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-    * ATR seed = simple average of first `period` TR values
-    * ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -12608,12 +12514,8 @@ public final class Core {
     * Wilder-smoothed average of the True Range over a period, measuring price
     * volatility regardless of direction. Higher ATR means greater volatility;
     * no directional bias.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-    * ATR seed = simple average of first `period` TR values
-    * ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -13284,10 +13186,8 @@ public final class Core {
     * average over the last N periods. Measures dispersion around the window
     * mean. Higher values indicate greater spread; zero when all values in the
     * window are equal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0}^{N-1} |x_{t-i} - mean_t|$ (N = optInTimePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/avgdev">ta-lib.org/functions/avgdev</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -13344,10 +13244,8 @@ public final class Core {
     * average over the last N periods. Measures dispersion around the window
     * mean. Higher values indicate greater spread; zero when all values in the
     * window are equal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0}^{N-1} |x_{t-i} - mean_t|$ (N = optInTimePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/avgdev">ta-lib.org/functions/avgdev</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -13823,10 +13721,8 @@ public final class Core {
     * Average Price: the arithmetic mean of each bar's open, high, low, and
     * close. A price-transform overlap condensing OHLC into a single
     * representative price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/avgprice">ta-lib.org/functions/avgprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -13888,10 +13784,8 @@ public final class Core {
     * Average Price: the arithmetic mean of each bar's open, high, low, and
     * close. A price-transform overlap condensing OHLC into a single
     * representative price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/avgprice">ta-lib.org/functions/avgprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -14820,25 +14714,8 @@ public final class Core {
     * Bollinger Bands: a moving-average middle band with upper and lower bands
     * offset by a multiple of the standard deviation. Used to gauge relative
     * price volatility.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
-    * \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
-    * \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-    * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
-    * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-    * lower deviation multipliers.
-    * <p><b>Notes</b>
-    * <ul>
-    * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
-    * <li>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</li>
-    * </ul>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -14914,25 +14791,8 @@ public final class Core {
     * Bollinger Bands: a moving-average middle band with upper and lower bands
     * offset by a multiple of the standard deviation. Used to gauge relative
     * price volatility.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * \text{middle}_t &= \operatorname{MA}(X, n, \text{matype})_t \\
-    * \sigma_t &= \operatorname{STDDEV}(X, n)_t \\
-    * \text{upper}_t &= \text{middle}_t + k_{\text{up}}\,\sigma_t \\
-    * \text{lower}_t &= \text{middle}_t - k_{\text{dn}}\,\sigma_t
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series, $n$ the period, $\text{matype}$ the
-    * moving-average type, and $k_{\text{up}}$, $k_{\text{dn}}$ the upper and
-    * lower deviation multipliers.
-    * <p><b>Notes</b>
-    * <ul>
-    * <li>The defaults reproduce Bollinger's original definition: a 20-period SMA middle band with $k_{\text{up}} = k_{\text{dn}} = 2$. Any other $\text{matype}$ is a TA-Lib generalisation.</li>
-    * <li>$\text{matype}$ sets where the envelope is centred; $n$ and $k$ set how wide it is. The two are independent — $\sigma$ depends only on the price window, so changing the middle band re-centres the bands without resizing them.</li>
-    * </ul>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bbands">ta-lib.org/functions/bbands</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -16089,10 +15949,8 @@ public final class Core {
     * over a rolling window. Measures how much a security moves relative to a
     * market index. Beta = 1 moves with the index; &lt; 1 less volatile, &gt; 1
     * more volatile.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1_{i-1})/p^1_{i-1}$ from inReal1. With $n$=period over the window: $\beta = \dfrac{n\,S_{xy}-S_x S_y}{n\,S_{xx}-S_x^2}$, where $S_{xx}=\sum x^2,\ S_{xy}=\sum xy,\ S_x=\sum x,\ S_y=\sum y$.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/beta">ta-lib.org/functions/beta</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -16155,10 +16013,8 @@ public final class Core {
     * over a rolling window. Measures how much a security moves relative to a
     * market index. Beta = 1 moves with the index; &lt; 1 less volatile, &gt; 1
     * more volatile.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per-bar returns: $x_i=(p^0_i-p^0_{i-1})/p^0_{i-1}$ from inReal0, $y_i=(p^1_i-p^1_{i-1})/p^1_{i-1}$ from inReal1. With $n$=period over the window: $\beta = \dfrac{n\,S_{xy}-S_x S_y}{n\,S_{xx}-S_x^2}$, where $S_{xx}=\sum x^2,\ S_{xy}=\sum xy,\ S_x=\sum x,\ S_y=\sum y$.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/beta">ta-lib.org/functions/beta</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -17369,10 +17225,8 @@ public final class Core {
     * normalized by the bar's high-low range. A per-bar oscillator with no
     * smoothing. Positive: close above open (buyers dominated); negative:
     * sellers dominated.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * BOP = (Close - Open) / (High - Low)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bop">ta-lib.org/functions/bop</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -17431,10 +17285,8 @@ public final class Core {
     * normalized by the bar's high-low range. A per-bar oscillator with no
     * smoothing. Positive: close above open (buyers dominated); negative:
     * sellers dominated.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * BOP = (Close - Open) / (High - Low)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/bop">ta-lib.org/functions/bop</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -18065,13 +17917,8 @@ public final class Core {
     * its simple moving average, scaled by mean absolute deviation. Momentum
     * oscillator flagging overbought/oversold extremes. CCI &gt; +100
     * overbought; CCI &lt; -100 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_i = (High_i + Low_i + Close_i)/3
-    * SMA = (1/N) * sum(TP over N bars)
-    * meanDev = (1/N) * sum(|TP - SMA| over N bars)
-    * CCI = (TP_last - SMA) / (0.015 * meanDev)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -18134,13 +17981,8 @@ public final class Core {
     * its simple moving average, scaled by mean absolute deviation. Momentum
     * oscillator flagging overbought/oversold extremes. CCI &gt; +100
     * overbought; CCI &lt; -100 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_i = (High_i + Low_i + Close_i)/3
-    * SMA = (1/N) * sum(TP over N bars)
-    * meanDev = (1/N) * sum(|TP - SMA| over N bars)
-    * CCI = (TP_last - SMA) / (0.015 * meanDev)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -18867,6 +18709,8 @@ public final class Core {
     * and closes down inside the first white body. A hit (-100) signals a
     * bearish reversal; significant in an uptrend, which this function does not
     * verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl2crows">ta-lib.org/functions/cdl2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
@@ -18935,6 +18779,8 @@ public final class Core {
     * and closes down inside the first white body. A hit (-100) signals a
     * bearish reversal; significant in an uptrend, which this function does not
     * verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl2crows">ta-lib.org/functions/cdl2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
@@ -19635,6 +19481,8 @@ public final class Core {
     * (down) candles with successively lower closes, each opening inside the
     * prior black's real body. It is a bearish reversal signal. A hit (-100)
     * signals a bearish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3blackcrows">ta-lib.org/functions/cdl3blackcrows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>
@@ -19701,6 +19549,8 @@ public final class Core {
     * (down) candles with successively lower closes, each opening inside the
     * prior black's real body. It is a bearish reversal signal. A hit (-100)
     * signals a bearish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3blackcrows">ta-lib.org/functions/cdl3blackcrows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior mature uptrend the pattern classically assumes for significance.</li>
@@ -20451,6 +20301,8 @@ public final class Core {
     * to the first that closes past the first candle's open. Signals a bullish
     * reversal (three inside up, significant in a downtrend) or a bearish
     * reversal (three inside down, significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3inside">ta-lib.org/functions/cdl3inside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
@@ -20521,6 +20373,8 @@ public final class Core {
     * to the first that closes past the first candle's open. Signals a bullish
     * reversal (three inside up, significant in a downtrend) or a bearish
     * reversal (three inside down, significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3inside">ta-lib.org/functions/cdl3inside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
@@ -21285,6 +21139,8 @@ public final class Core {
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles, traditionally read
     * as significant only inside a trend matching those three candles.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
@@ -21355,6 +21211,8 @@ public final class Core {
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles, traditionally read
     * as significant only inside a trend matching those three candles.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
@@ -22051,6 +21909,8 @@ public final class Core {
     * candle 1's body) followed by a third candle that confirms in the engulfing
     * direction. Signals a bullish reversal (Three Outside Up) or bearish
     * reversal (Three Outside Down).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3outside">ta-lib.org/functions/cdl3outside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
@@ -22120,6 +21980,8 @@ public final class Core {
     * candle 1's body) followed by a third candle that confirms in the engulfing
     * direction. Signals a bullish reversal (Three Outside Up) or bearish
     * reversal (Three Outside Down).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3outside">ta-lib.org/functions/cdl3outside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
@@ -22835,6 +22697,8 @@ public final class Core {
     * marubozu contained within the second candle's range. A hit signals a
     * bullish reversal; per the code comment it is meaningful in a downtrend,
     * but the function does not verify prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
@@ -22905,6 +22769,8 @@ public final class Core {
     * marubozu contained within the second candle's range. A hit signals a
     * bullish reversal; per the code comment it is meaningful in a downtrend,
     * but the function does not verify prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
@@ -23927,6 +23793,8 @@ public final class Core {
     * higher closes, each opening within/near the prior body and each with a
     * very short upper shadow. A hit is a bullish reversal signal, most
     * meaningful in a downtrend, which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3whitesoldiers">ta-lib.org/functions/cdl3whitesoldiers</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
@@ -23995,6 +23863,8 @@ public final class Core {
     * higher closes, each opening within/near the prior body and each with a
     * very short upper shadow. A hit is a bullish reversal signal, most
     * meaningful in a downtrend, which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3whitesoldiers">ta-lib.org/functions/cdl3whitesoldiers</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
@@ -24986,6 +24856,8 @@ public final class Core {
     * A three-candle reversal pattern: a long body, then a gapped-away doji,
     * then a body of opposite color that gaps back the other way and closes deep
     * into the first body. Bullish (bottom) or bearish (top) reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
@@ -25059,6 +24931,8 @@ public final class Core {
     * A three-candle reversal pattern: a long body, then a gapped-away doji,
     * then a body of opposite color that gaps back the other way and closes deep
     * into the first body. Bullish (bottom) or bearish (top) reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
@@ -26066,6 +25940,8 @@ public final class Core {
     * bodies and/or lengthening upper shadows). Signals that an uptrend's
     * advance is being blocked. A hit (-100) is bearish: the advance is
     * stalling/blocked; meaningful mainly within an existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdladvanceblock">ta-lib.org/functions/cdladvanceblock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
@@ -26134,6 +26010,8 @@ public final class Core {
     * bodies and/or lengthening upper shadows). Signals that an uptrend's
     * advance is being blocked. A hit (-100) is bearish: the advance is
     * stalling/blocked; meaningful mainly within an existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdladvanceblock">ta-lib.org/functions/cdladvanceblock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
@@ -27138,10 +27016,8 @@ public final class Core {
     * lower shadow; a bearish belt-hold is a long black candle with no/very
     * short upper shadow. A white hit is bullish (opens at the low, closes
     * strong); a black hit is bearish (opens at the high, closes weak).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
@@ -27211,10 +27087,8 @@ public final class Core {
     * lower shadow; a bearish belt-hold is a long black candle with no/very
     * short upper shadow. A white hit is bullish (opens at the low, closes
     * strong); a black hit is bearish (opens at the high, closes weak).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires real body > BodyLong average (long body), then either: white body (close>=open) AND lower shadow < ShadowVeryShort average -> bullish; OR black body (close<open) AND upper shadow < ShadowVeryShort average -> bearish. No prior-trend or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
@@ -27920,6 +27794,8 @@ public final class Core {
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
     * reversal).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
@@ -27989,6 +27865,8 @@ public final class Core {
     * the move, and an opposite-colored fifth candle that closes back inside the
     * gap. Emits a bullish signal (bottom reversal) or bearish signal (top
     * reversal).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
@@ -28759,10 +28637,8 @@ public final class Core {
     * short shadow, so the close sits at the candle's extreme. A strong
     * directional bar, not a defined reversal/continuation signal — white is
     * bullish, black is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlclosingmarubozu">ta-lib.org/functions/cdlclosingmarubozu</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<a href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</a>)</li>
@@ -28830,10 +28706,8 @@ public final class Core {
     * short shadow, so the close sits at the candle's extreme. A strong
     * directional bar, not a defined reversal/continuation signal — white is
     * bullish, black is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Requires: (1) long real body: real body > the BodyLong average; AND (2) very short shadow at the closing end: if white (close>=open) upper shadow < the ShadowVeryShort average [close at/near high]; if black (close<open) lower shadow < the ShadowVeryShort average [close at/near low].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlclosingmarubozu">ta-lib.org/functions/cdlclosingmarubozu</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<a href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</a>)</li>
@@ -29542,6 +29416,8 @@ public final class Core {
     * A four-candle pattern: two black marubozus, then a black candle that gaps
     * down but pokes its upper shadow into the prior body, then a larger black
     * candle fully engulfing the third. A hit signals a bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlconcealbabyswall">ta-lib.org/functions/cdlconcealbabyswall</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
@@ -29608,6 +29484,8 @@ public final class Core {
     * A four-candle pattern: two black marubozus, then a black candle that gaps
     * down but pokes its upper shadow into the prior body, then a larger black
     * candle fully engulfing the third. A hit signals a bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlconcealbabyswall">ta-lib.org/functions/cdlconcealbabyswall</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
@@ -30362,6 +30240,8 @@ public final class Core {
     * closing prices are (nearly) equal. Emits a bullish signal when the second
     * candle is white and a bearish signal when it is black (a reversal signal,
     * though its trend context is not checked).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlcounterattack">ta-lib.org/functions/cdlcounterattack</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -30430,6 +30310,8 @@ public final class Core {
     * closing prices are (nearly) equal. Emits a bullish signal when the second
     * candle is white and a bearish signal when it is black (a reversal signal,
     * though its trend context is not checked).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlcounterattack">ta-lib.org/functions/cdlcounterattack</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -31167,6 +31049,8 @@ public final class Core {
     * black candle that opens above the prior high and closes deep into the
     * prior white body past a penetration threshold. Signals a potential top. A
     * hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -31238,6 +31122,8 @@ public final class Core {
     * black candle that opens above the prior high and closes deep into the
     * prior white body past a penetration threshold. Signals a potential top. A
     * hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -31894,10 +31780,8 @@ public final class Core {
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
     * at or below the BodyDoji threshold. Market indecision; neither bullish nor
     * bearish on its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -31960,10 +31844,8 @@ public final class Core {
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
     * at or below the BodyDoji threshold. Market indecision; neither bullish nor
     * bearish on its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -32606,10 +32488,8 @@ public final class Core {
     * likely trend reversal; true direction depends on the prevailing trend
     * (bullish in a downtrend, bearish in an uptrend), which the code does not
     * itself verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldojistar">ta-lib.org/functions/cdldojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -32683,10 +32563,8 @@ public final class Core {
     * likely trend reversal; true direction depends on the prevailing trend
     * (bullish in a downtrend, bearish in an uptrend), which the code does not
     * itself verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. Candle 1: long real body (realbody > BodyLong average). Candle 2: doji (realbody <= BodyDoji average). Gap: either candle 1 white (color==1) AND candle 2 real body gaps up above it (the real bodies gap up), or candle 1 black (color==-1) AND candle 2 real body gaps down below it (the real bodies gap down).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldojistar">ta-lib.org/functions/cdldojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -33426,10 +33304,8 @@ public final class Core {
     * trend (the code does not judge direction). A hit marks a dragonfly doji;
     * treated as a potential reversal, but direction (bullish/bearish) must be
     * read from the trend it appears in.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < ShadowVeryShort average (no/very short upper shadow) AND lower shadow > ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldragonflydoji">ta-lib.org/functions/cdldragonflydoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -33501,10 +33377,8 @@ public final class Core {
     * trend (the code does not judge direction). A hit marks a dragonfly doji;
     * treated as a potential reversal, but direction (bullish/bearish) must be
     * read from the trend it appears in.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Single candle. realbody <= BodyDoji average (doji body) AND upper shadow < ShadowVeryShort average (no/very short upper shadow) AND lower shadow > ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldragonflydoji">ta-lib.org/functions/cdldragonflydoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -34165,6 +34039,8 @@ public final class Core {
     * the first candle's opposite-colored real body. Bullish (white engulfs
     * black) or bearish (black engulfs white) reversal signal; ideally after a
     * downtrend (bullish) or uptrend (bearish), which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlengulfing">ta-lib.org/functions/cdlengulfing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
@@ -34235,6 +34111,8 @@ public final class Core {
     * the first candle's opposite-colored real body. Bullish (white engulfs
     * black) or bearish (black engulfs white) reversal signal; ideally after a
     * downtrend (bullish) or uptrend (bearish), which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlengulfing">ta-lib.org/functions/cdlengulfing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
@@ -34933,6 +34811,8 @@ public final class Core {
     * gaps up (the star), then a black candle closing well down into the first
     * candle's body. A stricter Evening Star whose middle candle must be a doji.
     * Hit (-100) signals a bearish top reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningdojistar">ta-lib.org/functions/cdleveningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -35005,6 +34885,8 @@ public final class Core {
     * gaps up (the star), then a black candle closing well down into the first
     * candle's body. A stricter Evening Star whose middle candle must be a doji.
     * Hit (-100) signals a bearish top reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningdojistar">ta-lib.org/functions/cdleveningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -35874,6 +35756,8 @@ public final class Core {
     * short-bodied star gapping up, then a black candle closing well down into
     * the first candle's body. A hit signals a bearish reversal (most
     * significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -35945,6 +35829,8 @@ public final class Core {
     * short-bodied star gapping up, then a black candle closing well down into
     * the first candle's body. A hit signals a bearish reversal (most
     * significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -36738,6 +36624,8 @@ public final class Core {
     * first candle's real body and open at about the same level. It is a
     * continuation signal whose sign reports the gap direction; the code does
     * not verify a prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgapsidesidewhite">ta-lib.org/functions/cdlgapsidesidewhite</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
@@ -36807,6 +36695,8 @@ public final class Core {
     * first candle's real body and open at about the same level. It is a
     * continuation signal whose sign reports the gap direction; the code does
     * not verify a prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgapsidesidewhite">ta-lib.org/functions/cdlgapsidesidewhite</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
@@ -37567,10 +37457,8 @@ public final class Core {
     * does not judge. A hit marks a gravestone doji; its bullish vs bearish
     * reversal meaning must be read against the prevailing trend, which this
     * function does not check.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -37642,10 +37530,8 @@ public final class Core {
     * does not judge. A hit marks a gravestone doji; its bullish vs bearish
     * reversal meaning must be read against the prevailing trend, which this
     * function does not check.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -38413,6 +38299,8 @@ public final class Core {
     * Single-candle pattern: a small real body at the top of the range with a
     * long lower shadow and little or no upper shadow, sitting at or near the
     * prior candle's low. A hit flags a potential bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhammer">ta-lib.org/functions/cdlhammer</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
@@ -38480,6 +38368,8 @@ public final class Core {
     * Single-candle pattern: a small real body at the top of the range with a
     * long lower shadow and little or no upper shadow, sitting at or near the
     * prior candle's low. A hit flags a potential bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhammer">ta-lib.org/functions/cdlhammer</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
@@ -39394,6 +39284,8 @@ public final class Core {
     * upper shadow, sitting at or near the highs of the prior candle. Bearish
     * reversal signal. A hit is a bearish reversal signal (meaningful at the top
     * of an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhangingman">ta-lib.org/functions/cdlhangingman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
@@ -39462,6 +39354,8 @@ public final class Core {
     * upper shadow, sitting at or near the highs of the prior candle. Bearish
     * reversal signal. A hit is a bearish reversal signal (meaningful at the top
     * of an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhangingman">ta-lib.org/functions/cdlhangingman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
@@ -40340,6 +40234,8 @@ public final class Core {
     * Two-candle pattern: a long real body followed by a short real body
     * contained within the first candle's real body. A reversal signal whose
     * direction is the opposite of the first candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharami">ta-lib.org/functions/cdlharami</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
@@ -40407,6 +40303,8 @@ public final class Core {
     * Two-candle pattern: a long real body followed by a short real body
     * contained within the first candle's real body. A reversal signal whose
     * direction is the opposite of the first candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharami">ta-lib.org/functions/cdlharami</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
@@ -41205,6 +41103,8 @@ public final class Core {
     * real body is contained within the first candle's real body (the doji
     * variant of the Harami). Bullish after a black first candle, bearish after
     * a white first candle.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharamicross">ta-lib.org/functions/cdlharamicross</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
@@ -41273,6 +41173,8 @@ public final class Core {
     * real body is contained within the first candle's real body (the doji
     * variant of the Harami). Bullish after a black first candle, bearish after
     * a white first candle.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharamicross">ta-lib.org/functions/cdlharamicross</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
@@ -42035,10 +41937,8 @@ public final class Core {
     * only candle color, not a bullish/bearish direction. A hit marks indecision
     * (long-legged candle); not directional - sign encodes only the candle's
     * color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhighwave">ta-lib.org/functions/cdlhighwave</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
@@ -42109,10 +42009,8 @@ public final class Core {
     * only candle color, not a bullish/bearish direction. A hit marks indecision
     * (long-legged candle); not directional - sign encodes only the candle's
     * color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at index i. Hit when all hold: (1) short real body: real body < the BodyShort average; (2) very long upper shadow: upper shadow > the ShadowVeryLong average; (3) very long lower shadow: lower shadow > the ShadowVeryLong average. No color, gap, or trend condition.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhighwave">ta-lib.org/functions/cdlhighwave</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
@@ -42848,6 +42746,8 @@ public final class Core {
     * reversal/continuation depending on the breakout direction. A
     * false-breakout setup: positive = bullish, negative = bearish; magnitude
     * 200 flags the confirming bar.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhikkake">ta-lib.org/functions/cdlhikkake</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
@@ -42915,6 +42815,8 @@ public final class Core {
     * reversal/continuation depending on the breakout direction. A
     * false-breakout setup: positive = bullish, negative = bearish; magnitude
     * 200 flags the confirming bar.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhikkake">ta-lib.org/functions/cdlhikkake</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
@@ -43706,6 +43608,8 @@ public final class Core {
     * range. Bullish or bearish reversal signal. Bullish (+) or bearish (-)
     * reversal; per the code's note it is significant in a downtrend (bull) or
     * uptrend (bear), context the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhikkakemod">ta-lib.org/functions/cdlhikkakemod</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>
@@ -43772,6 +43676,8 @@ public final class Core {
     * range. Bullish or bearish reversal signal. Bullish (+) or bearish (-)
     * reversal; per the code's note it is significant in a downtrend (bull) or
     * uptrend (bear), context the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhikkakemod">ta-lib.org/functions/cdlhikkakemod</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</li>
@@ -44590,10 +44496,8 @@ public final class Core {
     * Two-candle pattern: a long black candle followed by a small black candle
     * whose real body sits inside the prior body. A hit signals a bullish
     * reversal, most meaningful in a downtrend, which the code does not verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
@@ -44660,10 +44564,8 @@ public final class Core {
     * Two-candle pattern: a long black candle followed by a small black candle
     * whose real body sits inside the prior body. A hit signals a bullish
     * reversal, most meaningful in a downtrend, which the code does not verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
@@ -45436,6 +45338,8 @@ public final class Core {
     * candles, each with a very short (or no) lower shadow, where each candle
     * after the first opens at or very near the prior candle's close. A hit
     * signals a bearish reversal (pattern is always bearish).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlidentical3crows">ta-lib.org/functions/cdlidentical3crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the bearish reversal classically assumes.</li>
@@ -45503,6 +45407,8 @@ public final class Core {
     * candles, each with a very short (or no) lower shadow, where each candle
     * after the first opens at or very near the prior candle's close. A hit
     * signals a bearish reversal (pattern is always bearish).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlidentical3crows">ta-lib.org/functions/cdlidentical3crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the bearish reversal classically assumes.</li>
@@ -46297,10 +46203,8 @@ public final class Core {
     * candle that opens below the prior low and closes just barely into the
     * prior body (near the prior close). It is a bearish continuation signal. A
     * hit signals bearish continuation (the down move is expected to resume).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
@@ -46369,10 +46273,8 @@ public final class Core {
     * candle that opens below the prior low and closes just barely into the
     * prior body (near the prior close). It is a bearish continuation signal. A
     * hit signals bearish continuation (the down move is expected to resume).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
@@ -47142,6 +47044,8 @@ public final class Core {
     * Single-candle pattern: a small real body with a long upper shadow and
     * little-to-no lower shadow that gaps down from the prior candle. A hit
     * flags a potential bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinvertedhammer">ta-lib.org/functions/cdlinvertedhammer</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
@@ -47209,6 +47113,8 @@ public final class Core {
     * Single-candle pattern: a small real body with a long upper shadow and
     * little-to-no lower shadow that gaps down from the prior candle. A hit
     * flags a potential bullish reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinvertedhammer">ta-lib.org/functions/cdlinvertedhammer</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
@@ -48011,6 +47917,8 @@ public final class Core {
     * Two-candle pattern of two opposite-color marubozu (long bodies with very
     * short shadows) separated by a price gap. A reversal signal whose direction
     * is set by the second candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
@@ -48077,6 +47985,8 @@ public final class Core {
     * Two-candle pattern of two opposite-color marubozu (long bodies with very
     * short shadows) separated by a price gap. A reversal signal whose direction
     * is set by the second candle's color.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
@@ -48860,6 +48770,8 @@ public final class Core {
     * A two-candle pattern of two opposite-color marubozu (long body, very short
     * shadows on both ends) separated by a gap. A strong directional/reversal
     * signal whose bull/bear bias is set by the longer of the two marubozu.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -48923,6 +48835,8 @@ public final class Core {
     * A two-candle pattern of two opposite-color marubozu (long body, very short
     * shadows on both ends) separated by a gap. A strong directional/reversal
     * signal whose bull/bear bias is set by the longer of the two marubozu.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -49664,6 +49578,8 @@ public final class Core {
     * white candle that opens above the prior open and closes above the prior
     * high. A hit is a bullish reversal signal, most meaningful after a
     * downtrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlladderbottom">ta-lib.org/functions/cdlladderbottom</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
@@ -49733,6 +49649,8 @@ public final class Core {
     * white candle that opens above the prior open and closes above the prior
     * high. A hit is a bullish reversal signal, most meaningful after a
     * downtrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlladderbottom">ta-lib.org/functions/cdlladderbottom</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
@@ -50448,10 +50366,8 @@ public final class Core {
     * Single-candle doji (open ~ close) with at least one long shadow. Signals
     * market indecision, not a directional bias. Marks indecision/uncertainty;
     * not inherently bullish or bearish despite the positive sign.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdllongleggeddoji">ta-lib.org/functions/cdllongleggeddoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
@@ -50520,10 +50436,8 @@ public final class Core {
     * Single-candle doji (open ~ close) with at least one long shadow. Signals
     * market indecision, not a directional bias. Marks indecision/uncertainty;
     * not inherently bullish or bearish despite the positive sign.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Hit when: real body <= BodyDoji average (doji body) AND (lower shadow > ShadowLong average OR upper shadow > ShadowLong average), i.e. at least one long shadow.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdllongleggeddoji">ta-lib.org/functions/cdllongleggeddoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
@@ -51219,6 +51133,8 @@ public final class Core {
     * shadow. The signal direction follows the candle color (bullish if white,
     * bearish if black). Signals strong directional conviction on the bar. Not
     * intrinsically a reversal or continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdllongline">ta-lib.org/functions/cdllongline</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -51283,6 +51199,8 @@ public final class Core {
     * shadow. The signal direction follows the candle color (bullish if white,
     * bearish if black). Signals strong directional conviction on the bar. Not
     * intrinsically a reversal or continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdllongline">ta-lib.org/functions/cdllongline</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -51971,10 +51889,8 @@ public final class Core {
     * Single candle with a long real body and no/very-short upper and lower
     * shadows, so open and close sit at the range extremes. Bullish (white) or
     * bearish (black) reversal/strength signal per the body color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmarubozu">ta-lib.org/functions/cdlmarubozu</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
@@ -52041,10 +51957,8 @@ public final class Core {
     * Single candle with a long real body and no/very-short upper and lower
     * shadows, so open and close sit at the range extremes. Bullish (white) or
     * bearish (black) reversal/strength signal per the body color.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at i. Match when: realbody(i) > BodyLong average AND upperShadow(i) < ShadowVeryShort average AND lowerShadow(i) < ShadowVeryShort average. If matched emit candlecolor(i)*100 (+100 white when close>=open, -100 black when close<open); else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmarubozu">ta-lib.org/functions/cdlmarubozu</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
@@ -52712,10 +52626,8 @@ public final class Core {
     * closes (within a tolerance). Treated as a bullish reversal signal. A hit
     * signals a potential bullish reversal (shared support close after two down
     * candles).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
@@ -52782,10 +52694,8 @@ public final class Core {
     * closes (within a tolerance). Treated as a bullish reversal signal. A hit
     * signals a potential bullish reversal (shared support close after two down
     * candles).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles i-1, i. Candle i-1: black (close<open). Candle i: black (close<open). Equal closes: close[i-1]-E <= close[i] <= close[i-1]+E, where E = the Equal average. No shadow, body-size, or gap conditions are checked.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmatchinglow">ta-lib.org/functions/cdlmatchinglow</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
@@ -53509,6 +53419,8 @@ public final class Core {
     * hold within the first body, and a final white candle closing above the
     * reaction days' highs. Signals continuation of the prior uptrend. Hit =
     * bullish continuation of the existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
@@ -53581,6 +53493,8 @@ public final class Core {
     * hold within the first body, and a final white candle closing above the
     * reaction days' highs. Signals continuation of the prior uptrend. Hit =
     * bullish continuation of the existing uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
@@ -54485,6 +54399,8 @@ public final class Core {
     * candle's body. It is the doji-star variant of the morning star. A hit
     * (+100) signals a bullish reversal; most meaningful after a downtrend,
     * which this function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -54560,6 +54476,8 @@ public final class Core {
     * candle's body. It is the doji-star variant of the morning star. A hit
     * (+100) signals a bullish reversal; most meaningful after a downtrend,
     * which this function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -55432,6 +55350,8 @@ public final class Core {
     * the first candle's body. Bullish reversal signal. A hit signals a bullish
     * reversal (most meaningful after a downtrend, which the code does not
     * check).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -55507,6 +55427,8 @@ public final class Core {
     * the first candle's body. Bullish reversal signal. A hit signals a bullish
     * reversal (most meaningful after a downtrend, which the code does not
     * check).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -56295,10 +56217,8 @@ public final class Core {
     * candle that opens below the prior candle's low and closes right at that
     * low. Bearish continuation signal. A hit is bearish (bearish continuation);
     * the code does not verify the assumed prior downtrend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. 1st: black (close<open) with long real body (realbody > BodyLong average). 2nd: white (close>=open); open < prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) <= close2 <= (prior_low + EqualAvg).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlonneck">ta-lib.org/functions/cdlonneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
@@ -56366,10 +56286,8 @@ public final class Core {
     * candle that opens below the prior candle's low and closes right at that
     * low. Bearish continuation signal. A hit is bearish (bearish continuation);
     * the code does not verify the assumed prior downtrend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. 1st: black (close<open) with long real body (realbody > BodyLong average). 2nd: white (close>=open); open < prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) <= close2 <= (prior_low + EqualAvg).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlonneck">ta-lib.org/functions/cdlonneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
@@ -57092,6 +57010,8 @@ public final class Core {
     * that opens below the prior low and closes back above the midpoint of the
     * prior black body. Bullish reversal signal. A hit (+100) is a bullish
     * reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlpiercing">ta-lib.org/functions/cdlpiercing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior downtrend is not verified.</li>
@@ -57159,6 +57079,8 @@ public final class Core {
     * that opens below the prior low and closes back above the midpoint of the
     * prior black body. Bullish reversal signal. A hit (+100) is a bullish
     * reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlpiercing">ta-lib.org/functions/cdlpiercing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior downtrend is not verified.</li>
@@ -57880,6 +57802,8 @@ public final class Core {
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
@@ -57947,6 +57871,8 @@ public final class Core {
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
@@ -58758,6 +58684,8 @@ public final class Core {
     * counter-color candles that stay partly within the first candle's high-low
     * range, then a long same-color candle that resumes the trend. Bullish
     * (rising) or bearish (falling) continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrisefall3methods">ta-lib.org/functions/cdlrisefall3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
@@ -58829,6 +58757,8 @@ public final class Core {
     * counter-color candles that stay partly within the first candle's high-low
     * range, then a long same-color candle that resumes the trend. Bullish
     * (rising) or bearish (falling) continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrisefall3methods">ta-lib.org/functions/cdlrisefall3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
@@ -59706,10 +59636,8 @@ public final class Core {
     * color, opens at the same price as the first, and is a long-bodied belt
     * hold. Bullish (white second candle) or bearish (black second candle)
     * continuation signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlseparatinglines">ta-lib.org/functions/cdlseparatinglines</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>
@@ -59775,10 +59703,8 @@ public final class Core {
     * color, opens at the same price as the first, and is a long-bodied belt
     * hold. Bullish (white second candle) or bearish (black second candle)
     * continuation signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlseparatinglines">ta-lib.org/functions/cdlseparatinglines</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>
@@ -60610,6 +60536,8 @@ public final class Core {
     * little-to-no lower shadow that gaps up from the prior candle's real body.
     * Bearish reversal signal. A hit (-100) flags a bearish reversal at the top
     * of an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlshootingstar">ta-lib.org/functions/cdlshootingstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
@@ -60679,6 +60607,8 @@ public final class Core {
     * little-to-no lower shadow that gaps up from the prior candle's real body.
     * Bearish reversal signal. A hit (-100) flags a bearish reversal at the top
     * of an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlshootingstar">ta-lib.org/functions/cdlshootingstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
@@ -61455,14 +61385,8 @@ public final class Core {
     * Single-candle pattern: a short real body with short upper and lower
     * shadows (a small-range candle). Not a directional signal — the output sign
     * encodes candle color, not bullish/bearish sentiment.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at i, all three:
-    * - short real body: real body < the BodyShort average
-    * - short upper shadow: upper shadow < the ShadowShort average
-    * - short lower shadow: lower shadow < the ShadowShort average
-    * If matched: output = candle color * 100 (+100 white, -100 black); else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlshortline">ta-lib.org/functions/cdlshortline</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -61526,14 +61450,8 @@ public final class Core {
     * Single-candle pattern: a short real body with short upper and lower
     * shadows (a small-range candle). Not a directional signal — the output sign
     * encodes candle color, not bullish/bearish sentiment.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle at i, all three:
-    * - short real body: real body < the BodyShort average
-    * - short upper shadow: upper shadow < the ShadowShort average
-    * - short lower shadow: lower shadow < the ShadowShort average
-    * If matched: output = candle color * 100 (+100 white, -100 black); else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlshortline">ta-lib.org/functions/cdlshortline</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -62193,10 +62111,8 @@ public final class Core {
     * Single-candle pattern: a small real body with both an upper and a lower
     * shadow longer than the body. Signals indecision; the code does not
     * classify it as bullish or bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -62259,10 +62175,8 @@ public final class Core {
     * Single-candle pattern: a small real body with both an upper and a lower
     * shadow longer than the body. Signals indecision; the code does not
     * classify it as bullish or bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -62993,6 +62907,8 @@ public final class Core {
     * closes where the third loses momentum (a small body riding on the shoulder
     * of the second's long body). It is a bearish reversal signal of a stalling
     * advance. A hit (-100) is bearish: the uptrend is stalling and may reverse.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlstalledpattern">ta-lib.org/functions/cdlstalledpattern</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
@@ -63061,6 +62977,8 @@ public final class Core {
     * closes where the third loses momentum (a small body riding on the shoulder
     * of the second's long body). It is a bearish reversal signal of a stalling
     * advance. A hit (-100) is bearish: the uptrend is stalling and may reverse.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlstalledpattern">ta-lib.org/functions/cdlstalledpattern</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
@@ -63943,6 +63861,8 @@ public final class Core {
     * level as the 1st (the "bread"). A hit signals a bullish reversal (code
     * comment notes it is significant in a downtrend, which the function does
     * not verify).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlsticksandwich">ta-lib.org/functions/cdlsticksandwich</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</a>)</li>
@@ -64010,6 +63930,8 @@ public final class Core {
     * level as the 1st (the "bread"). A hit signals a bullish reversal (code
     * comment notes it is significant in a downtrend, which the function does
     * not verify).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlsticksandwich">ta-lib.org/functions/cdlsticksandwich</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</a>)</li>
@@ -64735,6 +64657,8 @@ public final class Core {
     * (dragonfly-doji) line; a potential reversal only when read against the
     * trend (typically a bottom/bullish reversal after a downtrend), which the
     * code itself does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltakuri">ta-lib.org/functions/cdltakuri</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -64804,6 +64728,8 @@ public final class Core {
     * (dragonfly-doji) line; a potential reversal only when read against the
     * trend (typically a bottom/bullish reversal after a downtrend), which the
     * code itself does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltakuri">ta-lib.org/functions/cdltakuri</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -65548,6 +65474,8 @@ public final class Core {
     * opposite-color candle that opens inside its body and closes back into the
     * gap without filling it. An upside gap is a bullish continuation signal; a
     * downside gap is a bearish continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltasukigap">ta-lib.org/functions/cdltasukigap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
@@ -65616,6 +65544,8 @@ public final class Core {
     * opposite-color candle that opens inside its body and closes back into the
     * gap without filling it. An upside gap is a bullish continuation signal; a
     * downside gap is a bearish continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltasukigap">ta-lib.org/functions/cdltasukigap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
@@ -66342,6 +66272,8 @@ public final class Core {
     * its midpoint. It is a bearish continuation signal. A hit is bearish: the
     * failed white push back into the black body signals continuation of the
     * down move.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlthrusting">ta-lib.org/functions/cdlthrusting</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
@@ -66412,6 +66344,8 @@ public final class Core {
     * its midpoint. It is a bearish continuation signal. A hit is bearish: the
     * failed white push back into the black body signals continuation of the
     * down move.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlthrusting">ta-lib.org/functions/cdlthrusting</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
@@ -67139,6 +67073,8 @@ public final class Core {
     * A three-candle pattern of three consecutive doji where the middle doji is
     * a star (its body gaps away from the first). Bullish or bearish reversal
     * signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltristar">ta-lib.org/functions/cdltristar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
@@ -67207,6 +67143,8 @@ public final class Core {
     * A three-candle pattern of three consecutive doji where the middle doji is
     * a star (its body gaps away from the first). Bullish or bearish reversal
     * signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltristar">ta-lib.org/functions/cdltristar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
@@ -67930,6 +67868,8 @@ public final class Core {
     * potential bullish reversal, ideally in a downtrend (trend not checked by
     * the code). A hit (+100) marks a bullish reversal; significant in a
     * downtrend, which the function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlunique3river">ta-lib.org/functions/cdlunique3river</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
@@ -67998,6 +67938,8 @@ public final class Core {
     * potential bullish reversal, ideally in a downtrend (trend not checked by
     * the code). A hit (+100) marks a bullish reversal; significant in a
     * downtrend, which the function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlunique3river">ta-lib.org/functions/cdlunique3river</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
@@ -68770,6 +68712,8 @@ public final class Core {
     * candle that engulfs the second candle's real body but still closes above
     * the first candle's close. Signals a bearish reversal. A hit (-100) is a
     * bearish reversal signal, most meaningful in an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
@@ -68838,6 +68782,8 @@ public final class Core {
     * candle that engulfs the second candle's real body but still closes above
     * the first candle's close. Signals a bearish reversal. A hit (-100) is a
     * bearish reversal signal, most meaningful in an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
@@ -69548,6 +69494,8 @@ public final class Core {
     * real-body gap, followed by an opposite-color candle that fills into the
     * gap. Bullish (upside) when the first two candles are white, bearish
     * (downside) when they are black.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlxsidegap3methods">ta-lib.org/functions/cdlxsidegap3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
@@ -69617,6 +69565,8 @@ public final class Core {
     * real-body gap, followed by an opposite-color candle that fills into the
     * gap. Bullish (upside) when the first two candles are white, bearish
     * (downside) when they are black.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlxsidegap3methods">ta-lib.org/functions/cdlxsidegap3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
@@ -70120,10 +70070,8 @@ public final class Core {
    /**
     * Element-wise ceiling (round up to the nearest integer) of the input
     * series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = ceil(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ceil">ta-lib.org/functions/ceil</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -70173,10 +70121,8 @@ public final class Core {
    /**
     * Element-wise ceiling (round up to the nearest integer) of the input
     * series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = ceil(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ceil">ta-lib.org/functions/ceil</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -70769,13 +70715,8 @@ public final class Core {
     * per-bar multiplier with. CMF is that same multiplier summed over a fixed
     * window and normalised, where AD accumulates it from the start of the
     * series without bound.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * t = high[i] - low[i]
-    * mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-    * CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-    * There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmf">ta-lib.org/functions/cmf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
@@ -70864,13 +70805,8 @@ public final class Core {
     * per-bar multiplier with. CMF is that same multiplier summed over a fixed
     * window and normalised, where AD accumulates it from the start of the
     * series without bound.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * t = high[i] - low[i]
-    * mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-    * CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-    * There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmf">ta-lib.org/functions/cmf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
@@ -71724,10 +71660,8 @@ public final class Core {
     * average up-moves and down-moves. Identical to RSI except the numerator
     * uses (gain-loss) instead of gain. Bounded in [-100,+100]; positive = net
     * upward momentum, negative = net downward.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmo">ta-lib.org/functions/cmo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</li>
@@ -71786,10 +71720,8 @@ public final class Core {
     * average up-moves and down-moves. Identical to RSI except the numerator
     * uses (gain-loss) instead of gain. Bounded in [-100,+100]; positive = net
     * upward momentum, negative = net downward.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the initial period accumulate gain = sum of positive d, loss = sum of -d for negative d. Wilder-smooth each: prevGain = (prevGain*(period-1) + gain_today)/period (same for loss). CMO = 100 * (prevGain-prevLoss)/(prevGain+prevLoss); 0 when prevGain+prevLoss == 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmo">ta-lib.org/functions/cmo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Gains and losses are smoothed with Wilder's method (as in RSI) rather than the simple period sums of Chande's original definition.</li>
@@ -72628,10 +72560,8 @@ public final class Core {
     * and pandas-ta's default. See <a
     * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum of the positive d, Sd = sum of -d for negative d. CMOU = 100 * (Su-Sd)/(Su+Sd); 0 when Su+Sd == 0 (an exactly flat window). Unlike CMO, the sums are the plain period totals (a moving-window sum), not Wilder-smoothed averages, so there is no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -72692,10 +72622,8 @@ public final class Core {
     * and pandas-ta's default. See <a
     * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum of the positive d, Sd = sum of -d for negative d. CMOU = 100 * (Su-Sd)/(Su+Sd); 0 when Su+Sd == 0 (an exactly flat window). Unlike CMO, the sums are the plain period totals (a moving-window sum), not Wilder-smoothed averages, so there is no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -73697,13 +73625,8 @@ public final class Core {
     * as a weighted moving average of the <b>sum</b> of two rates of change.
     * Unbounded; positive turns from below zero are the signal the indicator was
     * designed for (long-term buying opportunities on monthly index data).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-    * Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-    * The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period > optInROC2Period` is accepted rather than rejected.
-    * The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
@@ -73768,13 +73691,8 @@ public final class Core {
     * as a weighted moving average of the <b>sum</b> of two rates of change.
     * Unbounded; positive turns from below zero are the signal the indicator was
     * designed for (long-term buying opportunities on monthly index data).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-    * Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-    * The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period > optInROC2Period` is accepted rather than rejected.
-    * The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
@@ -74957,10 +74875,8 @@ public final class Core {
     * rolling window of optInTimePeriod bars. Measures how linearly the two
     * series move together. r near +1: strong positive co-movement; near -1:
     * strong inverse; near 0: no linear relationship.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/correl">ta-lib.org/functions/correl</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</li>
@@ -75024,10 +74940,8 @@ public final class Core {
     * rolling window of optInTimePeriod bars. Measures how linearly the two
     * series move together. r near +1: strong positive co-movement; near -1:
     * strong inverse; near 0: no linear relationship.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/correl">ta-lib.org/functions/correl</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</li>
@@ -76027,10 +75941,8 @@ public final class Core {
    }
    /**
     * Element-wise cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = cos(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cos">ta-lib.org/functions/cos</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -76082,10 +75994,8 @@ public final class Core {
    }
    /**
     * Element-wise cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = cos(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cos">ta-lib.org/functions/cos</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -76461,10 +76371,8 @@ public final class Core {
    }
    /**
     * Element-wise hyperbolic cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -76515,10 +76423,8 @@ public final class Core {
    }
    /**
     * Element-wise hyperbolic cosine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = cosh(inReal[i]) = (e^{inReal[i]} + e^{-inReal[i]}) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cosh">ta-lib.org/functions/cosh</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -76922,12 +76828,8 @@ public final class Core {
     * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
     * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
     * — every bar since the anchor contributes.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
-    * Left-to-right in one double, no compensation — the same plain `+=` convention the shipped accumulators (`AD`, `OBV`) use.
-    * **The accumulator re-seeds at the anchor.** `CUMSUM(3, 7, x)` starts its total at `x[3]`; it does not warm up from `x[0]`. This is the published contract of the indicators built on it (StockCharts: only the A/D Line's *shape* carries meaning, the first value is "simply Net Advances for one period") and the convention of every shipped path-dependent function. The `path_dependent` flag declares exactly this class.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cumsum">ta-lib.org/functions/cumsum</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Lookback 0: {@code outBegIdx = startIdx}, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.</li>
@@ -76988,12 +76890,8 @@ public final class Core {
     * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
     * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
     * — every bar since the anchor contributes.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
-    * Left-to-right in one double, no compensation — the same plain `+=` convention the shipped accumulators (`AD`, `OBV`) use.
-    * **The accumulator re-seeds at the anchor.** `CUMSUM(3, 7, x)` starts its total at `x[3]`; it does not warm up from `x[0]`. This is the published contract of the indicators built on it (StockCharts: only the A/D Line's *shape* carries meaning, the first value is "simply Net Advances for one period") and the convention of every shipped path-dependent function. The `path_dependent` flag declares exactly this class.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cumsum">ta-lib.org/functions/cumsum</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Lookback 0: {@code outBegIdx = startIdx}, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.</li>
@@ -77575,13 +77473,8 @@ public final class Core {
     * is typical of the panic near a market bottom, while a range that narrows
     * steadily over a long span is typical of a market topping out. It measures
     * range, not direction, so it says nothing about which way price is heading.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * E = EMA( HL, optInTimePeriod )
-    * CVI = 100 * ( E - E[optInROCPeriod bars ago] ) / E[optInROCPeriod bars ago]
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePeriod + 1), seeded with the simple average of the first optInTimePeriod spreads.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cvi">ta-lib.org/functions/cvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks {@code chaikvolat} signature. Implementations that expose a single length are the special case where both are set to the same value.</li>
@@ -77662,13 +77555,8 @@ public final class Core {
     * is typical of the panic near a market bottom, while a range that narrows
     * steadily over a long span is typical of a market topping out. It measures
     * range, not direction, so it says nothing about which way price is heading.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * E = EMA( HL, optInTimePeriod )
-    * CVI = 100 * ( E - E[optInROCPeriod bars ago] ) / E[optInROCPeriod bars ago]
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePeriod + 1), seeded with the simple average of the first optInTimePeriod spreads.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cvi">ta-lib.org/functions/cvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks {@code chaikvolat} signature. Implementations that expose a single length are the special case where both are set to the same value.</li>
@@ -78419,10 +78307,8 @@ public final class Core {
    /**
     * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
     * reduce lag versus a plain EMA. Overlap Studies overlay on price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dema">ta-lib.org/functions/dema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -78481,10 +78367,8 @@ public final class Core {
    /**
     * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
     * reduce lag versus a plain EMA. Overlap Studies overlay on price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dema">ta-lib.org/functions/dema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -79025,10 +78909,8 @@ public final class Core {
    }
    /**
     * Element-wise division of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] / inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/div">ta-lib.org/functions/div</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
@@ -79086,10 +78968,8 @@ public final class Core {
    }
    /**
     * Element-wise division of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] / inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/div">ta-lib.org/functions/div</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
@@ -79673,13 +79553,8 @@ public final class Core {
     * four-week rule — generally credited as the first published systematic
     * trend-following system — buys a break above the high of the preceding
     * weeks and sells a break below their low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Window = the optInTimePeriod bars ending at the current bar
-    * Upper  = Highest High of Window
-    * Lower  = Lowest  Low  of Window
-    * Middle = (Upper + Lower) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
@@ -79753,13 +79628,8 @@ public final class Core {
     * four-week rule — generally credited as the first published systematic
     * trend-following system — buys a break above the high of the preceding
     * weeks and sells a break below their low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Window = the optInTimePeriod bars ending at the current bar
-    * Upper  = Highest High of Window
-    * Lower  = Lowest  Low  of Window
-    * Middle = (Upper + Lower) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/donchian">ta-lib.org/functions/donchian</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
@@ -80552,11 +80422,8 @@ public final class Core {
     * rather than the direction of the market. The distance between successive
     * peaks estimates the cycle length, and the amplitude is in price units, so
     * it is comparable across time only for one instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-    * DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
@@ -80622,11 +80489,8 @@ public final class Core {
     * rather than the direction of the market. The distance between successive
     * peaks estimates the cycle length, and the amplitude is in price units, so
     * it is comparable across time only for one instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-    * DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
@@ -81629,10 +81493,8 @@ public final class Core {
     * -DI. Measures the strength of directional (trending) movement,
     * irrespective of direction. Higher DX = stronger trend (either direction);
     * low DX = ranging market.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then Wilder-smooth each: X = X - X/period + today. +DI = 100*(+DM14/TR14), -DI = 100*(-DM14/TR14). DX = 100 * |(-DI) - (+DI)| / ((-DI) + (+DI)).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dx">ta-lib.org/functions/dx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it can be unreliable when values are near 1).</li>
@@ -81704,10 +81566,8 @@ public final class Core {
     * -DI. Measures the strength of directional (trending) movement,
     * irrespective of direction. Higher DX = stronger trend (either direction);
     * low DX = ranging market.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Seed +DM14, -DM14, TR14 as sums of the first (period-1) one-period values, then Wilder-smooth each: X = X - X/period + today. +DI = 100*(+DM14/TR14), -DI = 100*(-DM14/TR14). DX = 100 * |(-DI) - (+DI)| / ((-DI) + (+DI)).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dx">ta-lib.org/functions/dx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it can be unreliable when values are near 1).</li>
@@ -82730,11 +82590,8 @@ public final class Core {
     * sellers. Nothing normalises the result, so it scales with the instrument's
     * own volume: read its sign and its shape over time, not its level against
     * another instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -82805,11 +82662,8 @@ public final class Core {
     * sellers. Nothing normalises the result, so it scales with the instrument's
     * own volume: read its sign and its shape over time, not its level against
     * another instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -83526,10 +83380,8 @@ public final class Core {
     * recursive smoothing factor. A core building block seeding or composing
     * many other indicators. Reacts faster than SMA; price above/below EMA
     * suggests up/down trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ema">ta-lib.org/functions/ema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -83594,10 +83446,8 @@ public final class Core {
     * recursive smoothing factor. A core building block seeding or composing
     * many other indicators. Reacts faster than SMA; price above/below EMA
     * suggests up/down trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ema">ta-lib.org/functions/ema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -84297,13 +84147,8 @@ public final class Core {
     * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
-    * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-    * The output is a hard 0..1 — the net move can never exceed the path travelled.
-    * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/er">ta-lib.org/functions/er</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
@@ -84371,13 +84216,8 @@ public final class Core {
     * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
-    * Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-    * The output is a hard 0..1 — the net move can never exceed the path travelled.
-    * TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/er">ta-lib.org/functions/er</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>First output at index {@code P} ({@code P} one-bar changes need {@code P+1} prices). No unstable period, not start-dependent.</li>
@@ -85194,11 +85034,8 @@ public final class Core {
     * from an EMA of the close. Bulls strong enough to push the high above the
     * average read as positive Bull Power; bears dragging the low below it read
     * as negative Bear Power.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
-    * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/eri">ta-lib.org/functions/eri</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
@@ -85271,11 +85108,8 @@ public final class Core {
     * from an EMA of the close. Bulls strong enough to push the high above the
     * average read as positive Bull Power; bears dragging the low below it read
     * as negative Bear Power.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
-    * Because the underlying average is an [`EMA`](/functions/ema), ERI inherits its unstable period: the warm-up consumes `TA_GetUnstablePeriod(TA_FUNC_UNST_EMA)` extra bars, exactly as `EMA` itself does.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/eri">ta-lib.org/functions/eri</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>ERI is a cancelling difference: near the zero crossings that carry its signal, tiny EMA discrepancies are amplified without bound in relative terms. Compare against external values with an absolute tolerance.</li>
@@ -85893,10 +85727,8 @@ public final class Core {
    }
    /**
     * Element-wise base-e exponential of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = exp(inReal[i]) = e^{inReal[i]}
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -85946,10 +85778,8 @@ public final class Core {
    }
    /**
     * Element-wise base-e exponential of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = exp(inReal[i]) = e^{inReal[i]}
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/exp">ta-lib.org/functions/exp</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -86324,10 +86154,8 @@ public final class Core {
    /**
     * Element-wise floor (round down to the nearest integer) of the input
     * series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = floor(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/floor">ta-lib.org/functions/floor</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -86377,10 +86205,8 @@ public final class Core {
    /**
     * Element-wise floor (round down to the nearest integer) of the input
     * series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = floor(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/floor">ta-lib.org/functions/floor</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -86964,10 +86790,8 @@ public final class Core {
     * below; the value oscillates around zero and crosses it whenever price
     * meets its own forecast. Persistent readings far from zero say the trend is
     * running ahead of, or lagging, its regression line.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Forecast fitted over the N bars ending at t-1 and evaluated one x-step beyond that window — the forecast for bar t made without seeing it.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
@@ -87031,10 +86855,8 @@ public final class Core {
     * below; the value oscillates around zero and crosses it whenever price
     * meets its own forecast. Persistent readings far from zero say the trend is
     * running ahead of, or lagging, its regression line.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Forecast fitted over the N bars ending at t-1 and evaluated one x-step beyond that window — the forecast for bar t made without seeing it.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
@@ -87839,12 +87661,8 @@ public final class Core {
     * / {@code inLow[...]} at that index. The two outputs are independent flags
     * rather than one signed value, because an outside bar can be a swing high
     * and a swing low at once.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
-    * swingHigh(i) = 100 if High[c] > High[j] for every j in [c-L, c+R] other than c, else 0.
-    * swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its {@code ta.pivothigh} / {@code ta.pivotlow} let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</li>
@@ -87930,12 +87748,8 @@ public final class Core {
     * / {@code inLow[...]} at that index. The two outputs are independent flags
     * rather than one signed value, because an outside bar can be a swing high
     * and a swing low at once.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
-    * swingHigh(i) = 100 if High[c] > High[j] for every j in [c-L, c+R] other than c, else 0.
-    * swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its {@code ta.pivothigh} / {@code ta.pivotlow} let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</li>
@@ -88771,14 +88585,8 @@ public final class Core {
     * {@code HA} is recursive: every candle carries the previous one, so the
     * first candle of a request is seeded from its own bar and its influence
     * halves on each bar that follows.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-    * HA_open[0]  = ( O[0] + C[0] ) / 2
-    * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-    * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-    * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
@@ -88870,14 +88678,8 @@ public final class Core {
     * {@code HA} is recursive: every candle carries the previous one, so the
     * first candle of a request is seeded from its own bar and its influence
     * halves on each bar that follows.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-    * HA_open[0]  = ( O[0] + C[0] ) / 2
-    * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-    * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-    * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
@@ -90140,11 +89942,8 @@ public final class Core {
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-    * All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/hma">ta-lib.org/functions/hma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are <b>truncated</b> to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
@@ -90220,11 +90019,8 @@ public final class Core {
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-    * All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/hma">ta-lib.org/functions/hma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are <b>truncated</b> to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
@@ -92184,6 +91980,8 @@ public final class Core {
     * Hilbert Transform estimate of the dominant cycle period (in bars) of the
     * price series. Outputs the smoothed instantaneous cycle period. Output is
     * the estimated dominant cycle length in bars (clamped to 6-50).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_dcperiod">ta-lib.org/functions/ht_dcperiod</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -92239,6 +92037,8 @@ public final class Core {
     * Hilbert Transform estimate of the dominant cycle period (in bars) of the
     * price series. Outputs the smoothed instantaneous cycle period. Output is
     * the estimated dominant cycle length in bars (clamped to 6-50).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_dcperiod">ta-lib.org/functions/ht_dcperiod</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -94124,6 +93924,8 @@ public final class Core {
     * degrees) of the dominant market cycle, derived from a homodyne
     * discriminator on a Hilbert-transformed, smoothed price. One real output
     * per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_dcphase">ta-lib.org/functions/ht_dcphase</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -94181,6 +93983,8 @@ public final class Core {
     * degrees) of the dominant market cycle, derived from a homodyne
     * discriminator on a Hilbert-transformed, smoothed price. One real output
     * per bar. Output is degrees, in the range −45 to 315 (a full 360° span).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_dcphase">ta-lib.org/functions/ht_dcphase</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -96148,10 +95952,8 @@ public final class Core {
     * detrend/Hilbert machinery as the other HT_* cycle functions. This function
     * is meant for building your own cycle analysis on top of the raw phasor,
     * not as a ready-made signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_phasor">ta-lib.org/functions/ht_phasor</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -96213,10 +96015,8 @@ public final class Core {
     * detrend/Hilbert machinery as the other HT_* cycle functions. This function
     * is meant for building your own cycle analysis on top of the raw phasor,
     * not as a ready-made signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_phasor">ta-lib.org/functions/ht_phasor</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -98099,6 +97899,8 @@ public final class Core {
     * and emits its sine plus a 45-degree-lead sine. The two curves cross near
     * cycle turning points. outSine and outLeadSine crossing marks cycle turning
     * points.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_sine">ta-lib.org/functions/ht_sine</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -98158,6 +97960,8 @@ public final class Core {
     * and emits its sine plus a 45-degree-lead sine. The two curves cross near
     * cycle turning points. outSine and outLeadSine crossing marks cycle turning
     * points.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_sine">ta-lib.org/functions/ht_sine</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -100236,6 +100040,8 @@ public final class Core {
     * Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag
     * overlay whose averaging window adapts to the dominant cycle period
     * measured via Hilbert-transform quadrature (I/Q) analysis of price.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -100289,6 +100095,8 @@ public final class Core {
     * Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag
     * overlay whose averaging window adapts to the dominant cycle period
     * measured via Hilbert-transform quadrature (I/Q) analysis of price.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -102458,6 +102266,8 @@ public final class Core {
     * trend-following) or 0 (cycling — favor mean-reversion). Built from the
     * same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used
     * across the other HT_* functions.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_trendmode">ta-lib.org/functions/ht_trendmode</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -102513,6 +102323,8 @@ public final class Core {
     * trend-following) or 0 (cycling — favor mean-reversion). Built from the
     * same MAMA dominant-cycle/phase DSP plus a SineWave/trendline test used
     * across the other HT_* functions.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_trendmode">ta-lib.org/functions/ht_trendmode</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -104206,10 +104018,8 @@ public final class Core {
     * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
     * open-to-close body of each bar. Over a rolling window it ratios cumulative
     * up-body moves against total up+down body moves.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for bars with close<=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -104267,10 +104077,8 @@ public final class Core {
     * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
     * open-to-close body of each bar. Over a rolling window it ratios cumulative
     * up-body moves against total up+down body moves.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for bars with close<=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -105164,12 +104972,8 @@ public final class Core {
     * fast in trends and smooths in ranging markets. Flat KAMA =
     * non-trending/ranging market. KAMA tracking price closely = efficient
     * trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    * SC = (ER*(2/3 - 2/31) + 2/31)^2
-    * KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
@@ -105232,12 +105036,8 @@ public final class Core {
     * fast in trends and smooths in ranging markets. Flat KAMA =
     * non-trending/ranging market. KAMA tracking price closely = efficient
     * trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    * SC = (ER*(2/3 - 2/31) + 2/31)^2
-    * KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
@@ -106199,14 +105999,8 @@ public final class Core {
     * multiple of the Average True Range above and below it. The band width
     * tracks volatility, so the channel widens in fast markets and narrows in
     * quiet ones.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High + Low + Close) / 3
-    * Middle = EMA(TP, N)
-    * Band = ATR(M)
-    * Upper = Middle + Deviations * Band
-    * Lower = Middle - Deviations * Band
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
@@ -106294,14 +106088,8 @@ public final class Core {
     * multiple of the Average True Range above and below it. The band width
     * tracks volatility, so the channel widens in fast markets and narrows in
     * quiet ones.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High + Low + Close) / 3
-    * Middle = EMA(TP, N)
-    * Band = ATR(M)
-    * Upper = Middle + Deviations * Band
-    * Lower = Middle - Deviations * Band
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kc">ta-lib.org/functions/kc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Several incompatible indicators are published under the name "Keltner Channel", disagreeing by percent rather than by rounding. This is the typical-price centre line with a Wilder-smoothed Average True Range band, the form implemented by TTR and ta4j.</li>
@@ -107042,13 +106830,8 @@ public final class Core {
     * which is the smoother the original formula language specifies; selecting a
     * simple moving average for both reproduces the classic Slow Stochastic with
     * a J line attached.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * K = MA(RSV, SlowK_Period, SlowK_MAType)
-    * D = MA(K, SlowD_Period, SlowD_MAType)
-    * J = 3*K - 2*D
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
@@ -107152,13 +106935,8 @@ public final class Core {
     * which is the smoother the original formula language specifies; selecting a
     * simple moving average for both reproduces the classic Slow Stochastic with
     * a J line attached.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * K = MA(RSV, SlowK_Period, SlowK_MAType)
-    * D = MA(K, SlowD_Period, SlowD_MAType)
-    * J = 3*K - 2*D
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as {@code SMA(X, N, 1)}, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</li>
@@ -108000,6 +107778,8 @@ public final class Core {
     * Least-squares straight-line fit over the last optInTimePeriod bars,
     * reported as the fitted line value at the window endpoint (b +
     * m*(period-1)).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg">ta-lib.org/functions/linearreg</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -108056,6 +107836,8 @@ public final class Core {
     * Least-squares straight-line fit over the last optInTimePeriod bars,
     * reported as the fitted line value at the window endpoint (b +
     * m*(period-1)).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg">ta-lib.org/functions/linearreg</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -109118,10 +108900,8 @@ public final class Core {
     * points. It is the LINEARREG_SLOPE value passed through atan and converted
     * to degrees. Positive angle = rising fit line, negative = falling;
     * magnitude reflects steepness.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, SumXSqr=N(N−1)(2N−1)/6; angle = atan(m)·(180/π)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_angle">ta-lib.org/functions/linearreg_angle</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -109179,10 +108959,8 @@ public final class Core {
     * points. It is the LINEARREG_SLOPE value passed through atan and converted
     * to degrees. Positive angle = rising fit line, negative = falling;
     * magnitude reflects steepness.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (N·SumXY − SumX·SumY) / (SumX² − N·SumXSqr), with SumX=N(N−1)/2, SumXSqr=N(N−1)(2N−1)/6; angle = atan(m)·(180/π)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_angle">ta-lib.org/functions/linearreg_angle</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -110234,12 +110012,8 @@ public final class Core {
     * Returns the y-intercept (b) of the least-squares regression line fitted
     * over the last optInTimePeriod values. Part of the linear-regression family
     * (LINEARREG, SLOPE, ANGLE, TSF).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-    * m = (period·SumXY − SumX·SumY) / Divisor
-    * b = (SumY − m·SumX) / period   ← output
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -110296,12 +110070,8 @@ public final class Core {
     * Returns the y-intercept (b) of the least-squares regression line fitted
     * over the last optInTimePeriod values. Part of the linear-regression family
     * (LINEARREG, SLOPE, ANGLE, TSF).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Fit y = b + m·x over the window with x = bars-ago (x=0 is the current bar, x=period-1 the oldest). With SumX = period(period-1)/2, SumXSqr = period(period-1)(2·period-1)/6, Divisor = SumX² − period·SumXSqr:
-    * m = (period·SumXY − SumX·SumY) / Divisor
-    * b = (SumY − m·SumX) / period   ← output
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_intercept">ta-lib.org/functions/linearreg_intercept</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -111348,12 +111118,8 @@ public final class Core {
     * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
     * trend line. Positive slope = rising trend, negative = falling; magnitude
     * is price change per bar.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (n·SumXY − SumX·SumY) / Divisor
-    * SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    * SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -111411,12 +111177,8 @@ public final class Core {
     * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
     * trend line. Positive slope = rising trend, negative = falling; magnitude
     * is price change per bar.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (n·SumXY − SumX·SumY) / Divisor
-    * SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    * SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -112199,10 +111961,8 @@ public final class Core {
    }
    /**
     * Element-wise natural logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ln">ta-lib.org/functions/ln</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
@@ -112257,10 +112017,8 @@ public final class Core {
    }
    /**
     * Element-wise natural logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ln">ta-lib.org/functions/ln</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
@@ -112639,10 +112397,8 @@ public final class Core {
    }
    /**
     * Element-wise base-10 logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log10(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/log10">ta-lib.org/functions/log10</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
@@ -112696,10 +112452,8 @@ public final class Core {
    }
    /**
     * Element-wise base-10 logarithm of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = log10(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/log10">ta-lib.org/functions/log10</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</li>
@@ -113379,10 +113133,8 @@ public final class Core {
     * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ma">ta-lib.org/functions/ma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
@@ -113459,10 +113211,8 @@ public final class Core {
     * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ma">ta-lib.org/functions/ma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
@@ -114752,10 +114502,8 @@ public final class Core {
     * slow EMA of the input, plus an EMA-smoothed signal line and their
     * histogram. MACD crossing its signal line and histogram sign changes flag
     * momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macd">ta-lib.org/functions/macd</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one.</li>
@@ -114832,10 +114580,8 @@ public final class Core {
     * slow EMA of the input, plus an EMA-smoothed signal line and their
     * histogram. MACD crossing its signal line and histogram sign changes flag
     * momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macd">ta-lib.org/functions/macd</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one.</li>
@@ -115806,13 +115552,8 @@ public final class Core {
     * user-selectable MA type. Outputs the MACD line, its signal line, and their
     * difference (histogram). Hist sign change (MACD crossing its signal line)
     * flags momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = MA_fast(inReal) - MA_slow(inReal)
-    * Signal = MA_signal(MACD)
-    * Hist = MACD - Signal
-    * (each MA_* uses its own MA type and period)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdext">ta-lib.org/functions/macdext</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</li>
@@ -115910,13 +115651,8 @@ public final class Core {
     * user-selectable MA type. Outputs the MACD line, its signal line, and their
     * difference (histogram). Hist sign change (MACD crossing its signal line)
     * flags momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = MA_fast(inReal) - MA_slow(inReal)
-    * Signal = MA_signal(MACD)
-    * Hist = MACD - Signal
-    * (each MA_* uses its own MA type and period)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdext">ta-lib.org/functions/macdext</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</li>
@@ -116831,12 +116567,8 @@ public final class Core {
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
     * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
     * period. Signal-line crossovers and histogram sign flag momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_12 - EMA_26   (fixed k: 0.15 for 12, 0.075 for 26)
-    * Signal = EMA(MACD, signalPeriod),  k = 2/(signalPeriod+1)
-    * Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdfix">ta-lib.org/functions/macdfix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</li>
@@ -116905,12 +116637,8 @@ public final class Core {
     * MACD with the fast/slow EMAs fixed to the classic 12/26 periods (with the
     * classic fixed smoothing factors 0.15 and 0.075), exposing only the signal
     * period. Signal-line crossovers and histogram sign flag momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_12 - EMA_26   (fixed k: 0.15 for 12, 0.075 for 26)
-    * Signal = EMA(MACD, signalPeriod),  k = 2/(signalPeriod+1)
-    * Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdfix">ta-lib.org/functions/macdfix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</li>
@@ -118276,13 +118004,8 @@ public final class Core {
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
     * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
     * FAMA is bullish; crossing below is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    * MAMA = alpha*price + (1-alpha)*MAMA_prev
-    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -118348,13 +118071,8 @@ public final class Core {
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
     * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
     * FAMA is bullish; crossing below is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    * MAMA = alpha*price + (1-alpha)*MAMA_prev
-    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -119694,11 +119412,8 @@ public final class Core {
     * fake / squat) derived from the signs of the bar-to-bar change in this
     * index and in volume. That is an interpretive layer on top of the series,
     * not part of it; {@code outReal} is the scalar only.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MARKETFI_t = (high_t - low_t) / volume_t
-    * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -119767,11 +119482,8 @@ public final class Core {
     * fake / squat) derived from the signs of the bar-to-bar change in this
     * index and in volume. That is an interpretive layer on top of the series,
     * not part of it; {@code outReal} is the scalar only.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MARKETFI_t = (high_t - low_t) / volume_t
-    * A bar with zero volume reports 0 rather than dividing: it facilitated no movement, and a successful call never emits NaN or ±Inf.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/marketfi">ta-lib.org/functions/marketfi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -120507,14 +120219,8 @@ public final class Core {
     * above 27, then falling back under 26.5, warns that the prevailing trend is
     * about to reverse. Which way it reverses has to come from a trend
     * indicator, because the Mass Index has no sign of its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * single = EMA( HL, optInFastPeriod )
-    * double = EMA( single, optInFastPeriod )
-    * MASSI = SUM( single / double, optInSlowPeriod )
-    * Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod + 1), seeded with the simple average of the first optInFastPeriod inputs of that stage.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/massi">ta-lib.org/functions/massi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two periods are not interchangeable and are never swapped: {@code optInFastPeriod} is the length of both exponential averages, {@code optInSlowPeriod} the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</li>
@@ -120595,14 +120301,8 @@ public final class Core {
     * above 27, then falling back under 26.5, warns that the prevailing trend is
     * about to reverse. Which way it reverses has to come from a trend
     * indicator, because the Mass Index has no sign of its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * single = EMA( HL, optInFastPeriod )
-    * double = EMA( single, optInFastPeriod )
-    * MASSI = SUM( single / double, optInSlowPeriod )
-    * Both averages are the standard TA-Lib EMA: smoothing factor 2 / (optInFastPeriod + 1), seeded with the simple average of the first optInFastPeriod inputs of that stage.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/massi">ta-lib.org/functions/massi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two periods are not interchangeable and are never swapped: {@code optInFastPeriod} is the length of both exponential averages, {@code optInSlowPeriod} the length of the summation window. Some implementations reorder them when the summation window is the shorter of the two; this one does not.</li>
@@ -121664,10 +121364,8 @@ public final class Core {
     * Moving average whose period varies per bar, driven by a companion period
     * series. For each bar it computes an MA of the selected type over the
     * (clamped) period given by inPeriods.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mavp">ta-lib.org/functions/mavp</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
@@ -121741,10 +121439,8 @@ public final class Core {
     * Moving average whose period varies per bar, driven by a companion period
     * series. For each bar it computes an MA of the selected type over the
     * (clamped) period given by inPeriods.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mavp">ta-lib.org/functions/mavp</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
@@ -122500,10 +122196,8 @@ public final class Core {
    /**
     * Highest input value over a rolling window of the last optInTimePeriod
     * bars. A moving-window maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/max">ta-lib.org/functions/max</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -122558,10 +122252,8 @@ public final class Core {
    /**
     * Highest input value over a rolling window of the last optInTimePeriod
     * bars. A moving-window maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/max">ta-lib.org/functions/max</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -123204,10 +122896,8 @@ public final class Core {
     * Returns the index of the highest input value within a rolling window of
     * optInTimePeriod bars. Same as MAX but outputs the location instead of the
     * value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -123269,10 +122959,8 @@ public final class Core {
     * Returns the index of the highest input value within a rolling window of
     * optInTimePeriod bars. Same as MAX but outputs the location instead of the
     * value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -123811,10 +123499,8 @@ public final class Core {
    /**
     * Median Price: the midpoint of each bar's high and low. A price-transform
     * overlay.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $MEDPRICE_i = (High_i + Low_i) / 2$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/medprice">ta-lib.org/functions/medprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -123870,10 +123556,8 @@ public final class Core {
    /**
     * Median Price: the midpoint of each bar's high and low. A price-transform
     * overlay.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $MEDPRICE_i = (High_i + Low_i) / 2$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/medprice">ta-lib.org/functions/medprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -124558,10 +124242,8 @@ public final class Core {
     * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
     * positive vs negative money flow over a period. A volume-based analog of
     * RSI. &gt;80 overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative if TP<prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mfi">ta-lib.org/functions/mfi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</li>
@@ -124631,10 +124313,8 @@ public final class Core {
     * Money Flow Index: a volume-weighted momentum oscillator (0-100) comparing
     * positive vs negative money flow over a period. A volume-based analog of
     * RSI. &gt;80 overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP = (High+Low+Close)/3; MF = TP*Volume, classed positive if TP>prevTP, negative if TP<prevTP, neither if equal. MFI = 100 * posSumMF/(posSumMF+negSumMF).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mfi">ta-lib.org/functions/mfi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the typical price is unchanged from the prior bar, that bar's money flow is counted as neither positive nor negative.</li>
@@ -125612,10 +125292,8 @@ public final class Core {
     * Midpoint over a period: the average of the highest and lowest input values
     * within the lookback window. A single-series overlap smoother (use MIDPRICE
     * for separate high/low price bars).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/midpoint">ta-lib.org/functions/midpoint</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -125671,10 +125349,8 @@ public final class Core {
     * Midpoint over a period: the average of the highest and lowest input values
     * within the lookback window. A single-series overlap smoother (use MIDPRICE
     * for separate high/low price bars).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MIDPOINT = (Highest(inReal, period) + Lowest(inReal, period)) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/midpoint">ta-lib.org/functions/midpoint</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -126589,11 +126265,8 @@ public final class Core {
     * Midpoint of the price range over a rolling window: the average of the
     * highest high and lowest low across the last optInTimePeriod bars. An
     * overlap-study line plotted on price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-    * This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middle output, alongside the two extrema.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/midprice">ta-lib.org/functions/midprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -126652,11 +126325,8 @@ public final class Core {
     * Midpoint of the price range over a rolling window: the average of the
     * highest high and lowest low across the last optInTimePeriod bars. An
     * overlap-study line plotted on price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-    * This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middle output, alongside the two extrema.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/midprice">ta-lib.org/functions/midprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -127503,10 +127173,8 @@ public final class Core {
    }
    /**
     * Rolling minimum: the lowest input value over the trailing period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/min">ta-lib.org/functions/min</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -127560,10 +127228,8 @@ public final class Core {
    }
    /**
     * Rolling minimum: the lowest input value over the trailing period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = min(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/min">ta-lib.org/functions/min</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -128204,10 +127870,8 @@ public final class Core {
     * Returns the absolute index of the lowest value within a rolling window of
     * the given period. Same scan as MIN but outputs the position of the minimum
     * rather than its value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -128269,10 +127933,8 @@ public final class Core {
     * Returns the absolute index of the lowest value within a rolling window of
     * the given period. Same scan as MIN but outputs the position of the minimum
     * rather than its value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -129098,11 +128760,8 @@ public final class Core {
     * Returns both the lowest and highest values of the input over a rolling
     * window of the last optInTimePeriod bars. An overlap-study companion to MIN
     * and MAX that computes both extrema in one pass.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
-    * outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minmax">ta-lib.org/functions/minmax</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -129164,11 +128823,8 @@ public final class Core {
     * Returns both the lowest and highest values of the input over a rolling
     * window of the last optInTimePeriod bars. An overlap-study companion to MIN
     * and MAX that computes both extrema in one pass.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outMin[i] = min(inReal[i-optInTimePeriod+1 .. i])
-    * outMax[i] = max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minmax">ta-lib.org/functions/minmax</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -129977,11 +129633,8 @@ public final class Core {
    /**
     * Returns the absolute input indices of the lowest and highest values within
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -130046,11 +129699,8 @@ public final class Core {
    /**
     * Returns the absolute input indices of the lowest and highest values within
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -131187,10 +130837,8 @@ public final class Core {
     * directional movement (-DM) normalized by smoothed True Range. Measures the
     * strength of downward price movement. Higher -DI indicates a stronger
     * downtrend; compared against +DI to gauge directional dominance.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minus_di">ta-lib.org/functions/minus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
@@ -131260,10 +130908,8 @@ public final class Core {
     * directional movement (-DM) normalized by smoothed True Range. Measures the
     * strength of downward price movement. Higher -DI indicates a stronger
     * downtrend; compared against +DI to gauge directional dominance.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * -DM1 = (prevLow - low) if (prevLow-low)>0 and (high-prevHigh)<(prevLow-low), else 0. Seed -DM/TR = sum of first (period-1) -DM1/TR1, then Wilder-smooth each: X = X - X/period + today. -DI = 100 * (-DM / TR); TR from ta_true_range. If period<=1: -DI1 = -DM1/TR1 (no ×100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minus_di">ta-lib.org/functions/minus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (it was removed as unreliable when values are near 1).</li>
@@ -132583,14 +132229,8 @@ public final class Core {
     * Minus Directional Movement, the downward component of Wilder's directional
     * movement system. Measures Wilder-smoothed downward price motion over the
     * period. Higher -DM indicates stronger downward directional movement.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * diffP = high - prevHigh; diffM = prevLow - low
-    * -DM1 = diffM if (diffM > 0 and diffP < diffM) else 0
-    * period<=1: output raw -DM1 per bar.
-    * period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
-    * -DM = prevMinusDM - prevMinusDM/period (+ -DM1 when the bar qualifies)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minus_dm">ta-lib.org/functions/minus_dm</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -132652,14 +132292,8 @@ public final class Core {
     * Minus Directional Movement, the downward component of Wilder's directional
     * movement system. Measures Wilder-smoothed downward price motion over the
     * period. Higher -DM indicates stronger downward directional movement.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * diffP = high - prevHigh; diffM = prevLow - low
-    * -DM1 = diffM if (diffM > 0 and diffP < diffM) else 0
-    * period<=1: output raw -DM1 per bar.
-    * period>1: seed = sum of first (period-1) -DM1; then Wilder smooth each bar:
-    * -DM = prevMinusDM - prevMinusDM/period (+ -DM1 when the bar qualifies)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minus_dm">ta-lib.org/functions/minus_dm</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -133518,10 +133152,8 @@ public final class Core {
     * Momentum: current price minus the price optInTimePeriod bars ago. The
     * absolute (unnormalized) rate of change. Positive = price rose over the
     * period, negative = fell; centered at zero.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mom">ta-lib.org/functions/mom</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -133578,10 +133210,8 @@ public final class Core {
     * Momentum: current price minus the price optInTimePeriod bars ago. The
     * absolute (unnormalized) rate of change. Positive = price rose over the
     * period, negative = fell; centered at zero.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mom">ta-lib.org/functions/mom</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -134062,10 +133692,8 @@ public final class Core {
    }
    /**
     * Element-wise multiplication of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] * inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mult">ta-lib.org/functions/mult</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -134119,10 +133747,8 @@ public final class Core {
    }
    /**
     * Element-wise multiplication of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] * inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mult">ta-lib.org/functions/mult</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -134836,11 +134462,8 @@ public final class Core {
     * volatility comparable across price levels and securities. Same computation
     * as ATR, then normalized by close. Higher values mean greater relative
     * volatility; unit is percent of price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * NATR = (ATR / Close) * 100
-    * ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR_{t-1}*(period-1) + TR_t) / period
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -134904,11 +134527,8 @@ public final class Core {
     * volatility comparable across price levels and securities. Same computation
     * as ATR, then normalized by close. Higher values mean greater relative
     * volatility; unit is percent of price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * NATR = (ATR / Close) * 100
-    * ATR: first value = SMA of TRANGE over period; then Wilder smoothing ATR_t = (ATR_{t-1}*(period-1) + TR_t) / period
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/natr">ta-lib.org/functions/natr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -135638,16 +135258,8 @@ public final class Core {
     * percentage price change. The premise is that quiet, low-volume days
     * reflect the actions of well-informed "smart money", so NVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * NVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * NVI[i] = NVI[i-1] + ( inVolume[i] < inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * NVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not fall (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -135705,16 +135317,8 @@ public final class Core {
     * percentage price change. The premise is that quiet, low-volume days
     * reflect the actions of well-informed "smart money", so NVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * NVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * NVI[i] = NVI[i-1] + ( inVolume[i] < inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * NVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not fall (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -136239,10 +135843,8 @@ public final class Core {
     * On Balance Volume: a running cumulative total of volume, added on up-price
     * bars and subtracted on down-price bars. Relates volume flow to price
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -136294,10 +135896,8 @@ public final class Core {
     * On Balance Volume: a running cumulative total of volume, added on up-price
     * bars and subtracted on down-price bars. Relates volume flow to price
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -136949,10 +136549,8 @@ public final class Core {
     * scale and never invents a level the series never traded at. At P = 50 with
     * an odd window it is the rolling median; at the extremes it degenerates to
     * the rolling minimum and maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentile">ta-lib.org/functions/percentile</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's {@code ta.percentile_linear_interpolation}) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</li>
@@ -137021,10 +136619,8 @@ public final class Core {
     * scale and never invents a level the series never traded at. At P = 50 with
     * an odd window it is the rolling median; at the extremes it degenerates to
     * the rolling minimum and maximum.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentile">ta-lib.org/functions/percentile</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's {@code ta.percentile_linear_interpolation}) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</li>
@@ -137711,13 +137307,8 @@ public final class Core {
     * That makes it flat-scaled across instruments and directly comparable
     * between them. It is best known as the third leg of Connors' ConnorsRSI,
     * applied there to one-day returns rather than to price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t, over the previous optInTimePeriod values:
-    * count = number of j in [t-optInTimePeriod, t-1] with inReal[j] < inReal[t]
-    * PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-    * The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's {@code ta.percentrank} counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</li>
@@ -137790,13 +137381,8 @@ public final class Core {
     * That makes it flat-scaled across instruments and directly comparable
     * between them. It is best known as the third leg of Connors' ConnorsRSI,
     * applied there to one-day returns rather than to price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t, over the previous optInTimePeriod values:
-    * count = number of j in [t-optInTimePeriod, t-1] with inReal[j] < inReal[t]
-    * PERCENTRANK[t] = ( count / optInTimePeriod ) * 100
-    * The comparison is strictly less-than, so a value tied with a predecessor does not count that predecessor.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/percentrank">ta-lib.org/functions/percentrank</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Ties are strict: a predecessor equal to the current value is not counted. A constant series therefore reports 0 on every bar. TradingView's {@code ta.percentrank} counts ties as well (less-than-or-equal), which reports 100 on that same series; Pine parity is a different function, not a variant of this one, and the two agree only on windows with no repeated values.</li>
@@ -138778,14 +138364,8 @@ public final class Core {
     * movement expressed as a percentage of the true range. Measures the
     * strength of upward price movement. Rising +DI signals strengthening upward
     * direction; compared against MINUS_DI to judge trend direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DM1 = (H-Hprev) if (H-Hprev) > 0 and (H-Hprev) > (Lprev-L), else 0.
-    * TR1 = true range = max(H-L, |H-Cprev|, |L-Cprev|).
-    * Seed +DM/TR = sum of first (period-1) one-period values; then Wilder smooth: X = X - X/period + X1.
-    * +DI = 100 * (+DM / TR); if TR = 0, +DI = 0.
-    * When period <= 1: +DI = +DM1 / TR1 (no *100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/plus_di">ta-lib.org/functions/plus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding of intermediate values is not applied (it was unreliable when values are near 1).</li>
@@ -138855,14 +138435,8 @@ public final class Core {
     * movement expressed as a percentage of the true range. Measures the
     * strength of upward price movement. Rising +DI signals strengthening upward
     * direction; compared against MINUS_DI to judge trend direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DM1 = (H-Hprev) if (H-Hprev) > 0 and (H-Hprev) > (Lprev-L), else 0.
-    * TR1 = true range = max(H-L, |H-Cprev|, |L-Cprev|).
-    * Seed +DM/TR = sum of first (period-1) one-period values; then Wilder smooth: X = X - X/period + X1.
-    * +DI = 100 * (+DM / TR); if TR = 0, +DI = 0.
-    * When period <= 1: +DI = +DM1 / TR1 (no *100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/plus_di">ta-lib.org/functions/plus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding of intermediate values is not applied (it was unreliable when values are near 1).</li>
@@ -140183,13 +139757,8 @@ public final class Core {
     * Plus Directional Movement: the Wilder-smoothed accumulation of upward
     * directional movement (+DM1). A component of the Directional Movement
     * System used to build +DI/DX/ADX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DM1 = (high - prevHigh) if (high-prevHigh) > 0 and > (prevLow-low), else 0.
-    * period<=1: output = +DM1 per bar.
-    * period>1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
-    * +DM = prevPlusDM - prevPlusDM/period + +DM1(today)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/plus_dm">ta-lib.org/functions/plus_dm</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -140251,13 +139820,8 @@ public final class Core {
     * Plus Directional Movement: the Wilder-smoothed accumulation of upward
     * directional movement (+DM1). A component of the Directional Movement
     * System used to build +DI/DX/ADX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DM1 = (high - prevHigh) if (high-prevHigh) > 0 and > (prevLow-low), else 0.
-    * period<=1: output = +DM1 per bar.
-    * period>1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
-    * +DM = prevPlusDM - prevPlusDM/period + +DM1(today)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/plus_dm">ta-lib.org/functions/plus_dm</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -141176,11 +140740,8 @@ public final class Core {
     * (scale-invariant) variant of APO. Positive when the fast MA is above the
     * slow MA (upward momentum), negative otherwise; magnitude is the %
     * deviation.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PPO = ((fastMA(inReal) - slowMA(inReal)) / slowMA(inReal)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-day EMA) / 26-day EMA) * 100, i.e. the MACD oscillator expressed as a percentage. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -141251,11 +140812,8 @@ public final class Core {
     * (scale-invariant) variant of APO. Positive when the fast MA is above the
     * slow MA (upward momentum), negative otherwise; magnitude is the %
     * deviation.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PPO = ((fastMA(inReal) - slowMA(inReal)) / slowMA(inReal)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-day EMA) / 26-day EMA) * 100, i.e. the MACD oscillator expressed as a percentage. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -141831,16 +141389,8 @@ public final class Core {
     * percentage price change. The premise is that active, high-volume days
     * reflect the actions of the less-informed "crowd", so PVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * PVI[i] = PVI[i-1] + ( inVolume[i] > inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * PVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not rise (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -141898,16 +141448,8 @@ public final class Core {
     * percentage price change. The premise is that active, high-volume days
     * reflect the actions of the less-informed "crowd", so PVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * PVI[i] = PVI[i-1] + ( inVolume[i] > inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * PVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not rise (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvi">ta-lib.org/functions/pvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -142540,11 +142082,8 @@ public final class Core {
     * volume, expressed as a percentage of the slow MA. Positive when short-term
     * volume is above its longer-term average (rising participation), negative
     * when below. The default periods (12, 26) match MACD and PPO.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvo">ta-lib.org/functions/pvo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -142617,11 +142156,8 @@ public final class Core {
     * volume, expressed as a percentage of the slow MA. Positive when short-term
     * volume is above its longer-term average (rising participation), negative
     * when below. The default periods (12, 26) match MACD and PPO.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA of Volume - 26-day EMA of Volume) / 26-day EMA of Volume) * 100, i.e. the PPO/MACD oscillator computed on volume. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvo">ta-lib.org/functions/pvo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -143166,11 +142702,8 @@ public final class Core {
     * the shape of the curve carries information. A rising PVT while price is
     * flat says volume is accumulating on the up moves; a falling PVT while
     * price rises is the classic bearish divergence.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-    * The series starts at zero on the first bar of the requested range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
@@ -143240,11 +142773,8 @@ public final class Core {
     * the shape of the curve carries information. A rising PVT while price is
     * flat says volume is accumulating on the up moves; a falling PVT while
     * price rises is the classic bearish divergence.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-    * The series starts at zero on the first bar of the requested range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
@@ -143795,11 +143325,8 @@ public final class Core {
     * measures how bullish or bearish the bodies have been over the window,
     * independently of the wicks — above zero the bodies closed up on balance,
     * below zero they closed down, and the zero-line crossings are the signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -143863,11 +143390,8 @@ public final class Core {
     * measures how bullish or bearish the bodies have been over the window,
     * independently of the wicks — above zero the bodies closed up on balance,
     * below zero they closed down, and the zero-line crossings are the signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * body_t = close_t - open_t; QSTICK_t = ( Σ body over the last `optInTimePeriod` bars ) / optInTimePeriod
-    * The moving average is a plain SMA, so there is no seeding convention and none of the cross-library divergence that comes with one. `optInTimePeriod` of 1 leaves the raw body.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/qstick">ta-lib.org/functions/qstick</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -144512,12 +144036,8 @@ public final class Core {
     * travels under five names for one object: RMA (TradingView, pandas-ta),
     * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
     * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
-    * seed at bar N-1:  RMA = ( x[0] + x[1] + ... + x[N-1] ) / N
-    * for i >= N:       RMA[i] = alpha * x[i] + beta * RMA[i-1]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rma">ta-lib.org/functions/rma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's own writing uses a period of 14, and pandas-ta defaults to 10. The default here is the one the rest of the moving-average family carries, so a call that swaps one MA for another keeps its period.</li>
@@ -144600,12 +144120,8 @@ public final class Core {
     * travels under five names for one object: RMA (TradingView, pandas-ta),
     * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
     * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
-    * seed at bar N-1:  RMA = ( x[0] + x[1] + ... + x[N-1] ) / N
-    * for i >= N:       RMA[i] = alpha * x[i] + beta * RMA[i-1]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rma">ta-lib.org/functions/rma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's own writing uses a period of 14, and pandas-ta defaults to 10. The default here is the one the rest of the moving-average family carries, so a call that swaps one MA for another keeps its period.</li>
@@ -145175,10 +144691,8 @@ public final class Core {
     * price optInTimePeriod bars earlier. Centered at zero with positive and
     * negative values. Positive when price rose over the period, negative when
     * it fell; magnitude scales the move.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROC = ((price / prevPrice) - 1) * 100, where prevPrice = inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -145236,10 +144750,8 @@ public final class Core {
     * price optInTimePeriod bars earlier. Centered at zero with positive and
     * negative values. Positive when price rose over the period, negative when
     * it fell; magnitude scales the move.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROC = ((price / prevPrice) - 1) * 100, where prevPrice = inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/roc">ta-lib.org/functions/roc</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -145824,10 +145336,8 @@ public final class Core {
     * Rate of change expressed as a fraction of the price optInTimePeriod bars
     * ago. Normalized and centered at zero (positive or negative). &gt;0 rising
     * vs N bars ago, &lt;0 falling; equals ROC/100.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -145884,10 +145394,8 @@ public final class Core {
     * Rate of change expressed as a fraction of the price optInTimePeriod bars
     * ago. Normalized and centered at zero (positive or negative). &gt;0 rising
     * vs N bars ago, &lt;0 falling; equals ROC/100.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -146473,10 +145981,8 @@ public final class Core {
     * Rate of Change Ratio: the ratio of the current price to the price
     * optInTimePeriod bars ago. A momentum measure centered at 1. Always
     * positive, centered at 1: &gt;1 rising, &lt;1 falling.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCR = price / price[t - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -146534,10 +146040,8 @@ public final class Core {
     * Rate of Change Ratio: the ratio of the current price to the price
     * optInTimePeriod bars ago. A momentum measure centered at 1. Always
     * positive, centered at 1: &gt;1 rising, &lt;1 falling.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCR = price / price[t - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocr">ta-lib.org/functions/rocr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -147125,10 +146629,8 @@ public final class Core {
     * price optInTimePeriod bars ago. Momentum measure centered at 100 and
     * always positive. Above 100 = price rose vs n bars ago; below 100 = price
     * fell.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -147187,10 +146689,8 @@ public final class Core {
     * price optInTimePeriod bars ago. Momentum measure centered at 100 and
     * always positive. Above 100 = price rose vs n bars ago; below 100 = price
     * fell.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $ROCR100_t = \dfrac{price_t}{price_{t-n}} \times 100$, where $n$ = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocr100">ta-lib.org/functions/rocr100</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -147940,26 +147440,8 @@ public final class Core {
     * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
     * the ratio of average gains to average losses over the period. Used to
     * gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * U_t &= \max(X_t - X_{t-1},\ 0)
-    * &  D_t &= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-    * \overline{U}_t &= \begin{cases}
-    * \operatorname{SMA}(U, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} & \text{if } t > n
-    * \end{cases}
-    * &  \overline{D}_t &= \begin{cases}
-    * \operatorname{SMA}(D, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} & \text{if } t > n
-    * \end{cases} \\[4pt]
-    * \mathrm{RS}_t &= \frac{\overline{U}_t}{\overline{D}_t}
-    * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series and $n$ the period.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -148014,26 +147496,8 @@ public final class Core {
     * Wilder's Relative Strength Index, a momentum oscillator bounded 0-100 from
     * the ratio of average gains to average losses over the period. Used to
     * gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $$
-    * \begin{aligned}
-    * U_t &= \max(X_t - X_{t-1},\ 0)
-    * &  D_t &= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-    * \overline{U}_t &= \begin{cases}
-    * \operatorname{SMA}(U, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} & \text{if } t > n
-    * \end{cases}
-    * &  \overline{D}_t &= \begin{cases}
-    * \operatorname{SMA}(D, n)_t                 & \text{if } t = n \\[4pt]
-    * \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} & \text{if } t > n
-    * \end{cases} \\[4pt]
-    * \mathrm{RS}_t &= \frac{\overline{U}_t}{\overline{D}_t}
-    * &  \mathrm{RSI}_t &= 100 - \frac{100}{1 + \mathrm{RS}_t}
-    * \end{aligned}
-    * $$
-    * }</pre>
-    * <p>where $X$ is the input series and $n$ the period.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -149118,14 +148582,8 @@ public final class Core {
     * down bars. Dorsey proposed it as a confirming filter rather than a
     * stand-alone signal: take a long entry only while RVI is above 50, a short
     * only while it is below.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
-    * U[i] = S[i] if C[i] > C[i-1], else 0
-    * D[i] = S[i] if C[i] < C[i-1], else 0
-    * RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
-    * `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
@@ -149202,14 +148660,8 @@ public final class Core {
     * down bars. Dorsey proposed it as a confirming filter rather than a
     * stand-alone signal: take a long entry only while RVI is above 50, a short
     * only while it is below.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `S` the standard deviation of the last `optInStdDevPeriod` values of `inReal`, and `C` the input series:
-    * U[i] = S[i] if C[i] > C[i-1], else 0
-    * D[i] = S[i] if C[i] < C[i-1], else 0
-    * RVI  = 100 * RMA(U, optInTimePeriod) / ( RMA(U, optInTimePeriod) + RMA(D, optInTimePeriod) )
-    * `RMA` is Wilder's smoothed moving average, seeded with the simple average of its first `optInTimePeriod` inputs. A bar whose close equals the previous close feeds neither bucket.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvi">ta-lib.org/functions/rvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This is Dorsey's 1993 original, which measures the closes alone. His 1995 revision averages the index of the highs with the index of the lows; some vendors reserve the name RVI for that revision and call this one RVIorig. It is not implemented here.</li>
@@ -150143,10 +149595,8 @@ public final class Core {
     * direction signal: it says how much conviction is behind a price move, not
     * which way. Breakouts on a high ratio are the ones that tend to follow
     * through; the same breakout near 1 is the one to distrust.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvol">ta-lib.org/functions/rvol</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
@@ -150215,10 +149665,8 @@ public final class Core {
     * direction signal: it says how much conviction is behind a price move, not
     * which way. Breakouts on a high ratio are the ones that tend to follow
     * through; the same breakout near 1 is the one to distrust.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvol">ta-lib.org/functions/rvol</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
@@ -151099,12 +150547,8 @@ public final class Core {
     * that accelerates toward price via an acceleration factor. Signals trend
     * direction and trailing exit points. SAR below price = uptrend (long); SAR
     * above price = downtrend (short). Price crossing SAR flips direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + af * (EP - SAR)
-    * EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    * On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -151168,12 +150612,8 @@ public final class Core {
     * that accelerates toward price via an acceleration factor. Signals trend
     * direction and trailing exit points. SAR below price = uptrend (long); SAR
     * above price = downtrend (short). Price crossing SAR flips direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + af * (EP - SAR)
-    * EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    * On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -152654,10 +152094,8 @@ public final class Core {
     * short positions. Unlike SAR, it returns negative values while short so
     * reversals are distinguishable. Sign flip of the output marks a trend
     * reversal (positive=long stop, negative=short stop).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sarext">ta-lib.org/functions/sarext</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -152739,10 +152177,8 @@ public final class Core {
     * short positions. Unlike SAR, it returns negative values while short so
     * reversals are distinguishable. Sign flip of the output marks a trend
     * reversal (positive=long stop, negative=short stop).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sarext">ta-lib.org/functions/sarext</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -153761,10 +153197,8 @@ public final class Core {
    }
    /**
     * Element-wise sine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sin(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sin">ta-lib.org/functions/sin</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -153815,10 +153249,8 @@ public final class Core {
    }
    /**
     * Element-wise sine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sin(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sin">ta-lib.org/functions/sin</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -154193,10 +153625,8 @@ public final class Core {
    }
    /**
     * Element-wise hyperbolic sine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sinh(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -154246,10 +153676,8 @@ public final class Core {
    }
    /**
     * Element-wise hyperbolic sine of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sinh(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sinh">ta-lib.org/functions/sinh</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -154717,10 +154145,8 @@ public final class Core {
    /**
     * Simple Moving Average: the unweighted arithmetic mean of the last N input
     * values. Used to smooth a series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sma">ta-lib.org/functions/sma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -154781,10 +154207,8 @@ public final class Core {
    /**
     * Simple Moving Average: the unweighted arithmetic mean of the last N input
     * values. Used to smooth a series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SMA_t = (1/N) * sum_{i=t-N+1}^{t} inReal_i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sma">ta-lib.org/functions/sma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -155810,13 +155234,8 @@ public final class Core {
     * the close is above the midpoint of its range, negative below. Extreme
     * readings mark overbought and oversold conditions, and crossings of the
     * signal line are the usual trade trigger.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    * num = close - 0.5 * (HH + LL);  den = HH - LL
-    * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    * Signal = EMA(SMI, signalPeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -155907,13 +155326,8 @@ public final class Core {
     * the close is above the midpoint of its range, negative below. Extreme
     * readings mark overbought and oversold conditions, and crossings of the
     * signal line are the usual trade trigger.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-    * num = close - 0.5 * (HH + LL);  den = HH - LL
-    * SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-    * Signal = EMA(SMI, signalPeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -156869,10 +156283,8 @@ public final class Core {
    }
    /**
     * Element-wise square root of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sqrt(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A negative input has no real square root, so those elements come out NaN.</li>
@@ -156923,10 +156335,8 @@ public final class Core {
    }
    /**
     * Element-wise square root of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = sqrt(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A negative input has no real square root, so those elements come out NaN.</li>
@@ -157397,10 +156807,8 @@ public final class Core {
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>
@@ -157462,10 +156870,8 @@ public final class Core {
    /**
     * Rolling standard deviation of a series over a window, scaled by a
     * deviations multiplier. Delegates to VAR, then takes the square root.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\sigma_i = \sqrt{\mathrm{VAR}_i}\cdot nbDev$, where $\mathrm{VAR}_i = \frac{1}{N}\sum x^2 - \left(\frac{1}{N}\sum x\right)^2$ (population variance, $N=$ timePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stddev">ta-lib.org/functions/stddev</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Uses population variance (divides by the period, not period minus one), so results differ slightly from the sample standard deviation used by some tools.</li>
@@ -158338,12 +157744,8 @@ public final class Core {
     * over a lookback period, then double-smooths it. Returns the Slow-%K and
     * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
     * crossing %D signals momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-    * SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
@@ -158435,12 +157837,8 @@ public final class Core {
     * over a lookback period, then double-smooths it. Returns the Slow-%K and
     * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
     * crossing %D signals momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-    * SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
@@ -159679,11 +159077,8 @@ public final class Core {
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
     * STOCHF returns the unsmoothed FastK and FastD. Oscillates 0-100; &gt;80
     * overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
@@ -159764,11 +159159,8 @@ public final class Core {
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
     * STOCHF returns the unsmoothed FastK and FastD. Oscillates 0-100; &gt;80
     * overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
@@ -160793,12 +160185,8 @@ public final class Core {
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * rsi = RSI(inReal, optInTimePeriod)
-    * FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</li>
@@ -160878,12 +160266,8 @@ public final class Core {
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * rsi = RSI(inReal, optInTimePeriod)
-    * FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</li>
@@ -161450,10 +160834,8 @@ public final class Core {
    }
    /**
     * Element-wise subtraction of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] - inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sub">ta-lib.org/functions/sub</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -161507,10 +160889,8 @@ public final class Core {
    }
    /**
     * Element-wise subtraction of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] - inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sub">ta-lib.org/functions/sub</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -161981,10 +161361,8 @@ public final class Core {
    /**
     * Rolling sum of the input over a fixed period. Each output is the sum of
     * the most recent optInTimePeriod input values.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sum">ta-lib.org/functions/sum</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -162037,10 +161415,8 @@ public final class Core {
    /**
     * Rolling sum of the input over a fixed period. Each output is the sum of
     * the most recent optInTimePeriod input values.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sum">ta-lib.org/functions/sum</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -162840,16 +162216,8 @@ public final class Core {
     * the lower band while it is up and the upper band while it is down, so the
     * line is usually below price in an uptrend and above it in a downtrend, and
     * the flip is the signal. Attributed to Olivier Seban.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Median = (High + Low) / 2
-    * BasicUpper = Median + Multiplier * ATR(TimePeriod)
-    * BasicLower = Median - Multiplier * ATR(TimePeriod)
-    * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
-    * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
-    * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
-    * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
@@ -162932,16 +162300,8 @@ public final class Core {
     * the lower band while it is up and the upper band while it is down, so the
     * line is usually below price in an uptrend and above it in a downtrend, and
     * the flip is the signal. Attributed to Olivier Seban.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Median = (High + Low) / 2
-    * BasicUpper = Median + Multiplier * ATR(TimePeriod)
-    * BasicLower = Median - Multiplier * ATR(TimePeriod)
-    * Upper = BasicUpper, when BasicUpper < previous Upper or previous Close > previous Upper; otherwise the previous Upper
-    * Lower = BasicLower, when BasicLower > previous Lower or previous Close < previous Lower; otherwise the previous Lower
-    * SuperTrend = Lower while the trend is up, until Close < Lower flips it down
-    * SuperTrend = Upper while the trend is down, until Close > Upper flips it up
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/supertrend">ta-lib.org/functions/supertrend</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Both bands are carried forward on every bar, and the trend is decided against the current bar's band. This is the form Investopedia, TradingView and ta4j all describe. A second published form, from the AmiBroker script attributed to Seban, carries only the band the trend is riding and lets the other float free; the two agree on almost every bar and part company at a flip, where this form hands back a band it has been carrying all along and that one hands back a fresh value.</li>
@@ -164022,12 +163382,8 @@ public final class Core {
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
     * despite both being called "triple EMA".
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    * v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    * T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -164092,12 +163448,8 @@ public final class Core {
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
     * despite both being called "triple EMA".
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    * v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    * T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -164720,10 +164072,8 @@ public final class Core {
    }
    /**
     * Element-wise tangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = tan(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tan">ta-lib.org/functions/tan</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -164775,10 +164125,8 @@ public final class Core {
    }
    /**
     * Element-wise tangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = tan(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tan">ta-lib.org/functions/tan</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -165154,10 +164502,8 @@ public final class Core {
    }
    /**
     * Element-wise hyperbolic tangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = tanh(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tanh">ta-lib.org/functions/tanh</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -165208,10 +164554,8 @@ public final class Core {
    }
    /**
     * Element-wise hyperbolic tangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = tanh(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tanh">ta-lib.org/functions/tanh</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -165828,10 +165172,8 @@ public final class Core {
     * Triple Exponential Moving Average: a smoothed price overlay built from
     * three successively-applied EMAs to reduce lag versus a plain EMA. Distinct
     * from EMA3, also called "triple EMA" in the literature.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tema">ta-lib.org/functions/tema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -165891,10 +165233,8 @@ public final class Core {
     * Triple Exponential Moving Average: a smoothed price overlay built from
     * three successively-applied EMAs to reduce lag versus a plain EMA. Distinct
     * from EMA3, also called "triple EMA" in the literature.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * EMA1=EMA(t,period); EMA2=EMA(EMA1,period); EMA3=EMA(EMA2,period); TEMA = 3*EMA1 - 3*EMA2 + EMA3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tema">ta-lib.org/functions/tema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -166550,10 +165890,8 @@ public final class Core {
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>
@@ -166616,10 +165954,8 @@ public final class Core {
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>
@@ -167483,10 +166819,8 @@ public final class Core {
     * prices toward the middle of the window most heavily. Equivalent to an SMA
     * of an SMA, computed here via an incremental triangular-weighted running
     * numerator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trima">ta-lib.org/functions/trima</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Follows the generally accepted (Metastock) definition rather than the TradeStation variant.</li>
@@ -167548,10 +166882,8 @@ public final class Core {
     * prices toward the middle of the window most heavily. Equivalent to an SMA
     * of an SMA, computed here via an incremental triangular-weighted running
     * numerator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trima">ta-lib.org/functions/trima</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Follows the generally accepted (Metastock) definition rather than the TradeStation variant.</li>
@@ -168707,10 +168039,8 @@ public final class Core {
     * oscillator that filters out price moves shorter than the chosen period.
     * Oscillates around zero; sign, zero-crossings and slope signal momentum
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
@@ -168773,10 +168103,8 @@ public final class Core {
     * oscillator that filters out price moves shorter than the chosen period.
     * Oscillates around zero; sign, zero-crossings and slope signal momentum
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * E1 = EMA(inReal, n); E2 = EMA(E1, n); E3 = EMA(E2, n); TRIX = ROC_1(E3) = 100 * (E3_today/E3_yesterday - 1)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trix">ta-lib.org/functions/trix</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The final rate-of-change step yields 0 when the previous smoothed value is exactly zero, rather than being undefined.</li>
@@ -169571,10 +168899,8 @@ public final class Core {
     * Time Series Forecast: fits a least-squares linear regression line over the
     * last N bars and projects it one x-step beyond LINEARREG. Same regression
     * as LINEARREG but evaluated at x=period instead of x=period-1.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSqr), b = (SumY - m*SumX)/N; output = b + m*N. With SumX=N(N-1)/2, SumXSqr=N(N-1)(2N-1)/6.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tsf">ta-lib.org/functions/tsf</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -169631,10 +168957,8 @@ public final class Core {
     * Time Series Forecast: fits a least-squares linear regression line over the
     * last N bars and projects it one x-step beyond LINEARREG. Same regression
     * as LINEARREG but evaluated at x=period instead of x=period-1.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Fit y=b+m*x over window (x=0..N-1): m = (N*SumXY - SumX*SumY)/(SumX^2 - N*SumXSqr), b = (SumY - m*SumX)/N; output = b + m*N. With SumX=N(N-1)/2, SumXSqr=N(N-1)(2N-1)/6.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tsf">ta-lib.org/functions/tsf</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -170722,12 +170046,8 @@ public final class Core {
     * conditions, and divergence against price is the classic Blau reading. A
     * signal line is not part of the output; apply {@code EMA} to
     * {@code outReal} to obtain one, since no source agrees on its period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = close - previous close
-    * TSI = 100 * EMA(EMA(m, firstPeriod), secondPeriod) / EMA(EMA(|m|, firstPeriod), secondPeriod)
-    * The first period is applied first, to the raw change; the second smooths its result. The order matters: the two averages do not commute, because each is seeded from a simple average of its own inputs.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -170806,12 +170126,8 @@ public final class Core {
     * conditions, and divergence against price is the classic Blau reading. A
     * signal line is not part of the output; apply {@code EMA} to
     * {@code outReal} to obtain one, since no source agrees on its period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = close - previous close
-    * TSI = 100 * EMA(EMA(m, firstPeriod), secondPeriod) / EMA(EMA(|m|, firstPeriod), secondPeriod)
-    * The first period is applied first, to the raw change; the second smooths its result. The order matters: the two averages do not commute, because each is seeded from a simple average of its own inputs.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tsi">ta-lib.org/functions/tsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>An input whose every change is exactly zero leaves both the numerator and the denominator at zero. Rather than divide, TSI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</li>
@@ -171425,10 +170741,8 @@ public final class Core {
    /**
     * Typical Price: the average of the high, low, and close of each bar. A
     * single representative price per period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * out[i] = (High[i] + Low[i] + Close[i]) / 3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/typprice">ta-lib.org/functions/typprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -171486,10 +170800,8 @@ public final class Core {
    /**
     * Typical Price: the average of the high, low, and close of each bar. A
     * single representative price per period.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * out[i] = (High[i] + Low[i] + Close[i]) / 3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/typprice">ta-lib.org/functions/typprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -172391,13 +171703,8 @@ public final class Core {
     * weighted average. Blends short-, medium-, and long-term momentum to damp
     * single-period noise. Ranges 0-100; conventionally &gt;70 overbought,
     * &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * trueLow = min(low, prevClose);  BP = close - trueLow
-    * TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    * avg_n = (sum BP over n bars) / (sum TR over n bars)
-    * ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>
@@ -172471,13 +171778,8 @@ public final class Core {
     * weighted average. Blends short-, medium-, and long-term momentum to damp
     * single-period noise. Ranges 0-100; conventionally &gt;70 overbought,
     * &lt;30 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * trueLow = min(low, prevClose);  BP = close - trueLow
-    * TR = max(high-low, |prevClose-high|, |prevClose-low|)
-    * avg_n = (sum BP over n bars) / (sum TR over n bars)
-    * ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</li>
@@ -173688,10 +172990,8 @@ public final class Core {
     * Rolling population variance of a real series over a given period. Measures
     * dispersion of values around their mean. Higher values indicate greater
     * dispersion; 0 means constant input.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</li>
@@ -173753,10 +173053,8 @@ public final class Core {
     * Rolling population variance of a real series over a given period. Measures
     * dispersion of values around their mean. Higher values indicate greater
     * dispersion; 0 means constant input.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</li>
@@ -174712,11 +174010,8 @@ public final class Core {
     * direction, but it uses no smoothing and carries no recursion. A common use
     * is regime selection: run trend-following logic while VHF is high,
     * oscillator logic while it is low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-    * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</li>
@@ -174783,11 +174078,8 @@ public final class Core {
     * direction, but it uses no smoothing and carries no recursion. A common use
     * is regime selection: run trend-following logic while VHF is high,
     * oscillator logic while it is low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-    * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</li>
@@ -175641,11 +174933,8 @@ public final class Core {
     * each summed over the period and normalized by the summed true range. A +VI
     * line crossing above −VI is the bullish signal the authors describe; the
     * two lines are conventionally plotted together.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
@@ -175721,11 +175010,8 @@ public final class Core {
     * each summed over the period and normalized by the summed true range. A +VI
     * line crossing above −VI is the bullish signal the authors describe; the
     * two lines are conventionally plotted together.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
@@ -176753,10 +176039,8 @@ public final class Core {
     * further it runs from its anchor. It stays within the range of the typical
     * prices it averages, but over a long trending range it can sit far from the
     * current price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwap">ta-lib.org/functions/vwap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
@@ -176834,10 +176118,8 @@ public final class Core {
     * further it runs from its anchor. It stays within the range of the typical
     * prices it averages, but over a long trending range it can sit far from the
     * current price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwap">ta-lib.org/functions/vwap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
@@ -177699,11 +176981,8 @@ public final class Core {
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
     * definition agrees, so there is no competing variant.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    * Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwma">ta-lib.org/functions/vwma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
@@ -177775,11 +177054,8 @@ public final class Core {
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
     * definition agrees, so there is no competing variant.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    * Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwma">ta-lib.org/functions/vwma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
@@ -178475,17 +177751,8 @@ public final class Core {
     * the same name. What remains once the multiplier is dropped is a signed
     * close-to-close move measured on the true range, so it is grouped as a
     * momentum indicator, not a volume one.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t:
-    * TRH_t = max(close_{t-1}, high_t)
-    * TRL_t = min(close_{t-1}, low_t)
-    * if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    * if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    * otherwise                     AD_t = 0
-    * WAD_t = WAD_{t-1} + AD_t
-    * The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -178558,17 +177825,8 @@ public final class Core {
     * the same name. What remains once the multiplier is dropped is a signed
     * close-to-close move measured on the true range, so it is grouped as a
     * momentum indicator, not a volume one.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t:
-    * TRH_t = max(close_{t-1}, high_t)
-    * TRL_t = min(close_{t-1}, low_t)
-    * if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    * if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    * otherwise                     AD_t = 0
-    * WAD_t = WAD_{t-1} + AD_t
-    * The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -179075,10 +178333,8 @@ public final class Core {
    /**
     * Weighted Close Price: a per-bar price average giving the close double
     * weight relative to high and low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wclprice">ta-lib.org/functions/wclprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -179136,10 +178392,8 @@ public final class Core {
    /**
     * Weighted Close Price: a per-bar price average giving the close double
     * weight relative to high and low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wclprice">ta-lib.org/functions/wclprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -179898,10 +179152,8 @@ public final class Core {
     * 0]. Measures where the current close sits relative to the high-low range
     * of the last N bars. Near 0 = close at period high (overbought); near -100
     * = close at period low (oversold).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -179964,10 +179216,8 @@ public final class Core {
     * 0]. Measures where the current close sits relative to the high-low range
     * of the last N bars. Near 0 = close at period high (overbought); near -100
     * = close at period low (oversold).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.
@@ -180903,10 +180153,8 @@ public final class Core {
     * Linearly weighted moving average: each of the last N prices is weighted by
     * its position, oldest getting weight 1 and newest weight N. Smooths price
     * while emphasizing recent bars.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wma">ta-lib.org/functions/wma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -180968,10 +180216,8 @@ public final class Core {
     * Linearly weighted moving average: each of the last N prices is weighted by
     * its position, oldest getting weight 1 and newest weight N. Smooths price
     * while emphasizing recent bars.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wma">ta-lib.org/functions/wma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -181934,13 +181180,8 @@ public final class Core {
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * lag = Integer( (n - 1) / 2 )
-    * d = 2 * Price - Price[lag bars ago]
-    * ZLEMA(n) = EMA( d, n )
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
@@ -182020,13 +181261,8 @@ public final class Core {
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * lag = Integer( (n - 1) / 2 )
-    * d = 2 * Price - Price[lag bars ago]
-    * ZLEMA(n) = EMA( d, n )
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>

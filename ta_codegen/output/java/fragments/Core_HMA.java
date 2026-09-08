@@ -688,11 +688,8 @@
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-    * All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/hma">ta-lib.org/functions/hma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are <b>truncated</b> to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
@@ -768,11 +765,8 @@
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
-    * All three averages are the standard linearly-weighted moving average (TA-Lib's WMA). Every output is a closed-form weighted sum of the input window: there is no seeding, no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/hma">ta-lib.org/functions/hma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are <b>truncated</b> to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>

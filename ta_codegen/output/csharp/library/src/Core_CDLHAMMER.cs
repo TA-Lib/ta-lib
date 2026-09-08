@@ -321,6 +321,10 @@ public partial class Core
    /// prior candle's low. A hit flags a potential bullish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhammer">ta-lib.org/functions/cdlhammer</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
    /// <item><description>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. (<see href="https://thepatternsite.com/Hammer.html">thepatternsite.com</see>)</description></item>
@@ -387,6 +391,10 @@ public partial class Core
    /// prior candle's low. A hit flags a potential bullish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhammer">ta-lib.org/functions/cdlhammer</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
    /// <item><description>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. (<see href="https://thepatternsite.com/Hammer.html">thepatternsite.com</see>)</description></item>

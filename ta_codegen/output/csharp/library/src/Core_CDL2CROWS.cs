@@ -236,6 +236,10 @@ public partial class Core
    /// verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl2crows">ta-lib.org/functions/cdl2crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<see href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</see>)</description></item>
@@ -304,6 +308,10 @@ public partial class Core
    /// verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl2crows">ta-lib.org/functions/cdl2crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<see href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</see>)</description></item>

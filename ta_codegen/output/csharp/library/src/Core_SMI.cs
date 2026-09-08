@@ -672,13 +672,10 @@ public partial class Core
    /// signal line are the usual trade trigger.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-   /// num = close - 0.5 * (HH + LL);  den = HH - LL
-   /// SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-   /// Signal = EMA(SMI, signalPeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</description></item>
@@ -766,13 +763,10 @@ public partial class Core
    /// signal line are the usual trade trigger.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HH = MAX(high, timePeriod);  LL = MIN(low, timePeriod)
-   /// num = close - 0.5 * (HH + LL);  den = HH - LL
-   /// SMI = 100 * EMA(EMA(num, slowPeriod), fastPeriod) / (0.5 * EMA(EMA(den, slowPeriod), fastPeriod))
-   /// Signal = EMA(SMI, signalPeriod)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/smi">ta-lib.org/functions/smi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose bars are all flat (every high equal to its low) leaves both the numerator and the denominator at zero. Rather than divide, SMI emits 0 there — the same convention as CCI and IMI. Some implementations divide unguarded and return a non-finite value.</description></item>
    /// <item><description>Each exponential average is seeded with a simple average of its own first inputs, the same seeding TA-Lib's EMA uses, so the first published values converge toward an unlimited-history result rather than reproducing it exactly. <c>TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)</c> discards more of that warm-up. Implementations seeding from a single first sample — Tulip and TradingView among them — differ over the transient and agree once it decays.</description></item>

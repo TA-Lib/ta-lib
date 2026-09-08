@@ -474,13 +474,10 @@ public partial class Core
    /// designed for (long-term buying opportunities on monthly index data).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-   /// Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-   /// The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period &gt; optInROC2Period` is accepted rather than rejected.
-   /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
@@ -549,13 +546,10 @@ public partial class Core
    /// designed for (long-term buying opportunities on monthly index data).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
-   /// Each ROC carries [`ROC`](/functions/roc)'s own zero guard — a zero price `optInROC*Period` bars back yields 0.0 for that term, never an infinity. The two ROCs are **summed**, not averaged: every published definition sums them. (Tulip's `copp` averages, so it reads at exactly half this amplitude — a clean 2.0x ratio against Tulip is Tulip's variant, not a defect.)
-   /// The formula is symmetric in the two ROC periods and the lookback keys off their max, so `optInROC1Period &gt; optInROC2Period` is accepted rather than rejected.
-   /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/coppock">ta-lib.org/functions/coppock</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>

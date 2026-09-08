@@ -429,12 +429,10 @@ public partial class Core
    /// Alligator.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// AC_t = AO_t − SMA(AO, signal)_t
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -516,12 +514,10 @@ public partial class Core
    /// Alligator.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// AC_t = AO_t − SMA(AO, signal)_t
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

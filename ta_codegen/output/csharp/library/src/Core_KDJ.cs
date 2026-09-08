@@ -284,13 +284,10 @@ public partial class Core
    /// a J line attached.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-   /// K = MA(RSV, SlowK_Period, SlowK_MAType)
-   /// D = MA(K, SlowD_Period, SlowD_MAType)
-   /// J = 3*K - 2*D
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as <c>SMA(X, N, 1)</c>, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</description></item>
    /// <item><description>How that recurrence is started is a TA-Lib house convention, not something the originating specification settles: like every other Wilder-smoothed function here, the first value is the simple average of the first N inputs, and callers who want the transient gone set the unstable period. Platforms that seed the recurrence at 50, or at the first raw value, differ for the first several dozen bars.</description></item>
@@ -389,13 +386,10 @@ public partial class Core
    /// a J line attached.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// RSV = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-   /// K = MA(RSV, SlowK_Period, SlowK_MAType)
-   /// D = MA(K, SlowD_Period, SlowD_MAType)
-   /// J = 3*K - 2*D
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kdj">ta-lib.org/functions/kdj</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The default smoothing is Wilder's moving average. The originating 通达信 (Tongdaxin) formula language writes each stage as <c>SMA(X, N, 1)</c>, a recurrence with weight 1/N on the new value, which is Wilder's smoothing under another name — not a simple average.</description></item>
    /// <item><description>How that recurrence is started is a TA-Lib house convention, not something the originating specification settles: like every other Wilder-smoothed function here, the first value is the simple average of the first N inputs, and callers who want the transient gone set the unstable period. Platforms that seed the recurrence at 50, or at the first raw value, differ for the first several dozen bars.</description></item>

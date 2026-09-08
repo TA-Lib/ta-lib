@@ -156,12 +156,10 @@ public partial class Core
    /// no window — every bar since the anchor contributes.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
-   /// Left-to-right in one double, no compensation — the same plain `+=` convention the shipped accumulators (`AD`, `OBV`) use.
-   /// **The accumulator re-seeds at the anchor.** `CUMSUM(3, 7, x)` starts its total at `x[3]`; it does not warm up from `x[0]`. This is the published contract of the indicators built on it (StockCharts: only the A/D Line's *shape* carries meaning, the first value is "simply Net Advances for one period") and the convention of every shipped path-dependent function. The `path_dependent` flag declares exactly this class.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cumsum">ta-lib.org/functions/cumsum</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Lookback 0: <c>outBegIdx = startIdx</c>, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.</description></item>
    /// <item><description>The sum is uncompensated. A Kahan or Neumaier variant would diverge from <c>AD</c>'s own convention, which this follows.</description></item>
@@ -225,12 +223,10 @@ public partial class Core
    /// no window — every bar since the anchor contributes.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
-   /// Left-to-right in one double, no compensation — the same plain `+=` convention the shipped accumulators (`AD`, `OBV`) use.
-   /// **The accumulator re-seeds at the anchor.** `CUMSUM(3, 7, x)` starts its total at `x[3]`; it does not warm up from `x[0]`. This is the published contract of the indicators built on it (StockCharts: only the A/D Line's *shape* carries meaning, the first value is "simply Net Advances for one period") and the convention of every shipped path-dependent function. The `path_dependent` flag declares exactly this class.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cumsum">ta-lib.org/functions/cumsum</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Lookback 0: <c>outBegIdx = startIdx</c>, one output per input bar. Streaming state is a single accumulator, so a peek commits nothing by construction.</description></item>
    /// <item><description>The sum is uncompensated. A Kahan or Neumaier variant would diverge from <c>AD</c>'s own convention, which this follows.</description></item>

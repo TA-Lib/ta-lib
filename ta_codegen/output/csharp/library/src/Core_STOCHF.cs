@@ -481,11 +481,10 @@ public partial class Core
    /// overbought, &lt;20 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-   /// FastD = MA(FastK, FastD_Period, FastD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</description></item>
    /// </list>
@@ -564,11 +563,10 @@ public partial class Core
    /// overbought, &lt;20 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-   /// FastD = MA(FastK, FastD_Period, FastD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</description></item>
    /// </list>

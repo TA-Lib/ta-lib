@@ -208,6 +208,8 @@
     * its midpoint. It is a bearish continuation signal. A hit is bearish: the
     * failed white push back into the black body signals continuation of the
     * down move.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlthrusting">ta-lib.org/functions/cdlthrusting</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
@@ -278,6 +280,8 @@
     * its midpoint. It is a bearish continuation signal. A hit is bearish: the
     * failed white push back into the black body signals continuation of the
     * down move.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlthrusting">ta-lib.org/functions/cdlthrusting</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>

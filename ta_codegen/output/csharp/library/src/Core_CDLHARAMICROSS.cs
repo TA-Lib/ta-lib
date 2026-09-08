@@ -283,6 +283,10 @@ public partial class Core
    /// a white first candle.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlharamicross">ta-lib.org/functions/cdlharamicross</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. (<see href="https://thepatternsite.com/HaramiCrossBear.html">thepatternsite.com</see>)</description></item>
@@ -352,6 +356,10 @@ public partial class Core
    /// a white first candle.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlharamicross">ta-lib.org/functions/cdlharamicross</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. (<see href="https://thepatternsite.com/HaramiCrossBear.html">thepatternsite.com</see>)</description></item>

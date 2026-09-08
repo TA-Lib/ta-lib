@@ -286,6 +286,10 @@ public partial class Core
    /// direction is the opposite of the first candle's color.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlharami">ta-lib.org/functions/cdlharami</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). (<see href="https://thepatternsite.com/HaramiBear.html">thepatternsite.com</see>)</description></item>
@@ -354,6 +358,10 @@ public partial class Core
    /// direction is the opposite of the first candle's color.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlharami">ta-lib.org/functions/cdlharami</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</description></item>
    /// <item><description>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). (<see href="https://thepatternsite.com/HaramiBear.html">thepatternsite.com</see>)</description></item>

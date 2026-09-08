@@ -227,6 +227,8 @@
     * real body is contained within the first candle's real body (the doji
     * variant of the Harami). Bullish after a black first candle, bearish after
     * a white first candle.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharamicross">ta-lib.org/functions/cdlharamicross</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
@@ -295,6 +297,8 @@
     * real body is contained within the first candle's real body (the doji
     * variant of the Harami). Bullish after a black first candle, bearish after
     * a white first candle.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlharamicross">ta-lib.org/functions/cdlharamicross</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>

@@ -211,6 +211,8 @@
     * to the first that closes past the first candle's open. Signals a bullish
     * reversal (three inside up, significant in a downtrend) or a bearish
     * reversal (three inside down, significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3inside">ta-lib.org/functions/cdl3inside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
@@ -281,6 +283,8 @@
     * to the first that closes past the first candle's open. Signals a bullish
     * reversal (three inside up, significant in a downtrend) or a bearish
     * reversal (three inside down, significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3inside">ta-lib.org/functions/cdl3inside</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>

@@ -311,6 +311,10 @@ public partial class Core
    /// bullish continuation of the existing uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</description></item>
    /// <item><description>The continuation reading assumes a prior uptrend, which is not verified.</description></item>
@@ -383,6 +387,10 @@ public partial class Core
    /// bullish continuation of the existing uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlmathold">ta-lib.org/functions/cdlmathold</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</description></item>
    /// <item><description>The continuation reading assumes a prior uptrend, which is not verified.</description></item>

@@ -179,17 +179,8 @@
     * the same name. What remains once the multiplier is dropped is a signed
     * close-to-close move measured on the true range, so it is grouped as a
     * momentum indicator, not a volume one.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t:
-    * TRH_t = max(close_{t-1}, high_t)
-    * TRL_t = min(close_{t-1}, low_t)
-    * if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    * if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    * otherwise                     AD_t = 0
-    * WAD_t = WAD_{t-1} + AD_t
-    * The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -262,17 +253,8 @@
     * the same name. What remains once the multiplier is dropped is a signed
     * close-to-close move measured on the true range, so it is grouped as a
     * momentum indicator, not a volume one.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * For each bar t:
-    * TRH_t = max(close_{t-1}, high_t)
-    * TRL_t = min(close_{t-1}, low_t)
-    * if close_t > close_{t-1} then AD_t = close_t - TRL_t
-    * if close_t < close_{t-1} then AD_t = close_t - TRH_t
-    * otherwise                     AD_t = 0
-    * WAD_t = WAD_{t-1} + AD_t
-    * The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

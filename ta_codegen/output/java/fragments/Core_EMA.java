@@ -193,10 +193,8 @@
     * recursive smoothing factor. A core building block seeding or composing
     * many other indicators. Reacts faster than SMA; price above/below EMA
     * suggests up/down trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ema">ta-lib.org/functions/ema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -261,10 +259,8 @@
     * recursive smoothing factor. A core building block seeding or composing
     * many other indicators. Reacts faster than SMA; price above/below EMA
     * suggests up/down trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2 / (period + 1); EMA_t = (price_t - EMA_{t-1}) * k + EMA_{t-1}. Seed: EMA = SMA of first `period` bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ema">ta-lib.org/functions/ema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>

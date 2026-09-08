@@ -247,11 +247,10 @@ public partial class Core
    /// oscillator logic while it is low.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-   /// The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num &lt;= den` always, so the result never leaves [0,1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</description></item>
    /// <item><description>Adam White later described an 18-bar VHF smoothed by a 6-bar moving average. That variant is not implemented here; apply a moving average to <c>outReal</c> to obtain it.</description></item>
@@ -317,11 +316,10 @@ public partial class Core
    /// oscillator logic while it is low.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-   /// The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num &lt;= den` always, so the result never leaves [0,1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</description></item>
    /// <item><description>Adam White later described an 18-bar VHF smoothed by a 6-bar moving average. That variant is not implemented here; apply a moving average to <c>outReal</c> to obtain it.</description></item>

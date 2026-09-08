@@ -252,13 +252,8 @@
     * is typical of the panic near a market bottom, while a range that narrows
     * steadily over a long span is typical of a market topping out. It measures
     * range, not direction, so it says nothing about which way price is heading.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * E = EMA( HL, optInTimePeriod )
-    * CVI = 100 * ( E - E[optInROCPeriod bars ago] ) / E[optInROCPeriod bars ago]
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePeriod + 1), seeded with the simple average of the first optInTimePeriod spreads.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cvi">ta-lib.org/functions/cvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks {@code chaikvolat} signature. Implementations that expose a single length are the special case where both are set to the same value.</li>
@@ -339,13 +334,8 @@
     * is typical of the panic near a market bottom, while a range that narrows
     * steadily over a long span is typical of a market topping out. It measures
     * range, not direction, so it says nothing about which way price is heading.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HL = high - low
-    * E = EMA( HL, optInTimePeriod )
-    * CVI = 100 * ( E - E[optInROCPeriod bars ago] ) / E[optInROCPeriod bars ago]
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (optInTimePeriod + 1), seeded with the simple average of the first optInTimePeriod spreads.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cvi">ta-lib.org/functions/cvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The averaging length and the rate-of-change length are independent, as in Achelis's relay of the author ("an exponential moving average of the difference between the daily high and low prices ... then the percent that this moving average has changed over a specified time period") and in the MathWorks {@code chaikvolat} signature. Implementations that expose a single length are the special case where both are set to the same value.</li>

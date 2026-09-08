@@ -346,13 +346,10 @@ public partial class Core
    /// the start of the series without bound.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// t = high[i] - low[i]
-   /// mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-   /// CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-   /// There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cmf">ta-lib.org/functions/cmf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The output is the raw ratio in <c>[-1, +1]</c>, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</description></item>
    /// <item><description>Each bar's close is expected to lie within its own <c>[low, high]</c>, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as <see href="https://ta-lib.org/functions/ad"><c>AD</c></see> does.</description></item>
@@ -439,13 +436,10 @@ public partial class Core
    /// the start of the series without bound.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// t = high[i] - low[i]
-   /// mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-   /// CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-   /// There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cmf">ta-lib.org/functions/cmf</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The output is the raw ratio in <c>[-1, +1]</c>, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</description></item>
    /// <item><description>Each bar's close is expected to lie within its own <c>[low, high]</c>, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as <see href="https://ta-lib.org/functions/ad"><c>AD</c></see> does.</description></item>

@@ -310,6 +310,8 @@
     * higher closes, each opening within/near the prior body and each with a
     * very short upper shadow. A hit is a bullish reversal signal, most
     * meaningful in a downtrend, which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3whitesoldiers">ta-lib.org/functions/cdl3whitesoldiers</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
@@ -378,6 +380,8 @@
     * higher closes, each opening within/near the prior body and each with a
     * very short upper shadow. A hit is a bullish reversal signal, most
     * meaningful in a downtrend, which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3whitesoldiers">ta-lib.org/functions/cdl3whitesoldiers</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>

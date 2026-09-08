@@ -256,10 +256,10 @@ public partial class Core
    /// read from the trend it appears in.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Single candle. realbody &lt;= BodyDoji average (doji body) AND upper shadow &lt; ShadowVeryShort average (no/very short upper shadow) AND lower shadow &gt; ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldragonflydoji">ta-lib.org/functions/cdldragonflydoji</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
    /// <item><description>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. (<see href="https://thepatternsite.com/Dragonfly.html">thepatternsite.com</see>)</description></item>
@@ -330,10 +330,10 @@ public partial class Core
    /// read from the trend it appears in.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Single candle. realbody &lt;= BodyDoji average (doji body) AND upper shadow &lt; ShadowVeryShort average (no/very short upper shadow) AND lower shadow &gt; ShadowVeryShort average (lower shadow present, not very short). No color, gap, or trend test.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldragonflydoji">ta-lib.org/functions/cdldragonflydoji</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</description></item>
    /// <item><description>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. (<see href="https://thepatternsite.com/Dragonfly.html">thepatternsite.com</see>)</description></item>

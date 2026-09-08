@@ -255,6 +255,10 @@ public partial class Core
    /// as significant only inside a trend matching those three candles.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the surrounding trend the pattern classically assumes for significance.</description></item>
    /// <item><description>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</description></item>
@@ -326,6 +330,10 @@ public partial class Core
    /// as significant only inside a trend matching those three candles.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the surrounding trend the pattern classically assumes for significance.</description></item>
    /// <item><description>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</description></item>

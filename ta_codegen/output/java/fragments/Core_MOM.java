@@ -158,10 +158,8 @@
     * Momentum: current price minus the price optInTimePeriod bars ago. The
     * absolute (unnormalized) rate of change. Positive = price rose over the
     * period, negative = fell; centered at zero.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mom">ta-lib.org/functions/mom</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -218,10 +216,8 @@
     * Momentum: current price minus the price optInTimePeriod bars ago. The
     * absolute (unnormalized) rate of change. Positive = price rose over the
     * period, negative = fell; centered at zero.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MOM[i] = inReal[i] - inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mom">ta-lib.org/functions/mom</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

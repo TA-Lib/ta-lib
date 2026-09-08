@@ -213,10 +213,10 @@ public partial class Core
    /// volatility).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TR = max( high - low, |prevClose - high|, |prevClose - low| )
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</description></item>
    /// </list>
@@ -280,10 +280,10 @@ public partial class Core
    /// volatility).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TR = max( high - low, |prevClose - high|, |prevClose - low| )
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</description></item>
    /// </list>

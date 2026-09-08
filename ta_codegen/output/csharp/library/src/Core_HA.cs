@@ -335,14 +335,10 @@ public partial class Core
    /// halves on each bar that follows.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-   /// HA_open[0]  = ( O[0] + C[0] ) / 2
-   /// HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-   /// HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-   /// HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</description></item>
    /// <item><description>Both divisors are exact powers of two, so implementations that scale by <c>0.5</c> and <c>0.25</c> produce the same doubles as those that divide by 2 and 4.</description></item>
@@ -429,14 +425,10 @@ public partial class Core
    /// halves on each bar that follows.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-   /// HA_open[0]  = ( O[0] + C[0] ) / 2
-   /// HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-   /// HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-   /// HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</description></item>
    /// <item><description>Both divisors are exact powers of two, so implementations that scale by <c>0.5</c> and <c>0.25</c> produce the same doubles as those that divide by 2 and 4.</description></item>

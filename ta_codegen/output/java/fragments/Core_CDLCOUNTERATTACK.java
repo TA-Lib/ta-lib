@@ -213,6 +213,8 @@
     * closing prices are (nearly) equal. Emits a bullish signal when the second
     * candle is white and a bearish signal when it is black (a reversal signal,
     * though its trend context is not checked).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlcounterattack">ta-lib.org/functions/cdlcounterattack</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
@@ -281,6 +283,8 @@
     * closing prices are (nearly) equal. Emits a bullish signal when the second
     * candle is white and a bearish signal when it is black (a reversal signal,
     * though its trend context is not checked).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlcounterattack">ta-lib.org/functions/cdlcounterattack</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>

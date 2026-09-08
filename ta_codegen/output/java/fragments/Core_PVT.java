@@ -109,11 +109,8 @@
     * the shape of the curve carries information. A rising PVT while price is
     * flat says volume is accumulating on the up moves; a falling PVT while
     * price rises is the classic bearish divergence.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-    * The series starts at zero on the first bar of the requested range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>
@@ -183,11 +180,8 @@
     * the shape of the curve carries information. A rising PVT while price is
     * flat says volume is accumulating on the up moves; a falling PVT while
     * price rises is the classic bearish divergence.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PVT[i] = PVT[i-1] + inVolume[i] * (inClose[i] - inClose[i-1]) / inClose[i-1]
-    * The series starts at zero on the first bar of the requested range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/pvt">ta-lib.org/functions/pvt</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The absolute level is arbitrary and depends on where the accumulation started, so two ranges over the same data give curves of the same shape at different offsets.</li>

@@ -435,13 +435,10 @@ public partial class Core
    /// System used to build +DI/DX/ADX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// +DM1 = (high - prevHigh) if (high-prevHigh) &gt; 0 and &gt; (prevLow-low), else 0.
-   /// period&lt;=1: output = +DM1 per bar.
-   /// period&gt;1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
-   /// +DM = prevPlusDM - prevPlusDM/period + +DM1(today)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/plus_dm">ta-lib.org/functions/plus_dm</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -501,13 +498,10 @@ public partial class Core
    /// System used to build +DI/DX/ADX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// +DM1 = (high - prevHigh) if (high-prevHigh) &gt; 0 and &gt; (prevLow-low), else 0.
-   /// period&lt;=1: output = +DM1 per bar.
-   /// period&gt;1: seed = sum of first (period-1) +DM1; then Wilder smoothing:
-   /// +DM = prevPlusDM - prevPlusDM/period + +DM1(today)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/plus_dm">ta-lib.org/functions/plus_dm</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in
