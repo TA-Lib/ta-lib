@@ -3110,6 +3110,22 @@ fn emit_func_h_block(o: &mut String, func: &FuncDef, lookup: &dyn crate::streami
     let _ = writeln!(o, " * Output = {}", output_desc.join(", "));
     o.push_str(" * \n");
 
+    let declinable: Vec<&str> = func
+        .outputs
+        .iter()
+        .filter(|out| out.is_nullable())
+        .map(|out| out.name.as_str())
+        .collect();
+    if !declinable.is_empty() {
+        let _ = writeln!(
+            o,
+            " * {} may be NULL: still computed where the algorithm needs it, but\n \
+             * not written out.",
+            declinable.join(" and ")
+        );
+        o.push_str(" * \n");
+    }
+
     // Optional parameters section
     if !func.optional_inputs.is_empty() {
         o.push_str(" * Optional Parameters\n");

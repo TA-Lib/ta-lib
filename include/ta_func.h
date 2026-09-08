@@ -11148,6 +11148,9 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Clone( const TA_MACDFIX_Stream *stream, TA_MACD
  * Input  = double
  * Output = double, double
  * 
+ * outFAMA may be NULL: still computed where the algorithm needs it, but
+ * not written out.
+ * 
  * Optional Parameters
  * -------------------
  * optInFastLimit:(From 0.01 to 0.99)
@@ -15723,8 +15726,8 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
                                                 double        optInMultiplier, /* From 0 to 30000000000000000000000000000000000000 */
                                                 int          *outBegIdx,
                                                 int          *outNBElement,
-                                                double        outReal[],
-                                                int           outInteger[] );
+                                                double        outSupertrend[],
+                                                int           outTrend[] );
 
 TA_LIB_API TA_RetCode TA_S_SUPERTREND( int    startIdx,
                                        int    endIdx,
@@ -15735,8 +15738,8 @@ TA_LIB_API TA_RetCode TA_S_SUPERTREND( int    startIdx,
                                                   double        optInMultiplier, /* From 0 to 30000000000000000000000000000000000000 */
                                                   int          *outBegIdx,
                                                   int          *outNBElement,
-                                                  double        outReal[],
-                                                  int           outInteger[] );
+                                                  double        outSupertrend[],
+                                                  int           outTrend[] );
 
 TA_LIB_API int TA_SUPERTREND_Lookback( int           optInTimePeriod, /* From 2 to 100000 */
                                                 double        optInMultiplier );  /* From 0 to 30000000000000000000000000000000000000 */
@@ -15748,11 +15751,11 @@ TA_LIB_API int TA_SUPERTREND_Lookback( int           optInTimePeriod, /* From 2 
  */
 typedef struct TA_SUPERTREND_Stream TA_SUPERTREND_Stream;
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_Open( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, double *outReal, int *outInteger );
+TA_LIB_API TA_RetCode TA_SUPERTREND_Open( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, double *outSupertrend, int *outTrend );
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outReal, int *outInteger );
+TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend );
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outReal, int *outInteger );
+TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend );
 
 TA_LIB_API TA_RetCode TA_SUPERTREND_Close( TA_SUPERTREND_Stream *stream );
 
@@ -15761,14 +15764,14 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Close( TA_SUPERTREND_Stream *stream );
  * with the whole warm-up history — bit-identical to TA_SUPERTREND( 0, historyLen-1,
  * ... ).
  */
-TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outReal[], int outInteger[] );
+TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[] );
 
 /*
  * Value: the value(s) at the last bar the stream counted — the bar
  * TA_SUPERTREND_OutRange ends on — without recomputing. Seeded by Open, refreshed by
  * every accepted Update, left alone by Peek.
  */
-TA_LIB_API TA_RetCode TA_SUPERTREND_Value( const TA_SUPERTREND_Stream *stream, double *outReal, int *outInteger );
+TA_LIB_API TA_RetCode TA_SUPERTREND_Value( const TA_SUPERTREND_Stream *stream, double *outSupertrend, int *outTrend );
 
 /*
  * OutRange: the bars this stream has an output for, in the input series'
