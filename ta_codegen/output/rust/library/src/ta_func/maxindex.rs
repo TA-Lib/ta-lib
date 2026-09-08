@@ -611,7 +611,9 @@ impl MaxindexStream {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] if any bar value is not finite, on the same test
-    /// `update` applies, and a rejected peek changes nothing at all.
+    /// `update` applies, and a rejected peek changes nothing at all. Not
+    /// [`RetCode::OutOfRangeEndIndex`]: `peek` counts no bar, so it keeps
+    /// answering past the [`Core::MAX_INDEX`] ceiling `update` stops at.
     #[doc(alias = "TA_MAXINDEX_Peek")]
     pub fn peek(&self, inReal: f64) -> Result<i32, RetCode> {
         if !inReal.is_finite() {

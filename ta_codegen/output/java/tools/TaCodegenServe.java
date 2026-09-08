@@ -831,6 +831,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -1851,6 +1853,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, AccbandsOut out ) {
              requireArgument("ACCBANDS peek", "out", out);
@@ -2564,6 +2568,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -3083,6 +3089,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -3596,6 +3604,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -4320,6 +4330,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -5104,6 +5116,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -6270,6 +6284,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -7321,6 +7337,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -8095,6 +8113,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -8920,6 +8940,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -9674,6 +9696,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, AroonOut out ) {
              requireArgument("AROON peek", "out", out);
@@ -10603,6 +10627,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -11311,6 +11337,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -11744,6 +11772,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -12468,6 +12498,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -13191,6 +13223,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -13731,6 +13765,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -14805,6 +14841,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, BbandsOut out ) {
              requireArgument("BBANDS peek", "out", out);
@@ -16038,6 +16076,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -17277,6 +17317,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -17997,6 +18039,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -18814,6 +18858,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -19587,6 +19633,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -20416,6 +20464,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -21245,6 +21295,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -21979,6 +22031,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -22833,6 +22887,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -23923,6 +23979,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -24975,6 +25033,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -26077,6 +26137,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -27091,6 +27153,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -27885,6 +27949,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -28709,6 +28775,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -29495,6 +29563,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -30318,6 +30388,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -31115,6 +31187,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -31819,6 +31893,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -32572,6 +32648,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -33380,6 +33458,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -34087,6 +34167,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -34915,6 +34997,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -35842,6 +35926,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -36693,6 +36779,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -37517,6 +37605,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -38386,6 +38476,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -39368,6 +39460,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -40285,6 +40379,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -41151,6 +41247,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -41984,6 +42082,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -42771,6 +42871,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -43655,6 +43757,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -44543,6 +44647,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -45392,6 +45498,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -46255,6 +46363,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -47097,6 +47207,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -47958,6 +48070,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -48801,6 +48915,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -49611,6 +49727,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -50395,6 +50513,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -51149,6 +51269,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -51914,6 +52036,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -52650,6 +52774,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -53490,6 +53616,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -54466,6 +54594,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -55401,6 +55531,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -56245,6 +56377,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -57018,6 +57152,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -57824,6 +57960,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -58730,6 +58868,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -59664,6 +59804,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -60562,6 +60704,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -61394,6 +61538,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -62108,6 +62254,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -62975,6 +63123,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -63876,6 +64026,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -64679,6 +64831,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -65480,6 +65634,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -66289,6 +66445,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -67074,6 +67232,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -67877,6 +68037,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -68717,6 +68879,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -69462,6 +69626,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inOpen, double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -69996,6 +70162,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -70728,6 +70896,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -71620,6 +71790,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -72529,6 +72701,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -73634,6 +73808,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -74885,6 +75061,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -75907,6 +76085,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -76339,6 +76519,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -76818,6 +77000,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -77526,6 +77710,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -78318,6 +78504,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -78913,6 +79101,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -79623,6 +79813,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, DonchianOut out ) {
              requireArgument("DONCHIAN peek", "out", out);
@@ -80484,6 +80676,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -81572,6 +81766,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -82654,6 +82850,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -83441,6 +83639,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -84226,6 +84426,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -85124,6 +85326,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, EriOut out ) {
              requireArgument("ERI peek", "out", out);
@@ -85767,6 +85971,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -86197,6 +86403,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -86891,6 +87099,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -87804,6 +88014,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, FractalOut out ) {
              requireArgument("FRACTAL peek", "out", out);
@@ -88748,6 +88960,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
              requireArgument("HA peek", "out", out);
@@ -90131,6 +90345,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -92151,6 +92367,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -94106,6 +94324,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -96135,6 +96355,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, HtPhasorOut out ) {
              requireArgument("HT_PHASOR peek", "out", out);
@@ -98091,6 +98313,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, HtSineOut out ) {
              requireArgument("HT_SINE peek", "out", out);
@@ -100211,6 +100435,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -102456,6 +102682,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -104105,6 +104333,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inOpen, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
@@ -105085,6 +105315,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -106169,6 +106401,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, KcOut out ) {
              requireArgument("KC peek", "out", out);
@@ -107037,6 +107271,8 @@ class Core {
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period. It does allocate a small bounded amount
            * per call — a size fixed by the indicator, never by the period.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, KdjOut out ) {
              requireArgument("KDJ peek", "out", out);
@@ -107899,6 +108135,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -109037,6 +109275,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -110167,6 +110407,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -111293,6 +111535,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -112120,6 +112364,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -112558,6 +112804,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -113394,6 +113642,8 @@ class Core {
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period. It does allocate a small bounded amount
            * per call — a size fixed by the indicator, never by the period.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -114752,6 +115002,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, MacdOut out ) {
              requireArgument("MACD peek", "out", out);
@@ -115852,6 +116104,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, MacdextOut out ) {
              requireArgument("MACDEXT peek", "out", out);
@@ -116812,6 +117066,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, MacdfixOut out ) {
              requireArgument("MACDFIX peek", "out", out);
@@ -118331,6 +118587,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, MamaOut out ) {
              requireArgument("MAMA peek", "out", out);
@@ -119640,6 +119898,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
@@ -120503,6 +120763,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -121636,6 +121898,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal, double inPeriods ) {
              if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
@@ -122439,6 +122703,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -123168,6 +123434,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -123762,6 +124030,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -124556,6 +124826,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -125582,6 +125854,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -126585,6 +126859,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -127499,6 +127775,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -128226,6 +128504,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public int peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -129146,6 +129426,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, MinmaxOut out ) {
              requireArgument("MINMAX peek", "out", out);
@@ -130046,6 +130328,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, MinmaxindexOut out ) {
              requireArgument("MINMAXINDEX peek", "out", out);
@@ -131266,6 +131550,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -132649,6 +132935,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -133564,6 +133852,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -134094,6 +134384,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -134897,6 +135189,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -135690,6 +135984,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -136267,6 +136563,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal, double inVolume ) {
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
@@ -137027,6 +137325,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -137780,6 +138080,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -138853,6 +139155,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -140235,6 +140539,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -141240,6 +141546,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -141873,6 +142181,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -142604,6 +142914,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inVolume ) {
              if( !Double.isFinite(inVolume) )
@@ -143214,6 +143526,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inClose, double inVolume ) {
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -143841,6 +144155,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inOpen, double inClose ) {
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
@@ -144576,6 +144892,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -145198,6 +145516,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -145844,6 +146164,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -146493,6 +146815,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -147144,6 +147468,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -147982,6 +148308,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -149202,6 +149530,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -150188,6 +150518,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inVolume ) {
              if( !Double.isFinite(inVolume) )
@@ -151147,6 +151479,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -152745,6 +153079,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
@@ -153762,6 +154098,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -154192,6 +154530,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -154747,6 +155087,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -155936,6 +156278,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, SmiOut out ) {
              requireArgument("SMI peek", "out", out);
@@ -156884,6 +157228,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -157439,6 +157785,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -158474,6 +158822,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, StochOut out ) {
              requireArgument("STOCH peek", "out", out);
@@ -159801,6 +160151,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, StochfOut out ) {
              requireArgument("STOCHF peek", "out", out);
@@ -160914,6 +161266,8 @@ class Core {
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period. It does allocate a small bounded amount
            * per call — a size fixed by the indicator, never by the period.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inReal, StochrsiOut out ) {
              requireArgument("STOCHRSI peek", "out", out);
@@ -161499,6 +161853,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal0, double inReal1 ) {
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
@@ -162037,6 +162393,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -162977,6 +163335,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, SupertrendOut out ) {
              requireArgument("SUPERTREND peek", "out", out);
@@ -164119,6 +164479,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -164759,6 +165121,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -165191,6 +165555,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -165891,6 +166257,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -166608,6 +166976,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -167561,6 +167931,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -168771,6 +169143,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -169640,6 +170014,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -170829,6 +171205,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -171478,6 +171856,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -172515,6 +172895,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -173774,6 +174156,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -174798,6 +175182,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -175768,6 +176154,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public void peek( double inHigh, double inLow, double inClose, VortexOut out ) {
              requireArgument("VORTEX peek", "out", out);
@@ -176849,6 +177237,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose, double inVolume ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
@@ -177793,6 +178183,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal, double inVolume ) {
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
@@ -178566,6 +178958,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -179131,6 +179525,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -179988,6 +180384,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inHigh, double inLow, double inClose ) {
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
@@ -181008,6 +181406,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -182049,6 +182449,8 @@ class Core {
            * run concurrently with each other. It copies nothing: the frame runs against this handle, reading its
            * buffers and storing what the step would commit into locals, so the cost
            * does not grow with the period and {@code peek} never allocates.
+           * <p>It counts no bar, so it keeps answering past the
+           * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
            */
           public double peek( double inReal ) {
              if( !Double.isFinite(inReal) )
@@ -182322,7 +182724,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "bf57d4f692fa2f95";
+    static final String SPLICED_GENCODE_DIGEST = "7d6a57109cfb0552";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

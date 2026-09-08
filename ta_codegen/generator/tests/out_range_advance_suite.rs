@@ -132,16 +132,7 @@ fn spellings(lang: &str) -> (&'static str, &'static str) {
     }
 }
 
-/// Rule U4's guard, asserted in the ONE slot §2.4 puts it in: first, with only
-/// the handle-presence check allowed in front of it — exactly as only `!stream`
-/// may precede an opener's S1/S2 pair.
-///
-/// Position, not presence. C is matched as one two-line substring because its
-/// `Peek` opens with declarations (C89) and so has no "first statement"; the
-/// other three are matched on the body's leading statements, trimmed, so the
-/// assertion cannot drift off a re-indent.
-/// Rule U4's condition, per backend — the anchor both the presence assertion
-/// and `Peek`'s absence assertion key on, so the two cannot drift apart.
+/// Rule U4's condition, per backend.
 fn ceiling_needle(lang: &str) -> &'static str {
     match lang {
         "c" => "stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX",
@@ -152,6 +143,14 @@ fn ceiling_needle(lang: &str) -> &'static str {
     }
 }
 
+/// Rule U4's guard, in the ONE slot §2.4 puts it in: first, with only the
+/// handle-presence check allowed in front of it — exactly as only `!stream` may
+/// precede an opener's S1/S2 pair.
+///
+/// Position, not presence. C is matched as a substring including that check,
+/// because a composed `Update` opens with `TA_RetCode retCode;` and so has no
+/// "first statement"; the other three are matched on the body's leading
+/// statements, trimmed, so the assertion cannot drift off a re-indent.
 fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
     if lang == "c" {
         let want = concat!(
@@ -313,9 +312,8 @@ fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
 fn only_an_accepted_bar_advances_the_range() {
     let (mut updates, mut peeks, mut guards) = (0usize, 0usize, 0usize);
     let mut advancers = 0usize;
-    // Rule U4's own counter, not a share of the others: it is asserted on three
-    // entry points where they cover one or two, so a sweep that stopped reaching
-    // `advance` would still saturate theirs.
+    // Rule U4's own counter, not a share of the others, so a sweep that stopped
+    // reaching `advance` would still saturate theirs.
     let mut ceilings = 0usize;
     let mut no_bars = Vec::new();
     for name in streaming_funcs() {

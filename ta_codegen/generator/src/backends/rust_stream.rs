@@ -3001,7 +3001,9 @@ fn emit_update_and_peek(
          \x20   /// # Errors\n\
          \x20   ///\n\
          \x20   /// [`RetCode::BadParam`] if any bar value is not finite, on the same test\n\
-         \x20   /// `update` applies, and a rejected peek changes nothing at all."
+         \x20   /// `update` applies, and a rejected peek changes nothing at all. Not\n\
+         \x20   /// [`RetCode::OutOfRangeEndIndex`]: `peek` counts no bar, so it keeps\n\
+         \x20   /// answering past the [`Core::MAX_INDEX`] ceiling `update` stops at."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Peek\")]");
     let _ = writeln!(o, "    pub fn peek(&self, {sig_bars}) -> Result<{vt}, RetCode> {{");

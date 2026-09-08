@@ -686,6 +686,8 @@
        * buffers and storing what the step would commit into locals, so the cost
        * does not grow with the period. It does allocate a small bounded amount
        * per call — a size fixed by the indicator, never by the period.
+       * <p>It counts no bar, so it keeps answering past the
+       * {@link Core#MAX_INDEX} ceiling {@code update} stops at.
        */
       public double peek( double inReal ) {
          if( !Double.isFinite(inReal) )

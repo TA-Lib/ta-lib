@@ -1188,11 +1188,15 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
              period, and <c>Peek</c> never allocates.",
         );
     }
+    d.para(
+        "It counts no bar, so it keeps answering past the <see cref=\"Core.MAX_INDEX\"/> \
+         ceiling <c>Update</c> stops at.",
+    );
     d.close("remarks");
     for input in &inputs {
         d.param(input, &bar_param_desc(input));
     }
-    d.returns("What <see cref=\"Update\"/> would return for this bar.");
+    d.returns("The value <see cref=\"Update\"/> would return for this bar, when it takes it.");
     o.push('\n');
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Peek( {sig_bars} )");

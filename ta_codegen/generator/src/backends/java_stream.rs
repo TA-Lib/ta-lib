@@ -1031,6 +1031,8 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
          \x20      * transition, with every store it would make carried in a local instead.\n\
          \x20      * Never writes this handle, so peeks may\n\
          \x20      * run concurrently with each other. {cost}\n\
+         \x20      * <p>It counts no bar, so it keeps answering past the\n\
+         \x20      * {{@link Core#MAX_INDEX}} ceiling {{@code update}} stops at.\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} peek( {sig_bars}{sink} ) {{");
