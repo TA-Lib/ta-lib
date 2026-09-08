@@ -777,53 +777,53 @@
       {
       case SMA: {
          sp.cur_outReal = ((SmaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case EMA: {
          sp.cur_outReal = ((EmaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case WMA: {
          sp.cur_outReal = ((WmaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case DEMA: {
          sp.cur_outReal = ((DemaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case TEMA: {
          sp.cur_outReal = ((TemaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case TRIMA: {
          sp.cur_outReal = ((TrimaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case KAMA: {
          sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case MAMA: {
          MamaOut subOut = new MamaOut();
          ((MamaStream) sp.sub).update(inReal, subOut);
          sp.cur_outReal = subOut.mama;
-         break;
+         return;
       }
       case T3: {
          sp.cur_outReal = ((T3Stream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case HMA: {
          sp.cur_outReal = ((HmaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case ZLEMA: {
          sp.cur_outReal = ((ZlemaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       case RMA: {
          sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
-         break;
+         return;
       }
       default:
          break; /* unreachable: open rejects arms without a sub-stream */

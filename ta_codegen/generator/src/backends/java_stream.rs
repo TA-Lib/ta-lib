@@ -3044,7 +3044,10 @@ fn emit_dispatch(
                 }
             }
         }
-        let _ = writeln!(o, "         break;");
+        // `return`, not `break`: the switch is the whole method body, so this
+        // costs a byte where the jump to the end cost three, and the step frame
+        // is 4 bytes over the same 325-byte budget the peek frame is kept under.
+        let _ = writeln!(o, "         return;");
         let _ = writeln!(o, "      }}");
     }
     let _ = writeln!(o, "      default:");

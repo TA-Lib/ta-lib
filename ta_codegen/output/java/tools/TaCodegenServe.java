@@ -113589,53 +113589,53 @@ class Core {
           {
           case SMA: {
              sp.cur_outReal = ((SmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case EMA: {
              sp.cur_outReal = ((EmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case WMA: {
              sp.cur_outReal = ((WmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case DEMA: {
              sp.cur_outReal = ((DemaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case TEMA: {
              sp.cur_outReal = ((TemaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case TRIMA: {
              sp.cur_outReal = ((TrimaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case KAMA: {
              sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case MAMA: {
              MamaOut subOut = new MamaOut();
              ((MamaStream) sp.sub).update(inReal, subOut);
              sp.cur_outReal = subOut.mama;
-             break;
+             return;
           }
           case T3: {
              sp.cur_outReal = ((T3Stream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case HMA: {
              sp.cur_outReal = ((HmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case ZLEMA: {
              sp.cur_outReal = ((ZlemaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case RMA: {
              sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           default:
              break; /* unreachable: open rejects arms without a sub-stream */
@@ -182314,7 +182314,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "da345d5e1dfb8ec3";
+    static final String SPLICED_GENCODE_DIGEST = "0b26fafbf32d4805";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
