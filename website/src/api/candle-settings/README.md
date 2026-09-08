@@ -36,19 +36,6 @@ TA_SetCandleSettings( TA_BodyLong, TA_RangeType_RealBody, 10, 1.2 );
 TA_RestoreCandleDefaultSettings( TA_BodyLong );
 ```
 
-Range types are `TA_RangeType_RealBody`, `TA_RangeType_HighLow` and
-`TA_RangeType_Shadows`; setting types are `TA_BodyLong` and friends, per the table
-below. `TA_RestoreCandleDefaultSettings` reverts one setting, or every one when
-passed `TA_AllCandleSettings`.
-
-Returns `TA_BAD_PARAM` unless `settingType` names one setting (`TA_AllCandleSettings`
-is meaningful only for the restore call), `rangeType` is one of the three members,
-`avgPeriod` is between `0` and `TA_MAX_INDEX`, and `factor` is not NaN.
-
-Being globals, choose candle settings **once, from a single thread**, before making
-concurrent calls (see [multi-threading](/api/#multithreading)). They stay in effect
-until changed or restored.
-
 @tab Rust
 
 ```rust
@@ -62,26 +49,6 @@ let core = Core::builder()
     )
     .build()?;
 ```
-
-`RangeType` is `RealBody`, `HighLow` or `Shadows` — the three C spells
-`TA_RangeType_*`. There is no fourth to reject, so unlike C the domain is
-enforced by the type rather than at the call; `RangeType::try_from(i32)` is where
-a raw value from a config file or the wire is checked. An `avg_period` outside
-`0..=MAX_INDEX` or a NaN `factor` is refused, and `build()` reports
-`RetCode::BadParam` — the same domain C rejects with `TA_BAD_PARAM`.
-
-There is no restore call and none is needed: a builder starts from the defaults, so
-"restoring" a setting means simply not overriding it. Settings are fixed when the
-[`Core`](/api/rust/) is built, which is what makes it `Send + Sync`; to change one,
-build another `Core`.
-
-`CandleSettingType::AllCandleSettings` is a wildcard for the C restore call, not a
-setting — there is no single setting for it to write. Passing it to
-`candle_setting` is refused, and `build()` reports `RetCode::BadParam`, the same
-code C returns. The setters chain, so they cannot report a rejection at the point
-it happens; the first one is latched and surfaced by `build()`. Check that
-`Result` — a discarded one loses the whole configuration, not just the offending
-setting.
 
 @tab Java
 
@@ -101,15 +68,6 @@ Core restored = core.toBuilder()
     .build();
 ```
 
-The same domain applies: `avgPeriod` in `0..MAX_INDEX`, `factor` not NaN. A
-violation throws `IllegalArgumentException` right where `candleSetting` is
-called, rather than being deferred to `build()` the way Rust and C# report theirs.
-
-`Core` has no reader for a candle setting — only for the [unstable
-period](/api/unstable-period/#api). Settings are fixed when the `Core` is built,
-which is what makes it safe to share across threads; to change one, build
-another with `toBuilder()`.
-
 @tab C\#
 
 ```csharp
@@ -125,11 +83,6 @@ Core restored = core.ToBuilder()
     .RestoreCandleDefault(CandleSettingType.BodyLong)
     .Build();
 ```
-
-The same domain applies. A value outside it throws
-`ArgumentOutOfRangeException` rather than returning a code — no public C# path
-surfaces a `RetCode` — and a rejected call leaves the previous setting in place.
-Read a threshold back with `core.CandleSettings(CandleSettingType.BodyLong)`.
 
 :::
 
@@ -154,7 +107,7 @@ them `CandleSettingType.BodyLong`.
 | `Equal`           | HighLow  | 5  | 0.05 |
 
 `AllCandleSettings` targets every setting at once. It is meaningful only for C's
-restore call; see the Rust tab above.
+restore call.
 
 ## See also
 

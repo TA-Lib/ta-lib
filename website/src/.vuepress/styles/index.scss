@@ -231,3 +231,53 @@ html[data-theme="dark"] {
   .ta-arg-opt   { background-color: #4a4a52; color: #ececf1; }
   .ta-arg-out   { background-color: #5a4f12; color: #fdf6d6; }
 }
+
+// Unstable-period figure (`api/unstable-period/`): an inline SVG, so the series
+// colours can follow the theme toggle the way `<img>` cannot. Neutrals come from
+// the theme's own `--vp-c-*`; only the three categorical hues are restated for dark.
+// SVG text does not reflow, so the figure scrolls rather than shrinking below the
+// width where its labels stop being readable.
+.uf-fig {
+  margin: 1.6rem 0 1.2rem;
+  overflow-x: auto;
+}
+
+.uf {
+  --uf-1: #2a78d6;
+  --uf-2: #eb6834;
+  --uf-3: #1baf7a;
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+}
+
+[data-theme="dark"] .uf { --uf-1: #3987e5; --uf-2: #d95926; --uf-3: #199e70; }
+
+.uf-wash      { fill: var(--vp-c-text); opacity: 0.05; }
+.uf-grid      { stroke: var(--vp-c-border); stroke-width: 1; opacity: 0.55; }
+.uf-axis      { stroke: var(--vp-c-border); stroke-width: 1; }
+.uf-ctx       { fill: none; stroke: var(--vp-c-text); stroke-width: 1; opacity: 0.24; }
+.uf-tick      { fill: var(--vp-c-text-subtle); font-size: 12px; }
+.uf-tick-y    { text-anchor: end; }
+.uf-boundary  { stroke: var(--vp-c-text-mute); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.uf-ema       { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.uf-ema1      { stroke: var(--uf-1); stroke-width: 4; }
+.uf-ema2      { stroke: var(--uf-2); stroke-width: 2.5; }
+.uf-ema3      { stroke: var(--uf-3); stroke-width: 1.2; }
+.uf-dot       { stroke: var(--vp-c-bg); stroke-width: 1.5; }
+.uf-dot1      { fill: var(--uf-1); }
+.uf-dot2      { fill: var(--uf-2); }
+.uf-dot3      { fill: var(--uf-3); }
+.uf-legend-bg { fill: var(--vp-c-bg); opacity: 0.92; }
+.uf-legend    { fill: var(--vp-c-text-mute); font-size: 13px; }
+.uf-arrow     { stroke: var(--vp-c-text-mute); stroke-width: 1.5; }
+.uf-zone      { fill: var(--vp-c-text); font-size: 14px; font-weight: 600; }
+#uf-ah path   { fill: var(--vp-c-text-mute); }
+
+.uf-fig figcaption {
+  margin-top: 0.5rem;
+  color: var(--vp-c-text-mute);
+  font-size: 0.88em;
+  line-height: 1.5;
+}
