@@ -17,6 +17,10 @@ GDATA_FILES = $(shell find . -name 'ta_gData*.c')
 # Distribute additional bash scripts needed to "make all"
 BUILD_SHELL_FILES = src/tools/post-build-bin.sh
 
+# What the CMake build reads from the source tree. Omitting one is invisible
+# until vcpkg builds the release tarball.
+CMAKE_FILES = CMakeLists.txt cmake/warn-stale-installs.cmake.in include/ta_config.h.cmake
+
 # Add more files to EXTRA_DIST to be included on "make dist"
 # This is only for files that are not auto-discovered by autotools.
-EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES) VERSION LICENSE
+EXTRA_DIST = $(HEADER_FILES) $(GDATA_FILES) $(BUILD_SHELL_FILES) $(CMAKE_FILES) VERSION LICENSE
