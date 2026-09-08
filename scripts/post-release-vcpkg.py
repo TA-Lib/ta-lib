@@ -56,7 +56,6 @@ import json
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
