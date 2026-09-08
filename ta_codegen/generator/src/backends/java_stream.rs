@@ -558,7 +558,8 @@ fn emit_loop_shape(
         func, model, &fields, &step_settings, stream_fma, enums, registry, helpers, counter, 9,
         &BTreeSet::new(),
     );
-    emit_handle_class(o, func, &fields, &SubMembers::none(), frame.as_deref());
+    let frame = frame.map(PeekFrame::falls_through);
+    emit_handle_class(o, func, &fields, &SubMembers::none(), frame.as_ref());
     emit_step(o, func, model, &step_settings, stream_fma, enums, registry, helpers, counter);
     emit_open_body(
         o, func, model, body, &fields, &step_settings, stream_fma, enums, registry,
@@ -628,6 +629,21 @@ impl SubMembers {
     }
 }
 
+/// A rendered peek frame and whether it returns on every path. A terminal
+/// frame owns its exits, so the tail read of `cur_*` must NOT follow it:
+/// javac rejects the unreachable statement outright (JLS 14.22), and a
+/// multi-output frame would skip the caller's sink write instead.
+struct PeekFrame {
+    body: String,
+    terminal: bool,
+}
+
+impl PeekFrame {
+    fn falls_through(body: String) -> Self {
+        Self { body, terminal: false }
+    }
+}
+
 /// Emit the nested handle class. `subs` holds the tier-owned members
 /// (sub-handle copies); loop tier passes [`SubMembers::none`].
 fn emit_handle_class(
@@ -635,7 +651,7 @@ fn emit_handle_class(
     func: &FuncDef,
     fields: &[Field],
     subs: &SubMembers,
-    frame: Option<&str>,
+    frame: Option<&PeekFrame>,
 ) {
     emit_handle_class_with_members(o, func, fields, subs, "", frame);
 }
@@ -648,7 +664,7 @@ fn emit_handle_class_with_members(
     fields: &[Field],
     subs: &SubMembers,
     extra_members: &str,
-    frame: Option<&str>,
+    frame: Option<&PeekFrame>,
 ) {
     let class = stream_class_name(func);
     let base = base_name(func);
@@ -918,7 +934,7 @@ fn finite_bar_check(func: &FuncDef, indent: &str, what: &str) -> String {
 }
 
 
-fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, frame: Option<&str>) {
+fn emit_update_peek_value_copy(o: &mut String, func: &FuncDef, frame: Option<&PeekFrame>) {
     emit_update_method(o, func);
     emit_peek_method(o, func, frame);
     emit_value_method(o, func);
@@ -988,7 +1004,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
 }
 
 // --- peek ------------------------------------------------------------------------
-fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
+fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&PeekFrame>) {
     let class = stream_class_name(func);
     let multi = has_value_class(func);
     let vt = if multi {
@@ -1010,8 +1026,8 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     // rather than off the output count: the outputs go to the caller's own sink
     // now, so the count says nothing about what a peek allocates.
     let allocates = frame.is_some_and(|f| {
-        f.contains(".clone()")
-            || f.lines().any(|l| l.contains(" = new ") && l.trim_end().ends_with("Out();"))
+        f.body.contains(".clone()")
+            || f.body.lines().any(|l| l.contains(" = new ") && l.trim_end().ends_with("Out();"))
     });
     let cost = if allocates {
         "It copies no buffer: the frame runs against this handle, reading its\n\
@@ -1040,10 +1056,12 @@ fn emit_peek_method(o: &mut String, func: &FuncDef, frame: Option<&str>) {
     // run any of it.
     o.push_str(&require_sink(func, "         ", "peek"));
     o.push_str(&finite_bar_check(func, "         ", "peek"));
-    let body = frame.expect("every tier emits a peek frame");
+    let frame = frame.expect("every tier emits a peek frame");
     let _ = writeln!(o, "         {class} sp = this;");
-    o.push_str(body);
-    if multi {
+    o.push_str(&frame.body);
+    if frame.terminal {
+        assert!(!multi, "a terminal peek frame would skip the caller's sink write");
+    } else if multi {
         o.push_str(&write_out_stmts(func, "out", "", "         "));
     } else {
         let _ = writeln!(o, "         return {};", fresh_value_expr_local(func));
@@ -1273,21 +1291,34 @@ fn build_dispatch_peek_frame(
     enums: &HashMap<String, EnumDef>,
     registry: &Registry,
     helpers: &HelperRegistry,
-) -> String {
+) -> PeekFrame {
+    // Arms return straight out of the switch rather than accumulating, to keep
+    // the frame under C2's default `FreqInlineSize` (325 bytes of bytecode):
+    // over it, every caller holding an MA sub-handle loses inlining. The
+    // accumulating shape measured 345, this one 286, and each further MAType
+    // arm costs 16.
+    let terminal = func.outputs.len() == 1;
     let mut f = String::new();
-    for out in &func.outputs {
-        let jty = out_java_type(func, &out.name);
-        let zero = if jty == "int" { "0" } else { "0.0" };
-        let _ = writeln!(f, "         {jty} cur_{} = {zero};", out.name);
+    if !terminal {
+        for out in &func.outputs {
+            let jty = out_java_type(func, &out.name);
+            let zero = if jty == "int" { "0" } else { "0.0" };
+            let _ = writeln!(f, "         {jty} cur_{} = {zero};", out.name);
+        }
     }
     if let Some(idp) = &dp.identity {
         let cond = params_on_state(func, &idp.condition);
         let cond = render_predicate(&cond, ctx, registry, helpers);
         let _ = writeln!(f, "         if( {cond} ) {{");
-        for (out, inp) in &idp.pairs {
-            let _ = writeln!(f, "            cur_{out} = {inp};");
+        if terminal {
+            let (_, inp) = &idp.pairs[0];
+            let _ = writeln!(f, "            return {inp};");
+        } else {
+            for (out, inp) in &idp.pairs {
+                let _ = writeln!(f, "            cur_{out} = {inp};");
+            }
+            let _ = writeln!(f, "            return {};", fresh_value_expr_local(func));
         }
-        let _ = writeln!(f, "            return {};", fresh_value_expr_local(func));
         let _ = writeln!(f, "         }}");
     }
     let _ = writeln!(f, "         switch( sp.{} )", dp.param);
@@ -1297,15 +1328,18 @@ fn build_dispatch_peek_frame(
         let cls = callee_stream_class(registry, &arm.callee);
         let ocls = callee_out_class(registry, &arm.callee);
         let _ = writeln!(f, "         case {label}: {{");
+        let mut returned = false;
         if arm.out_map.len() == 1 {
             let streaming::OutSlot::Forward(k) = arm.out_map[0] else {
                 panic!("single-output arm cannot discard its only slot")
             };
-            let _ = writeln!(
-                f,
-                "            cur_{} = (({cls}) sp.sub).peek({bar_args});",
-                outputs[k]
-            );
+            let call = format!("(({cls}) sp.sub).peek({bar_args})");
+            if terminal {
+                let _ = writeln!(f, "            return {call};");
+                returned = true;
+            } else {
+                let _ = writeln!(f, "            cur_{} = {call};", outputs[k]);
+            }
         } else {
             let _ = writeln!(
                 f,
@@ -1314,16 +1348,24 @@ fn build_dispatch_peek_frame(
             );
             for (i, slot) in arm.out_map.iter().enumerate() {
                 if let streaming::OutSlot::Forward(k) = slot {
-                    let _ = writeln!(
-                        f,
-                        "            cur_{} = subValue.{};",
-                        outputs[*k],
-                        callee_value_field(registry, &arm.callee, i)
-                    );
+                    let field = callee_value_field(registry, &arm.callee, i);
+                    if terminal {
+                        let _ = writeln!(f, "            return subValue.{field};");
+                        returned = true;
+                    } else {
+                        let _ = writeln!(f, "            cur_{} = subValue.{field};", outputs[*k]);
+                    }
                 }
             }
         }
-        let _ = writeln!(f, "            break;");
+        if terminal {
+            // Without a forwarded slot the arm emits no exit at all and falls
+            // into the next case, which casts this arm's sub-handle to the next
+            // arm's class.
+            assert!(returned, "dispatch arm {label} forwards no output");
+        } else {
+            let _ = writeln!(f, "            break;");
+        }
         let _ = writeln!(f, "         }}");
     }
     let _ = writeln!(f, "         default:");
@@ -1332,7 +1374,7 @@ fn build_dispatch_peek_frame(
         "            throw new IllegalStateException(\"unreachable: open rejects arms without a sub-stream\");"
     );
     let _ = writeln!(f, "         }}");
-    f
+    PeekFrame { body: f, terminal }
 }
 
 /// [`peek_frame_arm_named`] for the tiers whose transition uses the ordinary
@@ -2766,7 +2808,8 @@ fn emit_dual_mode(
             f
         })
     };
-    emit_handle_class(o, func, &fields, &SubMembers::none(), dual_frame.as_deref());
+    let dual_frame = dual_frame.map(PeekFrame::falls_through);
+    emit_handle_class(o, func, &fields, &SubMembers::none(), dual_frame.as_ref());
 
     // --- step: one function, the mode re-derived from the stored param ------
     emit_step_sig(o, func);
@@ -3251,6 +3294,7 @@ fn emit_period_bank(
     let _ = writeln!(bank_frame, "         }}");
     let _ = writeln!(bank_frame, "         int slot = cp - sp.{min};");
     let _ = writeln!(bank_frame, "         double cur_{out} = sp.bank[slot].peek({price});");
+    let bank_frame = PeekFrame::falls_through(bank_frame);
     emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, Some(&bank_frame));
 
     // --- step: advance ALL slots, output the clamped-period slot ------------
@@ -4111,7 +4155,8 @@ fn emit_composed(
             helpers, counter, &fields, true,
         )
     };
-    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, frame.as_deref());
+    let frame = frame.map(PeekFrame::falls_through);
+    emit_handle_class_with_members(o, func, &fields, &subs, &extra_members, frame.as_ref());
 
     emit_composed_step(
         o, func, cp, &step_settings, stream_fma, registry, &inputs, &outputs, enums, helpers,

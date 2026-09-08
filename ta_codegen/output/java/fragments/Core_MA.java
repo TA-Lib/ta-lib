@@ -693,67 +693,52 @@
          if( !Double.isFinite(inReal) )
             throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
          MaStream sp = this;
-         double cur_outReal = 0.0;
          if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
-            cur_outReal = inReal;
-            return cur_outReal;
+            return inReal;
          }
          switch( sp.optInMAType )
          {
          case SMA: {
-            cur_outReal = ((SmaStream) sp.sub).peek(inReal);
-            break;
+            return ((SmaStream) sp.sub).peek(inReal);
          }
          case EMA: {
-            cur_outReal = ((EmaStream) sp.sub).peek(inReal);
-            break;
+            return ((EmaStream) sp.sub).peek(inReal);
          }
          case WMA: {
-            cur_outReal = ((WmaStream) sp.sub).peek(inReal);
-            break;
+            return ((WmaStream) sp.sub).peek(inReal);
          }
          case DEMA: {
-            cur_outReal = ((DemaStream) sp.sub).peek(inReal);
-            break;
+            return ((DemaStream) sp.sub).peek(inReal);
          }
          case TEMA: {
-            cur_outReal = ((TemaStream) sp.sub).peek(inReal);
-            break;
+            return ((TemaStream) sp.sub).peek(inReal);
          }
          case TRIMA: {
-            cur_outReal = ((TrimaStream) sp.sub).peek(inReal);
-            break;
+            return ((TrimaStream) sp.sub).peek(inReal);
          }
          case KAMA: {
-            cur_outReal = ((KamaStream) sp.sub).peek(inReal);
-            break;
+            return ((KamaStream) sp.sub).peek(inReal);
          }
          case MAMA: {
             MamaOut subValue = new MamaOut();
             ((MamaStream) sp.sub).peek(inReal, subValue);
-            cur_outReal = subValue.mama;
-            break;
+            return subValue.mama;
          }
          case T3: {
-            cur_outReal = ((T3Stream) sp.sub).peek(inReal);
-            break;
+            return ((T3Stream) sp.sub).peek(inReal);
          }
          case HMA: {
-            cur_outReal = ((HmaStream) sp.sub).peek(inReal);
-            break;
+            return ((HmaStream) sp.sub).peek(inReal);
          }
          case ZLEMA: {
-            cur_outReal = ((ZlemaStream) sp.sub).peek(inReal);
-            break;
+            return ((ZlemaStream) sp.sub).peek(inReal);
          }
          case RMA: {
-            cur_outReal = ((RmaStream) sp.sub).peek(inReal);
-            break;
+            return ((RmaStream) sp.sub).peek(inReal);
          }
          default:
             throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
          }
-         return cur_outReal;
       }
 
       /**
