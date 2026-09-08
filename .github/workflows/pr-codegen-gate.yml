@@ -134,6 +134,13 @@ jobs:
             exit 1
           fi
 
+      # Free here: the classes are already on disk, and nothing else in CI ever
+      # looks at generated Java as BYTECODE. Crossing C2's inline budget changes
+      # no output and fails no test, so without this it lands silently.
+      - name: MA's dispatch frames stay inside C2's inline budget
+        shell: bash
+        run: python3 scripts/check_java_inline_budget.py /tmp/ta-java-main
+
       # Hand-written, and the generator preserves them — so an API change lands
       # here only if someone carries it. Nothing else on this gate reads them.
       - name: Compile the hand-written Java suites against it
