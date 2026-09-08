@@ -52,7 +52,7 @@ double provisional = s.peek(formingClose);      // state left unchanged
 
 - **Warm-up.** `open` succeeds only if `history.length >= <NAME>_Lookback(params) + 1` — with fewer bars there is no defined value yet. Too little history throws `InsufficientHistoryException` (see [Error model](#error-model)). After `open`, the history can be discarded — the stream keeps everything it needs.
 - **Closed vs forming bar.** `update` commits state irreversibly, so use it only for **closed** bars. `peek` returns exactly the value the next `update` would, without committing — call it as often as the forming bar ticks. `value()` re-reads the last committed value without recomputing.
-- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/#numerical_stability) and [candle settings](/api/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
+- **Parameters are fixed at `open`.** Changing a parameter means a new stream. [Unstable period](/api/java/#numerical_stability) and [candle settings](/api/java/#candle_settings) are read from the owning `Core` at `open`. Since `Core` is immutable they cannot change underneath a live stream — to stream with different settings, build a new `Core` and open from that.
 - **Threads.** A stream is single-writer: `update` must not race with any other call on the same stream. Processing forks are possible by cloning the stream, and each clone becomes fully independent and can be updated concurrently.
 - **Not serializable.** To checkpoint, retain the history and re-open — the result is bit-identical by contract.
 
@@ -76,7 +76,8 @@ int pattern = c.update(o, h, l, cl);
 ```
 
 Reusing one sink is the point: `update`, `peek` and `value` overwrite its fields
-and allocate nothing, so a hot loop costs zero bytes per bar. The price is that
+rather than allocating a new one, so a hot loop costs nothing that grows with the
+period. The price is that
 **its contents are only valid until the next call that writes it**. It is a
 buffer, not a reading — a reference kept past that call, or one put in a
 collection, sees the value change underneath it. Copy the fields out if the
@@ -85,6 +86,10 @@ reason `<Name>Out` deliberately has no `equals`/`hashCode`: value equality on a
 mutable object breaks `HashMap`/`HashSet` the moment a reused sink becomes a key.
 Passing `null` is an `IllegalArgumentException`, taken before the bar is
 committed.
+
+A handle that drives a multi-output stream of its own allocates one further sink
+per `update` and per `peek`, of a size the indicator fixes and the period never
+does.
 
 ## Array-Fill Open
 
@@ -139,8 +144,8 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 | `<name>Open` / `<name>OpenAndFill` | Too little history throws `InsufficientHistoryException` (a subclass of `IllegalArgumentException` — catch it to accumulate more bars and retry). Out-of-range parameters throw plain `IllegalArgumentException`. |
 | `update` / `peek` | `IllegalArgumentException` on invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range — so to count a rejected bar rather than re-feed it, call `advance()`. (See the note below for the one composed-indicator corner.) |
 | `advance` | `IndexOutOfBoundsException` once the range has reached bar `Core.MAX_INDEX`, the last index the batch API addresses. `update` throws the same there, and that one does not clear: open a new stream on a shorter history. `peek` counts no bar and is not subject to it. |
-| `value` / `clone` / `outRange` | Never throw. |
+| `value()` / `clone` / `outRange` | Never throw. `value(out)` throws `IllegalArgumentException` on a null sink, as `update` and `peek` do. |
 
 ## Discovering streamable functions
 
-When driving TA-Lib through the [abstraction layer](/api/#abstract), streamable functions carry the `TA_FUNC_FLG_STREAM` flag in their function info.
+When driving TA-Lib through the [abstraction layer](/api/java/#abstract), streamable functions carry the `FuncFlags.STREAMING` bit in `FunctionInfo#flags()`.
