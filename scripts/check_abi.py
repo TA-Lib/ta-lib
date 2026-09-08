@@ -28,9 +28,17 @@ Nothing else in this file is excluded on purpose.
 
 The surface is what the INSTALLED headers declare -- CMake's `LIB_HEADERS`, read
 from CMakeLists.txt rather than listed here -- and specifically the
-`TA_LIB_API`-marked functions. Not the `.so`'s symbol table: nothing passes
-`-fvisibility=hidden`, so every non-static symbol lands in `.dynsym` and gating
-that would fail on internal churn nobody promised anything about.
+`TA_LIB_API`-marked functions. The built library's export table is then checked
+AGAINST that set rather than recorded beside it, because since #400 the two are
+the same thing: both build systems pass `-fvisibility=hidden`, so what a header
+declares is what `.dynsym` carries. That check is not redundant with the header
+parse -- it is the only thing that sees the map, the linker and the flag having
+actually applied. Dropping a name from `src/libta-lib.map` builds green and
+silently ships a library without that symbol; nothing else in the tree notices.
+
+What it still cannot see, so this is not read as total coverage: a BEHAVIOUR
+change behind an unchanged signature. A function that starts returning a new
+`TA_RetCode` has the same prototype, the same symbol, and the same entry here.
 """
 
 import os
@@ -484,6 +492,101 @@ def check_built_soname(root: str, want: str, required: bool = False) -> str:
     return "%s stamped it too" % os.path.basename(libs[-1])
 
 
+# Exported although no installed header declares it. Each name needs a reason
+# that is about the SHIPPED library, not about convenience: see
+# src/ta_common/ta_global.h. A name added here widens the ABI without widening
+# any header, which is exactly the drift this file exists to make deliberate.
+EXPORTED_BUT_UNDECLARED = {
+    "TA_Globals": "ta_regtest pokes it; the autotools tools link the .so (Homebrew, Debian)",
+}
+
+
+def _manifest_function_names(manifest: str) -> set:
+    """The declared function names, from the manifest's own `function ` lines."""
+    out = set()
+    for line in manifest.splitlines():
+        if not line.startswith("function "):
+            continue
+        head = line.split("(", 1)[0]
+        name = head.rsplit(None, 1)[-1].lstrip("*") if head.split() else ""
+        if name:
+            out.add(name)
+    return out
+
+
+def check_export_table(root: str, manifest: str, required: bool = False) -> str:
+    """The built library exports the declared set, and nothing else.
+
+    Catches what neither the header parse nor the soname check can: the
+    visibility flag or the linker map failing to apply (the surface silently
+    widens), and a declared function absent from the library (it silently
+    narrows -- `--no-undefined-version` only catches a map naming a symbol that
+    does not exist, never a name the map forgot).
+    """
+    import glob
+    want = re.search(r"^soname (\S+)$", manifest, re.M)
+    if not want:
+        return "EXPORTS UNCHECKED: manifest has no soname line"
+    major = want.group(1).rsplit(".", 1)[-1]
+    # ELF only, deliberately: `nm -D` and this name shape are GNU. A macOS build
+    # produces libta-lib.<major>.dylib and needs `nm -gU`, so the export set is
+    # UNMEASURED there rather than measured-and-equal -- say so, because
+    # "UNCHECKED" reads like "no library was built" and on macOS one was.
+    libs = sorted(glob.glob(os.path.join(root, "cmake-build",
+                                         "libta-lib.so.%s.*.*" % major)))
+    if not libs:
+        if required:
+            sys.exit("check_abi: --require-artifact was given but cmake-build/ holds no "
+                     "ELF shared library, so the export table was never read. That is a "
+                     "gate that did not run, not a pass. (Mach-O and PE are not covered "
+                     "here at all -- do not pass --require-artifact on those.)")
+        return "EXPORTS UNCHECKED: no ELF shared library (Mach-O/PE not covered)"
+    try:
+        out = subprocess.run(["nm", "-D", "--defined-only", libs[-1]],
+                             capture_output=True, text=True)
+    except FileNotFoundError:
+        if required:
+            sys.exit("check_abi: --require-artifact was given but nm is not on PATH")
+        return "EXPORTS UNCHECKED: no nm"
+    if out.returncode != 0:
+        if required:
+            sys.exit("check_abi: nm failed on %s: %s"
+                     % (os.path.basename(libs[-1]), out.stderr.strip()))
+        return "EXPORTS UNCHECKED: nm failed"
+
+    exported = {ln.split()[-1] for ln in out.stdout.splitlines() if len(ln.split()) >= 3}
+    if not exported:
+        sys.exit("check_abi: nm read 0 symbols from %s -- the parse moved, and an empty "
+                 "set would compare clean against nothing"
+                 % os.path.basename(libs[-1]))
+    declared = _manifest_function_names(manifest)
+    # Non-vacuity: the names parsed here must be the count the manifest states,
+    # so a regex that quietly stopped matching cannot read as agreement.
+    stated = re.search(r"^function-count (\d+)$", manifest, re.M)
+    if stated and len(declared) != int(stated.group(1)):
+        sys.exit("check_abi: parsed %d function name(s) but the manifest states "
+                 "function-count %s -- the parse moved"
+                 % (len(declared), stated.group(1)))
+
+    allowed = declared | set(EXPORTED_BUT_UNDECLARED)
+    extra = sorted(exported - allowed)
+    missing = sorted(allowed - exported)
+    if extra or missing:
+        msg = ["check_abi: the shipped export table is not the declared surface (%s)."
+               % os.path.basename(libs[-1])]
+        if extra:
+            msg.append("  %d symbol(s) exported that no header declares, e.g. %s"
+                       % (len(extra), ", ".join(extra[:8])))
+            msg.append("  Either -fvisibility=hidden or src/libta-lib.map did not apply,")
+            msg.append("  or something new needs TA_LIB_API dropped from it.")
+        if missing:
+            msg.append("  %d declared symbol(s) NOT exported, e.g. %s"
+                       % (len(missing), ", ".join(missing[:8])))
+            msg.append("  A caller that links these gets an undefined reference.")
+        sys.exit("\n".join(msg))
+    return "%d exported, all declared" % len(exported)
+
+
 def main() -> int:
     root = repo_root()
     update = "--update" in sys.argv
@@ -549,7 +652,9 @@ def main() -> int:
     if committed == fresh:
         want = re.search(r"^soname (\S+)$", fresh, re.M).group(1)
         built = check_built_soname(root, want, "--require-artifact" in sys.argv)
-        print("check_abi: public ABI matches %s (soname %s, %s)." % (MANIFEST, want, built))
+        exports = check_export_table(root, fresh, "--require-artifact" in sys.argv)
+        print("check_abi: public ABI matches %s (soname %s, %s; %s)."
+              % (MANIFEST, want, built, exports))
         return 0
     import difflib
     diff = list(difflib.unified_diff(committed.splitlines(), fresh.splitlines(),

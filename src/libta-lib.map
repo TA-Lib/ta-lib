@@ -1,0 +1,11 @@
+/* GCC emits a target_clones function's IFUNC and its `<name>.resolver` alias at
+ * STV_DEFAULT and ignores -fvisibility=hidden for both, so the flag alone leaves
+ * one stray export per cloned function. This localizes them and nothing else.
+ * It names no symbol this project owns, so it cannot go stale as the corpus
+ * grows -- and if a future GCC renames `.resolver`, check_abi's export gate says
+ * so rather than the surface silently widening.
+ */
+{
+  local:
+    *.resolver;
+};

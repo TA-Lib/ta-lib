@@ -114,13 +114,13 @@ unsigned int TA_GetUnstablePeriod( TA_FuncUnstId id )
  * behaviour the library has. TA_LibcPriv carries no field for this on purpose:
  * a body that tried to store the value would not compile.
  */
-TA_RetCode TA_SetCompatibility( TA_Compatibility value )
+TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value )
 {
    (void)value;
    return TA_SUCCESS;
 }
 
-TA_Compatibility TA_GetCompatibility( void )
+TA_LIB_API TA_Compatibility TA_GetCompatibility( void )
 {
    return TA_COMPATIBILITY_DEFAULT;
 }

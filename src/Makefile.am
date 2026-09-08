@@ -11,5 +11,8 @@ libta_lib_la_LIBADD = \
   ta_common/libta_common.la \
   $(LIBM)
 
-libta_lib_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION)
+libta_lib_la_LDFLAGS = -version-info $(TALIB_LIBRARY_VERSION) $(TA_VERSION_SCRIPT_FLAGS)
 
+# The linker map is consumed at LINK time, so a tarball without it configures
+# fine and then builds a library with the resolvers still exported.
+EXTRA_DIST = libta-lib.map

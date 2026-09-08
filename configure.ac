@@ -36,6 +36,33 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
 
+# Symbol visibility — mirrors CMakeLists.txt's C_VISIBILITY_PRESET. Without it
+# every non-static symbol lands in the shared library's dynamic table, so
+# TA_LIB_API is inert on ELF and a prototype that forgets it is caught only by a
+# Windows build. With it the attribute means the same thing on every platform.
+# Probed, so a compiler that rejects it still configures -- and check_abi's
+# export gate fails loudly rather than the surface silently widening.
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -fvisibility=hidden"
+AC_MSG_CHECKING([whether $CC accepts -fvisibility=hidden])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no]); CFLAGS="$save_CFLAGS"])
+
+# The companion linker map (src/libta-lib.map) localizes the target_clones
+# resolvers -fvisibility=hidden cannot reach. Probed the same way; Darwin has no
+# --version-script and needs no map, since target_clones is glibc-only.
+TA_VERSION_SCRIPT_FLAGS=""
+save_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS -Wl,--version-script=$srcdir/src/libta-lib.map -Wl,--no-undefined-version"
+AC_MSG_CHECKING([whether $CC accepts -Wl,--version-script])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+  [AC_MSG_RESULT([yes])
+   TA_VERSION_SCRIPT_FLAGS='-Wl,--version-script=$(top_srcdir)/src/libta-lib.map -Wl,--no-undefined-version'],
+  [AC_MSG_RESULT([no])])
+LDFLAGS="$save_LDFLAGS"
+AC_SUBST([TA_VERSION_SCRIPT_FLAGS])
+
 # Warnings — mirrors CMakeLists.txt, including why -Wunused-parameter and
 # -Wunknown-pragmas are off (uniform OHLCV signature; the deliberate
 # FP_CONTRACT pragma GCC ignores). Probed, so a compiler that rejects them
@@ -82,10 +109,14 @@ AC_SUBST([LIBM])
 #   any interface removed or changed       -> c+1 : 0   : 0     (soname +1)
 #   implementation only                    -> c   : r+1 : a     (soname unchanged)
 #
-# 1:0:0 -- 0.8.1 removes the 162 TA_*_Unguarded/TA_EMA_Private entry points and
+# 2:0:1 -- 0.8.1 removes the 162 TA_*_Unguarded/TA_EMA_Private entry points and
 # drops TA_FuncInfo.camelCaseName, so it is not the 0.7.1 ABI that shipped as
-# libta-lib.so.0.
-TALIB_LIBRARY_VERSION=1:0:0
+# libta-lib.so.0. The `:1` age is #400 re-exporting TA_Set/GetCompatibility with
+# TA_LIB_API: an addition, so the soname stays libta-lib.so.1. #400 also stops
+# exporting 1,516 internals, which moves no interface anyone was promised and no
+# line in ABI.manifest -- and libta-lib.so.1 has not shipped, so there is nothing
+# for it to break compatibility WITH.
+TALIB_LIBRARY_VERSION=2:0:1
 
 AC_SUBST(TALIB_LIBRARY_VERSION)
 

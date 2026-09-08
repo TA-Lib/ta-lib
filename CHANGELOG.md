@@ -100,13 +100,21 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
   load rather than silently misreading `TA_FuncInfo`.
 
 ### Removed
+- (#400) API: the shared library now exports only what the installed headers declare — 2,452
+  symbols instead of 3,968. The 1,516 removed were internals no header ever mentioned: the
+  `TA_<NAME>_OpenInternal` / `_OpenAndFillInternal` seams, the `_FramePP` / `_FramePPLB` frame
+  helpers, the `TA_DEF_*` / `TA_INFO_*` interface tables and the `target_clones` dispatch
+  resolvers. Nothing that compiles against `ta_libc.h` can have used them: no installed header
+  declared any of them, and none is reachable through the documented API. Code that linked one
+  anyway must stop. `TA_SetCompatibility()` and `TA_GetCompatibility()` are unaffected — they are
+  now exported from the Windows DLL too, which no released version did.
 - (#386) API: `include/ta_func_unguarded.h`, with the 161 `TA_<NAME>_Unguarded` functions and
   `TA_EMA_Private`. The header declared them `TA_LIB_API` and described them as exported public
   API. Call the ordinary `TA_<NAME>` functions instead, which validate their arguments.
 - (#386) API: `TA_FuncInfo.camelCaseName`. Code that reads it no longer compiles. Code that reads
   any field after it — `flags`, `nbInput`, `nbOptInput`, `nbOutput`, `handle` — must be rebuilt:
   the struct is 8 bytes smaller and every one of those fields moves.
-- (#388) API: the MetaStock variant of CMO, DEMA, EMA, MACD, MACDFIX, RSI, TEMA and TRIX is removed. The same variant reached MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MAType was EMA, DEMA or TEMA. Default behavior is unchanged. `TA_SetCompatibility()` and `TA_GetCompatibility()` remain declared, so existing sources still compile, but the setter now does nothing and the getter always answers `TA_COMPATIBILITY_DEFAULT`. They are not exported from the Windows DLL — no released version exported them either. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
+- (#388) API: the MetaStock variant of CMO, DEMA, EMA, MACD, MACDFIX, RSI, TEMA and TRIX is removed. The same variant reached MA, BBANDS, APO, PPO, PVO, MAVP, STOCH, STOCHF and STOCHRSI when the MAType was EMA, DEMA or TEMA. Default behavior is unchanged. `TA_SetCompatibility()` and `TA_GetCompatibility()` remain declared and exported, so existing sources still compile and link, but the setter now does nothing and the getter always answers `TA_COMPATIBILITY_DEFAULT`. Moving forward TA-Lib will create separate TA functions for distinct behaviors.
 
 ### Fixed
 - (#386) The `.deb` declared `prefix=/usr/local` in `ta-lib.pc` while installing into `/usr`, so `pkg-config` reported paths the package never populated — and preferred a stale TA-Lib under `/usr/local` where one existed.

@@ -255,6 +255,95 @@ jobs:
         shell: bash
         run: cd cmake-build/bin && ./ta_regtest
 
+      # scripts/check_abi.py measures the export table with `nm -D` over an ELF
+      # `libta-lib.so.N.*.*`, so it reads NOTHING here and says so. Mach-O is the
+      # other half of #400's claim: -fvisibility=hidden is the whole mechanism on
+      # this platform (there is no linker map -- target_clones is glibc-only, so
+      # no resolver is emitted), and nothing else in CI ever looks at the dylib.
+      - name: Public surface is narrowed on Mach-O too
+        shell: bash
+        run: |
+          set -euo pipefail
+          dylib=$(ls cmake-build/libta-lib.*.dylib 2>/dev/null | head -1)
+          if [ -z "$dylib" ]; then
+            echo "::error::No dylib under cmake-build/ -- this gate measured nothing."
+            exit 1
+          fi
+          # Mach-O prefixes every C symbol with an underscore; strip it once.
+          nm -gU "$dylib" | awk '{print $NF}' | sed 's/^_//' | sort -u > exported.txt
+          sed -n 's/^function .*[ *]\([A-Za-z_][A-Za-z0-9_]*\)(.*/\1/p' ABI.manifest \
+            | sort -u > declared.txt
+          # TA_Globals is exported although no installed header declares it --
+          # src/ta_common/ta_global.h says why. Nothing else may be.
+          echo TA_Globals >> declared.txt
+          sort -u declared.txt -o declared.txt
+          n_exp=$(wc -l < exported.txt); n_dec=$(wc -l < declared.txt)
+          echo "dylib exports $n_exp; headers declare $n_dec (incl. TA_Globals)"
+          if [ "$n_exp" -lt 100 ] || [ "$n_dec" -lt 100 ]; then
+            echo "::error::One of the two lists is implausibly short ($n_exp/$n_dec) -- the parse moved, and comparing against an empty set would read green."
+            exit 1
+          fi
+          extra=$(comm -23 exported.txt declared.txt)
+          missing=$(comm -13 exported.txt declared.txt)
+          rc=0
+          if [ -n "$extra" ]; then
+            echo "::error::The dylib exports $(echo "$extra" | wc -l) symbol(s) no header declares -- -fvisibility=hidden did not apply on AppleClang."
+            echo "$extra" | head -20
+            rc=1
+          fi
+          if [ -n "$missing" ]; then
+            echo "::error::$(echo "$missing" | wc -l) declared symbol(s) are NOT in the dylib -- a consumer linking them gets an undefined reference."
+            echo "$missing" | head -20
+            rc=1
+          fi
+          if [ "$rc" -eq 0 ]; then
+            echo "Mach-O export table is exactly the declared surface ($n_exp symbols)."
+          fi
+          exit $rc
+
+  # The only thing anywhere that LINKS the Windows DLL. The dist tests check
+  # that ta-lib.dll and ta-lib.lib exist as files (scripts/install_tests/msi.py),
+  # and the Python wrapper static-links ta-lib-static.lib, so a prototype that
+  # loses TA_LIB_API builds green everywhere and is simply missing from the DLL.
+  # That is not hypothetical: TA_GetVersionString was absent from 2002 until
+  # 0.7.1 (#57, CHANGELOG). On ELF the same omission is caught by
+  # check_abi.py's export gate; this is the Windows half of it.
+  dll-exports:
+    name: "Windows: the DLL exports what the headers declare"
+    runs-on: windows-2022
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout dev Branch
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      # Shared only: the probe must resolve through the import library, not
+      # quietly succeed by pulling objects out of ta-lib-static.lib.
+      - name: Build the DLL
+        shell: pwsh
+        run: |
+          cmake -S . -B build-dll -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF -DBUILD_DEV_TOOLS=OFF
+          cmake --build build-dll --config Release
+
+      - name: Link a probe against the import library and run it
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $implib = Get-ChildItem -Path build-dll -Recurse -Filter ta-lib.lib | Select-Object -First 1
+          $dll    = Get-ChildItem -Path build-dll -Recurse -Filter ta-lib.dll | Select-Object -First 1
+          if (-not $implib) { Write-Host "::error::No ta-lib.lib under build-dll -- nothing to link, so this gate measured nothing."; exit 1 }
+          if (-not $dll)    { Write-Host "::error::No ta-lib.dll under build-dll -- nothing to run against."; exit 1 }
+          Write-Host "import library: $($implib.FullName)"
+          cmake -S src/tools/dll_probe -B probe-build "-DTA_INCLUDE_DIR=$($PWD.Path)/include" "-DTA_IMPORT_LIB=$($implib.FullName)"
+          cmake --build probe-build --config Release
+          $exe = Get-ChildItem -Path probe-build -Recurse -Filter dll_probe.exe | Select-Object -First 1
+          if (-not $exe) { Write-Host "::error::dll_probe.exe was not produced."; exit 1 }
+          Copy-Item $dll.FullName $exe.DirectoryName
+          & $exe.FullName
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::The probe linked but failed at runtime (exit $LASTEXITCODE)."; exit $LASTEXITCODE }
+
   # Cross-language codegen verification — runs AFTER the C tests (needs: test).
   # C is the hero: the 'test' job above validates the C library with a C-only
   # toolchain (CMake/autotools never invoke cargo, so ta_regtest needs no Rust

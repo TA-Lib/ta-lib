@@ -70,16 +70,11 @@ fn no_committed_c_file_casts_away_a_name_its_block_reads() {
 
 /// Every function a shipped header DECLARES carries `TA_LIB_API`.
 ///
-/// On Linux and macOS the attribute is inert — nothing passes
-/// `-fvisibility=hidden`, so a non-static function is exported whether or not
-/// it carries one (measured: `TA_SMA_OpenInternal` has no `TA_LIB_API`, appears
-/// in no header, and is in the `.so`'s dynamic symbol table all the same). On
-/// Windows it is the whole mechanism: `TA_LIB_API` is `__declspec(dllexport)`
-/// while the library builds, and a prototype without it is simply missing from
-/// the DLL. So the failure is silent on every platform this project develops
-/// and tests on, and shows up only as an unresolved external in somebody's
-/// Windows build — which is exactly how it shipped once already
-/// (CHANGELOG #57, `TA_GetVersionString`).
+/// The attribute is the whole export mechanism on every platform: on Windows
+/// `TA_LIB_API` is `__declspec(dllexport)`, and on ELF/Mach-O the library builds
+/// `-fvisibility=hidden`, so a prototype without it is simply missing from the
+/// shipped library. `check_abi.py`'s export gate catches the same omission from
+/// the built artifact; this catches it without a build, on the PR gate.
 ///
 /// Over the INSTALL set, read from CMake's `LIB_HEADERS`, not a glob of
 /// `include/*.h`: `ta_config.h` is generated and untracked, so a glob sweeps a
@@ -100,15 +95,12 @@ fn no_committed_c_file_casts_away_a_name_its_block_reads() {
 /// everything up to the first `;`.
 #[test]
 fn every_declared_function_in_a_shipped_header_is_exported() {
-    // The one documented exception, and the header says why: a retired setting
-    // no released DLL ever exported, kept only so old sources still build.
-    // An exact SET — a third name arriving is as loud as one of these leaving.
-    let expected_exempt: std::collections::BTreeSet<String> = [
-        "ta_func.h:TA_GetCompatibility".to_string(),
-        "ta_func.h:TA_SetCompatibility".to_string(),
-    ]
-    .into_iter()
-    .collect();
+    // Empty, and it is an exact SET: a prototype arriving without the attribute
+    // is as loud as an exemption being dropped. Nothing is exempt any more --
+    // the retired TA_Set/GetCompatibility pair carries `TA_LIB_API` again, so
+    // the library exports what its headers promise on every platform.
+    let expected_exempt: std::collections::BTreeSet<String> =
+        std::collections::BTreeSet::new();
 
     let mut headers = 0usize;
     let mut exempt: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
@@ -209,10 +201,10 @@ fn every_declared_function_in_a_shipped_header_is_exported() {
 
     assert_eq!(
         exempt, expected_exempt,
-        "the set of shipped prototypes WITHOUT TA_LIB_API moved. A new one is absent from the \
-         Windows DLL while every platform this project tests on exports it anyway (CHANGELOG \
-         #57); one leaving means a deliberate exemption was dropped, which widens the shipped \
-         Windows surface"
+        "the set of shipped prototypes WITHOUT TA_LIB_API moved. A new one is declared in a \
+         shipped header but missing from the built library on every platform, which is a link \
+         failure in somebody else's build (CHANGELOG #57); one leaving means a deliberate \
+         exemption was dropped, which widens the shipped surface"
     );
 }
 

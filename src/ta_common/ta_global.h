@@ -111,6 +111,20 @@ typedef struct
 /* The following global is used all over the place 
  * and is the entry point for all other globals.
  */
-extern TA_LibcPriv *TA_Globals;
+
+/* Exported from the ELF/Mach-O library although no installed header declares
+ * it: the library builds hidden-by-default, and ta_regtest reaches this to poke
+ * state no public entry point can. Un-export it and the autotools ta_regtest
+ * stops linking -- which is Homebrew's and Debian's build, not just ours.
+ * Never __declspec(dllexport): the Windows DLL has never carried it, and the
+ * static library the Windows tools link does not need it.
+ */
+#if !defined(_WIN32) && defined(__GNUC__) && __GNUC__ >= 4
+  #define TA_LIB_INTERNAL_EXPORT __attribute__ ((visibility("default")))
+#else
+  #define TA_LIB_INTERNAL_EXPORT
+#endif
+
+extern TA_LIB_INTERNAL_EXPORT TA_LibcPriv *TA_Globals;
 
 #endif

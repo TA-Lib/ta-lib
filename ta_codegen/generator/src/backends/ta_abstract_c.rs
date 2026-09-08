@@ -3010,13 +3010,10 @@ fn gen_ta_func_h(funcs: &[&FuncDef]) -> String {
          \x20* TA_SetCompatibility does nothing and TA_GetCompatibility always\n\
          \x20* answers TA_COMPATIBILITY_DEFAULT. Both are kept so existing\n\
          \x20* sources still compile and link; avoid them in new code.\n\
-         \x20*\n\
-         \x20* Deliberately NOT TA_LIB_API: no released version ever exported\n\
-         \x20* them from the Windows DLL, and a retired setting is not the one\n\
-         \x20* to start. Adding it back would widen the shipped surface.\n\
          \x20*/\n\
-         TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
-         TA_Compatibility TA_GetCompatibility( void );\n\
+         TA_LIB_API TA_RetCode TA_SetCompatibility( TA_Compatibility value );\n\
+         \n\
+         TA_LIB_API TA_Compatibility TA_GetCompatibility( void );\n\
          \n\
          /* Candlesticks struct and functions\n\
          \x20* Because candlestick patterns are subjective, it is necessary \n\
