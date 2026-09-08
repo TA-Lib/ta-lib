@@ -319,30 +319,18 @@ jobs:
         with:
           ref: dev
 
-      # Shared only: the probe must resolve through the import library, not
-      # quietly succeed by pulling objects out of ta-lib-static.lib.
-      - name: Build the DLL
-        shell: pwsh
-        run: |
-          cmake -S . -B build-dll -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=OFF -DBUILD_DEV_TOOLS=OFF
-          cmake --build build-dll --config Release
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
 
-      - name: Link a probe against the import library and run it
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $implib = Get-ChildItem -Path build-dll -Recurse -Filter ta-lib.lib | Select-Object -First 1
-          $dll    = Get-ChildItem -Path build-dll -Recurse -Filter ta-lib.dll | Select-Object -First 1
-          if (-not $implib) { Write-Host "::error::No ta-lib.lib under build-dll -- nothing to link, so this gate measured nothing."; exit 1 }
-          if (-not $dll)    { Write-Host "::error::No ta-lib.dll under build-dll -- nothing to run against."; exit 1 }
-          Write-Host "import library: $($implib.FullName)"
-          cmake -S src/tools/dll_probe -B probe-build "-DTA_INCLUDE_DIR=$($PWD.Path)/include" "-DTA_IMPORT_LIB=$($implib.FullName)"
-          cmake --build probe-build --config Release
-          $exe = Get-ChildItem -Path probe-build -Recurse -Filter dll_probe.exe | Select-Object -First 1
-          if (-not $exe) { Write-Host "::error::dll_probe.exe was not produced."; exit 1 }
-          Copy-Item $dll.FullName $exe.DirectoryName
-          & $exe.FullName
-          if ($LASTEXITCODE -ne 0) { Write-Host "::error::The probe linked but failed at runtime (exit $LASTEXITCODE)."; exit $LASTEXITCODE }
+      # scripts/check_dll_exports.py, not inline cmake: CMakeLists.txt:127 hard-
+      # errors unless the MSVC environment is set, and the project already has
+      # the vswhere-based vcvarsall helper that scripts/package.py uses. Doing it
+      # any other way means hardcoding a Visual Studio edition path.
+      - name: Link a probe against the DLL's import library and run it
+        shell: bash
+        run: python scripts/check_dll_exports.py
 
   # Cross-language codegen verification — runs AFTER the C tests (needs: test).
   # C is the hero: the 'test' job above validates the C library with a C-only
