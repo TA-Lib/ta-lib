@@ -237,6 +237,7 @@ Error 1(TA_LIB_NOT_INITIALIZE): TA_Initialize was not successfully called
 <p>Take one bar and compute an indicator for it twice: once with a year of history before it, once with a decade. Do you get the same value? For many functions, always — they read a fixed number of bars and ignore everything older. Others are recursive, so their earliest values depend on how much history precedes them, converging as more bars are supplied — the Exponential Moving Average is the classic example. A few accumulate from the very first bar and never converge at all.</p>
 <p>Each function's documentation specifies which of the four <a href="/functions/stability.html">numerical-stability categories</a> applies to it.</p>
 <p>This is about convergence, not rounding. A function can be perfectly convergent and still accumulate floating-point error over a very long series — a separate axis, noted under <a href="#index_range">Index Range</a>.</p>
+<p>Outside both axes sits the edge of the arithmetic itself: TA-Lib computes in <b>double</b>. A value the library derives from your bars can leave the representable range even when every bar you supplied is finite — a running sum over extreme prices, or a ratio against a window that is very nearly flat. Nothing past such an overflow is defined, in either the batch or the streaming API. Close a stream handle that produces one rather than feeding it further.</p>
 <p>See the <a href="/api/unstable-period/">Unstable Period</a> page for how to configure this.</p>
 
 ### 4.3 Candlestick Settings {#candle_settings}

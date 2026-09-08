@@ -337,7 +337,9 @@ return the value, and Java writes every field of a caller-owned sink.
 **A rejection changes nothing at all.** No accumulator moves, no output is
 written, and `OutRange` does not advance — a rejected `Update` costs the caller
 nothing but the call, and the handle is intact and usable for the next bar, so a
-transient bad print clears itself. `Peek` is the same, under any outcome.
+transient bad print clears itself. `Peek` is the same, under any outcome. It
+holds while the library's own arithmetic stays inside `double`; past that,
+Part 3's *Intermediate overflow* governs and this rule does not.
 
 **U4 is the one rejection that does not clear.** It is S2 read one bar at a
 time: the next bar's index is `begIdx + count`, and once that leaves
@@ -460,18 +462,6 @@ can be handed, and U4 once the range has reached `TA_MAX_INDEX`, which every
 backend answers. Rust spells the second as `Result<(), RetCode>`; Java and C#
 throw, since a `void` accessor has nowhere else to put it.
 
-**One documented hole.** A composed function drives its sub-streams through their
-*public* entry points, so a sub-stream re-checks a value the library itself
-produced. If such an intermediate were ever non-finite the sub-stream would
-reject it, and the rejection would surface after earlier sub-streams in the
-pipeline had already stepped and counted their own bar — leaving the handle
-partway through a bar, with those siblings' `OutRange` one ahead of both the
-parent's and the rejecting sub-stream's.
-Reaching it requires an intermediate to overflow to ±Inf, i.e. input magnitudes
-around 1e306. Out of scope by the same reasoning as issue #191; recorded so it is
-not rediscovered. All four backends agree on the behaviour, and the reported
-error names the sub-stage.
-
 ### 2.5 Streaming tier — releasing
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
@@ -544,6 +534,23 @@ not on which function was called.
 
 Only the first row is undefined. The other three are ordinary errors, and
 Part 2 is their specification.
+
+### Intermediate overflow
+
+The library computes in `double`. A value it derives from your bars — a running
+sum, a smoothed average, a ratio against a window that is very nearly flat — can
+leave the representable range on bars that are each perfectly finite. **Past
+that point nothing is defined**: not the output, not the return code, and not
+the state of a stream handle that produced one. Treat such a handle as spent —
+close it and open a new one.
+
+Defined next to it: the *bar* handed to `Update` or `Peek` is checked, and a
+non-finite one is rejected (U3). That check is on the argument, not on what the
+arithmetic later makes of it. And a function whose own domain has a hole — an
+arc cosine outside [-1,1], a logarithm at zero — says so, in its `## Notes` and
+through `TA_FUNC_FLG_NAN_INF_OUT`. Overflow is not that: it is a property of
+`double` rather than of any indicator, so it carries no flag, and issue #191
+settled that it gets no semantics either.
 
 ### A buffer too short — in C
 
