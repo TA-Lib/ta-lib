@@ -122,7 +122,7 @@ Any dev with permission to merge to main branch can do a release.
 
 (10) Verify the Github release page shows the new version with all assets attached and downloadable. The website (https://ta-lib.org/install) catches up on its own within a nightly cycle afterward — see "After a release" below.
 
-(11) Run "./scripts/post-release-vcpkg.py" and follow the instructions to submit a PR to microsoft/vcpkg. Monitor the PR is eventually merged by vcpkg maintainers. This may take a few days.
+(11) Run "./scripts/post-release-vcpkg.py". It bumps the version + SHA512, runs x-add-version, opens the microsoft/vcpkg PR, and opens a "[monitor] VCPkg release <ver>" issue here to track it. It does not review the port, and that is where the time goes: before pushing, delete any patch that no longer applies to the new source (a vcpkg PR checklist item) and verify with a local "./vcpkg install talib". vcpkg CI can be green on every triplet and still be sent back by review, and each round costs days rather than a re-run. Close the monitor issue once "vcpkg install talib" installs the new version.
 
 (12) Monitor homebrew-core. The formula is updated within about an hour:
 https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/t/ta-lib.rb
