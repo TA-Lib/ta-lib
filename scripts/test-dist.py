@@ -20,6 +20,7 @@ import tempfile
 from utilities.versions import get_version_string, get_version_string_cmake
 from utilities.common import verify_git_repo,create_temp_dir
 from install_tests.python import test_python_windows, test_python_linux
+from install_tests.cmake_src import test_cmake_src_linux
 from install_tests.msi import test_msi_windows
 
 if __name__ == "__main__":
@@ -58,6 +59,10 @@ if __name__ == "__main__":
     if not os.path.isfile(package_file_path):
         print(f"Package file not found: {package_file_path}. Do './scripts/package.py")
         sys.exit(1)
+
+    # The vcpkg build path, before the autotools leg installs into /usr/local.
+    if host_platform == "linux":
+        test_cmake_src_linux(package_file_path, temp_dir, version)
 
     # Simulate user doing a ta-lib-python installation.
     if host_platform == "linux":
