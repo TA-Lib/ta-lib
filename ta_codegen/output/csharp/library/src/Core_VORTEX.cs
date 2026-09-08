@@ -437,11 +437,10 @@ public partial class Core
    /// two lines are conventionally plotted together.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-   /// No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <see href="https://ta-lib.org/functions/trange"><c>TRANGE</c></see> consumes it, so the first output sits at index <c>optInTimePeriod</c>, not <c>optInTimePeriod − 1</c>.</description></item>
    /// <item><description>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</description></item>
@@ -516,11 +515,10 @@ public partial class Core
    /// two lines are conventionally plotted together.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-   /// No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <see href="https://ta-lib.org/functions/trange"><c>TRANGE</c></see> consumes it, so the first output sits at index <c>optInTimePeriod</c>, not <c>optInTimePeriod − 1</c>.</description></item>
    /// <item><description>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</description></item>

@@ -200,6 +200,10 @@ public partial class Core
    /// reversal (Three Outside Down).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3outside">ta-lib.org/functions/cdl3outside</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</description></item>
    /// <item><description>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. (<see href="https://thepatternsite.com/ThreeOutsideUp.html">thepatternsite.com</see>)</description></item>
@@ -268,6 +272,10 @@ public partial class Core
    /// reversal (Three Outside Down).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3outside">ta-lib.org/functions/cdl3outside</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</description></item>
    /// <item><description>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. (<see href="https://thepatternsite.com/ThreeOutsideUp.html">thepatternsite.com</see>)</description></item>

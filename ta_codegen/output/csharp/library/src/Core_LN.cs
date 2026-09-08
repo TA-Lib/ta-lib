@@ -127,10 +127,10 @@ public partial class Core
    /// Element-wise natural logarithm of the input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = log(inReal[i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ln">ta-lib.org/functions/ln</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</description></item>
    /// </list>
@@ -185,10 +185,10 @@ public partial class Core
    /// Element-wise natural logarithm of the input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = log(inReal[i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ln">ta-lib.org/functions/ln</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The logarithm is defined only for positive values: a negative input gives NaN, and a zero input gives negative infinity.</description></item>
    /// </list>

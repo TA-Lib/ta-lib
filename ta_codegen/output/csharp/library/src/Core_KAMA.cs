@@ -522,12 +522,10 @@ public partial class Core
    /// trend.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-   /// SC = (ER*(2/3 - 2/31) + 2/31)^2
-   /// KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input, consistent with <c>MA(period=1)</c> for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</description></item>
    /// <item><description>The output never leaves the range of the prices it has seen.</description></item>
@@ -590,12 +588,10 @@ public partial class Core
    /// trend.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-   /// SC = (ER*(2/3 - 2/31) + 2/31)^2
-   /// KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input, consistent with <c>MA(period=1)</c> for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</description></item>
    /// <item><description>The output never leaves the range of the prices it has seen.</description></item>

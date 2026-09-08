@@ -239,6 +239,8 @@
     * short-bodied star gapping up, then a black candle closing well down into
     * the first candle's body. A hit signals a bearish reversal (most
     * significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -311,6 +313,8 @@
     * short-bodied star gapping up, then a black candle closing well down into
     * the first candle's body. A hit signals a bearish reversal (most
     * significant in an uptrend).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>

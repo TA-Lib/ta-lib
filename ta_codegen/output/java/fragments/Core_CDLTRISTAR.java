@@ -187,6 +187,8 @@
     * A three-candle pattern of three consecutive doji where the middle doji is
     * a star (its body gaps away from the first). Bullish or bearish reversal
     * signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltristar">ta-lib.org/functions/cdltristar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
@@ -255,6 +257,8 @@
     * A three-candle pattern of three consecutive doji where the middle doji is
     * a star (its body gaps away from the first). Bullish or bearish reversal
     * signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltristar">ta-lib.org/functions/cdltristar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>

@@ -73,10 +73,8 @@
    }
    /**
     * Element-wise division of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] / inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/div">ta-lib.org/functions/div</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>
@@ -134,10 +132,8 @@
    }
    /**
     * Element-wise division of two input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = inReal0[i] / inReal1[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/div">ta-lib.org/functions/div</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</li>

@@ -338,10 +338,10 @@ public partial class Core
    /// running ahead of, or lagging, its regression line.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Forecast fitted over the N bars ending at t-1 and evaluated one x-step beyond that window — the forecast for bar t made without seeing it.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</description></item>
    /// <item><description>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</description></item>
@@ -405,10 +405,10 @@ public partial class Core
    /// running ahead of, or lagging, its regression line.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FOSC[t] = 100 * (P[t] - TSF[t-1]) / P[t], where TSF[t-1] is the Time Series Forecast fitted over the N bars ending at t-1 and evaluated one x-step beyond that window — the forecast for bar t made without seeing it.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/fosc">ta-lib.org/functions/fosc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</description></item>
    /// <item><description>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</description></item>

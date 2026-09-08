@@ -292,11 +292,10 @@ public partial class Core
    /// each rolling window of optInTimePeriod bars. Index variant of MINMAX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-   /// outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>
@@ -359,11 +358,10 @@ public partial class Core
    /// each rolling window of optInTimePeriod bars. Index variant of MINMAX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-   /// outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>

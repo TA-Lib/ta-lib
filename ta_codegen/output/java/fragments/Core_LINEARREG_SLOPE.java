@@ -328,12 +328,8 @@
     * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
     * trend line. Positive slope = rising trend, negative = falling; magnitude
     * is price change per bar.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (n·SumXY − SumX·SumY) / Divisor
-    * SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    * SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -391,12 +387,8 @@
     * optInTimePeriod bars. Reports the per-bar rate of change of the fitted
     * trend line. Positive slope = rising trend, negative = falling; magnitude
     * is price change per bar.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * m = (n·SumXY − SumX·SumY) / Divisor
-    * SumX = n(n−1)/2,  SumXSqr = n(n−1)(2n−1)/6,  Divisor = SumX² − n·SumXSqr
-    * SumXY = Σ i·y[today−i],  SumY = Σ y[today−i],  i=0..n−1,  n=period,  y=inReal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg_slope">ta-lib.org/functions/linearreg_slope</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -340,6 +340,10 @@ public partial class Core
    /// uptrend (bear), context the code does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhikkakemod">ta-lib.org/functions/cdlhikkakemod</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</description></item>
    /// </list>
@@ -408,6 +412,10 @@ public partial class Core
    /// uptrend (bear), context the code does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhikkakemod">ta-lib.org/functions/cdlhikkakemod</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that this reversal pattern assumes.</description></item>
    /// </list>

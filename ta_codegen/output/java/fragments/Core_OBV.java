@@ -106,10 +106,8 @@
     * On Balance Volume: a running cumulative total of volume, added on up-price
     * bars and subtracted on down-price bars. Relates volume flow to price
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -161,10 +159,8 @@
     * On Balance Volume: a running cumulative total of volume, added on up-price
     * bars and subtracted on down-price bars. Relates volume flow to price
     * direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * OBV[i] = OBV[i-1] + (inReal[i] > inReal[i-1] ? V[i] : inReal[i] < inReal[i-1] ? -V[i] : 0); seed OBV[startIdx] = V[startIdx]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/obv">ta-lib.org/functions/obv</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

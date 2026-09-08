@@ -434,11 +434,10 @@ public partial class Core
    /// overlap-study line plotted on price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-   /// This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middle output, alongside the two extrema.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/midprice">ta-lib.org/functions/midprice</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -498,11 +497,10 @@ public partial class Core
    /// overlap-study line plotted on price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// MIDPRICE = (Highest(High, N) + Lowest(Low, N)) / 2, over the N=optInTimePeriod bars ending at each index
-   /// This is the Donchian Channel centerline: `DONCHIAN` emits this line as its middle output, alongside the two extrema.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/midprice">ta-lib.org/functions/midprice</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

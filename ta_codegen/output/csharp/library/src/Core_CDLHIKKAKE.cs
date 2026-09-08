@@ -291,6 +291,10 @@ public partial class Core
    /// 200 flags the confirming bar.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhikkake">ta-lib.org/functions/cdlhikkake</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<see href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -359,6 +363,10 @@ public partial class Core
    /// 200 flags the confirming bar.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhikkake">ta-lib.org/functions/cdlhikkake</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<see href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</see>)</description></item>
    /// </list>

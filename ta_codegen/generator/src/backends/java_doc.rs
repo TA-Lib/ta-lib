@@ -37,25 +37,17 @@ pub fn guarded_docs(
 
     b.para(&summary_text(func, doc));
 
-    if let Some(formula) = &doc.formula {
-        b.raw("<p><b>Formula</b>");
-        b.raw("<pre>{@code");
-        for line in formula.lines() {
-            let t = line.trim();
-            if !t.is_empty() {
-                b.raw(format!(" * {t}").trim_start_matches(" * "));
-            }
-        }
-        b.raw("}</pre>");
-        if let Some(note) = &doc.formula_note {
-            b.para(&jdoc(note));
-        }
-    }
+    let url = doc_meta::function_page_url(&func.name);
+    b.para(&format!(
+        "Formula and more info at <a href=\"{url}\">{}</a>.",
+        url.trim_start_matches("https://")
+    ));
 
-    if !doc.notes.is_empty() {
+    let notes = doc_meta::renderable_notes(&doc.notes);
+    if !notes.is_empty() {
         b.raw("<p><b>Notes</b>");
         b.raw("<ul>");
-        for note in &doc.notes {
+        for note in notes {
             b.raw(&format!("<li>{}</li>", jdoc(note)));
         }
         b.raw("</ul>");

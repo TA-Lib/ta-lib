@@ -164,10 +164,8 @@
     * Single-candle pattern: a small real body with both an upper and a lower
     * shadow longer than the body. Signals indecision; the code does not
     * classify it as bullish or bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -230,10 +228,8 @@
     * Single-candle pattern: a small real body with both an upper and a lower
     * shadow longer than the body. Signals indecision; the code does not
     * classify it as bullish or bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle where: upper shadow > real body AND lower shadow > real body AND real body < the BodyShort average. The BodyShort average is the factor-scaled mean body over the prior avgPeriod candles.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlspinningtop">ta-lib.org/functions/cdlspinningtop</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

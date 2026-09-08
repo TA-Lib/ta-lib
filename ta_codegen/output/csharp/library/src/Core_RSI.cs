@@ -390,26 +390,10 @@ public partial class Core
    /// gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $$
-   /// \begin{aligned}
-   /// U_t &amp;= \max(X_t - X_{t-1},\ 0)
-   /// &amp;  D_t &amp;= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-   /// \overline{U}_t &amp;= \begin{cases}
-   /// \operatorname{SMA}(U, n)_t                 &amp; \text{if } t = n \\[4pt]
-   /// \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} &amp; \text{if } t &gt; n
-   /// \end{cases}
-   /// &amp;  \overline{D}_t &amp;= \begin{cases}
-   /// \operatorname{SMA}(D, n)_t                 &amp; \text{if } t = n \\[4pt]
-   /// \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} &amp; \text{if } t &gt; n
-   /// \end{cases} \\[4pt]
-   /// \mathrm{RS}_t &amp;= \frac{\overline{U}_t}{\overline{D}_t}
-   /// &amp;  \mathrm{RSI}_t &amp;= 100 - \frac{100}{1 + \mathrm{RS}_t}
-   /// \end{aligned}
-   /// $$
-   /// </code>
-   /// where $X$ is the input series and $n$ the period.
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -465,26 +449,10 @@ public partial class Core
    /// gauge overbought/oversold conditions. &gt;70 overbought, &lt;30 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $$
-   /// \begin{aligned}
-   /// U_t &amp;= \max(X_t - X_{t-1},\ 0)
-   /// &amp;  D_t &amp;= \max(X_{t-1} - X_t,\ 0) \\[4pt]
-   /// \overline{U}_t &amp;= \begin{cases}
-   /// \operatorname{SMA}(U, n)_t                 &amp; \text{if } t = n \\[4pt]
-   /// \dfrac{(n-1)\,\overline{U}_{t-1} + U_t}{n} &amp; \text{if } t &gt; n
-   /// \end{cases}
-   /// &amp;  \overline{D}_t &amp;= \begin{cases}
-   /// \operatorname{SMA}(D, n)_t                 &amp; \text{if } t = n \\[4pt]
-   /// \dfrac{(n-1)\,\overline{D}_{t-1} + D_t}{n} &amp; \text{if } t &gt; n
-   /// \end{cases} \\[4pt]
-   /// \mathrm{RS}_t &amp;= \frac{\overline{U}_t}{\overline{D}_t}
-   /// &amp;  \mathrm{RSI}_t &amp;= 100 - \frac{100}{1 + \mathrm{RS}_t}
-   /// \end{aligned}
-   /// $$
-   /// </code>
-   /// where $X$ is the input series and $n$ the period.
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/rsi">ta-lib.org/functions/rsi</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

@@ -140,16 +140,8 @@
     * percentage price change. The premise is that quiet, low-volume days
     * reflect the actions of well-informed "smart money", so NVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * NVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * NVI[i] = NVI[i-1] + ( inVolume[i] < inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * NVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not fall (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>
@@ -207,16 +199,8 @@
     * percentage price change. The premise is that quiet, low-volume days
     * reflect the actions of well-informed "smart money", so NVI is read as a
     * proxy for that cohort's positioning.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * NVI[startIdx] = 1000
-    * For each subsequent bar i:
-    * NVI[i] = NVI[i-1] + ( inVolume[i] < inVolume[i-1]
-    * ? ((inClose[i] - inClose[i-1]) / inClose[i-1]) * NVI[i-1]
-    * : 0 )
-    * The index carries forward unchanged on bars whose volume did not fall (and on the
-    * degenerate case of a zero previous close, which would otherwise divide by zero).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/nvi">ta-lib.org/functions/nvi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The index compounds, so it has no upper bound. If a run of large rises ever pushes it past the largest representable number, the last representable value is carried forward instead of returning infinity. Real price series stay far away from that.</li>

@@ -261,6 +261,8 @@
     * gaps up (the star), then a black candle closing well down into the first
     * candle's body. A stricter Evening Star whose middle candle must be a doji.
     * Hit (-100) signals a bearish top reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningdojistar">ta-lib.org/functions/cdleveningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -333,6 +335,8 @@
     * gaps up (the star), then a black candle closing well down into the first
     * candle's body. A stricter Evening Star whose middle candle must be a doji.
     * Hit (-100) signals a bearish top reversal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdleveningdojistar">ta-lib.org/functions/cdleveningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>

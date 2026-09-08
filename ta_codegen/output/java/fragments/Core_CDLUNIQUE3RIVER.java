@@ -210,6 +210,8 @@
     * potential bullish reversal, ideally in a downtrend (trend not checked by
     * the code). A hit (+100) marks a bullish reversal; significant in a
     * downtrend, which the function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlunique3river">ta-lib.org/functions/cdlunique3river</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
@@ -278,6 +280,8 @@
     * potential bullish reversal, ideally in a downtrend (trend not checked by
     * the code). A hit (+100) marks a bullish reversal; significant in a
     * downtrend, which the function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlunique3river">ta-lib.org/functions/cdlunique3river</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>

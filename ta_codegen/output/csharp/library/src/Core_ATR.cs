@@ -383,12 +383,10 @@ public partial class Core
    /// no directional bias.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-   /// ATR seed = simple average of first `period` TR values
-   /// ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -451,12 +449,10 @@ public partial class Core
    /// no directional bias.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-   /// ATR seed = simple average of first `period` TR values
-   /// ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

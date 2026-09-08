@@ -181,11 +181,8 @@
     * rather than the direction of the market. The distance between successive
     * peaks estimates the cycle length, and the amplitude is in price units, so
     * it is comparable across time only for one instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-    * DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>
@@ -251,11 +248,8 @@
     * rather than the direction of the market. The distance between successive
     * peaks estimates the cycle length, and the amplitude is in price units, so
     * it is comparable across time only for one instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Let `t = optInTimePeriod / 2 + 1`, an integer division, so a period and its odd successor share the same displacement.
-    * DPO[i] = P[i - t] - SMA(P, optInTimePeriod)[i]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dpo">ta-lib.org/functions/dpo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The value is emitted at the bar whose moving average produced it. Charting packages usually draw it {@code t} bars to the left instead, which is a plotting convention rather than a different series; a caller wanting that view shifts {@code outReal} itself.</li>

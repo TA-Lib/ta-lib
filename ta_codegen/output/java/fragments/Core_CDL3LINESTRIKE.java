@@ -199,6 +199,8 @@
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles, traditionally read
     * as significant only inside a trend matching those three candles.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
@@ -269,6 +271,8 @@
     * past the first candle's open. TA-Lib emits a signed continuation-style
     * signal keyed to the color of the first three candles, traditionally read
     * as significant only inside a trend matching those three candles.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3linestrike">ta-lib.org/functions/cdl3linestrike</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>

@@ -291,13 +291,8 @@
     * per-bar multiplier with. CMF is that same multiplier summed over a fixed
     * window and normalised, where AD accumulates it from the start of the
     * series without bound.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * t = high[i] - low[i]
-    * mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-    * CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-    * There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmf">ta-lib.org/functions/cmf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
@@ -386,13 +381,8 @@
     * per-bar multiplier with. CMF is that same multiplier summed over a fixed
     * window and normalised, where AD accumulates it from the start of the
     * series without bound.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * t = high[i] - low[i]
-    * mfv[i] = ((close[i] - low[i]) - (high[i] - close[i])) / t * volume[i], or 0 when t is not positive
-    * CMF[i] = ( sum_{k=i-N+1..i} mfv[k] ) / ( sum_{k=i-N+1..i} volume[k] ), N = optInTimePeriod
-    * There is no seeding and no recursion, hence no unstable period. Each output depends only on the N bars in its own window.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmf">ta-lib.org/functions/cmf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>

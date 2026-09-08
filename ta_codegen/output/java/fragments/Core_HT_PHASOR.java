@@ -678,10 +678,8 @@
     * detrend/Hilbert machinery as the other HT_* cycle functions. This function
     * is meant for building your own cycle analysis on top of the raw phasor,
     * not as a ready-made signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_phasor">ta-lib.org/functions/ht_phasor</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -743,10 +741,8 @@
     * detrend/Hilbert machinery as the other HT_* cycle functions. This function
     * is meant for building your own cycle analysis on top of the raw phasor,
     * not as a ready-made signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Smooth price with a 4-bar WMA (weights 1,2,3,4 /10). Apply the Hilbert Transform (a=0.0962, b=0.5769, scaled per bar by adjustedPrevPeriod = 0.075*period + 0.54) to get detrender = HT(smoothed) and Q1 = HT(detrender). Output: outInPhase = detrender delayed 3 price bars; outQuadrature = Q1.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_phasor">ta-lib.org/functions/ht_phasor</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

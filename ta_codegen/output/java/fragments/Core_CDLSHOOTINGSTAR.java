@@ -233,6 +233,8 @@
     * little-to-no lower shadow that gaps up from the prior candle's real body.
     * Bearish reversal signal. A hit (-100) flags a bearish reversal at the top
     * of an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlshootingstar">ta-lib.org/functions/cdlshootingstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
@@ -302,6 +304,8 @@
     * little-to-no lower shadow that gaps up from the prior candle's real body.
     * Bearish reversal signal. A hit (-100) flags a bearish reversal at the top
     * of an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlshootingstar">ta-lib.org/functions/cdlshootingstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>

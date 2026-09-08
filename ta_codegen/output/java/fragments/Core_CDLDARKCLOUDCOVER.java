@@ -197,6 +197,8 @@
     * black candle that opens above the prior high and closes deep into the
     * prior white body past a penetration threshold. Signals a potential top. A
     * hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>
@@ -269,6 +271,8 @@
     * black candle that opens above the prior high and closes deep into the
     * prior white body past a penetration threshold. Signals a potential top. A
     * hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend the bearish reversal classically assumes.</li>

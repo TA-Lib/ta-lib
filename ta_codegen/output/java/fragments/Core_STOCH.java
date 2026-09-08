@@ -477,12 +477,8 @@
     * over a lookback period, then double-smooths it. Returns the Slow-%K and
     * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
     * crossing %D signals momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-    * SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>
@@ -574,12 +570,8 @@
     * over a lookback period, then double-smooths it. Returns the Slow-%K and
     * Slow-%D lines. SlowK/SlowD &gt; 80 overbought, &lt; 20 oversold; %K
     * crossing %D signals momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-    * SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-    * SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</li>

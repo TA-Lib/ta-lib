@@ -238,6 +238,8 @@
     * counter-color candles that stay partly within the first candle's high-low
     * range, then a long same-color candle that resumes the trend. Bullish
     * (rising) or bearish (falling) continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrisefall3methods">ta-lib.org/functions/cdlrisefall3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
@@ -309,6 +311,8 @@
     * counter-color candles that stay partly within the first candle's high-low
     * range, then a long same-color candle that resumes the trend. Bullish
     * (rising) or bearish (falling) continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrisefall3methods">ta-lib.org/functions/cdlrisefall3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>

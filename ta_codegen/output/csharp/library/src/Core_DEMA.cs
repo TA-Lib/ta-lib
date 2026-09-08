@@ -331,10 +331,10 @@ public partial class Core
    /// reduce lag versus a plain EMA. Overlap Studies overlay on price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/dema">ta-lib.org/functions/dema</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</description></item>
    /// </list>
@@ -392,10 +392,10 @@ public partial class Core
    /// reduce lag versus a plain EMA. Overlap Studies overlay on price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/dema">ta-lib.org/functions/dema</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</description></item>
    /// </list>

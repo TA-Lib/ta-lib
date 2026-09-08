@@ -375,12 +375,8 @@
     * more than the level. The oscillator is one leg of Williams' Profitunity
     * system, alongside the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * AC_t = AO_t − SMA(AO, signal)_t
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -465,12 +461,8 @@
     * more than the level. The oscillator is one leg of Williams' Profitunity
     * system, alongside the Awesome Oscillator (<a
     * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * median_t = ( high_t + low_t ) / 2
-    * AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-    * AC_t = AO_t − SMA(AO, signal)_t
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ac">ta-lib.org/functions/ac</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

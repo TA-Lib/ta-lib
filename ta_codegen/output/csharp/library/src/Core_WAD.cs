@@ -235,17 +235,10 @@ public partial class Core
    /// momentum indicator, not a volume one.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t:
-   /// TRH_t = max(close_{t-1}, high_t)
-   /// TRL_t = min(close_{t-1}, low_t)
-   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
-   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
-   /// otherwise                     AD_t = 0
-   /// WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -317,17 +310,10 @@ public partial class Core
    /// momentum indicator, not a volume one.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// For each bar t:
-   /// TRH_t = max(close_{t-1}, high_t)
-   /// TRL_t = min(close_{t-1}, low_t)
-   /// if close_t &gt; close_{t-1} then AD_t = close_t - TRL_t
-   /// if close_t &lt; close_{t-1} then AD_t = close_t - TRH_t
-   /// otherwise                     AD_t = 0
-   /// WAD_t = WAD_{t-1} + AD_t
-   /// The first bar of the requested range has no previous close, so the first output is always AD_t = 0. A different `startIdx` shifts WAD's whole line by a constant.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/wad">ta-lib.org/functions/wad</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

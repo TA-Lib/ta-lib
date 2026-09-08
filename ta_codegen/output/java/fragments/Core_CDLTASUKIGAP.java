@@ -187,6 +187,8 @@
     * opposite-color candle that opens inside its body and closes back into the
     * gap without filling it. An upside gap is a bullish continuation signal; a
     * downside gap is a bearish continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltasukigap">ta-lib.org/functions/cdltasukigap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
@@ -255,6 +257,8 @@
     * opposite-color candle that opens inside its body and closes back into the
     * gap without filling it. An upside gap is a bullish continuation signal; a
     * downside gap is a bearish continuation signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdltasukigap">ta-lib.org/functions/cdltasukigap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>

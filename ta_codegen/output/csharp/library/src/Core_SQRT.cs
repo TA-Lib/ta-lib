@@ -127,10 +127,10 @@ public partial class Core
    /// Element-wise square root of the input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = sqrt(inReal[i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A negative input has no real square root, so those elements come out NaN.</description></item>
    /// </list>
@@ -185,10 +185,10 @@ public partial class Core
    /// Element-wise square root of the input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = sqrt(inReal[i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/sqrt">ta-lib.org/functions/sqrt</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A negative input has no real square root, so those elements come out NaN.</description></item>
    /// </list>

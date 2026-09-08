@@ -242,12 +242,8 @@
     * / {@code inLow[...]} at that index. The two outputs are independent flags
     * rather than one signed value, because an outside bar can be a swing high
     * and a swing low at once.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
-    * swingHigh(i) = 100 if High[c] > High[j] for every j in [c-L, c+R] other than c, else 0.
-    * swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its {@code ta.pivothigh} / {@code ta.pivotlow} let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</li>
@@ -333,12 +329,8 @@
     * / {@code inLow[...]} at that index. The two outputs are independent flags
     * rather than one signed value, because an outside bar can be a swing high
     * and a swing low at once.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * With `L = optInLeftBars`, `R = optInRightBars` and pivot `c = i - R`:
-    * swingHigh(i) = 100 if High[c] > High[j] for every j in [c-L, c+R] other than c, else 0.
-    * swingLow(i) = 100 if Low[c] < Low[j] for every j in [c-L, c+R] other than c, else 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/fractal">ta-lib.org/functions/fractal</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Strict on both sides: a bar tied with any other bar of its window is not a pivot. TradingView's Pine runtime differs — its {@code ta.pivothigh} / {@code ta.pivotlow} let a tie with an older bar stand and let a tie with a newer bar cancel, i.e. non-strict left and strict right — so a plateau Pine reports as a pivot is not one here.</li>

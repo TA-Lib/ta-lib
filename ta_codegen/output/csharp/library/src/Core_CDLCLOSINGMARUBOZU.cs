@@ -256,10 +256,10 @@ public partial class Core
    /// bullish, black is bearish.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Requires: (1) long real body: real body &gt; the BodyLong average; AND (2) very short shadow at the closing end: if white (close&gt;=open) upper shadow &lt; the ShadowVeryShort average [close at/near high]; if black (close&lt;open) lower shadow &lt; the ShadowVeryShort average [close at/near low].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlclosingmarubozu">ta-lib.org/functions/cdlclosingmarubozu</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<see href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -326,10 +326,10 @@ public partial class Core
    /// bullish, black is bearish.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Requires: (1) long real body: real body &gt; the BodyLong average; AND (2) very short shadow at the closing end: if white (close&gt;=open) upper shadow &lt; the ShadowVeryShort average [close at/near high]; if black (close&lt;open) lower shadow &lt; the ShadowVeryShort average [close at/near low].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlclosingmarubozu">ta-lib.org/functions/cdlclosingmarubozu</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<see href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</see>)</description></item>
    /// </list>

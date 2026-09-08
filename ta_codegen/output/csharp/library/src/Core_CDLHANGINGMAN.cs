@@ -322,6 +322,10 @@ public partial class Core
    /// of an uptrend).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhangingman">ta-lib.org/functions/cdlhangingman</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
    /// <item><description>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. (<see href="https://thepatternsite.com/HangingMan.html">thepatternsite.com</see>)</description></item>
@@ -389,6 +393,10 @@ public partial class Core
    /// of an uptrend).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhangingman">ta-lib.org/functions/cdlhangingman</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</description></item>
    /// <item><description>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. (<see href="https://thepatternsite.com/HangingMan.html">thepatternsite.com</see>)</description></item>

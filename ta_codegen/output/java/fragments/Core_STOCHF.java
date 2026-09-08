@@ -424,11 +424,8 @@
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
     * STOCHF returns the unsmoothed FastK and FastD. Oscillates 0-100; &gt;80
     * overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>
@@ -509,11 +506,8 @@
     * moving-average-smoothed %D line. Unlike STOCH (which slows both lines),
     * STOCHF returns the unsmoothed FastK and FastD. Oscillates 0-100; &gt;80
     * overbought, &lt;20 oversold.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * FastK = 100 * (Close - LowestLow) / (HighestHigh - LowestLow), over the last FastK_Period bars (incl. today)
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochf">ta-lib.org/functions/stochf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the high-low range over the window is zero, %K is set to 0 instead of being undefined.</li>

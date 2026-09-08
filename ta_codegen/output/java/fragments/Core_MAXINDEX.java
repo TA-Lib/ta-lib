@@ -184,10 +184,8 @@
     * Returns the index of the highest input value within a rolling window of
     * optInTimePeriod bars. Same as MAX but outputs the location instead of the
     * value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -249,10 +247,8 @@
     * Returns the index of the highest input value within a rolling window of
     * optInTimePeriod bars. Same as MAX but outputs the location instead of the
     * value.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outInteger[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/maxindex">ta-lib.org/functions/maxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the highest value, the index of one of them is returned — not necessarily the first or the last.</li>

@@ -448,10 +448,8 @@
     * prices toward the middle of the window most heavily. Equivalent to an SMA
     * of an SMA, computed here via an incremental triangular-weighted running
     * numerator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trima">ta-lib.org/functions/trima</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Follows the generally accepted (Metastock) definition rather than the TradeStation variant.</li>
@@ -513,10 +511,8 @@
     * prices toward the middle of the window most heavily. Equivalent to an SMA
     * of an SMA, computed here via an incremental triangular-weighted running
     * numerator.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Weights rise then fall (4-period: (1a+2b+2c+1d)/6; 5-period: (1a+2b+3c+2d+1e)/9). With n = period>>1: odd divides by (n+1)^2, even by n(n+1). Equivalent to odd: SMA(SMA(x,(period+1)/2),(period+1)/2); even: SMA(SMA(x,period/2),period/2+1).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trima">ta-lib.org/functions/trima</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Follows the generally accepted (Metastock) definition rather than the TradeStation variant.</li>

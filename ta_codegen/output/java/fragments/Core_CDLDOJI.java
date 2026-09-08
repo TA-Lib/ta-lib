@@ -164,10 +164,8 @@
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
     * at or below the BodyDoji threshold. Market indecision; neither bullish nor
     * bearish on its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -230,10 +228,8 @@
     * Single-candle Doji recognizer: fires when the real body (|close-open|) is
     * at or below the BodyDoji threshold. Market indecision; neither bullish nor
     * bearish on its own.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * match if $|close-open| \le \text{CandleAverage(BodyDoji)}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdldoji">ta-lib.org/functions/cdldoji</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

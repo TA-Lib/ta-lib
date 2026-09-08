@@ -363,10 +363,10 @@ public partial class Core
    /// the rolling minimum and maximum.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/percentile">ta-lib.org/functions/percentile</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's <c>ta.percentile_linear_interpolation</c>) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</description></item>
    /// <item><description>Every input value in the window must be finite. A NaN makes every comparison against it false, which breaks the ordering the rank index is read from.</description></item>
@@ -434,10 +434,10 @@ public partial class Core
    /// the rolling minimum and maximum.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $W_t = \operatorname{sort}(x_{t-N+1}, \dots, x_t)$; $k = \left\lceil \frac{P \cdot N}{100} \right\rceil$ clamped to $[1, N]$; $PERCENTILE_t = W_t[k]$ (N = optInTimePeriod, P = optInPercentile, $W_t[1]$ the smallest)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/percentile">ta-lib.org/functions/percentile</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The nearest-rank method is one of several incompatible percentile conventions. The linear-interpolation family (Hyndman &amp; Fan type 7, the default of most statistical packages, and TradingView's <c>ta.percentile_linear_interpolation</c>) reports a weighted blend of two neighbouring order statistics and can emit a value that never occurred. That is a different indicator, not a mode of this one: PERCENTILE's parameter list is fixed at a window and a percentage, and a method selector cannot be appended to it later without changing the function's arity.</description></item>
    /// <item><description>Every input value in the window must be finite. A NaN makes every comparison against it false, which breaks the ordering the rank index is read from.</description></item>

@@ -242,6 +242,10 @@ public partial class Core
    /// reversal signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlpiercing">ta-lib.org/functions/cdlpiercing</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A prior downtrend is not verified.</description></item>
    /// </list>
@@ -308,6 +312,10 @@ public partial class Core
    /// reversal signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlpiercing">ta-lib.org/functions/cdlpiercing</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A prior downtrend is not verified.</description></item>
    /// </list>

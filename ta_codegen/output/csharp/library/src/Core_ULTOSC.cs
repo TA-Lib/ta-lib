@@ -635,13 +635,10 @@ public partial class Core
    /// &lt;30 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// trueLow = min(low, prevClose);  BP = close - trueLow
-   /// TR = max(high-low, |prevClose-high|, |prevClose-low|)
-   /// avg_n = (sum BP over n bars) / (sum TR over n bars)
-   /// ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</description></item>
    /// </list>
@@ -715,13 +712,10 @@ public partial class Core
    /// &lt;30 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// trueLow = min(low, prevClose);  BP = close - trueLow
-   /// TR = max(high-low, |prevClose-high|, |prevClose-low|)
-   /// avg_n = (sum BP over n bars) / (sum TR over n bars)
-   /// ULTOSC = 100 * (4*avg_short + 2*avg_mid + avg_long) / 7
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ultosc">ta-lib.org/functions/ultosc</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The three periods are sorted internally, so the 4/2/1 weighting always applies to the shortest, middle, and longest period regardless of the order in which you pass them.</description></item>
    /// </list>

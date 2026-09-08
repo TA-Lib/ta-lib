@@ -156,10 +156,8 @@
    /**
     * Rolling sum of the input over a fixed period. Each output is the sum of
     * the most recent optInTimePeriod input values.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sum">ta-lib.org/functions/sum</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -212,10 +210,8 @@
    /**
     * Rolling sum of the input over a fixed period. Each output is the sum of
     * the most recent optInTimePeriod input values.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $out_i = \sum_{j=i-(N-1)}^{i} inReal_j$, N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sum">ta-lib.org/functions/sum</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

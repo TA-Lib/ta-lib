@@ -236,11 +236,8 @@
    /**
     * Returns the absolute input indices of the lowest and highest values within
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>
@@ -305,11 +302,8 @@
    /**
     * Returns the absolute input indices of the lowest and highest values within
     * each rolling window of optInTimePeriod bars. Index variant of MINMAX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outMinIdx[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-    * outMaxIdx[i] = index of max(inReal[i-optInTimePeriod+1 .. i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/minmaxindex">ta-lib.org/functions/minmaxindex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When several bars in a window share the extreme value, the index of one of them is returned — not necessarily the first or the last.</li>

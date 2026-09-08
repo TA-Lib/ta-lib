@@ -218,11 +218,8 @@
     * (scale-invariant) variant of APO. Positive when the fast MA is above the
     * slow MA (upward momentum), negative otherwise; magnitude is the %
     * deviation.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PPO = ((fastMA(inReal) - slowMA(inReal)) / slowMA(inReal)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-day EMA) / 26-day EMA) * 100, i.e. the MACD oscillator expressed as a percentage. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>
@@ -293,11 +290,8 @@
     * (scale-invariant) variant of APO. Positive when the fast MA is above the
     * slow MA (upward momentum), negative otherwise; magnitude is the %
     * deviation.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * PPO = ((fastMA(inReal) - slowMA(inReal)) / slowMA(inReal)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
-    * The standard form is exponential with periods 12 and 26 — ((12-day EMA - 26-day EMA) / 26-day EMA) * 100, i.e. the MACD oscillator expressed as a percentage. `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original PPO/MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ppo">ta-lib.org/functions/ppo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical, making the numerator — and therefore the output — zero at every bar.</li>

@@ -223,6 +223,8 @@
     * A two-candle pattern of two opposite-color marubozu (long body, very short
     * shadows on both ends) separated by a gap. A strong directional/reversal
     * signal whose bull/bear bias is set by the longer of the two marubozu.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -286,6 +288,8 @@
     * A two-candle pattern of two opposite-color marubozu (long body, very short
     * shadows on both ends) separated by a gap. A strong directional/reversal
     * signal whose bull/bear bias is set by the longer of the two marubozu.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlkickingbylength">ta-lib.org/functions/cdlkickingbylength</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

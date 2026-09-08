@@ -57,23 +57,15 @@ pub fn guarded_docs(
     b.close("summary");
 
     b.open("remarks");
-    if let Some(formula) = &doc.formula {
-        b.text("<b>Formula</b>");
-        b.raw("<code>");
-        for line in formula.lines() {
-            let t = line.trim();
-            if !t.is_empty() {
-                b.raw(&xml_escape_raw(t));
-            }
-        }
-        b.raw("</code>");
-        if let Some(note) = &doc.formula_note {
-            b.text(&csdoc(note));
-        }
-    }
-    if !doc.notes.is_empty() {
+    let url = doc_meta::function_page_url(&func.name);
+    b.para(&format!(
+        "Formula and more info at <see href=\"{url}\">{}</see>.",
+        url.trim_start_matches("https://")
+    ));
+    let notes = doc_meta::renderable_notes(&doc.notes);
+    if !notes.is_empty() {
         b.raw("<list type=\"bullet\">");
-        for note in &doc.notes {
+        for note in notes {
             b.raw(&format!("<item><description>{}</description></item>", csdoc(note)));
         }
         b.raw("</list>");
@@ -390,8 +382,7 @@ fn inline_link(chars: &[char], start: usize) -> Option<(String, String, usize)> 
     Some((label, dest, paren + 1))
 }
 
-/// Escape a raw (formula) line for XML content — entities only, no backtick
-/// handling (formulas use `*`/`<`/`>` as math, not markup).
+/// Escape a line for XML content — entities only, no inline-markup handling.
 pub(crate) fn xml_escape_raw(text: &str) -> String {
     text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }

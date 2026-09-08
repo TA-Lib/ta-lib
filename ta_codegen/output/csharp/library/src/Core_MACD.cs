@@ -475,10 +475,10 @@ public partial class Core
    /// momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/macd">ta-lib.org/functions/macd</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</description></item>
@@ -554,10 +554,10 @@ public partial class Core
    /// momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/macd">ta-lib.org/functions/macd</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing: the signal equals the MACD line and the histogram is zero. Before 0.6.5 this parameter value produced misaligned output (issues #48/#59).</description></item>

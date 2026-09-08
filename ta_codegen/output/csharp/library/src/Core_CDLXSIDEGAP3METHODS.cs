@@ -204,6 +204,10 @@ public partial class Core
    /// (downside) when they are black.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlxsidegap3methods">ta-lib.org/functions/cdlxsidegap3methods</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
    /// <item><description>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<see href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</see>)</description></item>
@@ -273,6 +277,10 @@ public partial class Core
    /// (downside) when they are black.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlxsidegap3methods">ta-lib.org/functions/cdlxsidegap3methods</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
    /// <item><description>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<see href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</see>)</description></item>

@@ -252,6 +252,10 @@ public partial class Core
    /// hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// </list>
@@ -322,6 +326,10 @@ public partial class Core
    /// hit (-100) is a bearish reversal signal, most meaningful after an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdldarkcloudcover">ta-lib.org/functions/cdldarkcloudcover</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// </list>

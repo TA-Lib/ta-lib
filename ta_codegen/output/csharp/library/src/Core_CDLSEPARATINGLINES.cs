@@ -294,10 +294,10 @@ public partial class Core
    /// continuation signal.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg &lt;= open[i] &lt;= open[i-1]+Equal_avg; (3) long body: realbody(i) &gt; BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) &lt; ShadowVeryShort_avg; if i is black, uppershadow(i) &lt; ShadowVeryShort_avg.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlseparatinglines">ta-lib.org/functions/cdlseparatinglines</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A prior trend is not verified, nor that the pattern aligns with it.</description></item>
    /// </list>
@@ -365,10 +365,10 @@ public partial class Core
    /// continuation signal.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg &lt;= open[i] &lt;= open[i-1]+Equal_avg; (3) long body: realbody(i) &gt; BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) &lt; ShadowVeryShort_avg; if i is black, uppershadow(i) &lt; ShadowVeryShort_avg.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlseparatinglines">ta-lib.org/functions/cdlseparatinglines</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A prior trend is not verified, nor that the pattern aligns with it.</description></item>
    /// </list>

@@ -192,11 +192,8 @@
     * direction, but it uses no smoothing and carries no recursion. A common use
     * is regime selection: run trend-following logic while VHF is high,
     * oscillator logic while it is low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-    * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</li>
@@ -263,11 +260,8 @@
     * direction, but it uses no smoothing and carries no recursion. A common use
     * is regime selection: run trend-following logic while VHF is high,
     * oscillator logic while it is low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
-    * The two windows are deliberately not co-terminal: the extrema span `optInTimePeriod` closes, the changes consume one more. Because `num` is the distance between two points the changes connect, `num <= den` always, so the result never leaves [0,1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vhf">ta-lib.org/functions/vhf</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A window whose closes are all identical has no vertical movement and no horizontal movement. VHF reports 0 there. Other libraries differ: Tulip Indicators leaves the division unguarded and emits NaN, pandas-ta-classic perturbs the numerator and emits +Inf.</li>

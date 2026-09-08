@@ -369,12 +369,8 @@
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
     * despite both being called "triple EMA".
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    * v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    * T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -439,12 +435,8 @@
     * Tillson's T3: a low-lag moving average built from six chained EMAs,
     * combined via volume-factor-weighted coefficients. Not the same as EMA3,
     * despite both being called "triple EMA".
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * k = 2/(period+1); e1=EMA(x), e2=EMA(e1), ... e6=EMA(e5) (six chained EMAs).
-    * v = vFactor: c1 = -v^3; c2 = 3(v^2 - c1); c3 = -6v^2 - 3(v - c1); c4 = 1 + 3v - c1 + 3v^2.
-    * T3 = c1*e6 + c2*e5 + c3*e4 + c4*e3
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/t3">ta-lib.org/functions/t3</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>

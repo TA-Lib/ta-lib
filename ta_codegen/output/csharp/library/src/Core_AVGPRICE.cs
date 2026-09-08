@@ -142,10 +142,10 @@ public partial class Core
    /// representative price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/avgprice">ta-lib.org/functions/avgprice</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -208,10 +208,10 @@ public partial class Core
    /// representative price.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = (High[i] + Low[i] + Close[i] + Open[i]) / 4
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/avgprice">ta-lib.org/functions/avgprice</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

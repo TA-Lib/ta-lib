@@ -225,10 +225,10 @@ public partial class Core
    /// than ADX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied (unreliable when values are near 1).</description></item>
    /// </list>
@@ -295,10 +295,10 @@ public partial class Core
    /// than ADX.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Wilder's original integer rounding is not applied (unreliable when values are near 1).</description></item>
    /// </list>

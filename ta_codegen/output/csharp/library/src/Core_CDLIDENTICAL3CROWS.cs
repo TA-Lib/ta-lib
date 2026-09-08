@@ -293,6 +293,10 @@ public partial class Core
    /// signals a bearish reversal (pattern is always bearish).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlidentical3crows">ta-lib.org/functions/cdlidentical3crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the bearish reversal classically assumes.</description></item>
    /// <item><description>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</description></item>
@@ -360,6 +364,10 @@ public partial class Core
    /// signals a bearish reversal (pattern is always bearish).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlidentical3crows">ta-lib.org/functions/cdlidentical3crows</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend that the bearish reversal classically assumes.</description></item>
    /// <item><description>Does not require the three bodies to be equal in size; 'identical' refers only to each candle opening at or near the previous candle's close.</description></item>

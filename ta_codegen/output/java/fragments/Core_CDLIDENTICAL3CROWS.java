@@ -237,6 +237,8 @@
     * candles, each with a very short (or no) lower shadow, where each candle
     * after the first opens at or very near the prior candle's close. A hit
     * signals a bearish reversal (pattern is always bearish).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlidentical3crows">ta-lib.org/functions/cdlidentical3crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the bearish reversal classically assumes.</li>
@@ -304,6 +306,8 @@
     * candles, each with a very short (or no) lower shadow, where each candle
     * after the first opens at or very near the prior candle's close. A hit
     * signals a bearish reversal (pattern is always bearish).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlidentical3crows">ta-lib.org/functions/cdlidentical3crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the bearish reversal classically assumes.</li>

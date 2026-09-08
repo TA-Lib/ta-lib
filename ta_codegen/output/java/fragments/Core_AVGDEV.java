@@ -145,10 +145,8 @@
     * average over the last N periods. Measures dispersion around the window
     * mean. Higher values indicate greater spread; zero when all values in the
     * window are equal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0}^{N-1} |x_{t-i} - mean_t|$ (N = optInTimePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/avgdev">ta-lib.org/functions/avgdev</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -205,10 +203,8 @@
     * average over the last N periods. Measures dispersion around the window
     * mean. Higher values indicate greater spread; zero when all values in the
     * window are equal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $mean_t = \frac{1}{N}\sum_{i=0}^{N-1} x_{t-i}$; $AVGDEV_t = \frac{1}{N}\sum_{i=0}^{N-1} |x_{t-i} - mean_t|$ (N = optInTimePeriod)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/avgdev">ta-lib.org/functions/avgdev</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

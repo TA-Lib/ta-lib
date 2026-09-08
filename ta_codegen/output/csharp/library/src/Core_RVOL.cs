@@ -221,10 +221,10 @@ public partial class Core
    /// through; the same breakout near 1 is the one to distrust.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/rvol">ta-lib.org/functions/rvol</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</description></item>
    /// <item><description>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</description></item>
@@ -291,10 +291,10 @@ public partial class Core
    /// through; the same breakout near 1 is the one to distrust.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/rvol">ta-lib.org/functions/rvol</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</description></item>
    /// <item><description>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</description></item>

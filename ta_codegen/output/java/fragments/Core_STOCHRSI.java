@@ -256,12 +256,8 @@
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * rsi = RSI(inReal, optInTimePeriod)
-    * FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</li>
@@ -341,12 +337,8 @@
     * of price, measuring where RSI sits within its recent min/max range.
     * Oscillates 0-100; high = RSI near its recent top, low = near its recent
     * bottom.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * rsi = RSI(inReal, optInTimePeriod)
-    * FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-    * FastD = MA(FastK, FastD_Period, FastD_MAType)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</li>

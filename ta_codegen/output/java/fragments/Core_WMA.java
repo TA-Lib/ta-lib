@@ -331,10 +331,8 @@
     * Linearly weighted moving average: each of the last N prices is weighted by
     * its position, oldest getting weight 1 and newest weight N. Smooths price
     * while emphasizing recent bars.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wma">ta-lib.org/functions/wma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -396,10 +394,8 @@
     * Linearly weighted moving average: each of the last N prices is weighted by
     * its position, oldest getting weight 1 and newest weight N. Smooths price
     * while emphasizing recent bars.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * WMA = ( sum_{k=1..N} k * P_k ) / (N(N+1)/2), where P_N is the most recent bar
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wma">ta-lib.org/functions/wma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>

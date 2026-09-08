@@ -294,6 +294,10 @@ public partial class Core
    /// significant in an uptrend).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// <item><description>The third candle only needs a body longer than short, not the full long body some definitions require.</description></item>
@@ -365,6 +369,10 @@ public partial class Core
    /// significant in an uptrend).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdleveningstar">ta-lib.org/functions/cdleveningstar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding uptrend the bearish reversal classically assumes.</description></item>
    /// <item><description>The third candle only needs a body longer than short, not the full long body some definitions require.</description></item>

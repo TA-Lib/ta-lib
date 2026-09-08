@@ -158,10 +158,8 @@
     * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
     * open-to-close body of each bar. Over a rolling window it ratios cumulative
     * up-body moves against total up+down body moves.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for bars with close<=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -219,10 +217,8 @@
     * Intraday Momentum Index: an RSI-like 0-100 oscillator built from the
     * open-to-close body of each bar. Over a rolling window it ratios cumulative
     * up-body moves against total up+down body moves.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * upsum = Σ(close-open) for bars with close>open; downsum = Σ(open-close) for bars with close<=open, over window [i-lookback, i]; IMI = 100 * upsum/(upsum+downsum)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/imi">ta-lib.org/functions/imi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

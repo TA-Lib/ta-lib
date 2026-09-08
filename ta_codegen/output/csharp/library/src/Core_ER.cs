@@ -356,13 +356,10 @@ public partial class Core
    /// kept bit-identical to it.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
-   /// Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-   /// The output is a hard 0..1 — the net move can never exceed the path travelled.
-   /// TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/er">ta-lib.org/functions/er</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>First output at index <c>P</c> (<c>P</c> one-bar changes need <c>P+1</c> prices). No unstable period, not start-dependent.</description></item>
    /// </list>
@@ -427,13 +424,10 @@ public partial class Core
    /// kept bit-identical to it.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// `ER[t] = |close[t] − close[t−P]| / Σ |close[k] − close[k−1]|` over the same `P` bars.
-   /// Two guards, both shared with `KAMA`: a ratio that floating point would nudge just above 1.0 on a straight-line advance is pinned to exactly 1.0, and a dead-flat window (0/0) also reports 1.0 — a flat market therefore reads as "perfectly efficient", which is `KAMA`'s own convention and what keeps the two reconstructible from each other.
-   /// The output is a hard 0..1 — the net move can never exceed the path travelled.
-   /// TC2000 documents a signed ×100 variant (−100..+100); the absolute 0..1 form here is the author's, StockCharts', LEAN's, backtrader's and pandas-ta's.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/er">ta-lib.org/functions/er</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>First output at index <c>P</c> (<c>P</c> one-bar changes need <c>P+1</c> prices). No unstable period, not start-dependent.</description></item>
    /// </list>

@@ -13,16 +13,12 @@
 //! HTML and XML targets cannot come to disagree about it while each keeps its
 //! own tags. Rust asks nothing: it never called them.
 //!
-//! Scope: inline emphasis, which is what the emitters now convert. It sweeps the
+//! Scope: inline emphasis, and TeX, which the emitters handle in the two ways
+//! authored notation can be handled — converted, or dropped. It sweeps the
 //! *emitted doc blocks* rather than the generated files, because a generated
 //! file also carries the C source's own changelog header verbatim (`IMI`'s
 //! `Fix #112: ... a *successful* call`), which is not Markdown and must not be
 //! converted. Reading the emitter's output directly is what tells those apart.
-//!
-//! Not in scope, and deliberately: the `## Formula` block, which
-//! `split_formula_note` hands to the emitters as preformatted text whenever the
-//! section carries no closing `$$` (148 of 150 sections). Its backticks and
-//! Markdown links are a separate defect with a separate blast radius.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -94,17 +90,13 @@ fn rendered_docs(name: &str, registry: &Registry) -> Vec<(String, String)> {
     out
 }
 
-/// The doc-comment lines of a rendered block, with the comment marker stripped
-/// and preformatted blocks dropped.
+/// The doc-comment lines of a rendered block, with the comment marker stripped.
 ///
-/// Both strips matter. A Javadoc line carries its own leading `*`, which reads
-/// as an emphasis opener if it is left on — the first version of this sweep
-/// reported 982 italics in the Java output on that alone. And a formula block is
-/// preformatted, so its asterisks are math; leaving it in would make this gate
-/// fail on the defect it is not fixing.
+/// The strip matters: a Javadoc line carries its own leading `*`, which reads as
+/// an emphasis opener if it is left on — the first version of this sweep
+/// reported 982 italics in the Java output on that alone.
 fn prose_lines(block: &str) -> Vec<String> {
     let mut out = Vec::new();
-    let mut in_pre = false;
     for raw in block.lines() {
         let s = raw.trim();
         let body = if let Some(b) = s.strip_prefix("///") {
@@ -114,19 +106,6 @@ fn prose_lines(block: &str) -> Vec<String> {
         } else {
             continue;
         };
-        // Order matters: the close marker is on its own line, and `<code>` is a
-        // prefix of nothing else here.
-        if body.contains("}</pre>") || body.contains("</code>") {
-            in_pre = false;
-            continue;
-        }
-        if body.contains("<pre>{@code") || body.contains("<code>") {
-            in_pre = true;
-            continue;
-        }
-        if in_pre {
-            continue;
-        }
         out.push(body.to_string());
     }
     out
@@ -261,21 +240,88 @@ fn the_sweep_would_see_a_reintroduced_delimiter() {
     assert_eq!(emphasis_runs(&mask_code_spans(&lines[1]), 1), 0);
 }
 
+/// Every rendered Java/C# doc line carrying TeX, as `label | line`.
+fn tex_survivors() -> Vec<String> {
+    let registry = Registry::from_dir(&input_dir());
+    let mut out = Vec::new();
+    for name in documented_indicators() {
+        for (label, block) in rendered_docs(&name, &registry) {
+            for line in prose_lines(&block) {
+                // `doc_meta::renderable_notes`' rule, restated rather than
+                // called: `$100` is money and must not fail a build, and the
+                // literal-string probe below is what arbitrates the filter
+                // without sharing its reading.
+                let tex = line.as_bytes().windows(2).any(|w| {
+                    (w[0] == b'\\' && w[1].is_ascii_alphabetic())
+                        || (w[0] == b'$' && !w[1].is_ascii_digit() && !w[1].is_ascii_whitespace())
+                });
+                if tex {
+                    out.push(format!("{label} | {}", line.trim()));
+                }
+            }
+        }
+    }
+    out
+}
+
+/// The second gate. Authored TeX renders as its own source in javadoc and in the
+/// XML doc, so a `## Notes` bullet carrying it is dropped rather than shipped
+/// (`doc_meta::renderable_notes`).
+///
+/// The drop covers Notes only, which is what makes this sweep worth its runtime:
+/// `## Summary` and the per-argument prose are not droppable — they are the only
+/// definition a Java or C# user gets — so TeX authored there has to fail the
+/// build instead. Nothing in the corpus carries any today; this is what says so.
+#[test]
+fn no_tex_reaches_the_java_or_csharp_docs() {
+    let survivors = tex_survivors();
+    assert!(
+        survivors.is_empty(),
+        "{} rendered doc line(s) carry TeX. A `## Notes` bullet is filtered, so \
+         these are Summary or argument prose, which cannot be dropped — move the \
+         notation to `## Formula`, which renders on ta-lib.org only:\n  {}",
+        survivors.len(),
+        survivors.join("\n  ")
+    );
+}
+
+/// The sweep above passes on an empty corpus just as well as on a clean one, so
+/// pin the filter it is measuring: BBANDS is the one function whose notes carry
+/// TeX, and neither of them may reach either target.
+#[test]
+fn the_tex_notes_are_actually_dropped() {
+    let registry = Registry::from_dir(&input_dir());
+    let (func, _) = load("bbands");
+    let notes = &func.doc.as_ref().expect("bbands doc").notes;
+    assert!(
+        notes.iter().any(|n| n.contains("\\text{matype}")),
+        "BBANDS' notes no longer carry TeX — repoint this probe at whatever does, \
+         or drop it with the filter. Notes: {notes:?}"
+    );
+    for (label, block) in rendered_docs("bbands", &registry) {
+        assert!(
+            !block.contains("matype}$"),
+            "{label} still ships BBANDS' TeX note:\n{block}"
+        );
+    }
+}
+
 /// A code span's asterisks are the author's text. Nothing in the corpus asserts
 /// this today, and the natural fix — convert every `*` — would silently rewrite
 /// parameter names inside `{@code ...}`.
 #[test]
 fn a_code_span_keeps_its_asterisks() {
     let registry = Registry::from_dir(&input_dir());
-    let blocks = rendered_docs("coppock", &registry);
+    let blocks = rendered_docs("rma", &registry);
     let java = blocks
         .iter()
         .find(|(l, _)| l.starts_with("java"))
         .map(|(_, b)| b.clone())
         .expect("java block");
     assert!(
-        java.contains("optInROC*Period"),
-        "COPPOCK's prose names optInROC*Period; the emitter must leave it alone.\n{java}"
+        java.contains("{@code alpha * x + (1 - alpha) * prev}"),
+        "RMA's notes spell the recurrence in a code span; the emitter must leave \
+         its asterisks alone.\n{java}"
     );
 }
 

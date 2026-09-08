@@ -253,10 +253,10 @@ public partial class Core
    /// color.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle at index i. Hit when all hold: (1) short real body: real body &lt; the BodyShort average; (2) very long upper shadow: upper shadow &gt; the ShadowVeryLong average; (3) very long lower shadow: lower shadow &gt; the ShadowVeryLong average. No color, gap, or trend condition.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhighwave">ta-lib.org/functions/cdlhighwave</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<see href="https://thepatternsite.com/HighWave.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -325,10 +325,10 @@ public partial class Core
    /// color.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle at index i. Hit when all hold: (1) short real body: real body &lt; the BodyShort average; (2) very long upper shadow: upper shadow &gt; the ShadowVeryLong average; (3) very long lower shadow: lower shadow &gt; the ShadowVeryLong average. No color, gap, or trend condition.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhighwave">ta-lib.org/functions/cdlhighwave</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<see href="https://thepatternsite.com/HighWave.html">thepatternsite.com</see>)</description></item>
    /// </list>

@@ -243,6 +243,10 @@ public partial class Core
    /// signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdltristar">ta-lib.org/functions/cdltristar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This reversal pattern does not verify the prior trend it classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<see href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</see>)</description></item>
@@ -310,6 +314,10 @@ public partial class Core
    /// signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdltristar">ta-lib.org/functions/cdltristar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This reversal pattern does not verify the prior trend it classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<see href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</see>)</description></item>

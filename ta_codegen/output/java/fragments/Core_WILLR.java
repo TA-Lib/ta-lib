@@ -436,10 +436,8 @@
     * 0]. Measures where the current close sits relative to the high-low range
     * of the last N bars. Near 0 = close at period high (overbought); near -100
     * = close at period low (oversold).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -502,10 +500,8 @@
     * 0]. Measures where the current close sits relative to the high-low range
     * of the last N bars. Near 0 = close at period high (overbought); near -100
     * = close at period low (oversold).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * %R = ((highestHigh - close) / (highestHigh - lowestLow)) * -100 over the trailing optInTimePeriod bars, clamped to [-100, 0]; if highestHigh == lowestLow, output 0.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/willr">ta-lib.org/functions/willr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

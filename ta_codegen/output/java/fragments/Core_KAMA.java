@@ -465,12 +465,8 @@
     * fast in trends and smooths in ranging markets. Flat KAMA =
     * non-trending/ranging market. KAMA tracking price closely = efficient
     * trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    * SC = (ER*(2/3 - 2/31) + 2/31)^2
-    * KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>
@@ -533,12 +529,8 @@
     * fast in trends and smooths in ranging markets. Flat KAMA =
     * non-trending/ranging market. KAMA tracking price closely = efficient
     * trend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ER = |price[t] - price[t-period]| / sum(|price[i]-price[i-1]|, last period bars)
-    * SC = (ER*(2/3 - 2/31) + 2/31)^2
-    * KAMA[t] = KAMA[t-1] + SC*(price[t] - KAMA[t-1])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/kama">ta-lib.org/functions/kama</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, consistent with {@code MA(period=1)} for every MAType. (The natural KAMA math at period 1 would degenerate to a fixed-alpha EMA because the efficiency ratio is always 1, so the copy is made explicit.) Allowed since 0.6.5.</li>

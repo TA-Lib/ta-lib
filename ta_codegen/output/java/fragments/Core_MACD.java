@@ -419,10 +419,8 @@
     * slow EMA of the input, plus an EMA-smoothed signal line and their
     * histogram. MACD crossing its signal line and histogram sign changes flag
     * momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macd">ta-lib.org/functions/macd</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one.</li>
@@ -499,10 +497,8 @@
     * slow EMA of the input, plus an EMA-smoothed signal line and their
     * histogram. MACD crossing its signal line and histogram sign changes flag
     * momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = EMA_fast - EMA_slow;  Signal = EMA(MACD, signalPeriod);  Hist = MACD - Signal
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macd">ta-lib.org/functions/macd</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the two are swapped so the slow EMA is always the longer one.</li>

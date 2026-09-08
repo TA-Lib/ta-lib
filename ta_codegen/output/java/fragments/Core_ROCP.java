@@ -169,10 +169,8 @@
     * Rate of change expressed as a fraction of the price optInTimePeriod bars
     * ago. Normalized and centered at zero (positive or negative). &gt;0 rising
     * vs N bars ago, &lt;0 falling; equals ROC/100.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -229,10 +227,8 @@
     * Rate of change expressed as a fraction of the price optInTimePeriod bars
     * ago. Normalized and centered at zero (positive or negative). &gt;0 rising
     * vs N bars ago, &lt;0 falling; equals ROC/100.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ROCP = (price - prevPrice) / prevPrice, prevPrice = inReal[i - optInTimePeriod]
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rocp">ta-lib.org/functions/rocp</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -288,6 +288,10 @@ public partial class Core
    /// flags a potential bullish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlinvertedhammer">ta-lib.org/functions/cdlinvertedhammer</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. (<see href="https://thepatternsite.com/HammerInv.html">thepatternsite.com</see>)</description></item>
@@ -355,6 +359,10 @@ public partial class Core
    /// flags a potential bullish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlinvertedhammer">ta-lib.org/functions/cdlinvertedhammer</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. (<see href="https://thepatternsite.com/HammerInv.html">thepatternsite.com</see>)</description></item>

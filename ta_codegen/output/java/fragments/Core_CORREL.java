@@ -448,10 +448,8 @@
     * rolling window of optInTimePeriod bars. Measures how linearly the two
     * series move together. r near +1: strong positive co-movement; near -1:
     * strong inverse; near 0: no linear relationship.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/correl">ta-lib.org/functions/correl</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</li>
@@ -515,10 +513,8 @@
     * rolling window of optInTimePeriod bars. Measures how linearly the two
     * series move together. r near +1: strong positive co-movement; near -1:
     * strong inverse; near 0: no linear relationship.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * r = (sumXY - sumX*sumY/n) / sqrt((sumX2 - sumX^2/n) * (sumY2 - sumY^2/n)),  n = optInTimePeriod, sums over the window
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/correl">ta-lib.org/functions/correl</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>When the correlation is undefined for a window (for example a constant series), the output is 0 rather than an error or NaN.</li>

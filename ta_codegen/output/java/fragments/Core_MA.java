@@ -373,10 +373,8 @@
     * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ma">ta-lib.org/functions/ma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>
@@ -453,10 +451,8 @@
     * Generic moving-average dispatcher that forwards the job to the MA
     * implementation selected by optInMAType. Single uniform interface over all
     * TA-Lib moving averages.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal = MA_of_type(optInMAType)(inReal, optInTimePeriod); default type = SMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ma">ta-lib.org/functions/ma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing for every MAType: the output is a copy of the input.</li>

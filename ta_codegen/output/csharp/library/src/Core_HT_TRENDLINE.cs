@@ -803,6 +803,10 @@ public partial class Core
    /// </summary>
    /// <remarks>
    /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</see>.
+   /// </para>
+   /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
    /// nothing outside that range is touched, and the library never pads with
@@ -855,6 +859,10 @@ public partial class Core
    /// measured via Hilbert-transform quadrature (I/Q) analysis of price.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

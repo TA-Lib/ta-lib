@@ -260,10 +260,10 @@ public partial class Core
    /// reversal, most meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles at i-1 and i. Both black: close[i-1] &lt; open[i-1] and close[i] &lt; open[i]. First body long: realbody[i-1] &gt; BodyLong average. Second body short: realbody[i] &lt;= BodyShort average. Second body contained by first: open[i] &lt; open[i-1] and close[i] &gt; close[i-1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the bullish reversal classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<see href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</see>)</description></item>
@@ -330,10 +330,10 @@ public partial class Core
    /// reversal, most meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// Two candles at i-1 and i. Both black: close[i-1] &lt; open[i-1] and close[i] &lt; open[i]. First body long: realbody[i-1] &gt; BodyLong average. Second body short: realbody[i] &lt;= BodyShort average. Second body contained by first: open[i] &lt; open[i-1] and close[i] &gt; close[i-1].
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that the bullish reversal classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<see href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</see>)</description></item>

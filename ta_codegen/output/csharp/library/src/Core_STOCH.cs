@@ -538,12 +538,10 @@ public partial class Core
    /// crossing %D signals momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-   /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-   /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</description></item>
    /// </list>
@@ -630,12 +628,10 @@ public partial class Core
    /// crossing %D signals momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// FastK = 100*(Close - LL_n)/(HH_n - LL_n), n = FastK_Period (LL/HH = lowest low / highest high over n)
-   /// SlowK = MA(FastK, SlowK_Period, SlowK_MAType)
-   /// SlowD = MA(SlowK, SlowD_Period, SlowD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stoch">ta-lib.org/functions/stoch</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When the high-low range over the window is zero, the raw stochastic is set to 0 instead of being undefined.</description></item>
    /// </list>

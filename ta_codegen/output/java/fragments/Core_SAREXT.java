@@ -673,10 +673,8 @@
     * short positions. Unlike SAR, it returns negative values while short so
     * reversals are distinguishable. Sign flip of the output marks a trend
     * reversal (positive=long stop, negative=short stop).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sarext">ta-lib.org/functions/sarext</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -759,10 +757,8 @@
     * short positions. Unlike SAR, it returns negative values while short so
     * reversals are distinguishable. Sign flip of the output marks a trend
     * reversal (positive=long stop, negative=short stop).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + AF*(EP - SAR), then clamped within the prior and current bar's range. On penetration, reverse: set SAR=EP (clamped), reset AF to its Init value, EP=extreme of the new direction. Output is +SAR when long, -SAR when short. On reversal an optional offset is applied: long->short SAR*(1+offset), short->long SAR*(1-offset).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sarext">ta-lib.org/functions/sarext</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

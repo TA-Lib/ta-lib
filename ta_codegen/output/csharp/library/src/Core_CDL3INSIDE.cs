@@ -267,6 +267,10 @@ public partial class Core
    /// reversal (three inside down, significant in an uptrend).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3inside">ta-lib.org/functions/cdl3inside</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</description></item>
    /// <item><description>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. (<see href="https://thepatternsite.com/ThreeInsideUp.html">thepatternsite.com</see>)</description></item>
@@ -337,6 +341,10 @@ public partial class Core
    /// reversal (three inside down, significant in an uptrend).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3inside">ta-lib.org/functions/cdl3inside</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</description></item>
    /// <item><description>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. (<see href="https://thepatternsite.com/ThreeInsideUp.html">thepatternsite.com</see>)</description></item>

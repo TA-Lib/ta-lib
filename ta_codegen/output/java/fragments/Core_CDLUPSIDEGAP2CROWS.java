@@ -212,6 +212,8 @@
     * candle that engulfs the second candle's real body but still closes above
     * the first candle's close. Signals a bearish reversal. A hit (-100) is a
     * bearish reversal signal, most meaningful in an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
@@ -280,6 +282,8 @@
     * candle that engulfs the second candle's real body but still closes above
     * the first candle's close. Signals a bearish reversal. A hit (-100) is a
     * bearish reversal signal, most meaningful in an uptrend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlupsidegap2crows">ta-lib.org/functions/cdlupsidegap2crows</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>

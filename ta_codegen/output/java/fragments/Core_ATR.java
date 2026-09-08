@@ -326,12 +326,8 @@
     * Wilder-smoothed average of the True Range over a period, measuring price
     * volatility regardless of direction. Higher ATR means greater volatility;
     * no directional bias.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-    * ATR seed = simple average of first `period` TR values
-    * ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -394,12 +390,8 @@
     * Wilder-smoothed average of the True Range over a period, measuring price
     * volatility regardless of direction. Higher ATR means greater volatility;
     * no directional bias.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR_t = max(high-low, |prevClose-high|, |prevClose-low|)
-    * ATR seed = simple average of first `period` TR values
-    * ATR_t = (ATR_{t-1} * (period-1) + TR_t) / period
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/atr">ta-lib.org/functions/atr</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

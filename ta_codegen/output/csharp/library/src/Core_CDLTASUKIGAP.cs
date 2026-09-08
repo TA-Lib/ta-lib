@@ -243,6 +243,10 @@ public partial class Core
    /// downside gap is a bearish continuation signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdltasukigap">ta-lib.org/functions/cdltasukigap</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
    /// <item><description>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). (<see href="https://thepatternsite.com/DownsideTasukiGap.html">thepatternsite.com</see>)</description></item>
@@ -312,6 +316,10 @@ public partial class Core
    /// downside gap is a bearish continuation signal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdltasukigap">ta-lib.org/functions/cdltasukigap</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</description></item>
    /// <item><description>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). (<see href="https://thepatternsite.com/DownsideTasukiGap.html">thepatternsite.com</see>)</description></item>

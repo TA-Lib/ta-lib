@@ -129,10 +129,10 @@ public partial class Core
    /// Element-wise division of two input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = inReal0[i] / inReal1[i]
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/div">ta-lib.org/functions/div</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</description></item>
    /// </list>
@@ -190,10 +190,10 @@ public partial class Core
    /// Element-wise division of two input series.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outReal[i] = inReal0[i] / inReal1[i]
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/div">ta-lib.org/functions/div</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Zero divided by zero gives NaN; anything else divided by zero gives positive or negative infinity. Neither is reported as an error.</description></item>
    /// </list>

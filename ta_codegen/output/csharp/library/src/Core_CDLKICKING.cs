@@ -278,6 +278,10 @@ public partial class Core
    /// is set by the second candle's color.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<see href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -344,6 +348,10 @@ public partial class Core
    /// is set by the second candle's color.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlkicking">ta-lib.org/functions/cdlkicking</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<see href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</see>)</description></item>
    /// </list>

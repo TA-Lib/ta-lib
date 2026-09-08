@@ -251,10 +251,10 @@ public partial class Core
    /// not inherently bullish or bearish despite the positive sign.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Hit when: real body &lt;= BodyDoji average (doji body) AND (lower shadow &gt; ShadowLong average OR upper shadow &gt; ShadowLong average), i.e. at least one long shadow.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdllongleggeddoji">ta-lib.org/functions/cdllongleggeddoji</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</description></item>
    /// <item><description>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." (<see href="https://thepatternsite.com/LongLegDoji.html">thepatternsite.com</see>)</description></item>
@@ -322,10 +322,10 @@ public partial class Core
    /// not inherently bullish or bearish despite the positive sign.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Hit when: real body &lt;= BodyDoji average (doji body) AND (lower shadow &gt; ShadowLong average OR upper shadow &gt; ShadowLong average), i.e. at least one long shadow.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdllongleggeddoji">ta-lib.org/functions/cdllongleggeddoji</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</description></item>
    /// <item><description>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." (<see href="https://thepatternsite.com/LongLegDoji.html">thepatternsite.com</see>)</description></item>

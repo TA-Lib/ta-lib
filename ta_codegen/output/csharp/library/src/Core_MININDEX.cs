@@ -239,10 +239,10 @@ public partial class Core
    /// rather than its value.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>
@@ -302,10 +302,10 @@ public partial class Core
    /// rather than its value.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// outInteger[i] = index of min(inReal[i-optInTimePeriod+1 .. i])
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/minindex">ta-lib.org/functions/minindex</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>When several bars in a window share the lowest value, the index of one of them is returned — not necessarily the first or the last.</description></item>
    /// </list>

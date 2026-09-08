@@ -232,6 +232,10 @@ public partial class Core
    /// not verify).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlsticksandwich">ta-lib.org/functions/cdlsticksandwich</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<see href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</see>)</description></item>
    /// </list>
@@ -299,6 +303,10 @@ public partial class Core
    /// not verify).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlsticksandwich">ta-lib.org/functions/cdlsticksandwich</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<see href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</see>)</description></item>
    /// </list>

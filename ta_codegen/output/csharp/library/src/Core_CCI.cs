@@ -324,13 +324,10 @@ public partial class Core
    /// overbought; CCI &lt; -100 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP_i = (High_i + Low_i + Close_i)/3
-   /// SMA = (1/N) * sum(TP over N bars)
-   /// meanDev = (1/N) * sum(|TP - SMA| over N bars)
-   /// CCI = (TP_last - SMA) / (0.015 * meanDev)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -393,13 +390,10 @@ public partial class Core
    /// overbought; CCI &lt; -100 oversold.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// TP_i = (High_i + Low_i + Close_i)/3
-   /// SMA = (1/N) * sum(TP over N bars)
-   /// meanDev = (1/N) * sum(|TP - SMA| over N bars)
-   /// CCI = (TP_last - SMA) / (0.015 * meanDev)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cci">ta-lib.org/functions/cci</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

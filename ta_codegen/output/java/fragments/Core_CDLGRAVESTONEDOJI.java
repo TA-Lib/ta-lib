@@ -200,10 +200,8 @@
     * does not judge. A hit marks a gravestone doji; its bullish vs bearish
     * reversal meaning must be read against the prevailing trend, which this
     * function does not check.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
@@ -275,10 +273,8 @@
     * does not judge. A hit marks a gravestone doji; its bullish vs bearish
     * reversal meaning must be read against the prevailing trend, which this
     * function does not check.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * One candle. Detected when all hold: (1) doji body: realbody |close-open| <= BodyDoji average; (2) very short/absent lower shadow: lowerShadow < ShadowVeryShort average; (3) non-short upper shadow: upperShadow > ShadowVeryShort average (open/close at the low with an upper shadow).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlgravestonedoji">ta-lib.org/functions/cdlgravestonedoji</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>

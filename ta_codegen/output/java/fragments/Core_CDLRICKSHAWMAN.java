@@ -233,6 +233,8 @@
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
@@ -300,6 +302,8 @@
     * of the high-low range. It is a neutral indecision signal, not a
     * directional (bullish/bearish) reversal. A hit marks market
     * indecision/uncertainty; neutral, neither bullish nor bearish.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlrickshawman">ta-lib.org/functions/cdlrickshawman</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>

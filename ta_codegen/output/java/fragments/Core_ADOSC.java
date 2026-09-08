@@ -301,13 +301,8 @@
     * the Accumulation/Distribution line. Highlights momentum in
     * accumulation/distribution volume flow. Positive/rising suggests
     * accumulation; negative/falling suggests distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ad += ((close-low)-(high-close))/(high-low) * volume   (only when high>low)
-    * fastEMA = fastk*ad + (1-fastk)*fastEMA,  fastk = 2/(optInFastPeriod+1)
-    * slowEMA = slowk*ad + (1-slowk)*slowEMA,  slowk = 2/(optInSlowPeriod+1)
-    * ADOSC = fastEMA - slowEMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adosc">ta-lib.org/functions/adosc</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -375,13 +370,8 @@
     * the Accumulation/Distribution line. Highlights momentum in
     * accumulation/distribution volume flow. Positive/rising suggests
     * accumulation; negative/falling suggests distribution.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ad += ((close-low)-(high-close))/(high-low) * volume   (only when high>low)
-    * fastEMA = fastk*ad + (1-fastk)*fastEMA,  fastk = 2/(optInFastPeriod+1)
-    * slowEMA = slowk*ad + (1-slowk)*slowEMA,  slowk = 2/(optInSlowPeriod+1)
-    * ADOSC = fastEMA - slowEMA
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adosc">ta-lib.org/functions/adosc</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

@@ -258,14 +258,8 @@
     * trend direction and strength on a -100..+100 scale. Positive when the high
     * is more recent than the low (up-trend); negative when the low is more
     * recent (down-trend).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 100 / optInTimePeriod
-    * AroonUp   = factor * (period - (today - highestIdx))
-    * AroonDown = factor * (period - (today - lowestIdx))
-    * AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-    * highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -325,14 +319,8 @@
     * trend direction and strength on a -100..+100 scale. Positive when the high
     * is more recent than the low (up-trend); negative when the low is more
     * recent (down-trend).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * factor = 100 / optInTimePeriod
-    * AroonUp   = factor * (period - (today - highestIdx))
-    * AroonDown = factor * (period - (today - lowestIdx))
-    * AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-    * highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

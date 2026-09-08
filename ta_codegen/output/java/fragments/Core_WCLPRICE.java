@@ -83,10 +83,8 @@
    /**
     * Weighted Close Price: a per-bar price average giving the close double
     * weight relative to high and low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wclprice">ta-lib.org/functions/wclprice</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -144,10 +142,8 @@
    /**
     * Weighted Close Price: a per-bar price average giving the close double
     * weight relative to high and low.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $\text{WCLPRICE} = \dfrac{\text{High} + \text{Low} + 2\cdot\text{Close}}{4}$
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/wclprice">ta-lib.org/functions/wclprice</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

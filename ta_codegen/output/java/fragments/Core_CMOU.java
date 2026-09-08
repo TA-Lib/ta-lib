@@ -323,10 +323,8 @@
     * and pandas-ta's default. See <a
     * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum of the positive d, Sd = sum of -d for negative d. CMOU = 100 * (Su-Sd)/(Su+Sd); 0 when Su+Sd == 0 (an exactly flat window). Unlike CMO, the sums are the plain period totals (a moving-window sum), not Wilder-smoothed averages, so there is no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -387,10 +385,8 @@
     * and pandas-ta's default. See <a
     * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * d = P[t]-P[t-1]; over the trailing `optInTimePeriod` changes accumulate Su = sum of the positive d, Sd = sum of -d for negative d. CMOU = 100 * (Su-Sd)/(Su+Sd); 0 when Su+Sd == 0 (an exactly flat window). Unlike CMO, the sums are the plain period totals (a moving-window sum), not Wilder-smoothed averages, so there is no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cmou">ta-lib.org/functions/cmou</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

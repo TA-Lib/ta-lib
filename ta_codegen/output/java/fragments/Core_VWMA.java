@@ -235,11 +235,8 @@
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
     * definition agrees, so there is no competing variant.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    * Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwma">ta-lib.org/functions/vwma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
@@ -311,11 +308,8 @@
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
     * definition agrees, so there is no competing variant.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * VWMA = ( sum_{k=t-N+1..t} P[k] * V[k] ) / ( sum_{k=t-N+1..t} V[k] ), N = optInTimePeriod
-    * Equivalently, and bit-identically so in TA-Lib for N of 2 or more, SMA(P * V, N) / SMA(V, N) — the composition TradingView documents for `ta.vwma`. There is no seeding and no recursion, hence no unstable period.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwma">ta-lib.org/functions/vwma</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>

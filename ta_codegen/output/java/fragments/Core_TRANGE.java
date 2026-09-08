@@ -157,10 +157,8 @@
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>
@@ -223,10 +221,8 @@
     * yesterday's close and today's high/low. Base volatility measure used to
     * build ATR/NATR. Larger values mean wider or gappier bars (higher
     * volatility).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TR = max( high - low, |prevClose - high|, |prevClose - low| )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/trange">ta-lib.org/functions/trange</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first bar produces no value because it has no prior close; unlike some definitions, it does not fall back to the high-low range for that bar.</li>

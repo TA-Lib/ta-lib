@@ -205,10 +205,8 @@
     * candle that opens below the prior candle's low and closes right at that
     * low. Bearish continuation signal. A hit is bearish (bearish continuation);
     * the code does not verify the assumed prior downtrend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. 1st: black (close<open) with long real body (realbody > BodyLong average). 2nd: white (close>=open); open < prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) <= close2 <= (prior_low + EqualAvg).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlonneck">ta-lib.org/functions/cdlonneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
@@ -276,10 +274,8 @@
     * candle that opens below the prior candle's low and closes right at that
     * low. Bearish continuation signal. A hit is bearish (bearish continuation);
     * the code does not verify the assumed prior downtrend.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. 1st: black (close<open) with long real body (realbody > BodyLong average). 2nd: white (close>=open); open < prior low; close within the Equal band of the prior low, i.e. (prior_low - EqualAvg) <= close2 <= (prior_low + EqualAvg).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlonneck">ta-lib.org/functions/cdlonneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>

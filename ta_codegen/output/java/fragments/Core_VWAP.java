@@ -219,10 +219,8 @@
     * further it runs from its anchor. It stays within the range of the typical
     * prices it averages, but over a long trending range it can sit far from the
     * current price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwap">ta-lib.org/functions/vwap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
@@ -300,10 +298,8 @@
     * further it runs from its anchor. It stays within the range of the typical
     * prices it averages, but over a long trending range it can sit far from the
     * current price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * TP_t = ( High_t + Low_t + Close_t ) / 3; VWAP_t = ( Σ TP · Volume ) / ( Σ Volume ), both sums running from the first bar of the range
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vwap">ta-lib.org/functions/vwap</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>

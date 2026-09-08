@@ -291,6 +291,8 @@
     * marubozu contained within the second candle's range. A hit signals a
     * bullish reversal; per the code comment it is meaningful in a downtrend,
     * but the function does not verify prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
@@ -361,6 +363,8 @@
     * marubozu contained within the second candle's range. A hit signals a
     * bullish reversal; per the code comment it is meaningful in a downtrend,
     * but the function does not verify prior trend.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdl3starsinsouth">ta-lib.org/functions/cdl3starsinsouth</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>

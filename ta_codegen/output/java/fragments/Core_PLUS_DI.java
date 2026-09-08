@@ -579,14 +579,8 @@
     * movement expressed as a percentage of the true range. Measures the
     * strength of upward price movement. Rising +DI signals strengthening upward
     * direction; compared against MINUS_DI to judge trend direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DM1 = (H-Hprev) if (H-Hprev) > 0 and (H-Hprev) > (Lprev-L), else 0.
-    * TR1 = true range = max(H-L, |H-Cprev|, |L-Cprev|).
-    * Seed +DM/TR = sum of first (period-1) one-period values; then Wilder smooth: X = X - X/period + X1.
-    * +DI = 100 * (+DM / TR); if TR = 0, +DI = 0.
-    * When period <= 1: +DI = +DM1 / TR1 (no *100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/plus_di">ta-lib.org/functions/plus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding of intermediate values is not applied (it was unreliable when values are near 1).</li>
@@ -656,14 +650,8 @@
     * movement expressed as a percentage of the true range. Measures the
     * strength of upward price movement. Rising +DI signals strengthening upward
     * direction; compared against MINUS_DI to judge trend direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DM1 = (H-Hprev) if (H-Hprev) > 0 and (H-Hprev) > (Lprev-L), else 0.
-    * TR1 = true range = max(H-L, |H-Cprev|, |L-Cprev|).
-    * Seed +DM/TR = sum of first (period-1) one-period values; then Wilder smooth: X = X - X/period + X1.
-    * +DI = 100 * (+DM / TR); if TR = 0, +DI = 0.
-    * When period <= 1: +DI = +DM1 / TR1 (no *100).
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/plus_di">ta-lib.org/functions/plus_di</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding of intermediate values is not applied (it was unreliable when values are near 1).</li>

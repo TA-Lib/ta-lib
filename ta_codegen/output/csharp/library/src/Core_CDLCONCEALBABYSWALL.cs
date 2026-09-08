@@ -252,6 +252,10 @@ public partial class Core
    /// candle fully engulfing the third. A hit signals a bullish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlconcealbabyswall">ta-lib.org/functions/cdlconcealbabyswall</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend the pattern classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<see href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</see>)</description></item>
@@ -318,6 +322,10 @@ public partial class Core
    /// candle fully engulfing the third. A hit signals a bullish reversal.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlconcealbabyswall">ta-lib.org/functions/cdlconcealbabyswall</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend the pattern classically assumes.</description></item>
    /// <item><description>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<see href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</see>)</description></item>

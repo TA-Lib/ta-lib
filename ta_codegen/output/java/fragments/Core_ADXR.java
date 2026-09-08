@@ -170,10 +170,8 @@
     * value from (period-1) bars earlier. Further damps ADX to gauge trend
     * strength. Higher values mean a stronger trend; smoother and more lagging
     * than ADX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>
@@ -242,10 +240,8 @@
     * value from (period-1) bars earlier. Further damps ADX to gauge trend
     * strength. Higher values mean a stronger trend; smoother and more lagging
     * than ADX.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * ADXR[i] = (ADX[i] + ADX[i-(period-1)]) / 2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adxr">ta-lib.org/functions/adxr</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied (unreliable when values are near 1).</li>

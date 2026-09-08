@@ -444,13 +444,10 @@ public partial class Core
    /// flags momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// MACD = MA_fast(inReal) - MA_slow(inReal)
-   /// Signal = MA_signal(MACD)
-   /// Hist = MACD - Signal
-   /// (each MA_* uses its own MA type and period)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/macdext">ta-lib.org/functions/macdext</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing for every signal MAType: the signal equals the MACD line and the histogram is zero.</description></item>
@@ -542,13 +539,10 @@ public partial class Core
    /// flags momentum shifts.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// MACD = MA_fast(inReal) - MA_slow(inReal)
-   /// Signal = MA_signal(MACD)
-   /// Hist = MACD - Signal
-   /// (each MA_* uses its own MA type and period)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/macdext">ta-lib.org/functions/macdext</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</description></item>
    /// <item><description>A signal period of 1 disables signal-line smoothing for every signal MAType: the signal equals the MACD line and the histogram is zero.</description></item>

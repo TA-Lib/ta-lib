@@ -370,13 +370,8 @@
     * user-selectable MA type. Outputs the MACD line, its signal line, and their
     * difference (histogram). Hist sign change (MACD crossing its signal line)
     * flags momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = MA_fast(inReal) - MA_slow(inReal)
-    * Signal = MA_signal(MACD)
-    * Hist = MACD - Signal
-    * (each MA_* uses its own MA type and period)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdext">ta-lib.org/functions/macdext</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</li>
@@ -474,13 +469,8 @@
     * user-selectable MA type. Outputs the MACD line, its signal line, and their
     * difference (histogram). Hist sign change (MACD crossing its signal line)
     * flags momentum shifts.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * MACD = MA_fast(inReal) - MA_slow(inReal)
-    * Signal = MA_signal(MACD)
-    * Hist = MACD - Signal
-    * (each MA_* uses its own MA type and period)
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/macdext">ta-lib.org/functions/macdext</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>If the slow period is set smaller than the fast period, the fast and slow periods and their MA types are swapped so the slow moving average is always the longer one.</li>

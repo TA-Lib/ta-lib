@@ -268,6 +268,8 @@
     * A three-candle reversal pattern: a long body, then a gapped-away doji,
     * then a body of opposite color that gaps back the other way and closes deep
     * into the first body. Bullish (bottom) or bearish (top) reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
@@ -341,6 +343,8 @@
     * A three-candle reversal pattern: a long body, then a gapped-away doji,
     * then a body of opposite color that gaps back the other way and closes deep
     * into the first body. Bullish (bottom) or bearish (top) reversal signal.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlabandonedbaby">ta-lib.org/functions/cdlabandonedbaby</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>

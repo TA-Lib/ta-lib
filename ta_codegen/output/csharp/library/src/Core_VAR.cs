@@ -403,10 +403,10 @@ public partial class Core
    /// dispersion; 0 means constant input.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</description></item>
    /// <item><description>The deviation-count parameter is accepted but has no effect on the result.</description></item>
@@ -470,10 +470,10 @@ public partial class Core
    /// dispersion; 0 means constant input.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// $\mathrm{VAR} = \frac{1}{n}\sum x_i^2 - \left(\frac{1}{n}\sum x_i\right)^2$, over the last $n$ = optInTimePeriod values (population, divides by $n$).
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/var">ta-lib.org/functions/var</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Computes population variance (divides by the period), not the sample variance (n-1) used by some definitions.</description></item>
    /// <item><description>The deviation-count parameter is accepted but has no effect on the result.</description></item>

@@ -239,6 +239,10 @@ public partial class Core
    /// downtrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlladderbottom">ta-lib.org/functions/cdlladderbottom</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bullish reversal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<see href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</see>)</description></item>
@@ -308,6 +312,10 @@ public partial class Core
    /// downtrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlladderbottom">ta-lib.org/functions/cdlladderbottom</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the preceding downtrend that this bullish reversal classically assumes.</description></item>
    /// <item><description>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<see href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</see>)</description></item>

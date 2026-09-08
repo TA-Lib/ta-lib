@@ -158,6 +158,8 @@
     * the first candle's opposite-colored real body. Bullish (white engulfs
     * black) or bearish (black engulfs white) reversal signal; ideally after a
     * downtrend (bullish) or uptrend (bearish), which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlengulfing">ta-lib.org/functions/cdlengulfing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
@@ -228,6 +230,8 @@
     * the first candle's opposite-colored real body. Bullish (white engulfs
     * black) or bearish (black engulfs white) reversal signal; ideally after a
     * downtrend (bullish) or uptrend (bearish), which the code does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlengulfing">ta-lib.org/functions/cdlengulfing</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>

@@ -381,11 +381,8 @@
     * each summed over the period and normalized by the summed true range. A +VI
     * line crossing above −VI is the bullish signal the authors describe; the
     * two lines are conventionally plotted together.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
@@ -461,11 +458,8 @@
     * each summed over the period and normalized by the summed true range. A +VI
     * line crossing above −VI is the bullish signal the authors describe; the
     * two lines are conventionally plotted together.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
-    * No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/vortex">ta-lib.org/functions/vortex</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>

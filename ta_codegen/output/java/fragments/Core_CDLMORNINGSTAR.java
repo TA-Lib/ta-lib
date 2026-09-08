@@ -239,6 +239,8 @@
     * the first candle's body. Bullish reversal signal. A hit signals a bullish
     * reversal (most meaningful after a downtrend, which the code does not
     * check).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -314,6 +316,8 @@
     * the first candle's body. Bullish reversal signal. A hit signals a bullish
     * reversal (most meaningful after a downtrend, which the code does not
     * check).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningstar">ta-lib.org/functions/cdlmorningstar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>

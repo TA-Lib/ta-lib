@@ -257,10 +257,10 @@ public partial class Core
    /// strong); a black hit is bearish (opens at the high, closes weak).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Requires real body &gt; BodyLong average (long body), then either: white body (close&gt;=open) AND lower shadow &lt; ShadowVeryShort average -&gt; bullish; OR black body (close&lt;open) AND upper shadow &lt; ShadowVeryShort average -&gt; bearish. No prior-trend or gap conditions are checked.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</description></item>
    /// <item><description>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. (<see href="https://thepatternsite.com/BeltHoldBull.html">thepatternsite.com</see>)</description></item>
@@ -330,10 +330,10 @@ public partial class Core
    /// strong); a black hit is bearish (opens at the high, closes weak).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// One candle. Requires real body &gt; BodyLong average (long body), then either: white body (close&gt;=open) AND lower shadow &lt; ShadowVeryShort average -&gt; bullish; OR black body (close&lt;open) AND upper shadow &lt; ShadowVeryShort average -&gt; bearish. No prior-trend or gap conditions are checked.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlbelthold">ta-lib.org/functions/cdlbelthold</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</description></item>
    /// <item><description>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. (<see href="https://thepatternsite.com/BeltHoldBull.html">thepatternsite.com</see>)</description></item>

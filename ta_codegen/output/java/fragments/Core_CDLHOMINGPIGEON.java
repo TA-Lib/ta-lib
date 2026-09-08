@@ -204,10 +204,8 @@
     * Two-candle pattern: a long black candle followed by a small black candle
     * whose real body sits inside the prior body. A hit signals a bullish
     * reversal, most meaningful in a downtrend, which the code does not verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
@@ -274,10 +272,8 @@
     * Two-candle pattern: a long black candle followed by a small black candle
     * whose real body sits inside the prior body. A hit signals a bullish
     * reversal, most meaningful in a downtrend, which the code does not verify.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles at i-1 and i. Both black: close[i-1] < open[i-1] and close[i] < open[i]. First body long: realbody[i-1] > BodyLong average. Second body short: realbody[i] <= BodyShort average. Second body contained by first: open[i] < open[i-1] and close[i] > close[i-1].
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlhomingpigeon">ta-lib.org/functions/cdlhomingpigeon</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>

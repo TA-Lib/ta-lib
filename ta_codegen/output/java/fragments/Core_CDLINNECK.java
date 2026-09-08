@@ -205,10 +205,8 @@
     * candle that opens below the prior low and closes just barely into the
     * prior body (near the prior close). It is a bearish continuation signal. A
     * hit signals bearish continuation (the down move is expected to resume).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
@@ -277,10 +275,8 @@
     * candle that opens below the prior low and closes just barely into the
     * prior body (near the prior close). It is a bearish continuation signal. A
     * hit signals bearish continuation (the down move is expected to resume).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two candles. First: black (close1 < open1) with a long real body (realbody > candleaverage(BodyLong)). Second: white (close2 >= open2), opens below the first candle's low (open2 < low1), and closes slightly into the first body: close2 >= close1 AND close2 <= close1 + candleaverage(Equal). No prior-trend check is performed.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlinneck">ta-lib.org/functions/cdlinneck</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>

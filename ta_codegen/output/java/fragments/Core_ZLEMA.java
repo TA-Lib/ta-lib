@@ -228,13 +228,8 @@
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * lag = Integer( (n - 1) / 2 )
-    * d = 2 * Price - Price[lag bars ago]
-    * ZLEMA(n) = EMA( d, n )
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
@@ -314,13 +309,8 @@
     * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
     * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
     * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * lag = Integer( (n - 1) / 2 )
-    * d = 2 * Price - Price[lag bars ago]
-    * ZLEMA(n) = EMA( d, n )
-    * The inner average is the standard TA-Lib EMA: smoothing factor 2 / (n + 1), seeded with the simple average of the first n de-lagged values.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/zlema">ta-lib.org/functions/zlema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>

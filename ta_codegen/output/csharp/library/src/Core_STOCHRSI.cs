@@ -317,12 +317,10 @@ public partial class Core
    /// bottom.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// rsi = RSI(inReal, optInTimePeriod)
-   /// FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-   /// FastD = MA(FastK, FastD_Period, FastD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</description></item>
    /// <item><description>When the RSI's recent range is zero, %K is set to 0 instead of being undefined.</description></item>
@@ -399,12 +397,10 @@ public partial class Core
    /// bottom.
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// rsi = RSI(inReal, optInTimePeriod)
-   /// FastK = 100 * (rsi_t - min(rsi, FastK_Period)) / (max(rsi, FastK_Period) - min(rsi, FastK_Period))
-   /// FastD = MA(FastK, FastD_Period, FastD_MAType)
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/stochrsi">ta-lib.org/functions/stochrsi</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>To reproduce the original article's unsmoothed Stochastic RSI, set the RSI period equal to the %K period and read the raw %K output.</description></item>
    /// <item><description>When the RSI's recent range is zero, %K is set to 0 instead of being undefined.</description></item>

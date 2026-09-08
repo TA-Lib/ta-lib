@@ -339,6 +339,8 @@
     * Least-squares straight-line fit over the last optInTimePeriod bars,
     * reported as the fitted line value at the window endpoint (b +
     * m*(period-1)).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg">ta-lib.org/functions/linearreg</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -395,6 +397,8 @@
     * Least-squares straight-line fit over the last optInTimePeriod bars,
     * reported as the fitted line value at the window endpoint (b +
     * m*(period-1)).
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/linearreg">ta-lib.org/functions/linearreg</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

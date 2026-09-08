@@ -71,10 +71,8 @@
    }
    /**
     * Element-wise tangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = tan(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tan">ta-lib.org/functions/tan</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -126,10 +124,8 @@
    }
    /**
     * Element-wise tangent of the input series.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * outReal[i] = tan(inReal[i])
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/tan">ta-lib.org/functions/tan</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

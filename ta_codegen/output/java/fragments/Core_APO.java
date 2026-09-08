@@ -206,11 +206,8 @@
     * average of the input, in price units. Measures short- vs long-term
     * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
     * otherwise.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
-    * The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/apo">ta-lib.org/functions/apo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>
@@ -282,11 +279,8 @@
     * average of the input, in price units. Measures short- vs long-term
     * momentum. Positive when fast MA &gt; slow MA (upward momentum); negative
     * otherwise.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * $APO = MA_{fast}(inReal) - MA_{slow}(inReal)$, both MAs of type optInMAType
-    * The standard form is exponential — APO with EMA and periods 12/26 is the fast-minus-slow EMA construction underlying the MACD (in price units). `optInMAType` therefore **defaults to EMA** — the moving average Gerald Appel used for the original MACD; pass another type (e.g. `TA_MAType_SMA`) to override.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/apo">ta-lib.org/functions/apo</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>{@code optInMAType} applies to both the fast and slow moving average. {@code TA_MAType_MAMA} ignores its period argument, so with {@code optInMAType = TA_MAType_MAMA} the fast and slow MAs are identical and the output is zero at every bar.</li>

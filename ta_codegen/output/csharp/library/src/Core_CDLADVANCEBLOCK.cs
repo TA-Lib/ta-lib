@@ -410,6 +410,10 @@ public partial class Core
    /// stalling/blocked; meaningful mainly within an existing uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdladvanceblock">ta-lib.org/functions/cdladvanceblock</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. (<see href="https://thepatternsite.com/AdvanceBlock.html">thepatternsite.com</see>)</description></item>
@@ -478,6 +482,10 @@ public partial class Core
    /// stalling/blocked; meaningful mainly within an existing uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdladvanceblock">ta-lib.org/functions/cdladvanceblock</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior uptrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. (<see href="https://thepatternsite.com/AdvanceBlock.html">thepatternsite.com</see>)</description></item>

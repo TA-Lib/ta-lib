@@ -803,13 +803,8 @@
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
     * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
     * FAMA is bullish; crossing below is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    * MAMA = alpha*price + (1-alpha)*MAMA_prev
-    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -877,13 +872,8 @@
     * driven by the dominant-cycle phase rate measured with a Hilbert transform.
     * Emits two lines, MAMA and its slower follower FAMA. MAMA crossing above
     * FAMA is bullish; crossing below is bearish.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * phase = atan(Q1/I1) in degrees; deltaPhase = max(1, prevPhase - phase)
-    * alpha = max(fastLimit/deltaPhase, slowLimit) if deltaPhase>1 else fastLimit
-    * MAMA = alpha*price + (1-alpha)*MAMA_prev
-    * FAMA = (alpha/2)*MAMA + (1-alpha/2)*FAMA_prev
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mama">ta-lib.org/functions/mama</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

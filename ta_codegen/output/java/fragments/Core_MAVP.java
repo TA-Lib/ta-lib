@@ -509,10 +509,8 @@
     * Moving average whose period varies per bar, driven by a companion period
     * series. For each bar it computes an MA of the selected type over the
     * (clamped) period given by inPeriods.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mavp">ta-lib.org/functions/mavp</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>
@@ -586,10 +584,8 @@
     * Moving average whose period varies per bar, driven by a companion period
     * series. For each bar it computes an MA of the selected type over the
     * (clamped) period given by inPeriods.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * p_i = clamp((int)inPeriods[startIdx+i], optInMinPeriod, optInMaxPeriod); outReal[i] = MA(inReal, p_i, optInMAType) at bar startIdx+i
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/mavp">ta-lib.org/functions/mavp</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Fractional per-bar periods are truncated to whole numbers before being clamped to the minimum and maximum period.</li>

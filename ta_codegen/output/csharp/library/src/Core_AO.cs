@@ -325,12 +325,10 @@ public partial class Core
    /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -404,12 +402,10 @@ public partial class Core
    /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// median_t = ( high_t + low_t ) / 2
-   /// AO_t = SMA(median, fast)_t − SMA(median, slow)_t
-   /// An inverted pair is not swapped: passing a fast period longer than the slow one is well defined and simply yields −AO.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/ao">ta-lib.org/functions/ao</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

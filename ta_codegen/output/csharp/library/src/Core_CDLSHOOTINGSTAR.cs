@@ -289,6 +289,10 @@ public partial class Core
    /// of an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlshootingstar">ta-lib.org/functions/cdlshootingstar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A preceding uptrend is not verified.</description></item>
    /// <item><description>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. (<see href="https://thepatternsite.com/ShootingStar.html">thepatternsite.com</see>)</description></item>
@@ -357,6 +361,10 @@ public partial class Core
    /// of an uptrend.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlshootingstar">ta-lib.org/functions/cdlshootingstar</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>A preceding uptrend is not verified.</description></item>
    /// <item><description>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. (<see href="https://thepatternsite.com/ShootingStar.html">thepatternsite.com</see>)</description></item>

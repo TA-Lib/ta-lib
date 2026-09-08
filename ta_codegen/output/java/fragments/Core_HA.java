@@ -278,14 +278,8 @@
     * {@code HA} is recursive: every candle carries the previous one, so the
     * first candle of a request is seeded from its own bar and its influence
     * halves on each bar that follows.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-    * HA_open[0]  = ( O[0] + C[0] ) / 2
-    * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-    * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-    * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
@@ -377,14 +371,8 @@
     * {@code HA} is recursive: every candle carries the previous one, so the
     * first candle of a request is seeded from its own bar and its influence
     * halves on each bar that follows.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * HA_close[i] = ( O[i] + H[i] + L[i] + C[i] ) / 4
-    * HA_open[0]  = ( O[0] + C[0] ) / 2
-    * HA_open[i]  = ( HA_open[i-1] + HA_close[i-1] ) / 2
-    * HA_high[i]  = max( H[i], HA_open[i], HA_close[i] )
-    * HA_low[i]   = min( L[i], HA_open[i], HA_close[i] )
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ha">ta-lib.org/functions/ha</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>

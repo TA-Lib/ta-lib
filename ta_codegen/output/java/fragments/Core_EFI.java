@@ -265,11 +265,8 @@
     * sellers. Nothing normalises the result, so it scales with the instrument's
     * own volume: read its sign and its shape over time, not its level against
     * another instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -340,11 +337,8 @@
     * sellers. Nothing normalises the result, so it scales with the instrument's
     * own volume: read its sign and its shape over time, not its level against
     * another instrument.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * force_t = ( close_t - close_{t-1} ) * volume_t; EFI = EMA( force, optInTimePeriod )
-    * The EMA is TA-Lib's, seeded with a simple average of the first `optInTimePeriod` force values. A period of 1 leaves the raw one-bar Force Index.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/efi">ta-lib.org/functions/efi</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

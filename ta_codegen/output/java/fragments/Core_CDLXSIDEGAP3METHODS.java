@@ -148,6 +148,8 @@
     * real-body gap, followed by an opposite-color candle that fills into the
     * gap. Bullish (upside) when the first two candles are white, bearish
     * (downside) when they are black.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlxsidegap3methods">ta-lib.org/functions/cdlxsidegap3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
@@ -217,6 +219,8 @@
     * real-body gap, followed by an opposite-color candle that fills into the
     * gap. Bullish (upside) when the first two candles are white, bearish
     * (downside) when they are black.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlxsidegap3methods">ta-lib.org/functions/cdlxsidegap3methods</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>

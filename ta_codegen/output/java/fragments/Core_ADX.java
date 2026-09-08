@@ -641,10 +641,8 @@
     * strongly a market is trending, regardless of direction. Higher values
     * indicate a stronger trend (a common convention treats &gt;25 as trending);
     * says nothing about direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adx">ta-lib.org/functions/adx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied.</li>
@@ -717,10 +715,8 @@
     * strongly a market is trending, regardless of direction. Higher values
     * indicate a stronger trend (a common convention treats &gt;25 as trending);
     * says nothing about direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * +DI = 100*(+DM_p/TR_p), -DI = 100*(-DM_p/TR_p); DX = 100*|(-DI)-(+DI)| / ((-DI)+(+DI)); first ADX = mean of the first `period` DX; then ADX = (prevADX*(period-1) + DX)/period. +DM_p/-DM_p/TR_p use Wilder smoothing: X = X - X/period + today's one-bar value.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/adx">ta-lib.org/functions/adx</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>Wilder's original integer rounding is not applied.</li>

@@ -745,6 +745,8 @@
     * Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag
     * overlay whose averaging window adapts to the dominant cycle period
     * measured via Hilbert-transform quadrature (I/Q) analysis of price.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -798,6 +800,8 @@
     * Ehlers' Hilbert Transform Instantaneous Trendline: a smoothed, low-lag
     * overlay whose averaging window adapts to the dominant cycle period
     * measured via Hilbert-transform quadrature (I/Q) analysis of price.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/ht_trendline">ta-lib.org/functions/ht_trendline</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

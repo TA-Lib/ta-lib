@@ -313,14 +313,10 @@ public partial class Core
    /// recent (down-trend).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// factor = 100 / optInTimePeriod
-   /// AroonUp   = factor * (period - (today - highestIdx))
-   /// AroonDown = factor * (period - (today - lowestIdx))
-   /// AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-   /// highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</see>.
+   /// </para>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
    /// <see cref="OutRange"/> says where they start and how many there are;
@@ -381,14 +377,10 @@ public partial class Core
    /// recent (down-trend).
    /// </summary>
    /// <remarks>
-   /// <b>Formula</b>
-   /// <code>
-   /// factor = 100 / optInTimePeriod
-   /// AroonUp   = factor * (period - (today - highestIdx))
-   /// AroonDown = factor * (period - (today - lowestIdx))
-   /// AroonOsc  = AroonUp - AroonDown = factor * (highestIdx - lowestIdx)
-   /// highestIdx/lowestIdx = bar index of the highest high / lowest low in the last (period+1) bars.
-   /// </code>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/aroonosc">ta-lib.org/functions/aroonosc</see>.
+   /// </para>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to
    /// <c>double</c> as they are read and all arithmetic is performed in

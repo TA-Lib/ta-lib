@@ -366,6 +366,10 @@ public partial class Core
    /// meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3whitesoldiers">ta-lib.org/functions/cdl3whitesoldiers</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior downtrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. (<see href="https://thepatternsite.com/ThreeWhiteSoldiers.html">thepatternsite.com</see>)</description></item>
@@ -434,6 +438,10 @@ public partial class Core
    /// meaningful in a downtrend, which the code does not verify.
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdl3whitesoldiers">ta-lib.org/functions/cdl3whitesoldiers</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior downtrend the pattern classically assumes for significance.</description></item>
    /// <item><description>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. (<see href="https://thepatternsite.com/ThreeWhiteSoldiers.html">thepatternsite.com</see>)</description></item>

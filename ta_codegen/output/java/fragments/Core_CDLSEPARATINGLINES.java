@@ -238,10 +238,8 @@
     * color, opens at the same price as the first, and is a long-bodied belt
     * hold. Bullish (white second candle) or bearish (black second candle)
     * continuation signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlseparatinglines">ta-lib.org/functions/cdlseparatinglines</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>
@@ -307,10 +305,8 @@
     * color, opens at the same price as the first, and is a long-bodied belt
     * hold. Bullish (white second candle) or bearish (black second candle)
     * continuation signal.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * Two consecutive candles i-1, i: (1) opposite colors: color(i-1) == -color(i); (2) same open: open[i-1]-Equal_avg <= open[i] <= open[i-1]+Equal_avg; (3) long body: realbody(i) > BodyLong_avg; (4) belt hold: if i is white, lowershadow(i) < ShadowVeryShort_avg; if i is black, uppershadow(i) < ShadowVeryShort_avg.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlseparatinglines">ta-lib.org/functions/cdlseparatinglines</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A prior trend is not verified, nor that the pattern aligns with it.</li>

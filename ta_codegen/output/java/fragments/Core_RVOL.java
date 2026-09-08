@@ -166,10 +166,8 @@
     * direction signal: it says how much conviction is behind a price move, not
     * which way. Breakouts on a high ratio are the ones that tend to follow
     * through; the same breakout near 1 is the one to distrust.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvol">ta-lib.org/functions/rvol</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
@@ -238,10 +236,8 @@
     * direction signal: it says how much conviction is behind a price move, not
     * which way. Breakouts on a high ratio are the ones that tend to follow
     * through; the same breakout near 1 is the one to distrust.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/rvol">ta-lib.org/functions/rvol</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>

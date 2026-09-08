@@ -464,12 +464,8 @@
     * that accelerates toward price via an acceleration factor. Signals trend
     * direction and trailing exit points. SAR below price = uptrend (long); SAR
     * above price = downtrend (short). Price crossing SAR flips direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + af * (EP - SAR)
-    * EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    * On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
     * outside that range is touched, and the library never pads with NaN. A
@@ -533,12 +529,8 @@
     * that accelerates toward price via an acceleration factor. Signals trend
     * direction and trailing exit points. SAR below price = uptrend (long); SAR
     * above price = downtrend (short). Price crossing SAR flips direction.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * SAR_next = SAR + af * (EP - SAR)
-    * EP = extreme point (highest high in long / lowest low in short); af starts at Acceleration, += Acceleration each new EP, capped at Maximum.
-    * On penetration: reverse, SAR := prior EP, reset af = Acceleration. SAR clamped each bar so it does not penetrate the prior/current bar's range.
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/sar">ta-lib.org/functions/sar</a>.
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
     * result beyond {@code float} range is still representable.

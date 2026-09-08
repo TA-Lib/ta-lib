@@ -275,10 +275,8 @@
    /**
     * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
     * reduce lag versus a plain EMA. Overlap Studies overlay on price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dema">ta-lib.org/functions/dema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>
@@ -337,10 +335,8 @@
    /**
     * Double Exponential Moving Average: an EMA combined with an EMA-of-EMA to
     * reduce lag versus a plain EMA. Overlap Studies overlay on price.
-    * <p><b>Formula</b>
-    * <pre>{@code
-    * EMA1 = EMA(inReal, period); EMA2 = EMA(EMA1, period); DEMA = 2*EMA1 - EMA2
-    * }</pre>
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/dema">ta-lib.org/functions/dema</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>A period of 1 performs no smoothing: the output is a copy of the input. Allowed since 0.6.5 (issues #48/#59).</li>

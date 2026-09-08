@@ -248,6 +248,10 @@ public partial class Core
    /// reversal).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</description></item>
    /// <item><description>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<see href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</see>)</description></item>
@@ -317,6 +321,10 @@ public partial class Core
    /// reversal).
    /// </summary>
    /// <remarks>
+   /// <para>
+   /// Formula and more info at
+   /// <see href="https://ta-lib.org/functions/cdlbreakaway">ta-lib.org/functions/cdlbreakaway</see>.
+   /// </para>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</description></item>
    /// <item><description>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<see href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</see>)</description></item>

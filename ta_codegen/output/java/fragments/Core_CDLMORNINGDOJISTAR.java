@@ -263,6 +263,8 @@
     * candle's body. It is the doji-star variant of the morning star. A hit
     * (+100) signals a bullish reversal; most meaningful after a downtrend,
     * which this function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
@@ -338,6 +340,8 @@
     * candle's body. It is the doji-star variant of the morning star. A hit
     * (+100) signals a bullish reversal; most meaningful after a downtrend,
     * which this function does not verify.
+    * <p>Formula and more info at <a
+    * href="https://ta-lib.org/functions/cdlmorningdojistar">ta-lib.org/functions/cdlmorningdojistar</a>.
     * <p><b>Notes</b>
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
