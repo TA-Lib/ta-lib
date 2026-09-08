@@ -410,9 +410,9 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-   /// Dimensions*, 1998): the rate at which market momentum is itself speeding
-   /// up or slowing down. Where the Awesome Oscillator
+   /// Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+   /// Dimensions</i>, 1998): the rate at which market momentum is itself
+   /// speeding up or slowing down. Where the Awesome Oscillator
    /// (<see href="https://ta-lib.org/functions/ao"><c>AO</c></see>) measures
    /// momentum, this measures the change in that momentum, by taking the
    /// oscillator's distance above or below its own moving average. Because
@@ -497,9 +497,9 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-   /// Dimensions*, 1998): the rate at which market momentum is itself speeding
-   /// up or slowing down. Where the Awesome Oscillator
+   /// Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+   /// Dimensions</i>, 1998): the rate at which market momentum is itself
+   /// speeding up or slowing down. Where the Awesome Oscillator
    /// (<see href="https://ta-lib.org/functions/ao"><c>AO</c></see>) measures
    /// momentum, this measures the change in that momentum, by taking the
    /// oscillator's distance above or below its own moving average. Because

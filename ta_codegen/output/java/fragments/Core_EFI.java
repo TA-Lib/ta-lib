@@ -252,7 +252,7 @@
       return RetCode.Success ;
    }
    /**
-    * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+    * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
     * volume-weighted momentum. Each bar's close-to-close move is weighted by
     * that bar's volume, and the result is smoothed with an exponential moving
     * average. The sign is the direction of the move; the size combines how far
@@ -327,7 +327,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+    * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
     * volume-weighted momentum. Each bar's close-to-close move is weighted by
     * that bar's volume, and the result is smoothed with an exponential moving
     * average. The sign is the direction of the move; the size combines how far

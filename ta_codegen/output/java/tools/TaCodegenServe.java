@@ -519,9 +519,9 @@ class Core {
           return RetCode.Success ;
        }
        /**
-        * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-        * Dimensions*, 1998): the rate at which market momentum is itself speeding
-        * up or slowing down. Where the Awesome Oscillator (<a
+        * Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+        * Dimensions</i>, 1998): the rate at which market momentum is itself
+        * speeding up or slowing down. Where the Awesome Oscillator (<a
         * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
         * this measures the change in that momentum, by taking the oscillator's
         * distance above or below its own moving average. Because acceleration turns
@@ -609,9 +609,9 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
-        * Dimensions*, 1998): the rate at which market momentum is itself speeding
-        * up or slowing down. Where the Awesome Oscillator (<a
+        * Bill Williams' Accelerator/Decelerator Oscillator (<i>New Trading
+        * Dimensions</i>, 1998): the rate at which market momentum is itself
+        * speeding up or slowing down. Where the Awesome Oscillator (<a
         * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
         * this measures the change in that momentum, by taking the oscillator's
         * distance above or below its own moving average. Because acceleration turns
@@ -4835,13 +4835,13 @@ class Core {
        }
        /**
         * Average Day Range: the arithmetic mean of the last {@code optInTimePeriod}
-        * bar ranges, high minus low. It answers how far price travels *within* a
-        * bar, and is read as a volatility budget — a stop or a target much smaller
-        * than ADR is inside the noise the instrument produces on an ordinary bar,
-        * one much larger asks for a move that rarely happens. Same family as ATR,
-        * and deliberately the narrower member: the range excludes the overnight
-        * gap, so on a gapping instrument ADR is systematically smaller than ATR.
-        * Having both is the point.
+        * bar ranges, high minus low. It answers how far price travels <i>within</i>
+        * a bar, and is read as a volatility budget — a stop or a target much
+        * smaller than ADR is inside the noise the instrument produces on an
+        * ordinary bar, one much larger asks for a move that rarely happens. Same
+        * family as ATR, and deliberately the narrower member: the range excludes
+        * the overnight gap, so on a gapping instrument ADR is systematically
+        * smaller than ATR. Having both is the point.
         * <p><b>Formula</b>
         * <pre>{@code
         * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
@@ -4850,7 +4850,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
-        * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes *are* the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
+        * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes <i>are</i> the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
         * <li>{@code high} below {@code low} is not rejected. The library validates ranges and parameters, not price sanity, so a bar entered upside down contributes a negative range and the average simply comes out lower, possibly negative, with no error.</li>
         * <li>Not the width of a Donchian channel. {@code MAX(high, n) - MIN(low, n)} is how far the window's extremes lie apart; ADR is the mean of the per-bar ranges, which is smaller whenever the window trends. {@code DONCHIAN} ships the two extremes that width is built from, not the width itself.</li>
         * <li>The request this function answers ({@code TA-Lib/ta-lib-python#575}) named "Average Day Range" but the freqtrade code behind it computes {@code MAX(close, 24) - MIN(close, 24)}, a channel width on the closes with no averaging and no high/low. That is a different series and already reachable, as {@code TA_SUB(TA_MAX(close, 24), TA_MIN(close, 24))}.</li>
@@ -4918,13 +4918,13 @@ class Core {
        }
        /**
         * Average Day Range: the arithmetic mean of the last {@code optInTimePeriod}
-        * bar ranges, high minus low. It answers how far price travels *within* a
-        * bar, and is read as a volatility budget — a stop or a target much smaller
-        * than ADR is inside the noise the instrument produces on an ordinary bar,
-        * one much larger asks for a move that rarely happens. Same family as ATR,
-        * and deliberately the narrower member: the range excludes the overnight
-        * gap, so on a gapping instrument ADR is systematically smaller than ATR.
-        * Having both is the point.
+        * bar ranges, high minus low. It answers how far price travels <i>within</i>
+        * a bar, and is read as a volatility budget — a stop or a target much
+        * smaller than ADR is inside the noise the instrument produces on an
+        * ordinary bar, one much larger asks for a move that rarely happens. Same
+        * family as ATR, and deliberately the narrower member: the range excludes
+        * the overnight gap, so on a gapping instrument ADR is systematically
+        * smaller than ATR. Having both is the point.
         * <p><b>Formula</b>
         * <pre>{@code
         * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
@@ -4933,7 +4933,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
-        * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes *are* the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
+        * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes <i>are</i> the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
         * <li>{@code high} below {@code low} is not rejected. The library validates ranges and parameters, not price sanity, so a bar entered upside down contributes a negative range and the average simply comes out lower, possibly negative, with no error.</li>
         * <li>Not the width of a Donchian channel. {@code MAX(high, n) - MIN(low, n)} is how far the window's extremes lie apart; ADR is the mean of the per-bar ranges, which is smaller whenever the window trends. {@code DONCHIAN} ships the two extremes that width is built from, not the width itself.</li>
         * <li>The request this function answers ({@code TA-Lib/ta-lib-python#575}) named "Average Day Range" but the freqtrade code behind it computes {@code MAX(close, 24) - MIN(close, 24)}, a channel width on the closes with no averaging and no high/low. That is a different series and already reachable, as {@code TA_SUB(TA_MAX(close, 24), TA_MIN(close, 24))}.</li>
@@ -7829,18 +7829,19 @@ class Core {
           return RetCode.Success ;
        }
        /**
-        * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-        * momentum read as the spread between a short and a long simple moving
-        * average of the median price. It contrasts what the recent bars have done
-        * against a longer stretch of the same market, using the bar midpoint rather
-        * than the close so that intrabar range, not the settle, drives the reading.
-        * Above zero the short window sits higher than the long one and momentum is
-        * with the bulls; below zero it is with the bears. It is drawn as a
-        * zero-centred histogram, and the readings that get traded are the zero-line
-        * crossings, the twin-peaks divergence, and the run of consecutive same-side
-        * bars — which is why the sign and the bar-to-bar change matter more than
-        * the level. The oscillator is the first leg of Williams' Profitunity
-        * system, alongside the Alligator and the Accelerator/Decelerator (<a
+        * Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+        * market momentum read as the spread between a short and a long simple
+        * moving average of the median price. It contrasts what the recent bars have
+        * done against a longer stretch of the same market, using the bar midpoint
+        * rather than the close so that intrabar range, not the settle, drives the
+        * reading. Above zero the short window sits higher than the long one and
+        * momentum is with the bulls; below zero it is with the bears. It is drawn
+        * as a zero-centred histogram, and the readings that get traded are the
+        * zero-line crossings, the twin-peaks divergence, and the run of consecutive
+        * same-side bars — which is why the sign and the bar-to-bar change matter
+        * more than the level. The oscillator is the first leg of Williams'
+        * Profitunity system, alongside the Alligator and the
+        * Accelerator/Decelerator (<a
         * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
         * <p><b>Formula</b>
         * <pre>{@code
@@ -7908,18 +7909,19 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-        * momentum read as the spread between a short and a long simple moving
-        * average of the median price. It contrasts what the recent bars have done
-        * against a longer stretch of the same market, using the bar midpoint rather
-        * than the close so that intrabar range, not the settle, drives the reading.
-        * Above zero the short window sits higher than the long one and momentum is
-        * with the bulls; below zero it is with the bears. It is drawn as a
-        * zero-centred histogram, and the readings that get traded are the zero-line
-        * crossings, the twin-peaks divergence, and the run of consecutive same-side
-        * bars — which is why the sign and the bar-to-bar change matter more than
-        * the level. The oscillator is the first leg of Williams' Profitunity
-        * system, alongside the Alligator and the Accelerator/Decelerator (<a
+        * Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+        * market momentum read as the spread between a short and a long simple
+        * moving average of the median price. It contrasts what the recent bars have
+        * done against a longer stretch of the same market, using the bar midpoint
+        * rather than the close so that intrabar range, not the settle, drives the
+        * reading. Above zero the short window sits higher than the long one and
+        * momentum is with the bulls; below zero it is with the bears. It is drawn
+        * as a zero-centred histogram, and the readings that get traded are the
+        * zero-line crossings, the twin-peaks divergence, and the run of consecutive
+        * same-side bars — which is why the sign and the bar-to-bar change matter
+        * more than the level. The oscillator is the first leg of Williams'
+        * Profitunity system, alongside the Alligator and the
+        * Accelerator/Decelerator (<a
         * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
         * <p><b>Formula</b>
         * <pre>{@code
@@ -20957,7 +20959,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
-        * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
+        * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -21027,7 +21029,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>Does not verify the surrounding trend the pattern classically assumes for significance.</li>
-        * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (*Encyclopedia of Candlestick Charts*) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
+        * <li>TA-Lib's sign follows the classic continuation reading. Thomas Bulkowski's statistical study of the pattern (<i>Encyclopedia of Candlestick Charts</i>) found the opposite in practice — it acted as a reversal far more often than a continuation — so traders who follow his research read this pattern's signal in the opposite direction from what its sign here suggests.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -72289,12 +72291,12 @@ class Core {
        }
        /**
         * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
-        * computed from **plain moving-window sums** of the up-moves and down-moves
-        * over the period. Bounded in [-100,+100]; positive = net upward momentum,
-        * negative = net downward. CMOU is the version as defined by Chande in his
-        * book *The New Technical Trader* (1994), and is the more common
-        * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-        * pandas-ta's default. See <a
+        * computed from <b>plain moving-window sums</b> of the up-moves and
+        * down-moves over the period. Bounded in [-100,+100]; positive = net upward
+        * momentum, negative = net downward. CMOU is the version as defined by
+        * Chande in his book <i>The New Technical Trader</i> (1994), and is the more
+        * common implementation used by TradingView ({@code ta.cmo}), QuantConnect
+        * and pandas-ta's default. See <a
         * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
         * variant of CMOU.
         * <p><b>Formula</b>
@@ -72353,12 +72355,12 @@ class Core {
        }
        /**
         * Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
-        * computed from **plain moving-window sums** of the up-moves and down-moves
-        * over the period. Bounded in [-100,+100]; positive = net upward momentum,
-        * negative = net downward. CMOU is the version as defined by Chande in his
-        * book *The New Technical Trader* (1994), and is the more common
-        * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-        * pandas-ta's default. See <a
+        * computed from <b>plain moving-window sums</b> of the up-moves and
+        * down-moves over the period. Bounded in [-100,+100]; positive = net upward
+        * momentum, negative = net downward. CMOU is the version as defined by
+        * Chande in his book <i>The New Technical Trader</i> (1994), and is the more
+        * common implementation used by TradingView ({@code ta.cmo}), QuantConnect
+        * and pandas-ta's default. See <a
         * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
         * variant of CMOU.
         * <p><b>Formula</b>
@@ -73362,10 +73364,10 @@ class Core {
        }
        /**
         * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-        * (*Barron's*, originally published as the "Trendex Model"), computed as a
-        * weighted moving average of the **sum** of two rates of change. Unbounded;
-        * positive turns from below zero are the signal the indicator was designed
-        * for (long-term buying opportunities on monthly index data).
+        * (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+        * as a weighted moving average of the <b>sum</b> of two rates of change.
+        * Unbounded; positive turns from below zero are the signal the indicator was
+        * designed for (long-term buying opportunities on monthly index data).
         * <p><b>Formula</b>
         * <pre>{@code
         * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
@@ -73433,10 +73435,10 @@ class Core {
        }
        /**
         * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-        * (*Barron's*, originally published as the "Trendex Model"), computed as a
-        * weighted moving average of the **sum** of two rates of change. Unbounded;
-        * positive turns from below zero are the signal the indicator was designed
-        * for (long-term buying opportunities on monthly index data).
+        * (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+        * as a weighted moving average of the <b>sum</b> of two rates of change.
+        * Unbounded; positive turns from below zero are the signal the indicator was
+        * designed for (long-term buying opportunities on monthly index data).
         * <p><b>Formula</b>
         * <pre>{@code
         * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
@@ -76588,9 +76590,9 @@ class Core {
         * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
         * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
         * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-        * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
-        * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
-        * every bar since the anchor contributes.
+        * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
+        * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
+        * — every bar since the anchor contributes.
         * <p><b>Formula</b>
         * <pre>{@code
         * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -76654,9 +76656,9 @@ class Core {
         * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
         * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
         * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-        * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
-        * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
-        * every bar since the anchor contributes.
+        * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
+        * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
+        * — every bar since the anchor contributes.
         * <p><b>Formula</b>
         * <pre>{@code
         * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -79352,7 +79354,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
-        * <li>A breakout rule compares the current bar against the **previous** bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
+        * <li>A breakout rule compares the current bar against the <b>previous</b> bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
         * <li>Upper, Middle and Lower are bit-identical to {@code MAX(high, N)}, {@code MIDPRICE(N)} and {@code MIN(low, N)}. DONCHIAN computes all three in one pass under the name users look for.</li>
         * <li>The middle line is the channel midpoint, not a moving average of price.</li>
         * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
@@ -79432,7 +79434,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The window includes the current bar, matching TradingView ({@code ta.highest}/{@code ta.lowest}), NinjaTrader, ta4j, pandas-ta and every other library that ships Donchian Channels.</li>
-        * <li>A breakout rule compares the current bar against the **previous** bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
+        * <li>A breakout rule compares the current bar against the <b>previous</b> bar's band — {@code High[t] &gt; Upper[t-1]} — which is where the one-bar offset belongs. Reading {@code Upper[t]} against {@code High[t]} can never signal, because {@code High[t]} is inside the window that produced it.</li>
         * <li>Upper, Middle and Lower are bit-identical to {@code MAX(high, N)}, {@code MIDPRICE(N)} and {@code MIN(low, N)}. DONCHIAN computes all three in one pass under the name users look for.</li>
         * <li>The middle line is the channel midpoint, not a moving average of price.</li>
         * <li>No smoothing or recursion is involved, so there is no unstable period: outputs are exact from the first bar.</li>
@@ -82386,7 +82388,7 @@ class Core {
           return RetCode.Success ;
        }
        /**
-        * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+        * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
         * volume-weighted momentum. Each bar's close-to-close move is weighted by
         * that bar's volume, and the result is smoothed with an exponential moving
         * average. The sign is the direction of the move; the size combines how far
@@ -82461,7 +82463,7 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Alexander Elder's Force Index (*Trading for a Living*, 1993):
+        * Alexander Elder's Force Index (<i>Trading for a Living</i>, 1993):
         * volume-weighted momentum. Each bar's close-to-close move is weighted by
         * that bar's volume, and the result is smoothed with an exponential moving
         * average. The sign is the direction of the move; the size combines how far
@@ -83959,8 +83961,8 @@ class Core {
        }
        /**
         * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
-        * measure from *Smarter Trading* (1995) — the net directional movement over
-        * the period divided by the total path travelled to get there. 1.0 is a
+        * measure from <i>Smarter Trading</i> (1995) — the net directional movement
+        * over the period divided by the total path travelled to get there. 1.0 is a
         * perfectly efficient (straight-line) move; values near 0 are churn. This is
         * exactly the efficiency ratio <a
         * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
@@ -84033,8 +84035,8 @@ class Core {
        }
        /**
         * Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
-        * measure from *Smarter Trading* (1995) — the net directional movement over
-        * the period divided by the total path travelled to get there. 1.0 is a
+        * measure from <i>Smarter Trading</i> (1995) — the net directional movement
+        * over the period divided by the total path travelled to get there. 1.0 is a
         * perfectly efficient (straight-line) move; values near 0 are churn. This is
         * exactly the efficiency ratio <a
         * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
@@ -84859,10 +84861,10 @@ class Core {
        }
        /**
         * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-        * *Trading for a Living* (1993) — how far the bar's high and low sit from an
-        * EMA of the close. Bulls strong enough to push the high above the average
-        * read as positive Bull Power; bears dragging the low below it read as
-        * negative Bear Power.
+        * <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+        * from an EMA of the close. Bulls strong enough to push the high above the
+        * average read as positive Bull Power; bears dragging the low below it read
+        * as negative Bear Power.
         * <p><b>Formula</b>
         * <pre>{@code
         * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
@@ -84936,10 +84938,10 @@ class Core {
        }
        /**
         * Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-        * *Trading for a Living* (1993) — how far the bar's high and low sit from an
-        * EMA of the close. Bulls strong enough to push the high above the average
-        * read as positive Bull Power; bears dragging the low below it read as
-        * negative Bear Power.
+        * <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+        * from an EMA of the close. Bulls strong enough to push the high above the
+        * average read as positive Bull Power; bears dragging the low below it read
+        * as negative Bear Power.
         * <p><b>Formula</b>
         * <pre>{@code
         * `Bull Power = High − EMA(Close, n)` and `Bear Power = Low − EMA(Close, n)`, both lines against the **same** EMA. Bull ≥ Bear on every bar since high ≥ low. TradingView's built-in *Bull Bear Power* — which its own support page calls "otherwise known as the Elder-Ray Index" — plots only the sum of the two, not the pair; StockCharts, TC2000 and pandas-ta all ship the two lines.
@@ -86639,7 +86641,7 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window *ending at the same bar*, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
+        * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
         * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -86706,7 +86708,7 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window *ending at the same bar*, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
+        * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
         * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -89816,7 +89818,7 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
+        * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are <b>truncated</b> to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
         * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting platform using the other convention still lands on TA-Lib's values.</li>
         * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
         * </ul>
@@ -89896,7 +89898,7 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are **truncated** to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
+        * <li>The two derived periods {@code n/2} and {@code sqrt(n)} are <b>truncated</b> to integers, exactly as in Alan Hull's own statement of the formula ({@code Integer()}); Tulip Indicators and pandas-ta do the same. Some other published descriptions round to nearest instead, which changes both the values and, for the square root, the lookback — a visibly different line, not a tolerance-level difference. TA-Lib follows the author.</li>
         * <li>The default period of 20 is Alan Hull's own default. It is also a period on which the truncate and round-to-nearest conventions coincide (20/2 is exact; sqrt(20) = 4.47 truncates and rounds to 4), so at the default a charting platform using the other convention still lands on TA-Lib's values.</li>
         * <li>A period of 1 performs no smoothing: the output is a copy of the input.</li>
         * </ul>
@@ -119352,7 +119354,7 @@ class Core {
           return RetCode.Success ;
        }
        /**
-        * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+        * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
         * price range a bar travelled per unit of volume traded — how much movement
         * the market "facilitated" per tick. A rising index on rising volume is read
         * as a move the market is absorbing; a rising index on falling volume as one
@@ -119425,7 +119427,7 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+        * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
         * price range a bar travelled per unit of volume traded — how much movement
         * the market "facilitated" per tick. A rising index on rising volume is read
         * as a move the market is absorbing; a rising index on falling volume as one
@@ -142204,8 +142206,8 @@ class Core {
        /**
         * Percentage Volume Oscillator: a variation of the <a
         * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
-        * (PPO, created by Gerald Appel) applied to the **volume** series instead of
-        * price. It is the difference between a fast and slow moving average of
+        * (PPO, created by Gerald Appel) applied to the <b>volume</b> series instead
+        * of price. It is the difference between a fast and slow moving average of
         * volume, expressed as a percentage of the slow MA. Positive when short-term
         * volume is above its longer-term average (rising participation), negative
         * when below. The default periods (12, 26) match MACD and PPO.
@@ -142281,8 +142283,8 @@ class Core {
        /**
         * Percentage Volume Oscillator: a variation of the <a
         * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
-        * (PPO, created by Gerald Appel) applied to the **volume** series instead of
-        * price. It is the difference between a fast and slow moving average of
+        * (PPO, created by Gerald Appel) applied to the <b>volume</b> series instead
+        * of price. It is the difference between a fast and slow moving average of
         * volume, expressed as a percentage of the slow MA. Positive when short-term
         * volume is above its longer-term average (rising participation), negative
         * when below. The default periods (12, 26) match MACD and PPO.
@@ -143459,7 +143461,7 @@ class Core {
           return RetCode.Success ;
        }
        /**
-        * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+        * Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
         * 1994): a simple moving average of the candle body, close minus open. It
         * measures how bullish or bearish the bodies have been over the window,
         * independently of the wicks — above zero the bodies closed up on balance,
@@ -143527,7 +143529,7 @@ class Core {
           return new OutRange(outBegIdx.value, outNBElement.value);
        }
        /**
-        * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+        * Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
         * 1994): a simple moving average of the candle body, close minus open. It
         * measures how bullish or bearish the bodies have been over the window,
         * independently of the wicks — above zero the bodies closed up on balance,
@@ -149818,7 +149820,7 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>The baseline is the mean of the N bars *preceding* the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
+        * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
         * <li>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -149890,7 +149892,7 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>The baseline is the mean of the N bars *preceding* the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
+        * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
         * <li>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -155470,7 +155472,7 @@ class Core {
        }
        /**
         * Stochastic Momentum Index: where the close sits relative to the
-        * **midpoint** of the recent high/low range, double-smoothed. Lane's
+        * <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
         * stochastic measures the close against the bottom of the range; Blau
         * measures it against the middle, then smooths numerator and denominator
         * separately with two exponential averages before dividing, which is what
@@ -155567,7 +155569,7 @@ class Core {
        }
        /**
         * Stochastic Momentum Index: where the close sits relative to the
-        * **midpoint** of the recent high/low range, double-smoothed. Lane's
+        * <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
         * stochastic measures the close against the bottom of the range; Blau
         * measures it against the middle, then smooths numerator and denominator
         * separately with two exponential averages before dividing, which is what
@@ -174377,10 +174379,10 @@ class Core {
         * range a window covered divided by the path it actually travelled. Bounded
         * in [0,1]. Values near 1 mean the market covered most of its path in one
         * direction (trending); values near 0 mean it retraced repeatedly and went
-        * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-        * but it uses no smoothing and carries no recursion. A common use is regime
-        * selection: run trend-following logic while VHF is high, oscillator logic
-        * while it is low.
+        * nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+        * direction, but it uses no smoothing and carries no recursion. A common use
+        * is regime selection: run trend-following logic while VHF is high,
+        * oscillator logic while it is low.
         * <p><b>Formula</b>
         * <pre>{@code
         * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
@@ -174448,10 +174450,10 @@ class Core {
         * range a window covered divided by the path it actually travelled. Bounded
         * in [0,1]. Values near 1 mean the market covered most of its path in one
         * direction (trending); values near 0 mean it retraced repeatedly and went
-        * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-        * but it uses no smoothing and carries no recursion. A common use is regime
-        * selection: run trend-following logic while VHF is high, oscillator logic
-        * while it is low.
+        * nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+        * direction, but it uses no smoothing and carries no recursion. A common use
+        * is regime selection: run trend-following logic while VHF is high,
+        * oscillator logic while it is low.
         * <p><b>Formula</b>
         * <pre>{@code
         * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
@@ -175304,12 +175306,12 @@ class Core {
        }
        /**
         * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-        * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-        * 2010). Positive and negative "vortex movement" — the reach from today's
-        * high to yesterday's low and from today's low to yesterday's high — each
-        * summed over the period and normalized by the summed true range. A +VI line
-        * crossing above −VI is the bullish signal the authors describe; the two
-        * lines are conventionally plotted together.
+        * indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+        * January 2010). Positive and negative "vortex movement" — the reach from
+        * today's high to yesterday's low and from today's low to yesterday's high —
+        * each summed over the period and normalized by the summed true range. A +VI
+        * line crossing above −VI is the bullish signal the authors describe; the
+        * two lines are conventionally plotted together.
         * <p><b>Formula</b>
         * <pre>{@code
         * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
@@ -175384,12 +175386,12 @@ class Core {
        }
        /**
         * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-        * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-        * 2010). Positive and negative "vortex movement" — the reach from today's
-        * high to yesterday's low and from today's low to yesterday's high — each
-        * summed over the period and normalized by the summed true range. A +VI line
-        * crossing above −VI is the bullish signal the authors describe; the two
-        * lines are conventionally plotted together.
+        * indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+        * January 2010). Positive and negative "vortex movement" — the reach from
+        * today's high to yesterday's low and from today's low to yesterday's high —
+        * each summed over the period and normalized by the summed true range. A +VI
+        * line crossing above −VI is the bullish signal the authors describe; the
+        * two lines are conventionally plotted together.
         * <p><b>Formula</b>
         * <pre>{@code
         * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
@@ -176429,7 +176431,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
-        * <li>Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before *any* volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.</li>
+        * <li>Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before <i>any</i> volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.</li>
         * <li>A bar whose price or volume is not a finite number cannot be weighted, so it is left out of the average entirely and repeats the previous value. It is skipped, not absorbed: the running average stays usable and resumes on the next bar that can be weighted, rather than being held at one stale value for the remainder of the range.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
@@ -176510,7 +176512,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>The sums run from the first bar of the range and are never reset. Charting packages anchor VWAP to a trading session and restart it at each session boundary; no TA-Lib function takes a timestamp or a session boundary, so the anchor is the range the caller asks for — pass one session's bars to get that session's VWAP. This is how AD and OBV, the other cumulative volume functions, are already used across sessions.</li>
-        * <li>Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before *any* volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.</li>
+        * <li>Volume is expected to be non-negative. A zero-volume bar carries no weight, so one occurring after volume has traded leaves the average exactly where it was. Before <i>any</i> volume has traded there are no weights at all and the weighted mean is undefined; those bars carry the previous value forward, which is 0 until the first bar with volume. A successful call never emits NaN or ±Inf. Other implementations differ here: pandas-ta-classic divides through and emits NaN, and trading-signals emits no value for the bar at all.</li>
         * <li>A bar whose price or volume is not a finite number cannot be weighted, so it is left out of the average entirely and repeats the previous value. It is skipped, not absorbed: the running average stays usable and resumes on the next bar that can be weighted, rather than being held at one stale value for the remainder of the range.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -177376,7 +177378,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
-        * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
+        * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which <i>every</i> volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
         * </ul>
         * <p>Values are written only where the indicator is defined. The returned
         * {@link OutRange} says where they start and how many there are; nothing
@@ -177452,7 +177454,7 @@ class Core {
         * <p><b>Notes</b>
         * <ul>
         * <li>A period of 1 performs no smoothing: the output is a copy of the input, whatever the volume.</li>
-        * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which *every* volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
+        * <li>Volume is expected to be non-negative. Individual zero-volume bars are fine: a bar that did not trade simply carries no weight, and the average stays well defined as long as some bar in the window has volume. At a period of 2 or more, a window in which <i>every</i> volume is zero has no weights at all; the weighted mean is then undefined and that element is NaN, as it is in every other implementation. Series carrying no volume on any bar, such as cash-index feeds, are outside what a volume-weighted average can describe — use SMA or WMA there.</li>
         * </ul>
         * <p>This is the {@code float[]} overload. The arithmetic is performed in
         * {@code double} before being written to the {@code double[]} output, so a
@@ -178135,15 +178137,15 @@ class Core {
         * Williams built it to catch that shift before price confirms it — traders
         * watch for the line to diverge from price, since a line that keeps rising
         * while price stalls or falls points to accumulation, and one that stalls
-        * while price pushes to a new high points to distribution. **It consumes no
-        * volume.** Larry Williams' original multiplies each move by that bar's
+        * while price pushes to a new high points to distribution. <b>It consumes no
+        * volume.</b> Larry Williams' original multiplies each move by that bar's
         * volume; Steven Achelis published the modification that drops the
-        * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-        * industry kept Williams' name on that no-volume form. That industry-wide
-        * decision is enough for TA-Lib to ship the same form under the same name.
-        * What remains once the multiplier is dropped is a signed close-to-close
-        * move measured on the true range, so it is grouped as a momentum indicator,
-        * not a volume one.
+        * multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+        * the industry kept Williams' name on that no-volume form. That
+        * industry-wide decision is enough for TA-Lib to ship the same form under
+        * the same name. What remains once the multiplier is dropped is a signed
+        * close-to-close move measured on the true range, so it is grouped as a
+        * momentum indicator, not a volume one.
         * <p><b>Formula</b>
         * <pre>{@code
         * For each bar t:
@@ -178218,15 +178220,15 @@ class Core {
         * Williams built it to catch that shift before price confirms it — traders
         * watch for the line to diverge from price, since a line that keeps rising
         * while price stalls or falls points to accumulation, and one that stalls
-        * while price pushes to a new high points to distribution. **It consumes no
-        * volume.** Larry Williams' original multiplies each move by that bar's
+        * while price pushes to a new high points to distribution. <b>It consumes no
+        * volume.</b> Larry Williams' original multiplies each move by that bar's
         * volume; Steven Achelis published the modification that drops the
-        * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-        * industry kept Williams' name on that no-volume form. That industry-wide
-        * decision is enough for TA-Lib to ship the same form under the same name.
-        * What remains once the multiplier is dropped is a signed close-to-close
-        * move measured on the true range, so it is grouped as a momentum indicator,
-        * not a volume one.
+        * multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+        * the industry kept Williams' name on that no-volume form. That
+        * industry-wide decision is enough for TA-Lib to ship the same form under
+        * the same name. What remains once the multiplier is dropped is a signed
+        * close-to-close move measured on the true range, so it is grouped as a
+        * momentum indicator, not a volume one.
         * <p><b>Formula</b>
         * <pre>{@code
         * For each bar t:
@@ -181612,8 +181614,8 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>**The paper this indicator is usually credited to describes a different filter.** Ehlers and Way's *Zero Lag (Well, Almost)* specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
-        * <li>{@code lag} **truncates**: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
+        * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
+        * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
         * <li>The de-lag is computed as {@code 2 * Price - Price[lag]} in one rounding, rather than the algebraically equal {@code Price + (Price - Price[lag])} that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value {@code lag} bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</li>
         * <li>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first {@code n} de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</li>
         * <li>ZLEMA inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves ZLEMA's first output too.</li>
@@ -181698,8 +181700,8 @@ class Core {
         * }</pre>
         * <p><b>Notes</b>
         * <ul>
-        * <li>**The paper this indicator is usually credited to describes a different filter.** Ehlers and Way's *Zero Lag (Well, Almost)* specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
-        * <li>{@code lag} **truncates**: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
+        * <li><b>The paper this indicator is usually credited to describes a different filter.</b> Ehlers and Way's <i>Zero Lag (Well, Almost)</i> specifies an error-correcting EMA with a per-bar gain search; neither the de-lagged series nor the {@code (n-1)/2} lag appears anywhere in it. What TA-Lib ships here is the de-lagged-EMA construction published under the "zero lag" name by Tulip Indicators, pandas-ta, TradingView Pine and others, for which no primary source is traceable.</li>
+        * <li>{@code lag} <b>truncates</b>: {@code Integer((n-1)/2)}. For an even period that is one bar shorter than the round-to-nearest convention some descriptions use, which moves the whole line, not just its warm-up. Tulip Indicators, pandas-ta and Pine all truncate.</li>
         * <li>The de-lag is computed as {@code 2 * Price - Price[lag]} in one rounding, rather than the algebraically equal {@code Price + (Price - Price[lag])} that Tulip Indicators, TradingView Pine and the Wikipedia statement use. The second form's extra rounding is one unit in the last place of the larger price — negligible against the de-lagged value, except where that value nearly cancels. When price is near double its value {@code lag} bars ago the two forms differ by about 5e-12 relative, so expect that much disagreement against those implementations on a strongly trending series, and do not attribute it to the seed or the smoothing factor.</li>
         * <li>Implementations disagree on how the inner EMA is seeded — TA-Lib uses its own EMA convention (the simple average of the first {@code n} de-lagged values), where Tulip Indicators seeds from a single raw price and so emits its first value earlier and converges to these values only after many bars.</li>
         * <li>ZLEMA inherits EMA's unstable period rather than owning one: {@code TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, ...)} moves ZLEMA's first output too.</li>
@@ -182151,7 +182153,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "30b672eff480d5e1";
+    static final String SPLICED_GENCODE_DIGEST = "a3261151c68145a3";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

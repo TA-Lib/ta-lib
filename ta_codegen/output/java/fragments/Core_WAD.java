@@ -170,15 +170,15 @@
     * Williams built it to catch that shift before price confirms it — traders
     * watch for the line to diverge from price, since a line that keeps rising
     * while price stalls or falls points to accumulation, and one that stalls
-    * while price pushes to a new high points to distribution. **It consumes no
-    * volume.** Larry Williams' original multiplies each move by that bar's
+    * while price pushes to a new high points to distribution. <b>It consumes no
+    * volume.</b> Larry Williams' original multiplies each move by that bar's
     * volume; Steven Achelis published the modification that drops the
-    * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-    * industry kept Williams' name on that no-volume form. That industry-wide
-    * decision is enough for TA-Lib to ship the same form under the same name.
-    * What remains once the multiplier is dropped is a signed close-to-close
-    * move measured on the true range, so it is grouped as a momentum indicator,
-    * not a volume one.
+    * multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+    * the industry kept Williams' name on that no-volume form. That
+    * industry-wide decision is enough for TA-Lib to ship the same form under
+    * the same name. What remains once the multiplier is dropped is a signed
+    * close-to-close move measured on the true range, so it is grouped as a
+    * momentum indicator, not a volume one.
     * <p><b>Formula</b>
     * <pre>{@code
     * For each bar t:
@@ -253,15 +253,15 @@
     * Williams built it to catch that shift before price confirms it — traders
     * watch for the line to diverge from price, since a line that keeps rising
     * while price stalls or falls points to accumulation, and one that stalls
-    * while price pushes to a new high points to distribution. **It consumes no
-    * volume.** Larry Williams' original multiplies each move by that bar's
+    * while price pushes to a new high points to distribution. <b>It consumes no
+    * volume.</b> Larry Williams' original multiplies each move by that bar's
     * volume; Steven Achelis published the modification that drops the
-    * multiplier (*Technical Analysis from A to Z*, 2nd ed., p.368), and the
-    * industry kept Williams' name on that no-volume form. That industry-wide
-    * decision is enough for TA-Lib to ship the same form under the same name.
-    * What remains once the multiplier is dropped is a signed close-to-close
-    * move measured on the true range, so it is grouped as a momentum indicator,
-    * not a volume one.
+    * multiplier (<i>Technical Analysis from A to Z</i>, 2nd ed., p.368), and
+    * the industry kept Williams' name on that no-volume form. That
+    * industry-wide decision is enough for TA-Lib to ship the same form under
+    * the same name. What remains once the multiplier is dropped is a signed
+    * close-to-close move measured on the true range, so it is grouped as a
+    * momentum indicator, not a volume one.
     * <p><b>Formula</b>
     * <pre>{@code
     * For each bar t:

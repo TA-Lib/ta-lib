@@ -375,12 +375,12 @@
    }
    /**
     * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-    * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-    * 2010). Positive and negative "vortex movement" — the reach from today's
-    * high to yesterday's low and from today's low to yesterday's high — each
-    * summed over the period and normalized by the summed true range. A +VI line
-    * crossing above −VI is the bullish signal the authors describe; the two
-    * lines are conventionally plotted together.
+    * indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+    * January 2010). Positive and negative "vortex movement" — the reach from
+    * today's high to yesterday's low and from today's low to yesterday's high —
+    * each summed over the period and normalized by the summed true range. A +VI
+    * line crossing above −VI is the bullish signal the authors describe; the
+    * two lines are conventionally plotted together.
     * <p><b>Formula</b>
     * <pre>{@code
     * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.
@@ -455,12 +455,12 @@
    }
    /**
     * Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-    * indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-    * 2010). Positive and negative "vortex movement" — the reach from today's
-    * high to yesterday's low and from today's low to yesterday's high — each
-    * summed over the period and normalized by the summed true range. A +VI line
-    * crossing above −VI is the bullish signal the authors describe; the two
-    * lines are conventionally plotted together.
+    * indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+    * January 2010). Positive and negative "vortex movement" — the reach from
+    * today's high to yesterday's low and from today's low to yesterday's high —
+    * each summed over the period and normalized by the summed true range. A +VI
+    * line crossing above −VI is the bullish signal the authors describe; the
+    * two lines are conventionally plotted together.
     * <p><b>Formula</b>
     * <pre>{@code
     * Per bar, `TR[i] = max(H[i]−L[i], |C[i−1]−H[i]|, |C[i−1]−L[i]|)` (exactly [`TRANGE`](/functions/trange)), `VMP[i] = |H[i] − L[i−1]|` and `VMM[i] = |L[i] − H[i−1]|`. Then `+VI = SUM(VMP, n) / SUM(TR, n)` and `−VI = SUM(VMM, n) / SUM(TR, n)`.

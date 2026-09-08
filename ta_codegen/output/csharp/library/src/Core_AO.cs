@@ -309,18 +309,19 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-   /// momentum read as the spread between a short and a long simple moving
-   /// average of the median price. It contrasts what the recent bars have done
-   /// against a longer stretch of the same market, using the bar midpoint rather
-   /// than the close so that intrabar range, not the settle, drives the reading.
-   /// Above zero the short window sits higher than the long one and momentum is
-   /// with the bulls; below zero it is with the bears. It is drawn as a
-   /// zero-centred histogram, and the readings that get traded are the zero-line
-   /// crossings, the twin-peaks divergence, and the run of consecutive same-side
-   /// bars — which is why the sign and the bar-to-bar change matter more than
-   /// the level. The oscillator is the first leg of Williams' Profitunity
-   /// system, alongside the Alligator and the Accelerator/Decelerator
+   /// Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+   /// market momentum read as the spread between a short and a long simple
+   /// moving average of the median price. It contrasts what the recent bars have
+   /// done against a longer stretch of the same market, using the bar midpoint
+   /// rather than the close so that intrabar range, not the settle, drives the
+   /// reading. Above zero the short window sits higher than the long one and
+   /// momentum is with the bulls; below zero it is with the bears. It is drawn
+   /// as a zero-centred histogram, and the readings that get traded are the
+   /// zero-line crossings, the twin-peaks divergence, and the run of consecutive
+   /// same-side bars — which is why the sign and the bar-to-bar change matter
+   /// more than the level. The oscillator is the first leg of Williams'
+   /// Profitunity system, alongside the Alligator and the
+   /// Accelerator/Decelerator
    /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
@@ -387,18 +388,19 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Bill Williams' Awesome Oscillator (*New Trading Dimensions*, 1998): market
-   /// momentum read as the spread between a short and a long simple moving
-   /// average of the median price. It contrasts what the recent bars have done
-   /// against a longer stretch of the same market, using the bar midpoint rather
-   /// than the close so that intrabar range, not the settle, drives the reading.
-   /// Above zero the short window sits higher than the long one and momentum is
-   /// with the bulls; below zero it is with the bears. It is drawn as a
-   /// zero-centred histogram, and the readings that get traded are the zero-line
-   /// crossings, the twin-peaks divergence, and the run of consecutive same-side
-   /// bars — which is why the sign and the bar-to-bar change matter more than
-   /// the level. The oscillator is the first leg of Williams' Profitunity
-   /// system, alongside the Alligator and the Accelerator/Decelerator
+   /// Bill Williams' Awesome Oscillator (<i>New Trading Dimensions</i>, 1998):
+   /// market momentum read as the spread between a short and a long simple
+   /// moving average of the median price. It contrasts what the recent bars have
+   /// done against a longer stretch of the same market, using the bar midpoint
+   /// rather than the close so that intrabar range, not the settle, drives the
+   /// reading. Above zero the short window sits higher than the long one and
+   /// momentum is with the bulls; below zero it is with the bears. It is drawn
+   /// as a zero-centred histogram, and the readings that get traded are the
+   /// zero-line crossings, the twin-peaks divergence, and the run of consecutive
+   /// same-side bars — which is why the sign and the bar-to-bar change matter
+   /// more than the level. The oscillator is the first leg of Williams'
+   /// Profitunity system, alongside the Alligator and the
+   /// Accelerator/Decelerator
    /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>

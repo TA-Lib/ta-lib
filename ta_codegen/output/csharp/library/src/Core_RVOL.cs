@@ -226,7 +226,7 @@ public partial class Core
    /// RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
    /// </code>
    /// <list type="bullet">
-   /// <item><description>The baseline is the mean of the N bars *preceding* the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</description></item>
+   /// <item><description>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</description></item>
    /// <item><description>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</description></item>
    /// </list>
    /// <para>
@@ -296,7 +296,7 @@ public partial class Core
    /// RVOL_t = Volume_t / ( (1/N) * sum_{i=t-N}^{t-1} Volume_i ), N = optInTimePeriod
    /// </code>
    /// <list type="bullet">
-   /// <item><description>The baseline is the mean of the N bars *preceding* the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</description></item>
+   /// <item><description>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</description></item>
    /// <item><description>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</description></item>
    /// </list>
    /// <para>

@@ -298,10 +298,10 @@ public partial class Core
    }
    /// <summary>
    /// Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-   /// *Trading for a Living* (1993) — how far the bar's high and low sit from an
-   /// EMA of the close. Bulls strong enough to push the high above the average
-   /// read as positive Bull Power; bears dragging the low below it read as
-   /// negative Bear Power.
+   /// <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+   /// from an EMA of the close. Bulls strong enough to push the high above the
+   /// average read as positive Bull Power; bears dragging the low below it read
+   /// as negative Bear Power.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -375,10 +375,10 @@ public partial class Core
    }
    /// <summary>
    /// Elder Ray Index: Alexander Elder's Bull Power / Bear Power pair from
-   /// *Trading for a Living* (1993) — how far the bar's high and low sit from an
-   /// EMA of the close. Bulls strong enough to push the high above the average
-   /// read as positive Bull Power; bears dragging the low below it read as
-   /// negative Bear Power.
+   /// <i>Trading for a Living</i> (1993) — how far the bar's high and low sit
+   /// from an EMA of the close. Bulls strong enough to push the high above the
+   /// average read as positive Bull Power; bears dragging the low below it read
+   /// as negative Bear Power.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

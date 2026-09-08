@@ -188,10 +188,10 @@
     * range a window covered divided by the path it actually travelled. Bounded
     * in [0,1]. Values near 1 mean the market covered most of its path in one
     * direction (trending); values near 0 mean it retraced repeatedly and went
-    * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-    * but it uses no smoothing and carries no recursion. A common use is regime
-    * selection: run trend-following logic while VHF is high, oscillator logic
-    * while it is low.
+    * nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+    * direction, but it uses no smoothing and carries no recursion. A common use
+    * is regime selection: run trend-following logic while VHF is high,
+    * oscillator logic while it is low.
     * <p><b>Formula</b>
     * <pre>{@code
     * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
@@ -259,10 +259,10 @@
     * range a window covered divided by the path it actually travelled. Bounded
     * in [0,1]. Values near 1 mean the market covered most of its path in one
     * direction (trending); values near 0 mean it retraced repeatedly and went
-    * nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-    * but it uses no smoothing and carries no recursion. A common use is regime
-    * selection: run trend-following logic while VHF is high, oscillator logic
-    * while it is low.
+    * nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+    * direction, but it uses no smoothing and carries no recursion. A common use
+    * is regime selection: run trend-following logic while VHF is high,
+    * oscillator logic while it is low.
     * <p><b>Formula</b>
     * <pre>{@code
     * num = MAX(C[t-optInTimePeriod+1..t]) - MIN(C[t-optInTimePeriod+1..t]), the range spanned by the `optInTimePeriod` most recent closes. den = SUM( |C[j] - C[j-1]| ) for j = t-optInTimePeriod+1 .. t, the total absolute movement over the same number of changes, which therefore reaches one close further back. VHF = num / den.
