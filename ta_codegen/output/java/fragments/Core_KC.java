@@ -25,7 +25,7 @@
     * @param optInATRPeriod Smoothing period of the Average True Range (default
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -281,7 +281,7 @@
     * @param optInATRPeriod Smoothing period of the Average True Range (default
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outRealMiddleBand Exponential moving average of the typical price.
@@ -373,7 +373,7 @@
     * @param optInATRPeriod Smoothing period of the Average True Range (default
     *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outRealUpperBand Centre line plus the scaled Average True Range.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outRealMiddleBand Exponential moving average of the typical price.

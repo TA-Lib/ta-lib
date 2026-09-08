@@ -25,9 +25,11 @@
     * method.
     *
     * @param optInFastLimit Upper bound on the adaptive smoothing factor
-    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
@@ -813,9 +815,11 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Price series to smooth.
     * @param optInFastLimit Upper bound on the adaptive smoothing factor
-    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFAMA Following adaptive moving average, using half the alpha
@@ -883,9 +887,11 @@
     * @param endIdx Last bar of the requested range (inclusive).
     * @param inReal Price series to smooth.
     * @param optInFastLimit Upper bound on the adaptive smoothing factor
-    *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-    *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+    *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outMAMA Adaptive moving average (fast line) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @param outFAMA Following adaptive moving average, using half the alpha

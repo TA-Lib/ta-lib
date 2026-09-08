@@ -26,7 +26,7 @@
     * @param optInTimePeriod Window length (default 5; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
@@ -185,7 +185,7 @@
     * @param optInTimePeriod Window length (default 5; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
     *        hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -251,7 +251,7 @@
     * @param optInTimePeriod Window length (default 5; range 2..100000;
     *        {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
     *        hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

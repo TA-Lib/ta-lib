@@ -37,7 +37,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInVFactor Volume factor weighting the coefficients (0 = plain
     *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int T3_Lookback( int optInTimePeriod, double optInVFactor )
@@ -388,7 +388,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInVFactor Volume factor weighting the coefficients (0 = plain
     *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal T3 smoothed line. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -457,7 +457,7 @@
     *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInVFactor Volume factor weighting the coefficients (0 = plain
     *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-    *        {@code -4e37} selects the default).
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal T3 smoothed line. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

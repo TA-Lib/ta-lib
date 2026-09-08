@@ -68,7 +68,8 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period of the Average True Range (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
-   /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
    {
@@ -494,7 +495,8 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period of the Average True Range (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
-   /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it
@@ -584,7 +586,8 @@ public partial class Core
    /// <param name="optInTimePeriod">Smoothing period of the Average True Range (default 10; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
-   /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it

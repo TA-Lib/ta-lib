@@ -21,8 +21,8 @@
     *
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must exceed above close[i-2]; larger values demand deeper
-    *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLMORNINGDOJISTAR_Lookback( double optInPenetration )
@@ -284,8 +284,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must exceed above close[i-2]; larger values demand deeper
-    *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
     *        bullish; never emits -100. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -364,8 +364,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must exceed above close[i-2]; larger values demand deeper
-    *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        penetration into the black body (default 0.3; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
     *        bullish; never emits -100. Must hold at least
     *        {@code endIdx - startIdx + 1} values.

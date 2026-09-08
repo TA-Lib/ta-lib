@@ -21,7 +21,8 @@
     *
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must penetrate below the 1st close; larger requires deeper
-    *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLEVENINGSTAR_Lookback( double optInPenetration )
@@ -259,7 +260,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must penetrate below the 1st close; larger requires deeper
-    *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
     *        emits +100. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -335,7 +337,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's real body the 3rd
     *        close must penetrate below the 1st close; larger requires deeper
-    *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
     *        emits +100. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

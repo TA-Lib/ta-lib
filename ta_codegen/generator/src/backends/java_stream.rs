@@ -2607,7 +2607,7 @@ fn javadoc_wrap(text: &str) -> String {
 /// public `OpenAndFill` hoists the aliasing guard and then delegates to
 /// `OpenAndFillInternal`, exactly the way `Open` delegates to `OpenInternal`.
 /// That symmetry is what makes the anchored fill seam reachable for every
-/// function rather than only the sixteen something composes over.
+/// function rather than only the ones something composes over.
 ///
 /// The two exempt tiers (`Dispatch`, `PeriodBank`) hand-roll a RetCode-returning
 /// body per entry point — theirs differ by which callee tier they call and by an
@@ -3107,14 +3107,17 @@ fn emit_dispatch(
                 }
             }
         }
-        // `return`, not `break`: the switch is the whole method body, so this
-        // costs a byte where the jump to the end cost three, and the step frame
-        // is 4 bytes over the same 325-byte budget the peek frame is kept under.
+        // Every arm returns, including `default` below, which is what makes
+        // javac reject anything emitted after this switch. Nothing may go
+        // there: the arms are the only writers of `sp.cur_*` and a tail would
+        // be dead on every real MAType, reached only by the unreachable
+        // default. Keep the two in step -- a `break` default silently restores
+        // the trap, at no saving.
         let _ = writeln!(o, "         return;");
         let _ = writeln!(o, "      }}");
     }
     let _ = writeln!(o, "      default:");
-    let _ = writeln!(o, "         break; /* unreachable: open rejects arms without a sub-stream */");
+    let _ = writeln!(o, "         return; /* unreachable: open rejects arms without a sub-stream */");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "   }}");
 

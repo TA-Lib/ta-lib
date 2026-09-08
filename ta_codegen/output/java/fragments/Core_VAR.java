@@ -27,7 +27,8 @@
     * @param optInTimePeriod Window length for the variance (default 5; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Deviation count accepted by the API but never used in
-    *        the computation (default 1; {@code -4e37} selects the default).
+    *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int VAR_Lookback( int optInTimePeriod, double optInNbDev )
@@ -366,7 +367,8 @@
     * @param optInTimePeriod Window length for the variance (default 5; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Deviation count accepted by the API but never used in
-    *        the computation (default 1; {@code -4e37} selects the default).
+    *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outReal Rolling population variance. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -432,7 +434,8 @@
     * @param optInTimePeriod Window length for the variance (default 5; range
     *        1..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDev Deviation count accepted by the API but never used in
-    *        the computation (default 1; {@code -4e37} selects the default).
+    *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outReal Rolling population variance. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

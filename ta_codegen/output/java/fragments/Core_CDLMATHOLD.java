@@ -20,8 +20,8 @@
     * output.
     *
     * @param optInPenetration Max fraction of the 1st white body the reaction
-    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLMATHOLD_Lookback( double optInPenetration )
@@ -277,8 +277,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param optInPenetration Max fraction of the 1st white body the reaction
-    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the bullish Mat Hold is detected, 0 otherwise.
     *        Never emits -100. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -354,8 +354,8 @@
     * @param inLow Low price of each bar.
     * @param inClose Close price of each bar.
     * @param optInPenetration Max fraction of the 1st white body the reaction
-    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0; {@code -4e37}
-    *        selects the default).
+    *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+    *        {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the bullish Mat Hold is detected, 0 otherwise.
     *        Never emits -100. Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

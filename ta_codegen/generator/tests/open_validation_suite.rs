@@ -478,8 +478,8 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
 /// minted a handle over an empty range. Rule S7 is what that shape is: a
 /// history that cannot produce a value (issue #271 item 4).
 ///
-/// Corpus-wide over the three ported backends, because the five sites are in
-/// four functions and the next composed indicator would get the same body. C is
+/// Corpus-wide over the three ported backends, because the sites are spread
+/// across the composed functions and the next one would get the same body. C is
 /// deliberately absent: no fold pass runs for it, so its guard still tests both
 /// halves. Nothing reaches the arm — no opener answers `TA_SUCCESS` over zero
 /// elements.

@@ -13829,9 +13829,9 @@ class Core {
         * @param optInTimePeriod Periods for the MA and standard deviation (default
         *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDevUp Standard-deviation multiplier for the upper band
-        *        (default 2; {@code -4e37} selects the default).
+        *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInNbDevDn Standard-deviation multiplier for the lower band
-        *        (default 2; {@code -4e37} selects the default).
+        *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
@@ -14399,9 +14399,9 @@ class Core {
         * @param optInTimePeriod Periods for the MA and standard deviation (default
         *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDevUp Standard-deviation multiplier for the upper band
-        *        (default 2; {@code -4e37} selects the default).
+        *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInNbDevDn Standard-deviation multiplier for the lower band
-        *        (default 2; {@code -4e37} selects the default).
+        *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
@@ -14479,9 +14479,9 @@ class Core {
         * @param optInTimePeriod Periods for the MA and standard deviation (default
         *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDevUp Standard-deviation multiplier for the upper band
-        *        (default 2; {@code -4e37} selects the default).
+        *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInNbDevDn Standard-deviation multiplier for the lower band
-        *        (default 2; {@code -4e37} selects the default).
+        *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInMAType Moving-average type for the middle band (default 0 =
         *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
         *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
@@ -24279,8 +24279,8 @@ class Core {
         * output.
         *
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
-        *        close must penetrate (default 0.3; minimum 0; {@code -4e37} selects the
-        *        default).
+        *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLABANDONEDBABY_Lookback( double optInPenetration )
@@ -24547,8 +24547,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
-        *        close must penetrate (default 0.3; minimum 0; {@code -4e37} selects the
-        *        default).
+        *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
         * @param outInteger +100 at a bullish abandoned baby bottom (3rd candle
         *        white), -100 at a bearish abandoned baby top (3rd candle black), 0
         *        otherwise; sign = color of the 3rd candle. Must hold at least
@@ -24625,8 +24625,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
-        *        close must penetrate (default 0.3; minimum 0; {@code -4e37} selects the
-        *        default).
+        *        close must penetrate (default 0.3; minimum 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
         * @param outInteger +100 at a bullish abandoned baby bottom (3rd candle
         *        white), -100 at a bearish abandoned baby top (3rd candle black), 0
         *        otherwise; sign = color of the 3rd candle. Must hold at least
@@ -30545,7 +30545,8 @@ class Core {
         *
         * @param optInPenetration Fraction of candle 1's real body that candle 2's
         *        close must penetrate below close[i-1]; larger values require deeper
-        *        penetration (default 0.5; minimum 0; {@code -4e37} selects the default).
+        *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
@@ -30740,7 +30741,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of candle 1's real body that candle 2's
         *        close must penetrate below close[i-1]; larger values require deeper
-        *        penetration (default 0.5; minimum 0; {@code -4e37} selects the default).
+        *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise; never emits +100. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -30816,7 +30818,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of candle 1's real body that candle 2's
         *        close must penetrate below close[i-1]; larger values require deeper
-        *        penetration (default 0.5; minimum 0; {@code -4e37} selects the default).
+        *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outInteger -100 when the pattern is detected (always bearish), 0
         *        otherwise; never emits +100. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -34242,7 +34245,7 @@ class Core {
         *
         * @param optInPenetration Fraction of the 1st real body the 3rd candle's
         *        close must penetrate; larger demands a deeper close into the first body
-        *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLEVENINGDOJISTAR_Lookback( double optInPenetration )
@@ -34502,7 +34505,7 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st real body the 3rd candle's
         *        close must penetrate; larger demands a deeper close into the first body
-        *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
         *        bearish; never emits +100. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -34579,7 +34582,7 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st real body the 3rd candle's
         *        close must penetrate; larger demands a deeper close into the first body
-        *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger -100 when the pattern is detected, 0 otherwise. Always
         *        bearish; never emits +100. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -35210,7 +35213,8 @@ class Core {
         *
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
         *        close must penetrate below the 1st close; larger requires deeper
-        *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLEVENINGSTAR_Lookback( double optInPenetration )
@@ -35448,7 +35452,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
         *        close must penetrate below the 1st close; larger requires deeper
-        *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
         *        emits +100. Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -35524,7 +35529,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
         *        close must penetrate below the 1st close; larger requires deeper
-        *        penetration (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        penetration (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outInteger -100 when detected (always bearish), 0 otherwise. Never
         *        emits +100. Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -52854,8 +52860,8 @@ class Core {
         * output.
         *
         * @param optInPenetration Max fraction of the 1st white body the reaction
-        *        days (3rd, 4th) may penetrate (default 0.5; minimum 0; {@code -4e37}
-        *        selects the default).
+        *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLMATHOLD_Lookback( double optInPenetration )
@@ -53111,8 +53117,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param optInPenetration Max fraction of the 1st white body the reaction
-        *        days (3rd, 4th) may penetrate (default 0.5; minimum 0; {@code -4e37}
-        *        selects the default).
+        *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the bullish Mat Hold is detected, 0 otherwise.
         *        Never emits -100. Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -53188,8 +53194,8 @@ class Core {
         * @param inLow Low price of each bar.
         * @param inClose Close price of each bar.
         * @param optInPenetration Max fraction of the 1st white body the reaction
-        *        days (3rd, 4th) may penetrate (default 0.5; minimum 0; {@code -4e37}
-        *        selects the default).
+        *        days (3rd, 4th) may penetrate (default 0.5; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the bullish Mat Hold is detected, 0 otherwise.
         *        Never emits -100. Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -53828,8 +53834,8 @@ class Core {
         *
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
         *        close must exceed above close[i-2]; larger values demand deeper
-        *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-        *        selects the default).
+        *        penetration into the black body (default 0.3; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLMORNINGDOJISTAR_Lookback( double optInPenetration )
@@ -54091,8 +54097,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
         *        close must exceed above close[i-2]; larger values demand deeper
-        *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-        *        selects the default).
+        *        penetration into the black body (default 0.3; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
         *        bullish; never emits -100. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -54171,8 +54177,8 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's real body the 3rd
         *        close must exceed above close[i-2]; larger values demand deeper
-        *        penetration into the black body (default 0.3; minimum 0; {@code -4e37}
-        *        selects the default).
+        *        penetration into the black body (default 0.3; minimum 0;
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the pattern is detected, 0 otherwise. Always
         *        bullish; never emits -100. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -54803,7 +54809,7 @@ class Core {
         *
         * @param optInPenetration Fraction of the 1st candle's body the 3rd close
         *        must exceed above the 1st close; larger = deeper penetration required
-        *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int CDLMORNINGSTAR_Lookback( double optInPenetration )
@@ -55043,7 +55049,7 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's body the 3rd close
         *        must exceed above the 1st close; larger = deeper penetration required
-        *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the morning star is detected, 0 otherwise.
         *        Never negative (pattern is exclusively bullish) Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -55123,7 +55129,7 @@ class Core {
         * @param inClose Close price of each bar.
         * @param optInPenetration Fraction of the 1st candle's body the 3rd close
         *        must exceed above the 1st close; larger = deeper penetration required
-        *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outInteger +100 when the morning star is detected, 0 otherwise.
         *        Never negative (pattern is exclusively bullish) Must hold at least
         *        {@code endIdx - startIdx + 1} values.
@@ -105440,7 +105446,7 @@ class Core {
         * @param optInATRPeriod Smoothing period of the Average True Range (default
         *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int KC_Lookback( int optInTimePeriod, int optInATRPeriod, double optInNbDev )
@@ -105696,7 +105702,7 @@ class Core {
         * @param optInATRPeriod Smoothing period of the Average True Range (default
         *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outRealUpperBand Centre line plus the scaled Average True Range.
         *        Must hold at least {@code endIdx - startIdx + 1} values.
         * @param outRealMiddleBand Exponential moving average of the typical price.
@@ -105788,7 +105794,7 @@ class Core {
         * @param optInATRPeriod Smoothing period of the Average True Range (default
         *        10; range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Multiplier applied to the Average True Range (default 2;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outRealUpperBand Centre line plus the scaled Average True Range.
         *        Must hold at least {@code endIdx - startIdx + 1} values.
         * @param outRealMiddleBand Exponential moving average of the typical price.
@@ -113253,7 +113259,7 @@ class Core {
              return;
           }
           default:
-             break; /* unreachable: open rejects arms without a sub-stream */
+             return; /* unreachable: open rejects arms without a sub-stream */
           }
        }
        private RetCode maOpenImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
@@ -116899,9 +116905,11 @@ class Core {
         * method.
         *
         * @param optInFastLimit Upper bound on the adaptive smoothing factor
-        *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+        *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-        *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+        *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
@@ -117687,9 +117695,11 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Price series to smooth.
         * @param optInFastLimit Upper bound on the adaptive smoothing factor
-        *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+        *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-        *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+        *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outMAMA Adaptive moving average (fast line) Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outFAMA Following adaptive moving average, using half the alpha
@@ -117757,9 +117767,11 @@ class Core {
         * @param endIdx Last bar of the requested range (inclusive).
         * @param inReal Price series to smooth.
         * @param optInFastLimit Upper bound on the adaptive smoothing factor
-        *        (default 0.5; range 0.01..0.99; {@code -4e37} selects the default).
+        *        (default 0.5; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param optInSlowLimit Lower bound on the adaptive smoothing factor
-        *        (default 0.05; range 0.01..0.99; {@code -4e37} selects the default).
+        *        (default 0.05; range 0.01..0.99; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outMAMA Adaptive moving average (fast line) Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @param outFAMA Following adaptive moving average, using half the alpha
@@ -135935,7 +135947,7 @@ class Core {
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
-        *        (default 50; range 0..100; {@code -4e37} selects the default).
+        *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
@@ -136239,7 +136251,7 @@ class Core {
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
-        *        (default 50; range 0..100; {@code -4e37} selects the default).
+        *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal The value at the requested rank within the trailing window.
         *        Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -136312,7 +136324,7 @@ class Core {
         * @param optInTimePeriod Number of bars in the trailing window (default 30;
         *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInPercentile Percentage position within the sorted window
-        *        (default 50; range 0..100; {@code -4e37} selects the default).
+        *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal The value at the requested rank within the trailing window.
         *        Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -149778,10 +149790,10 @@ class Core {
         * output.
         *
         * @param optInAcceleration Step added to the acceleration factor on each new
-        *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-        *        default).
+        *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+        *        the default).
         * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-        *        minimum 0; {@code -4e37} selects the default).
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int SAR_Lookback( double optInAcceleration, double optInMaximum )
@@ -150231,10 +150243,10 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param optInAcceleration Step added to the acceleration factor on each new
-        *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-        *        default).
+        *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+        *        the default).
         * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-        *        minimum 0; {@code -4e37} selects the default).
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
         *        least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -150299,10 +150311,10 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param optInAcceleration Step added to the acceleration factor on each new
-        *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-        *        default).
+        *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+        *        the default).
         * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-        *        minimum 0; {@code -4e37} selects the default).
+        *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
         *        least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -151120,22 +151132,23 @@ class Core {
         * output.
         *
         * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-        *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
-        *        default).
+        *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
         * @param optInOffsetOnReverse Fractional offset applied to the stop on each
-        *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+        *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param optInAccelerationInitLong Initial acceleration factor when long
-        *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationLong AF increment per new long extreme (default
-        *        0.02; minimum 0; {@code -4e37} selects the default).
+        *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationMaxLong Cap on the long acceleration factor
-        *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationInitShort Initial acceleration factor when short
-        *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationShort AF increment per new short extreme (default
-        *        0.02; minimum 0; {@code -4e37} selects the default).
+        *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationMaxShort Cap on the short acceleration factor
-        *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
@@ -151778,22 +151791,23 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-        *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
-        *        default).
+        *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
         * @param optInOffsetOnReverse Fractional offset applied to the stop on each
-        *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+        *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param optInAccelerationInitLong Initial acceleration factor when long
-        *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationLong AF increment per new long extreme (default
-        *        0.02; minimum 0; {@code -4e37} selects the default).
+        *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationMaxLong Cap on the long acceleration factor
-        *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationInitShort Initial acceleration factor when short
-        *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationShort AF increment per new short extreme (default
-        *        0.02; minimum 0; {@code -4e37} selects the default).
+        *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationMaxShort Cap on the short acceleration factor
-        *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal SAR stop level; positive while long, negative while short.
         *        Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -151864,22 +151878,23 @@ class Core {
         * @param inHigh High price of each bar.
         * @param inLow Low price of each bar.
         * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-        *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
-        *        default).
+        *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+        *        selects the default).
         * @param optInOffsetOnReverse Fractional offset applied to the stop on each
-        *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+        *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param optInAccelerationInitLong Initial acceleration factor when long
-        *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationLong AF increment per new long extreme (default
-        *        0.02; minimum 0; {@code -4e37} selects the default).
+        *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationMaxLong Cap on the long acceleration factor
-        *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationInitShort Initial acceleration factor when short
-        *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationShort AF increment per new short extreme (default
-        *        0.02; minimum 0; {@code -4e37} selects the default).
+        *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param optInAccelerationMaxShort Cap on the short acceleration factor
-        *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+        *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal SAR stop level; positive while long, negative while short.
         *        Must hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -156337,7 +156352,7 @@ class Core {
         * @param optInTimePeriod Window length (default 5; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
@@ -156496,7 +156511,7 @@ class Core {
         * @param optInTimePeriod Window length (default 5; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
         *        hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -156562,7 +156577,7 @@ class Core {
         * @param optInTimePeriod Window length (default 5; range 2..100000;
         *        {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Multiplier applied to the standard deviation (default 1;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal Standard deviation at each bar, scaled by optInNbDev. Must
         *        hold at least {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -161506,7 +161521,8 @@ class Core {
         * @param optInTimePeriod Smoothing period of the Average True Range (default
         *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMultiplier Multiplier applied to the Average True Range to set
-        *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+        *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+        *        the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
@@ -161912,7 +161928,8 @@ class Core {
         * @param optInTimePeriod Smoothing period of the Average True Range (default
         *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMultiplier Multiplier applied to the Average True Range to set
-        *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+        *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+        *        the default).
         * @param outSupertrend The SuperTrend line: the band the trend is currently
         *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
         * @param outTrend Trend direction: +1 while the trend rides the lower band,
@@ -161999,7 +162016,8 @@ class Core {
         * @param optInTimePeriod Smoothing period of the Average True Range (default
         *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInMultiplier Multiplier applied to the Average True Range to set
-        *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+        *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+        *        the default).
         * @param outSupertrend The SuperTrend line: the band the trend is currently
         *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
         * @param outTrend Trend direction: +1 while the trend rides the lower band,
@@ -162721,7 +162739,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInVFactor Volume factor weighting the coefficients (0 = plain
         *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int T3_Lookback( int optInTimePeriod, double optInVFactor )
@@ -163072,7 +163090,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInVFactor Volume factor weighting the coefficients (0 = plain
         *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal T3 smoothed line. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -163141,7 +163159,7 @@ class Core {
         *        range 1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInVFactor Volume factor weighting the coefficients (0 = plain
         *        triple EMA, higher = more DEMA-like sharpening) (default 0.7; range 0..1;
-        *        {@code -4e37} selects the default).
+        *        {@link Core#REAL_DEFAULT} selects the default).
         * @param outReal T3 smoothed line. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -172341,7 +172359,8 @@ class Core {
         * @param optInTimePeriod Window length for the variance (default 5; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Deviation count accepted by the API but never used in
-        *        the computation (default 1; {@code -4e37} selects the default).
+        *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @return The lookback, or {@code -1} if a parameter is out of range.
         */
        public int VAR_Lookback( int optInTimePeriod, double optInNbDev )
@@ -172680,7 +172699,8 @@ class Core {
         * @param optInTimePeriod Window length for the variance (default 5; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Deviation count accepted by the API but never used in
-        *        the computation (default 1; {@code -4e37} selects the default).
+        *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outReal Rolling population variance. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -172746,7 +172766,8 @@ class Core {
         * @param optInTimePeriod Window length for the variance (default 5; range
         *        1..100000; {@code Integer.MIN_VALUE} selects the default).
         * @param optInNbDev Deviation count accepted by the API but never used in
-        *        the computation (default 1; {@code -4e37} selects the default).
+        *        the computation (default 1; {@link Core#REAL_DEFAULT} selects the
+        *        default).
         * @param outReal Rolling population variance. Must hold at least
         *        {@code endIdx - startIdx + 1} values.
         * @return The range written: {@code begIdx} is the first bar with a value,
@@ -181389,7 +181410,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "975e13b41e8b5b70";
+    static final String SPLICED_GENCODE_DIGEST = "b9407387283958a2";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -24,10 +24,10 @@
     * output.
     *
     * @param optInAcceleration Step added to the acceleration factor on each new
-    *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-    *        minimum 0; {@code -4e37} selects the default).
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int SAR_Lookback( double optInAcceleration, double optInMaximum )
@@ -477,10 +477,10 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInAcceleration Step added to the acceleration factor on each new
-    *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-    *        minimum 0; {@code -4e37} selects the default).
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
     *        least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -545,10 +545,10 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInAcceleration Step added to the acceleration factor on each new
-    *        extreme point (default 0.02; minimum 0; {@code -4e37} selects the
-    *        default).
+    *        extreme point (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param optInMaximum Ceiling on the acceleration factor (default 0.2;
-    *        minimum 0; {@code -4e37} selects the default).
+    *        minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal Parabolic SAR stop/reverse level per bar. Must hold at
     *        least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

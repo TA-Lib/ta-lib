@@ -27,22 +27,23 @@
     * output.
     *
     * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-    *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
-    *        default).
+    *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
     * @param optInOffsetOnReverse Fractional offset applied to the stop on each
-    *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+    *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInAccelerationInitLong Initial acceleration factor when long
-    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationLong AF increment per new long extreme (default
-    *        0.02; minimum 0; {@code -4e37} selects the default).
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationMaxLong Cap on the long acceleration factor
-    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationInitShort Initial acceleration factor when short
-    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationShort AF increment per new short extreme (default
-    *        0.02; minimum 0; {@code -4e37} selects the default).
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationMaxShort Cap on the short acceleration factor
-    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
@@ -685,22 +686,23 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-    *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
-    *        default).
+    *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
     * @param optInOffsetOnReverse Fractional offset applied to the stop on each
-    *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+    *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInAccelerationInitLong Initial acceleration factor when long
-    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationLong AF increment per new long extreme (default
-    *        0.02; minimum 0; {@code -4e37} selects the default).
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationMaxLong Cap on the long acceleration factor
-    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationInitShort Initial acceleration factor when short
-    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationShort AF increment per new short extreme (default
-    *        0.02; minimum 0; {@code -4e37} selects the default).
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationMaxShort Cap on the short acceleration factor
-    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal SAR stop level; positive while long, negative while short.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -771,22 +773,23 @@
     * @param inHigh High price of each bar.
     * @param inLow Low price of each bar.
     * @param optInStartValue Initial SAR/direction: 0 auto, &gt;0 start long at
-    *        value, &lt;0 start short at |value| (default 0; {@code -4e37} selects the
-    *        default).
+    *        value, &lt;0 start short at |value| (default 0; {@link Core#REAL_DEFAULT}
+    *        selects the default).
     * @param optInOffsetOnReverse Fractional offset applied to the stop on each
-    *        reversal (default 0; minimum 0; {@code -4e37} selects the default).
+    *        reversal (default 0; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param optInAccelerationInitLong Initial acceleration factor when long
-    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationLong AF increment per new long extreme (default
-    *        0.02; minimum 0; {@code -4e37} selects the default).
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationMaxLong Cap on the long acceleration factor
-    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationInitShort Initial acceleration factor when short
-    *        (default 0.02; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationShort AF increment per new short extreme (default
-    *        0.02; minimum 0; {@code -4e37} selects the default).
+    *        0.02; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInAccelerationMaxShort Cap on the short acceleration factor
-    *        (default 0.2; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.2; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal SAR stop level; positive while long, negative while short.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

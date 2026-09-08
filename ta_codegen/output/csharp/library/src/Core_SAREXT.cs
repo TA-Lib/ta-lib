@@ -72,21 +72,22 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <c>-4e37</c> selects the default).</param>
+   /// short at |value| (default 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
-   /// 0; <c>-4e37</c> selects the default).</param>
+   /// 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
-   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
-   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
@@ -744,21 +745,22 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <c>-4e37</c> selects the default).</param>
+   /// short at |value| (default 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
-   /// 0; <c>-4e37</c> selects the default).</param>
+   /// 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
-   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
-   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -836,21 +838,22 @@ public partial class Core
    /// <param name="inHigh">High price of each bar.</param>
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="optInStartValue">Initial SAR/direction: 0 auto, &gt;0 start long at value, &lt;0 start
-   /// short at |value| (default 0; <c>-4e37</c> selects the default).</param>
+   /// short at |value| (default 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="optInOffsetOnReverse">Fractional offset applied to the stop on each reversal (default 0; minimum
-   /// 0; <c>-4e37</c> selects the default).</param>
+   /// 0; <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">Initial acceleration factor when long (default 0.02; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
-   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationLong">AF increment per new long extreme (default 0.02; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxLong">Cap on the long acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">Initial acceleration factor when short (default 0.02; minimum 0;
-   /// <c>-4e37</c> selects the default).</param>
-   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationShort">AF increment per new short extreme (default 0.02; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInAccelerationMaxShort">Cap on the short acceleration factor (default 0.2; minimum 0;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,

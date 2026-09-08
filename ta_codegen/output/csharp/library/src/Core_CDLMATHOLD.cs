@@ -65,7 +65,8 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInPenetration">Max fraction of the 1st white body the reaction days (3rd, 4th) may
-   /// penetrate (default 0.5; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// penetrate (default 0.5; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects
+   /// the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLMATHOLD_Lookback( double optInPenetration )
    {
@@ -335,7 +336,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Max fraction of the 1st white body the reaction days (3rd, 4th) may
-   /// penetrate (default 0.5; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// penetrate (default 0.5; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects
+   /// the default).</param>
    /// <param name="outInteger">+100 when the bullish Mat Hold is detected, 0 otherwise. Never emits -100.
    /// Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -417,7 +419,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Max fraction of the 1st white body the reaction days (3rd, 4th) may
-   /// penetrate (default 0.5; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// penetrate (default 0.5; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects
+   /// the default).</param>
    /// <param name="outInteger">+100 when the bullish Mat Hold is detected, 0 otherwise. Never emits -100.
    /// Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,

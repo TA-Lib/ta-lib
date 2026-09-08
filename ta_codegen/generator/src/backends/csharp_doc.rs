@@ -261,7 +261,7 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         }
         // Every optional parameter accepts the cross-language default sentinel.
         meta.push(match opt.param_type {
-            ParamType::Real => "<c>-4e37</c> selects the default".to_string(),
+            ParamType::Real => "<see cref=\"Core.REAL_DEFAULT\"/> selects the default".to_string(),
             _ => "<c>int.MinValue</c> selects the default".to_string(),
         });
     }

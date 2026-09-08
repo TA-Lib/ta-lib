@@ -23,7 +23,8 @@
     * @param optInTimePeriod Smoothing period of the Average True Range (default
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
-    *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int SUPERTREND_Lookback( int optInTimePeriod, double optInMultiplier )
@@ -429,7 +430,8 @@
     * @param optInTimePeriod Smoothing period of the Average True Range (default
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
-    *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param outSupertrend The SuperTrend line: the band the trend is currently
     *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outTrend Trend direction: +1 while the trend rides the lower band,
@@ -516,7 +518,8 @@
     * @param optInTimePeriod Smoothing period of the Average True Range (default
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
-    *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
+    *        the band width (default 3; minimum 0; {@link Core#REAL_DEFAULT} selects
+    *        the default).
     * @param outSupertrend The SuperTrend line: the band the trend is currently
     *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
     * @param outTrend Trend direction: +1 while the trend rides the lower band,

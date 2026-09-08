@@ -22,7 +22,7 @@
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
-    *        (default 50; range 0..100; {@code -4e37} selects the default).
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int PERCENTILE_Lookback( int optInTimePeriod, double optInPercentile )
@@ -326,7 +326,7 @@
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
-    *        (default 50; range 0..100; {@code -4e37} selects the default).
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
@@ -399,7 +399,7 @@
     * @param optInTimePeriod Number of bars in the trailing window (default 30;
     *        range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInPercentile Percentage position within the sorted window
-    *        (default 50; range 0..100; {@code -4e37} selects the default).
+    *        (default 50; range 0..100; {@link Core#REAL_DEFAULT} selects the default).
     * @param outReal The value at the requested rank within the trailing window.
     *        Must hold at least {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,

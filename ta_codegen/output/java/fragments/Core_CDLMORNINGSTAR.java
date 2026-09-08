@@ -21,7 +21,7 @@
     *
     * @param optInPenetration Fraction of the 1st candle's body the 3rd close
     *        must exceed above the 1st close; larger = deeper penetration required
-    *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLMORNINGSTAR_Lookback( double optInPenetration )
@@ -261,7 +261,7 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's body the 3rd close
     *        must exceed above the 1st close; larger = deeper penetration required
-    *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the morning star is detected, 0 otherwise.
     *        Never negative (pattern is exclusively bullish) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -341,7 +341,7 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of the 1st candle's body the 3rd close
     *        must exceed above the 1st close; larger = deeper penetration required
-    *        (default 0.3; minimum 0; {@code -4e37} selects the default).
+    *        (default 0.3; minimum 0; {@link Core#REAL_DEFAULT} selects the default).
     * @param outInteger +100 when the morning star is detected, 0 otherwise.
     *        Never negative (pattern is exclusively bullish) Must hold at least
     *        {@code endIdx - startIdx + 1} values.
