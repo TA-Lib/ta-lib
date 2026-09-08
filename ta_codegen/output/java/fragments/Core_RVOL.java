@@ -172,7 +172,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>The baseline is the mean of the N bars *preceding* the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
+    * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
     * <li>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -244,7 +244,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>The baseline is the mean of the N bars *preceding* the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
+    * <li>The baseline is the mean of the N bars <i>preceding</i> the current one, so RVOL needs one bar more than a moving average of the same period before it emits a value.</li>
     * <li>A window in which every bar traded nothing has a baseline of zero and no defined ratio: that element is ±Inf, or NaN when the current bar is also zero. Real volume is non-negative, so this only happens on a dead window — an instrument that did not trade at all, or a series carrying no volume, such as a cash-index feed.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

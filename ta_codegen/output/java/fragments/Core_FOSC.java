@@ -288,7 +288,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window *ending at the same bar*, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
+    * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
     * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -355,7 +355,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window *ending at the same bar*, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
+    * <li>Several vendors publish a "Chande Forecast Oscillator (CFO)" that compares the close to the regression value of the window <i>ending at the same bar</i>, with no lag. FOSC is the lagged form Chande and Achelis describe.</li>
     * <li>The default window is Chande's own suggestion, shorter than the one TA-Lib's TSF and LINEARREG default to.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in

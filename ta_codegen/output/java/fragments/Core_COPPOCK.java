@@ -414,10 +414,10 @@
    }
    /**
     * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-    * (*Barron's*, originally published as the "Trendex Model"), computed as a
-    * weighted moving average of the **sum** of two rates of change. Unbounded;
-    * positive turns from below zero are the signal the indicator was designed
-    * for (long-term buying opportunities on monthly index data).
+    * (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+    * as a weighted moving average of the <b>sum</b> of two rates of change.
+    * Unbounded; positive turns from below zero are the signal the indicator was
+    * designed for (long-term buying opportunities on monthly index data).
     * <p><b>Formula</b>
     * <pre>{@code
     * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`
@@ -485,10 +485,10 @@
    }
    /**
     * Coppock Curve: Edwin S. "Sedge" Coppock's long-term momentum oscillator
-    * (*Barron's*, originally published as the "Trendex Model"), computed as a
-    * weighted moving average of the **sum** of two rates of change. Unbounded;
-    * positive turns from below zero are the signal the indicator was designed
-    * for (long-term buying opportunities on monthly index data).
+    * (<i>Barron's</i>, originally published as the "Trendex Model"), computed
+    * as a weighted moving average of the <b>sum</b> of two rates of change.
+    * Unbounded; positive turns from below zero are the signal the indicator was
+    * designed for (long-term buying opportunities on monthly index data).
     * <p><b>Formula</b>
     * <pre>{@code
     * `COPPOCK = WMA(ROC(optInROC1Period) + ROC(optInROC2Period), optInWMAPeriod)`

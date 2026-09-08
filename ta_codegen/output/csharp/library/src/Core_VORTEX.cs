@@ -429,12 +429,12 @@ public partial class Core
    }
    /// <summary>
    /// Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-   /// indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-   /// 2010). Positive and negative "vortex movement" — the reach from today's
-   /// high to yesterday's low and from today's low to yesterday's high — each
-   /// summed over the period and normalized by the summed true range. A +VI line
-   /// crossing above −VI is the bullish signal the authors describe; the two
-   /// lines are conventionally plotted together.
+   /// indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+   /// January 2010). Positive and negative "vortex movement" — the reach from
+   /// today's high to yesterday's low and from today's low to yesterday's high —
+   /// each summed over the period and normalized by the summed true range. A +VI
+   /// line crossing above −VI is the bullish signal the authors describe; the
+   /// two lines are conventionally plotted together.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -508,12 +508,12 @@ public partial class Core
    }
    /// <summary>
    /// Vortex Indicator: Etienne Botes and Douglas Siepman's two-line trend
-   /// indicator (*Technical Analysis of Stocks &amp; Commodities* 28:1, January
-   /// 2010). Positive and negative "vortex movement" — the reach from today's
-   /// high to yesterday's low and from today's low to yesterday's high — each
-   /// summed over the period and normalized by the summed true range. A +VI line
-   /// crossing above −VI is the bullish signal the authors describe; the two
-   /// lines are conventionally plotted together.
+   /// indicator (<i>Technical Analysis of Stocks &amp; Commodities</i> 28:1,
+   /// January 2010). Positive and negative "vortex movement" — the reach from
+   /// today's high to yesterday's low and from today's low to yesterday's high —
+   /// each summed over the period and normalized by the summed true range. A +VI
+   /// line crossing above −VI is the bullish signal the authors describe; the
+   /// two lines are conventionally plotted together.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

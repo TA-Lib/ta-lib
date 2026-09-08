@@ -369,12 +369,12 @@ public partial class Core
    }
    /// <summary>
    /// Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
-   /// computed from **plain moving-window sums** of the up-moves and down-moves
-   /// over the period. Bounded in [-100,+100]; positive = net upward momentum,
-   /// negative = net downward. CMOU is the version as defined by Chande in his
-   /// book *The New Technical Trader* (1994), and is the more common
-   /// implementation used by TradingView (<c>ta.cmo</c>), QuantConnect and
-   /// pandas-ta's default. See
+   /// computed from <b>plain moving-window sums</b> of the up-moves and
+   /// down-moves over the period. Bounded in [-100,+100]; positive = net upward
+   /// momentum, negative = net downward. CMOU is the version as defined by
+   /// Chande in his book <i>The New Technical Trader</i> (1994), and is the more
+   /// common implementation used by TradingView (<c>ta.cmo</c>), QuantConnect
+   /// and pandas-ta's default. See
    /// <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see> for a
    /// smoothed variant of CMOU.
    /// </summary>
@@ -435,12 +435,12 @@ public partial class Core
    }
    /// <summary>
    /// Chande Momentum Oscillator: Tushar Chande's original momentum oscillator,
-   /// computed from **plain moving-window sums** of the up-moves and down-moves
-   /// over the period. Bounded in [-100,+100]; positive = net upward momentum,
-   /// negative = net downward. CMOU is the version as defined by Chande in his
-   /// book *The New Technical Trader* (1994), and is the more common
-   /// implementation used by TradingView (<c>ta.cmo</c>), QuantConnect and
-   /// pandas-ta's default. See
+   /// computed from <b>plain moving-window sums</b> of the up-moves and
+   /// down-moves over the period. Bounded in [-100,+100]; positive = net upward
+   /// momentum, negative = net downward. CMOU is the version as defined by
+   /// Chande in his book <i>The New Technical Trader</i> (1994), and is the more
+   /// common implementation used by TradingView (<c>ta.cmo</c>), QuantConnect
+   /// and pandas-ta's default. See
    /// <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see> for a
    /// smoothed variant of CMOU.
    /// </summary>
