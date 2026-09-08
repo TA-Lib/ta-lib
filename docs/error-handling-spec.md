@@ -199,10 +199,11 @@ elements: the batch tier may report that as an empty `OutRange`, but an opener
 has no handle to mint over a range holding nothing, so the sub-call's own
 `TA_SUCCESS` is not the answer.
 `an_opener_never_answers_the_code_its_sub_call_handed_back` pins it in the three
-ported backends. **C is the exception**, and it is a known one: the guard there
-still carries the `retCode != TA_SUCCESS` half — that backend answers a
-cross-call rejection by propagating the code rather than at the call site — so
-the arm cannot be rewritten without splitting the guard, and C mints the handle.
+ported backends. **C is outside that sweep**: no fold pass runs for it, so its
+transcribed guard still tests both halves and returns the sub-call's own code.
+Nothing reaches that arm — no opener answers `TA_SUCCESS` over zero elements —
+but a composed indicator that made one would hand C's caller `TA_SUCCESS` and a
+NULL handle where the other three answer S7.
 
 Unlike the batch tier, `OpenAndFill` outputs may **not** be the same buffer as
 the inputs (no in-place execution). Not because it would compute the wrong
@@ -432,13 +433,15 @@ and the emitted shape is held on the PR gate by
 `test_a_nullable_output_is_declinable_at_update_in_c`.
 
 **All four backends have a value accessor** since #287: `TA_<N>_Value`,
-`value()`, `value()` and `Value`. Each reports the value(s) at the last bar the
-stream counted — the bar `OutRange` ends on — without recomputing, and each is a
-plain read of state the stream already holds — so the only error surface is C's,
-which answers `TA_BAD_PARAM` for a NULL stream or a NULL out-pointer for a
-required output (a declinable output may be NULL and is then simply not
-written). Java, C# and Rust cannot fail: they take no argument
-to reject. The accessor exists because a FORKED stream is the one caller with no
+`value()`, `value()` / `value(<N>Out)` and `Value`. Each reports the value(s) at
+the last bar the stream counted — the bar `OutRange` ends on — without
+recomputing, and each is a plain read of state the stream already holds — so the
+only error surface is the destination it is handed. C answers `TA_BAD_PARAM` for
+a NULL stream or a NULL out-pointer for a required output (a declinable output
+may be NULL and is then simply not written), and a multi-output Java handle
+answers the same code for an absent sink, under U2. Rust, C# and single-output
+Java take no argument to reject.
+The accessor exists because a FORKED stream is the one caller with no
 earlier call to have handed it a value — `clone()` gives a second stream at the
 same bar, and `peek` would answer for a bar that has not been committed.
 

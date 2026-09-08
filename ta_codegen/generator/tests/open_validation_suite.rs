@@ -480,8 +480,9 @@ fn java_public_openers_check_arguments_then_the_index_pair() {
 ///
 /// Corpus-wide over the three ported backends, because the five sites are in
 /// four functions and the next composed indicator would get the same body. C is
-/// deliberately absent: it runs no cleanup sequence, so its guard still carries
-/// the error half and `return retCode` there is the error propagation.
+/// deliberately absent: no fold pass runs for it, so its guard still tests both
+/// halves. Nothing reaches the arm — no opener answers `TA_SUCCESS` over zero
+/// elements.
 ///
 /// This is the absence half. That the arm answers the opener's code — rather
 /// than losing the return altogether — is asserted directly on the pass, in
