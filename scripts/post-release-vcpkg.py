@@ -65,7 +65,6 @@ from utilities.common import run_command, verify_git_repo_original
 from utilities.files import path_join
 
 API_RELEASE_LATEST = "https://api.github.com/repos/TA-Lib/ta-lib/releases/latest"
-ASSET_PATTERN = re.compile(r"ta-lib-(\d+\.\d+\.\d+)-github-tag-archive\.tar\.gz$")
 VCPKG_PORT_NAME = "talib"
 
 # After the microsoft/vcpkg PR is opened, a tracking ("[monitor]") issue is opened in
@@ -103,21 +102,14 @@ def fetch_json(url: str) -> dict:
         return json.loads(r.read().decode("utf-8"))
 
 
-def version_key(v: str) -> tuple[int, int, int]:
-    m = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", v)
-    if not m:
-        raise ValueError(f"Invalid version: {v}")
-    return int(m.group(1)), int(m.group(2)), int(m.group(3))
-
-
 def read_latest_release_src_tarball() -> tuple[str, str, str, str]:
     """Return (version, tarball_name, download_url, tag_name) for the latest published release.
 
-    IMPORTANT: the download_url is the GitHub TAG ARCHIVE
-    (github.com/.../archive/<tag>.tar.gz), NOT the release's src.tar.gz
-    asset. vcpkg_from_github() downloads the tag archive, so the SHA512 in
-    portfile.cmake must be computed over those bytes — hashing the release
-    asset produced a hash-mismatch failure on every triplet (0.7.1 PR).
+    The SHA512 must cover the SAME bytes portfile.cmake downloads. The port uses
+    vcpkg_download_distfile() against the release asset, so this returns the asset.
+    Moving the port back onto vcpkg_from_github(), which fetches GitHub's generated
+    tag archive, means moving this with it: either one alone fails every triplet at
+    download.
     """
     data = fetch_json(API_RELEASE_LATEST)
     if data.get("draft", False):
@@ -126,23 +118,17 @@ def read_latest_release_src_tarball() -> tuple[str, str, str, str]:
     if not tag_name:
         raise RuntimeError("Latest release has no tag_name")
     version = tag_name.lstrip("v")
-    archive_url = f"https://github.com/TA-Lib/ta-lib/archive/{tag_name}.tar.gz"
-    tarball_name = f"ta-lib-{version}-github-tag-archive.tar.gz"
-    return version, tarball_name, archive_url, tag_name
-
-
-def read_cached_latest_release_src_tarball(out_dir: Path) -> tuple[str, str, Path]:
-    candidates: list[tuple[tuple[int, int, int], str, Path]] = []
-    for p in out_dir.glob("ta-lib-*-github-tag-archive.tar.gz"):
-        m = ASSET_PATTERN.search(p.name)
-        if not m:
-            continue
-        version = m.group(1)
-        candidates.append((version_key(version), version, p))
-    if not candidates:
-        raise RuntimeError("No cached ta-lib-<version>-src.tar.gz found")
-    _, version, path = sorted(candidates)[-1]
-    return version, path.name, path
+    tarball_name = f"ta-lib-{version}-src.tar.gz"
+    for asset in data.get("assets", []):
+        if asset.get("name") == tarball_name:
+            url = asset.get("browser_download_url", "")
+            if not url:
+                raise RuntimeError(f"Asset '{tarball_name}' on {tag_name} has no download URL.")
+            return version, tarball_name, url, tag_name
+    raise RuntimeError(
+        f"Release {tag_name} has no '{tarball_name}' asset.\n"
+        "release-step-1 attaches it; re-run that workflow before updating the port."
+    )
 
 
 def _check_local_at_release_tag(tag_name: str, version: str) -> None:
