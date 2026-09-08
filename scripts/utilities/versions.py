@@ -797,6 +797,10 @@ def calculate_sources_digest(root_dir: str, silent: bool = False) -> str:
         "src/**/*.c",
         "src/**/*.h",
         "src/**/*.am",
+        # The linker map decides what the shipped library EXPORTS, so a change
+        # here changes the artifact without touching a single .c -- and every
+        # other pattern would miss it.
+        "src/*.map",
         "*.am",
         "ta_func_api.xml",
         "ta_func_list.txt",
