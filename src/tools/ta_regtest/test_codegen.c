@@ -2091,7 +2091,6 @@ typedef struct {
     long long         streamPeekProbes;    /* peeks run by that leg */
     int               streamPeekRepFunctions; /* funcs that ran the repeat probe */
     long long         streamPeekRepProbes;    /* triples run (peek t, peek t-1, peek t) */
-    int               streamFillBars;      /* bars the OpenAndFill leg actually value-compared */
     int               streamStateFunctions; /* funcs whose handle state matched Open(n) (#240) */
     int               streamStateLegs;      /* legs that compared handle state (#240) */
     int               streamRangeFunctions; /* funcs whose handle OutRange matched batch (#241) */
@@ -3725,8 +3724,6 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
             {
                 int bars = stream_flag(ctx->responseBuf, "\"fill_bars\":");
                 fillChecked = 1;
-                if( bars >= 0 )
-                    ctx->streamFillBars = (ctx->streamFillBars < 0 ? 0 : ctx->streamFillBars) + bars;
                 if( stream_flag(ctx->responseBuf, "\"fill_ok\":") != 1 )
                 {
                     printf("STREAM FILL MISMATCH [TA_%s] vector=%d K=%d shape=%d "
@@ -3734,6 +3731,17 @@ static void stream_one_function(const TA_FuncInfo *funcInfo, void *opaqueData)
                            "  request:  %s\n  response: %s\n",
                            funcInfo->name, v, K, shape,
                            ctx->requestBuf, ctx->responseBuf);
+                    ctx->failed++;
+                    ctx->error = TA_CODEGEN_STREAM_MISMATCH;
+                    return;
+                }
+                /* Exactly zero, not <= 0: only the C server reports a count, and
+                 * the other three leave it -1 rather than answering 0. */
+                if( bars == 0 )
+                {
+                    printf("STREAM FILL VACUOUS [TA_%s] vector=%d K=%d shape=%d: the "
+                           "OpenAndFill leg reported checked and compared 0 bar(s)\n",
+                           funcInfo->name, v, K, shape);
                     ctx->failed++;
                     ctx->error = TA_CODEGEN_STREAM_MISMATCH;
                     return;
@@ -4773,7 +4781,6 @@ static ErrorNumber test_codegen_for_language(
             ctx.streamPeekProbes = 0;
             ctx.streamPeekRepFunctions = 0;
             ctx.streamPeekRepProbes = 0;
-            ctx.streamFillBars = -1;
             ctx.streamStateFunctions = 0;
             ctx.streamStateLegs     = 0;
             ctx.streamRangeFunctions = 0;
@@ -4823,29 +4830,6 @@ static ErrorNumber test_codegen_for_language(
                         ctx.error = TA_CODEGEN_STREAM_MISMATCH;
                     }
                 }
-            }
-            /* A leg that RAN is not a leg that COMPARED. `fill_checked` is set
-             * before the comparison loop, so an emitter that walks the loop zero
-             * times satisfies the floor above while checking no value at all --
-             * which is exactly what a dangling `else` did to the C server between
-             * #287 and #331: the loop bound to the wrong `if`, and every bar of
-             * every function went uncompared for four releases with all gates
-             * green. Count the bars, not the visits.
-             *
-             * C only. The other three servers build the same comparison as a
-             * structured `else { }` whose block cannot re-bind when a statement
-             * is inserted above it; C assembles it as text, which is what made
-             * the re-binding possible and invisible. A server reporting no count
-             * leaves this at -1 and is not measured here rather than passing a
-             * floor it never answered. */
-            if( ctx.error == TA_TEST_PASS && ctx.streamFillBars >= 0 &&
-                ctx.streamFillBars < ctx.streamFunctions )
-            {
-                printf("STREAM FILL VACUOUS: the OpenAndFill leg ran for %d function(s) "
-                       "but value-compared only %d bar(s) -- a leg that reports checked "
-                       "while comparing nothing\n",
-                       ctx.streamFunctions, ctx.streamFillBars);
-                ctx.error = TA_CODEGEN_STREAM_MISMATCH;
             }
             /* The same ratchet for the state-equivalence leg (#240). The
              * comparators are generated from the state struct itself and drop

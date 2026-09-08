@@ -1067,6 +1067,21 @@ fn rust_public_entry_documents_exactly_its_parameters() {
     assert!(checked >= 200, "expected the whole corpus, checked only {checked}");
 }
 
+/// `word` appearing in `hay` with no identifier character on either side.
+fn mentions_word(hay: &str, word: &str) -> bool {
+    hay.match_indices(word).any(|(i, _)| {
+        let before_ok = !hay[..i]
+            .chars()
+            .next_back()
+            .is_some_and(|c| c.is_alphanumeric() || c == '_');
+        let after_ok = !hay[i + word.len()..]
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_alphanumeric() || c == '_');
+        before_ok && after_ok
+    })
+}
+
 #[test]
 fn every_integer_output_carries_an_example_claim() {
     // The generated example checks a real output for finiteness. An integer output
@@ -1122,7 +1137,10 @@ fn every_integer_output_carries_an_example_claim() {
             .zip(backends::rust_doc::output_var_names(&func))
             .filter(|(o, _)| o.param_type == ir::ParamType::Integer)
             .map(|(_, var)| {
-                usize::from(out.contains(&format!("{var}[..out_range.count]")))
+                // Word boundary, not `contains`: `trend` is a proper suffix of
+                // `supertrend`, so the real output's finiteness assert would
+                // answer the integer output's needle.
+                usize::from(mentions_word(&out, &format!("{var}[..out_range.count]")))
             })
             .sum();
         assert!(

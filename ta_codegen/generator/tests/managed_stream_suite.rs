@@ -151,56 +151,62 @@ fn no_managed_peek_seeds_a_dead_output_local() {
 /// leaves the fields a mix of two bars and the next `value(out)` hands that
 /// mixture out as a reading.
 #[test]
-fn no_throwing_sub_call_follows_the_cur_capture_in_a_java_step() {
-    let mut with_subs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
-    for name in streaming_funcs() {
-        let base = backends::common::camel_words(&name.to_uppercase());
-        let s = section(&name, "java");
-        let body = body_of(&s, &format!("void {base}StepImpl("));
-        // Only the multi-output handles hold a cache, and only they can publish
-        // a half-written bar. A single-output `value()` is a field read, and the
-        // dispatch tier's `sp.cur_outReal = sub.update(..)` puts the call
-        // textually after the field it assigns while still being atomic.
-        if load(&name).0.outputs.len() < 2 {
-            continue;
+fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
+    for lang in ["java", "csharp"] {
+        let mut with_subs: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+        for name in streaming_funcs() {
+            let upper = name.to_uppercase();
+            let base = if lang == "java" {
+                backends::common::camel_words(&upper)
+            } else {
+                backends::common::pascal_words(&upper)
+            };
+            let s = section(&name, lang);
+            let body = body_of(&s, &format!("void {base}StepImpl("));
+            // Only the multi-output handles hold a cache, and only they can
+            // publish a half-written bar. A single-output `value()` is a field
+            // read, and the dispatch tier's `sp.cur_outReal = sub.update(..)`
+            // puts the call textually after the field it assigns while still
+            // being atomic.
+            if load(&name).0.outputs.len() < 2 {
+                continue;
+            }
+            let Some(first_cur) = body.find("sp.cur_") else {
+                continue;
+            };
+            let last_sub = ["sp.sub", "subOut"]
+                .iter()
+                .filter_map(|p| body.rfind(p))
+                .max();
+            if let Some(last_sub) = last_sub {
+                with_subs.insert(name.to_string());
+                assert!(
+                    last_sub < first_cur,
+                    "{name}: a sub-stream call runs after the first cur_* write in {lang}, so a \
+                     rejection there would leave the fields a mix of two bars and the \
+                     next value read would hand that mixture out as a reading:\n{body}"
+                );
+            }
         }
-        let Some(first_cur) = body.find("sp.cur_") else {
-            continue;
-        };
-        let last_sub = ["sp.sub", "subOut"]
-            .iter()
-            .filter_map(|p| body.rfind(p))
-            .max();
-        if let Some(last_sub) = last_sub {
-            with_subs.insert(name.to_string());
-            assert!(
-                last_sub < first_cur,
-                "{name}: a sub-stream call runs after the first cur_* write, so a \
-                 rejection there would leave the fields a mix of two bars and the \
-                 next value(out) would hand that mixture out as a reading:\n{body}"
-            );
-        }
+        // The property is only load-bearing where a sub exists to throw, so the
+        // sweep has to have found some — pinned as an exact SET, not a count, so a
+        // function leaving it is as loud as one joining.
+        //
+        // Over the SHIPPED corpus only. `scripts/synth_gate.py` copies its fixtures
+        // into input/, and one of them (SYNTH14) is multi-output, composed and
+        // streamable, so it legitimately joins this set there — a run under the
+        // synth gate would otherwise redden with a message naming shipped
+        // functions and nothing to do with the change under test.
+        let shipped: std::collections::BTreeSet<&str> =
+            with_subs.iter().map(String::as_str).filter(|n| !n.starts_with("synth")).collect();
+        let expected: std::collections::BTreeSet<&str> =
+            ["bbands", "kc", "kdj", "macdext", "stoch", "stochf", "stochrsi"].into_iter().collect();
+        assert_eq!(
+            shipped, expected,
+            "the set of multi-output handles driving a sub-stream moved in {lang} — the pin is \
+             stale or the sweep has gone vacuous"
+        );
     }
-    // The property is only load-bearing where a sub exists to throw, so the
-    // sweep has to have found some — pinned as an exact SET, not a count, so a
-    // function leaving it is as loud as one joining.
-    //
-    // Over the SHIPPED corpus only. `scripts/synth_gate.py` copies its fixtures
-    // into input/, and one of them (SYNTH14) is multi-output, composed and
-    // streamable, so it legitimately joins this set there. A literal that
-    // counted it would turn a correct tree red with a message naming six
-    // shipped functions and nothing to do with the change under test — the
-    // failure mode `StreamSmokeTest` records against corpus literals, and the
-    // reason this one is filtered rather than widened.
-    let shipped: std::collections::BTreeSet<&str> =
-        with_subs.iter().map(String::as_str).filter(|n| !n.starts_with("synth")).collect();
-    let expected: std::collections::BTreeSet<&str> =
-        ["bbands", "kc", "kdj", "macdext", "stoch", "stochf", "stochrsi"].into_iter().collect();
-    assert_eq!(
-        shipped, expected,
-        "the set of multi-output handles driving a sub-stream moved — the pin is \
-         stale or the sweep has gone vacuous"
-    );
 }
 /// A multi-output handle stores no `Value` instance (#310): `update`, `peek` and
 /// `value` each write a caller-owned `<N>Out` / `<N>Value`, so there is nothing
