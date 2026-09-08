@@ -1145,13 +1145,16 @@ TA_LIB_API TA_RetCode TA_STOCH_Update( TA_STOCH_Stream *stream, double inHigh, d
 {
    TA_RetCode retCode;
 
-   if( !stream || !outSlowK || !outSlowD ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outSlowK || !outSlowD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    retCode = TA_STOCH_StepImpl( stream, inHigh, inLow, inClose, outSlowK, outSlowD );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outSlowK = *outSlowK;
    stream->cur_outSlowD = *outSlowD;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -1307,7 +1310,9 @@ TA_LIB_API TA_RetCode TA_STOCH_OutRange( const TA_STOCH_Stream *stream, int *out
 TA_LIB_API TA_RetCode TA_STOCH_Advance( TA_STOCH_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

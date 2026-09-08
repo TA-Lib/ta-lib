@@ -224,10 +224,13 @@ TA_RetCode TA_FLOOR_OpenAndFillInternal( struct TA_FLOOR_Stream **stream, const 
 
 TA_LIB_API TA_RetCode TA_FLOOR_Update( TA_FLOOR_Stream *stream, double inReal, double *outReal )
 {
-   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_FLOOR_StepImpl( stream, inReal, outReal );
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -263,7 +266,9 @@ TA_LIB_API TA_RetCode TA_FLOOR_OutRange( const TA_FLOOR_Stream *stream, int *out
 TA_LIB_API TA_RetCode TA_FLOOR_Advance( TA_FLOOR_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

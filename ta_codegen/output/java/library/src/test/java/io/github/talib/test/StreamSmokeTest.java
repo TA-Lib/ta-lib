@@ -46,6 +46,7 @@ import io.github.talib.InsufficientHistoryException;
 import io.github.talib.MAType;
 import io.github.talib.OutRange;
 import io.github.talib.RangeType;
+import io.github.talib.RetCode;
 
 /**
  * Streaming-API smoke test, deliberately junit-free (runnable as a plain
@@ -691,6 +692,70 @@ public class StreamSmokeTest {
               "the rejected-update advance gate ran fewer checks than it was written with ("
               + advRejects + "/" + advHolds + "/" + advResumes + "/" + advValues
               + "/" + advPeekStills + "/" + advSkips + "/" + advSkipHolds + ")");
+    }
+
+    /* ---- rule U4, the other absolute (docs/error-handling-spec.md 2.4) --- */
+
+    private static int u4Ceilings = 0;
+    private static int u4Rejects = 0;
+    private static int u4Holds = 0;
+
+    /** {@code advance()} run out to the ceiling, the one thrown rejection no
+     *  feed can reach: {@code MAX_INDEX} is 100 million bars and this is the
+     *  only call that moves the count without O(period) work per bar.
+     *
+     *  <p>What it adds over the generator's source-text gate is the throw
+     *  itself — that {@code failure(...)} maps the code to an
+     *  {@link IndexOutOfBoundsException} and not to the
+     *  {@link IllegalArgumentException} every other streaming rejection is, and
+     *  that a handle refusing is a handle that moved nothing.
+     *
+     *  <p>The ceiling is on the BAR, {@code begIdx + count}, not on the count,
+     *  so the trip count comes from the range the opener reported. */
+    private static void theLastBarAStreamCanCountIsMaxIndex(Core core, double[] close) {
+        final Core.SmaStream s =
+            core.smaOpen(java.util.Arrays.copyOf(close, 60), 14);
+        final OutRange at = s.outRange();
+        for (int i = at.begIdx() + at.count(); i <= Core.MAX_INDEX; i++) {
+            s.advance();
+        }
+        final OutRange full = s.outRange();
+        check(full.begIdx() == at.begIdx() && full.begIdx() + full.count() == Core.MAX_INDEX + 1,
+              "the last bar a stream counts is MAX_INDEX, reached " + full);
+        u4Ceilings++;
+
+        /* Terminal, unlike a non-finite bar: the repeat is what proves no call
+         * clears it. An IllegalArgumentException here would be U3's code on U4's
+         * condition, so the type is asserted, not just the throwing. */
+        check(refusesPastTheCeiling(s::advance)
+                  && refusesPastTheCeiling(() -> s.update(close[60]))
+                  && refusesPastTheCeiling(s::advance),
+              "every counting call past MAX_INDEX must throw IndexOutOfBoundsException");
+        check(Double.isFinite(s.peek(close[60])),
+              "peek counts no bar, so it stays answerable past the ceiling");
+        u4Rejects++;
+
+        check(s.outRange().equals(full), "a refused call past the ceiling moves nothing");
+        u4Holds++;
+
+        System.out.println("  Index-domain ceiling gate (U4, absolute): "
+            + u4Ceilings + " ceiling(s) reached, " + u4Rejects
+            + " refusal set(s), " + u4Holds + " unmoved range(s)");
+        check(u4Ceilings >= 1 && u4Rejects >= 1 && u4Holds >= 1,
+              "the index-domain ceiling gate ran fewer checks than it was written with");
+    }
+
+    /* The code as well as the type: {@code failure} maps BOTH index codes to
+     * {@link io.github.talib.TaLibIndexException}, so a type test alone would
+     * accept U4 answering rule S1's code. */
+    private static boolean refusesPastTheCeiling(Runnable r) {
+        try {
+            r.run();
+            return false;
+        } catch (IndexOutOfBoundsException e) {
+            return e instanceof io.github.talib.TaLibFailure
+                && ((io.github.talib.TaLibFailure) e).retCode() == RetCode.OutOfRangeEndIndex;
+        }
     }
 
     /* ---- the registry-wide peek/copy sweep (#172 C4) --------------------- */
@@ -1552,6 +1617,7 @@ public class StreamSmokeTest {
 
         nonFiniteInputsAreRejected(core, open, high, low, close);
         aRejectedUpdateCostsNothingAndAdvanceCostsOneBar(core, open, high, low, close);
+        theLastBarAStreamCanCountIsMaxIndex(core, close);
         peekAndCopyHoldOnEveryHandle(core);
 
 

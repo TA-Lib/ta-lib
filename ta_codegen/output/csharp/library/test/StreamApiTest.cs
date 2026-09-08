@@ -1422,6 +1422,72 @@ public static class StreamApiTest
               + $"/{_advSkips}/{_advSkipHolds})");
     }
 
+    /* Rule U4 counters, one per property, each incremented AT its assertion. */
+    private static int _u4Ceilings;
+    private static int _u4Rejects;
+    private static int _u4Holds;
+
+    /// <summary>Rule U4: the last bar a stream can count is <c>MAX_INDEX</c>.</summary>
+    /// <remarks>
+    /// <para>No feed reaches it — <c>MAX_INDEX</c> is 100 million bars — and
+    /// <c>Advance()</c> is the only call that moves the count without O(period) work
+    /// per bar.</para>
+    /// <para>What this adds over the generator's source-text gate is the throw itself:
+    /// that a refusal carries <c>RetCode.OutOfRangeEndIndex</c> and not U3's
+    /// <c>BadParam</c>, and that a handle that refuses is one that moved nothing.
+    /// The ceiling is on the BAR, <c>BegIdx + Count</c>, not on the count, so the
+    /// trip count comes from the range the opener reported.</para>
+    /// </remarks>
+    private static void TheLastBarAStreamCanCountIsMaxIndex()
+    {
+        var core = new Core();
+        Core.SmaStream s = core.SmaOpen(Closes(60), 14);
+        OutRange at = s.OutRange;
+        for (int i = at.BegIdx + at.Count; i <= Core.MAX_INDEX; i++)
+        {
+            s.Advance();
+        }
+        OutRange full = s.OutRange;
+        Check(full.BegIdx == at.BegIdx && full.BegIdx + full.Count == Core.MAX_INDEX + 1,
+              $"the last bar a stream counts is MAX_INDEX, reached ({full.BegIdx},{full.Count})");
+        _u4Ceilings++;
+
+        /* Terminal, unlike a non-finite bar: the repeat is what proves no call
+           clears it. */
+        Check(RefusesPastTheCeiling(() => s.Advance())
+                  && RefusesPastTheCeiling(() => s.Update(1.0))
+                  && RefusesPastTheCeiling(() => s.Advance()),
+              "every counting call past MAX_INDEX must throw OutOfRangeEndIndex");
+        Check(double.IsFinite(s.Peek(1.0)),
+              "Peek counts no bar, so it stays answerable past the ceiling");
+        _u4Rejects++;
+
+        OutRange after = s.OutRange;
+        Check(after.BegIdx == full.BegIdx && after.Count == full.Count,
+              "a refused call past the ceiling moves nothing");
+        _u4Holds++;
+
+        Console.WriteLine($"  Index-domain ceiling gate (U4, absolute): {_u4Ceilings} "
+            + $"ceiling(s) reached, {_u4Rejects} refusal set(s), {_u4Holds} unmoved range(s)");
+        Check(_u4Ceilings >= 1 && _u4Rejects >= 1 && _u4Holds >= 1,
+              "the index-domain ceiling gate ran fewer checks than it was written with");
+    }
+
+    /* The code, not the exception type: U3 and U4 are both ArgumentExceptions at
+       this tier, so a type test would pass on the wrong rule. */
+    private static bool RefusesPastTheCeiling(Action a)
+    {
+        try
+        {
+            a();
+            return false;
+        }
+        catch (Exception e) when (e is ITaLibFailure f)
+        {
+            return f.RetCode == RetCode.OutOfRangeEndIndex;
+        }
+    }
+
     public static int Run()
     {
         StreamMatchesBatch();
@@ -1448,6 +1514,7 @@ public static class StreamApiTest
         CatalogueAgreesWithTheEmittedSurface();
         NonFiniteInputsAreRejected();
         ARejectedUpdateCostsNothingAndAdvanceCostsOneBar();
+        TheLastBarAStreamCanCountIsMaxIndex();
 
         if (_failures == 0)
         {

@@ -36,7 +36,7 @@ let history: Vec<f64> = /* ...your closing prices... */;
 let (mut s, last) = core.sma_open(&history, 30)?;   // stream + value at the last history bar
 
 // Each time a bar closes:
-let v = s.update(new_close)?;                        // Err only for a non-finite bar
+let v = s.update(new_close)?;                        // Err on a non-finite bar, or past MAX_INDEX
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
 let provisional = s.peek(forming_close)?;            // state left unchanged
@@ -44,7 +44,7 @@ let provisional = s.peek(forming_close)?;            // state left unchanged
 // dropping `s` closes the stream
 ```
 
-`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` the only thing they reject is invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()` (see [Utility Calls](#utility-calls)).
+`open` returns a `Result` — `Err(RetCode::InsufficientHistory)` if there is too little history (another bar might fix it, so this is the one worth retrying), `Err(RetCode::BadParam)` if a parameter is out of range. `update` and `peek` return a `Result` too, and after a successful `open` what they reject is invalid input such as NaN or ±Inf. `update` also rejects a bar past `Core::MAX_INDEX` — the last index the batch API addresses — and that one does not clear, so a handle that reaches it is done; `peek` counts no bar and is not subject to it. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `advance()` (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
@@ -99,12 +99,12 @@ let v = s.update(new_close)?;
 let v = s.value();          // the value at the last bar s counted
 let mut fork = s.clone();   // independent from here on
 let r = s.out_range();      // the bars s has an output for
-s.advance();                // a bar you skipped, counted
+s.advance()?;               // a bar you skipped, counted
 ```
 
-None of the four returns a `Result`: the first three read what the stream already
-holds and `advance()` moves one number, so there is nothing for any of them to
-reject.
+The first three return no `Result`: they read what the stream already holds, so
+there is nothing to reject. `advance()` returns one — it moves the range, and the
+range cannot pass `Core::MAX_INDEX`.
 
 See [Rules](#rules) for when concurrent reads of these are safe.
 

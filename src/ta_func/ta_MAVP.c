@@ -928,7 +928,10 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
 {
    int k, cp;
    double cpReal;
-   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) || !TA_IS_FINITE( inPeriods ) ) return TA_BAD_PARAM;
    for( k = 0; k < stream->nBank; k++ )
       TA_MA_Update( stream->bank[k], inReal, &stream->scratch[k] );
@@ -938,7 +941,7 @@ TA_LIB_API TA_RetCode TA_MAVP_Update( TA_MAVP_Stream *stream, double inReal, dou
    else cp = (int)cpReal;
    *outReal = stream->scratch[cp - stream->optInMinPeriod];
    stream->cur_outReal = *outReal;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -991,7 +994,9 @@ TA_LIB_API TA_RetCode TA_MAVP_OutRange( const TA_MAVP_Stream *stream, int *outBe
 TA_LIB_API TA_RetCode TA_MAVP_Advance( TA_MAVP_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

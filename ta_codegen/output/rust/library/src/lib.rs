@@ -107,7 +107,7 @@
 //!
 //! // Re-feed the bar when a corrected value arrives, or — when none is coming —
 //! // count it and carry on. Its output is the previous one, held.
-//! sma.advance();
+//! sma.advance()?;
 //! assert_eq!(sma.out_range().count, 5);
 //! assert_eq!(sma.value(), 15.0);
 //! # Ok::<(), ta_lib::RetCode>(())

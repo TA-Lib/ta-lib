@@ -376,10 +376,13 @@ TA_RetCode TA_NVI_OpenAndFillInternal( struct TA_NVI_Stream **stream, const doub
 
 TA_LIB_API TA_RetCode TA_NVI_Update( TA_NVI_Stream *stream, double inClose, double inVolume, double *outReal )
 {
-   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inClose ) || !TA_IS_FINITE( inVolume ) ) return TA_BAD_PARAM;
    TA_NVI_StepImpl( stream, inClose, inVolume, outReal );
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -448,7 +451,9 @@ TA_LIB_API TA_RetCode TA_NVI_OutRange( const TA_NVI_Stream *stream, int *outBegI
 TA_LIB_API TA_RetCode TA_NVI_Advance( TA_NVI_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

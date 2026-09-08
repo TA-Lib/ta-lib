@@ -1631,7 +1631,9 @@ enum SvRangeSite {
     Copy = 3,
     /// The prefix handle after one `TA_<N>_Advance` (#384) — the only call
     /// that moves the range without a bar, and the one place its cross-language
-    /// contract is stated: exactly +1, in every backend. Runs everywhere.
+    /// contract is stated: it succeeds and reports exactly +1, in every backend.
+    /// Runs everywhere. Its other answer, rule U4's ceiling, is 100 000 000 bars
+    /// out of reach at `stream_verify` sizes and is probed per backend instead.
     Advance = 4,
 }
 
@@ -6865,7 +6867,7 @@ fn emit_rust_sv_prefix_sweep(
     s.push_str("                        range_legs += 1; range_sites |= ");
     s.push_str(&sv_range_bit(SvRangeSite::Advance, SV_RANGE_MASK_RUST).to_string());
     s.push_str(";\n");
-    s.push_str("                        st.advance();\n");
+    s.push_str("                        if st.advance().is_err() { range_ok = false; }\n");
     s.push_str("                        if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }\n");
     s.push_str("                    }\n");
     s.push_str("                }\n            }\n        }\n");

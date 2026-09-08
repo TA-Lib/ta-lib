@@ -605,10 +605,13 @@ TA_RetCode TA_MINMAXINDEX_OpenAndFillInternal( struct TA_MINMAXINDEX_Stream **st
 
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Update( TA_MINMAXINDEX_Stream *stream, double inReal, int *outMinIdx, int *outMaxIdx )
 {
-   if( !stream || !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outMinIdx || !outMaxIdx ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    TA_MINMAXINDEX_StepImpl( stream, inReal, outMinIdx, outMaxIdx );
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -721,7 +724,9 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_OutRange( const TA_MINMAXINDEX_Stream *stre
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Advance( TA_MINMAXINDEX_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

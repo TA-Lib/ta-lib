@@ -571,13 +571,16 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Update( TA_STOCHRSI_Stream *stream, double inR
 {
    TA_RetCode retCode;
 
-   if( !stream || !outFastK || !outFastD ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outFastK || !outFastD ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal ) ) return TA_BAD_PARAM;
    retCode = TA_STOCHRSI_StepImpl( stream, inReal, outFastK, outFastD );
    if( retCode != TA_SUCCESS ) return retCode;
    stream->cur_outFastK = *outFastK;
    stream->cur_outFastD = *outFastD;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -633,7 +636,9 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OutRange( const TA_STOCHRSI_Stream *stream, in
 TA_LIB_API TA_RetCode TA_STOCHRSI_Advance( TA_STOCHRSI_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

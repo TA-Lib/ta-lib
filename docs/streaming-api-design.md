@@ -33,8 +33,11 @@ contract.
 
 **The handle reports its own `OutRange`** — `[begIdx, begIdx + count)`, the bars
 it has an output for, in the input series' coordinates: `TA_<N>_OutRange`,
-`out_range()`, `outRange()`, `OutRange`. Which calls move it is
-`docs/error-handling-spec.md` §2.4's business.
+`out_range()`, `outRange()`, `OutRange`. It is the batch tier's range and lives
+in the batch tier's domain, so the last bar a handle can reach is `MAX_INDEX`:
+past it `update` and `advance` refuse, permanently. Which calls move
+it, and how the refusal is spelled, are `docs/error-handling-spec.md` §2.4's
+business.
 
 **`Advance` counts a bar the handle was not fed** — `TA_<N>_Advance`,
 `advance()`, `advance()`, `Advance()`, emitted per handle class in all four
@@ -42,7 +45,9 @@ backends as `OutRange` is. It moves the count by one and nothing else, so
 the skipped bar's output is the previous one, held. It exists because a rejected
 `update` changes nothing: a caller with a corrected value re-feeds the bar, and
 one without says so here rather than letting two handles on one feed drift a bar
-apart.
+apart. The `MAX_INDEX` ceiling is what makes it fallible in the three
+backends where it was not already: C's has always returned a `TA_RetCode`, Rust's
+became `Result<(), RetCode>`, and Java's and C#'s stay `void` and throw.
 
 Multi-output functions produce one value per output per update: an out-pointer
 each in C, a tuple in Rust, a caller-owned sink in Java, a `readonly record

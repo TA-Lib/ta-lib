@@ -1100,11 +1100,26 @@ fn finite_bar_check(func: &FuncDef, indent: &str) -> String {
     )
 }
 
-/// The one spelling of the `OutRange` advance. The saturation guard is not
-/// optional: the count is an index like any other and `TA_MAX_INDEX` bounds it
-/// (#180), so a stream driven past it must stop counting rather than wrap.
+/// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
+/// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
+/// cannot answer it before its parent).
+///
+/// `>` and not `>=`: an opener may legally take `MAX_INDEX + 1` bars (rule S2),
+/// so a handle can be born holding the last bar in the domain and it is the NEXT
+/// one that has nowhere to go.
+fn out_range_ceiling_guard(indent: &str) -> String {
+    format!(
+        "{indent}if self.out.beg_idx + self.out.count > Core::MAX_INDEX {{\n\
+         {indent}    return Err(RetCode::OutOfRangeEndIndex);\n\
+         {indent}}}\n"
+    )
+}
+
+/// The one spelling of the `OutRange` advance. Unconditional: every entry point
+/// that reaches it has already answered [`out_range_ceiling_guard`], which is
+/// what bounds the count.
 fn advance_out_count(indent: &str) -> String {
-    format!("{indent}if self.out.count < Core::MAX_INDEX {{\n{indent}    self.out.count += 1;\n{indent}}}\n")
+    format!("{indent}self.out.count += 1;\n")
 }
 
 
@@ -2936,13 +2951,18 @@ fn emit_update_and_peek(
          \x20   /// A rejection leaves [`Self::out_range`] alone too. Re-feed the bar when\n\
          \x20   /// a corrected value arrives, or call [`Self::advance`] to count it and\n\
          \x20   /// carry on — two handles on one feed drift a bar apart if neither\n\
-         \x20   /// happens."
+         \x20   /// happens.\n\
+         \x20   ///\n\
+         \x20   /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached\n\
+         \x20   /// bar [`Core::MAX_INDEX`], which no re-feed clears: the handle has run\n\
+         \x20   /// out of index domain and only a shorter history can start a new one."
     );
     let _ = writeln!(o, "    #[doc(alias = \"TA_{n}_Update\")]");
     let _ = writeln!(
         o,
         "    pub fn update(&mut self, {sig_bars}) -> Result<{vt}, RetCode> {{"
     );
+    o.push_str(&out_range_ceiling_guard("        "));
     o.push_str(&finite_bar_check(func, "        "));
     // Retain the value(s) this bar produced where the step has no transition
     // tail to ride on — the composed, dispatch and period-bank steps write the
@@ -3043,6 +3063,9 @@ fn emit_update_and_peek(
          \x20   /// `peek` — and a clone carries it verbatim. A plain `Open` hands back\n\
          \x20   /// only the last value, a subset of this range, because the caller chose\n\
          \x20   /// not to take the fill.\n\
+         \x20   ///\n\
+         \x20   /// The last bar it can reach is [`Core::MAX_INDEX`]; past that `update`\n\
+         \x20   /// and `advance` answer [`RetCode::OutOfRangeEndIndex`].\n\
          \x20   #[doc(alias = \"TA_{n}_OutRange\")]\n\
          \x20   pub fn out_range(&self) -> OutRange {{\n\
          \x20       self.out\n\
@@ -3057,10 +3080,19 @@ fn emit_update_and_peek(
          \x20   /// For a bar the caller leaves out: one an `update` rejected and that\n\
          \x20   /// will not be re-fed, or a session with no print. Without it two handles\n\
          \x20   /// on one feed drift a bar apart when only one of them skips.\n\
+         \x20   ///\n\
+         \x20   /// # Errors\n\
+         \x20   ///\n\
+         \x20   /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached\n\
+         \x20   /// bar [`Core::MAX_INDEX`] — the last one the batch tier can address, and\n\
+         \x20   /// the last this handle will count. `update` answers the same there.\n\
          \x20   #[doc(alias = \"TA_{n}_Advance\")]\n\
-         \x20   pub fn advance(&mut self) {{\n\
+         \x20   pub fn advance(&mut self) -> Result<(), RetCode> {{\n\
          {}\
+         {}\
+         \x20       Ok(())\n\
          \x20   }}",
+        out_range_ceiling_guard("        "),
         advance_out_count("        ")
     );
     let _ = writeln!(o, "}}\n");

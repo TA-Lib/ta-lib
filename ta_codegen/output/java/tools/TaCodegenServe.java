@@ -747,6 +747,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -757,8 +760,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AcStream( AcStream other ) {
              this.core = other.core;
@@ -797,12 +808,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AC update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AC update: BadParam", RetCode.BadParam);
              core.acStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -1752,6 +1769,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -1762,8 +1782,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ACCBANDS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AccbandsStream( AccbandsStream other ) {
              this.core = other.core;
@@ -1797,13 +1825,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, AccbandsOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ACCBANDS update", RetCode.OutOfRangeEndIndex);
              requireArgument("ACCBANDS update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ACCBANDS update: BadParam", RetCode.BadParam);
              core.accbandsStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -2462,6 +2496,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -2472,8 +2509,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ACOS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AcosStream( AcosStream other ) {
              this.core = other.core;
@@ -2496,12 +2541,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ACOS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ACOS update: BadParam", RetCode.BadParam);
              core.acosStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -2963,6 +3014,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -2973,8 +3027,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AdStream( AdStream other ) {
              this.core = other.core;
@@ -2998,12 +3060,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("AD update: BadParam", RetCode.BadParam);
              core.adStepImpl(this, inHigh, inLow, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -3460,6 +3528,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -3470,8 +3541,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AddStream( AddStream other ) {
              this.core = other.core;
@@ -3494,12 +3573,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal0, double inReal1 ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("ADD update: BadParam", RetCode.BadParam);
              core.addStepImpl(this, inReal0, inReal1);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -4158,6 +4243,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -4168,8 +4256,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADOSC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AdoscStream( AdoscStream other ) {
              this.core = other.core;
@@ -4201,12 +4297,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADOSC update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("ADOSC update: BadParam", RetCode.BadParam);
              core.adoscStepImpl(this, inHigh, inLow, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -4929,6 +5031,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -4939,8 +5044,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AdrStream( AdrStream other ) {
              this.core = other.core;
@@ -4968,12 +5081,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("ADR update: BadParam", RetCode.BadParam);
              core.adrStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -6075,6 +6194,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -6085,8 +6207,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AdxStream( AdxStream other ) {
              this.core = other.core;
@@ -6117,12 +6247,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADX update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ADX update: BadParam", RetCode.BadParam);
              core.adxStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -7112,6 +7248,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -7122,8 +7261,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADXR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AdxrStream( AdxrStream other ) {
              this.core = other.core;
@@ -7151,12 +7298,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ADXR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ADXR update: BadParam", RetCode.BadParam);
              core.adxrStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -7864,6 +8017,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -7874,8 +8030,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AO advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AoStream( AoStream other ) {
              this.core = other.core;
@@ -7908,12 +8072,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AO update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AO update: BadParam", RetCode.BadParam);
              core.aoStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -8677,6 +8847,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -8687,8 +8860,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("APO advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           ApoStream( ApoStream other ) {
              this.core = other.core;
@@ -8716,12 +8897,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("APO update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("APO update: BadParam", RetCode.BadParam);
              core.apoStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -9404,6 +9591,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -9414,8 +9604,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AROON advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AroonStream( AroonStream other ) {
              this.core = other.core;
@@ -9451,13 +9649,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, AroonOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AROON update", RetCode.OutOfRangeEndIndex);
              requireArgument("AROON update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AROON update: BadParam", RetCode.BadParam);
              core.aroonStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.aroonDown = this.cur_outAroonDown;
              out.aroonUp = this.cur_outAroonUp;
           }
@@ -10319,6 +10523,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -10329,8 +10536,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AROONOSC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AroonoscStream( AroonoscStream other ) {
              this.core = other.core;
@@ -10365,12 +10580,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AROONOSC update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("AROONOSC update: BadParam", RetCode.BadParam);
              core.aroonoscStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -11022,6 +11243,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -11032,8 +11256,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ASIN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AsinStream( AsinStream other ) {
              this.core = other.core;
@@ -11056,12 +11288,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ASIN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ASIN update: BadParam", RetCode.BadParam);
              core.asinStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -11438,6 +11676,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -11448,8 +11689,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ATAN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AtanStream( AtanStream other ) {
              this.core = other.core;
@@ -11472,12 +11721,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ATAN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ATAN update: BadParam", RetCode.BadParam);
              core.atanStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -12140,6 +12395,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -12150,8 +12408,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ATR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AtrStream( AtrStream other ) {
              this.core = other.core;
@@ -12179,12 +12445,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ATR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ATR update: BadParam", RetCode.BadParam);
              core.atrStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -12847,6 +13119,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -12857,8 +13132,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AVGDEV advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AvgdevStream( AvgdevStream other ) {
              this.core = other.core;
@@ -12885,12 +13168,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AVGDEV update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("AVGDEV update: BadParam", RetCode.BadParam);
              core.avgdevStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -13374,6 +13663,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -13384,8 +13676,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AVGPRICE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           AvgpriceStream( AvgpriceStream other ) {
              this.core = other.core;
@@ -13408,12 +13708,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("AVGPRICE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("AVGPRICE update: BadParam", RetCode.BadParam);
              core.avgpriceStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -14420,6 +14726,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -14430,8 +14739,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("BBANDS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           BbandsStream( BbandsStream other ) {
              this.core = other.core;
@@ -14462,13 +14779,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, BbandsOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("BBANDS update", RetCode.OutOfRangeEndIndex);
              requireArgument("BBANDS update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("BBANDS update: BadParam", RetCode.BadParam);
              core.bbandsStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -15625,6 +15948,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -15635,8 +15961,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("BETA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           BetaStream( BetaStream other ) {
              this.core = other.core;
@@ -15681,12 +16015,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal0, double inReal1 ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("BETA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("BETA update: BadParam", RetCode.BadParam);
              core.betaStepImpl(this, inReal0, inReal1);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -16869,6 +17209,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -16879,8 +17222,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("BOP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           BopStream( BopStream other ) {
              this.core = other.core;
@@ -16903,12 +17254,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("BOP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("BOP update: BadParam", RetCode.BadParam);
              core.bopStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -17567,6 +17924,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -17577,8 +17937,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CCI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CciStream( CciStream other ) {
              this.core = other.core;
@@ -17606,12 +17974,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CCI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CCI update: BadParam", RetCode.BadParam);
              core.cciStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -18357,6 +18731,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -18367,8 +18744,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL2CROWS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl2crowsStream( Cdl2crowsStream other ) {
              this.core = other.core;
@@ -18406,12 +18791,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL2CROWS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL2CROWS update: BadParam", RetCode.BadParam);
              core.cdl2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -19109,6 +19500,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -19119,8 +19513,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3BLACKCROWS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl3blackcrowsStream( Cdl3blackcrowsStream other ) {
              this.core = other.core;
@@ -19162,12 +19564,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3BLACKCROWS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3BLACKCROWS update: BadParam", RetCode.BadParam);
              core.cdl3blackcrowsStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -19918,6 +20326,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -19928,8 +20339,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3INSIDE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl3insideStream( Cdl3insideStream other ) {
              this.core = other.core;
@@ -19974,12 +20393,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3INSIDE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3INSIDE update: BadParam", RetCode.BadParam);
              core.cdl3insideStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -20732,6 +21157,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -20742,8 +21170,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3LINESTRIKE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl3linestrikeStream( Cdl3linestrikeStream other ) {
              this.core = other.core;
@@ -20786,12 +21222,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3LINESTRIKE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3LINESTRIKE update: BadParam", RetCode.BadParam);
              core.cdl3linestrikeStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -21465,6 +21907,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -21475,8 +21920,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3OUTSIDE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl3outsideStream( Cdl3outsideStream other ) {
              this.core = other.core;
@@ -21503,12 +21956,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3OUTSIDE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3OUTSIDE update: BadParam", RetCode.BadParam);
              core.cdl3outsideStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -22267,6 +22726,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -22277,8 +22739,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3STARSINSOUTH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl3starsinsouthStream( Cdl3starsinsouthStream other ) {
              this.core = other.core;
@@ -22340,12 +22810,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3STARSINSOUTH update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3STARSINSOUTH update: BadParam", RetCode.BadParam);
              core.cdl3starsinsouthStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -23340,6 +23816,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -23350,8 +23829,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3WHITESOLDIERS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdl3whitesoldiersStream( Cdl3whitesoldiersStream other ) {
              this.core = other.core;
@@ -23413,12 +23900,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDL3WHITESOLDIERS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDL3WHITESOLDIERS update: BadParam", RetCode.BadParam);
              core.cdl3whitesoldiersStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -24384,6 +24877,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -24394,8 +24890,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLABANDONEDBABY advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlabandonedbabyStream( CdlabandonedbabyStream other ) {
              this.core = other.core;
@@ -24448,12 +24952,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLABANDONEDBABY update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLABANDONEDBABY update: BadParam", RetCode.BadParam);
              core.cdlabandonedbabyStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -25451,6 +25961,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -25461,8 +25974,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLADVANCEBLOCK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdladvanceblockStream( CdladvanceblockStream other ) {
              this.core = other.core;
@@ -25533,12 +26054,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLADVANCEBLOCK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLADVANCEBLOCK update: BadParam", RetCode.BadParam);
              core.cdladvanceblockStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -26482,6 +27009,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -26492,8 +27022,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLBELTHOLD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlbeltholdStream( CdlbeltholdStream other ) {
              this.core = other.core;
@@ -26530,12 +27068,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLBELTHOLD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBELTHOLD update: BadParam", RetCode.BadParam);
              core.cdlbeltholdStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -27249,6 +27793,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -27259,8 +27806,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLBREAKAWAY advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlbreakawayStream( CdlbreakawayStream other ) {
              this.core = other.core;
@@ -27307,12 +27862,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLBREAKAWAY update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLBREAKAWAY update: BadParam", RetCode.BadParam);
              core.cdlbreakawayStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -28066,6 +28627,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -28076,8 +28640,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLCLOSINGMARUBOZU advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlclosingmarubozuStream( CdlclosingmarubozuStream other ) {
              this.core = other.core;
@@ -28114,12 +28686,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLCLOSINGMARUBOZU update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCLOSINGMARUBOZU update: BadParam", RetCode.BadParam);
              core.cdlclosingmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -28829,6 +29407,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -28839,8 +29420,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLCONCEALBABYSWALL advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlconcealbabyswallStream( CdlconcealbabyswallStream other ) {
              this.core = other.core;
@@ -28883,12 +29472,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLCONCEALBABYSWALL update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCONCEALBABYSWALL update: BadParam", RetCode.BadParam);
              core.cdlconcealbabyswallStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -29635,6 +30230,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -29645,8 +30243,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLCOUNTERATTACK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlcounterattackStream( CdlcounterattackStream other ) {
              this.core = other.core;
@@ -29689,12 +30295,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLCOUNTERATTACK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLCOUNTERATTACK update: BadParam", RetCode.BadParam);
              core.cdlcounterattackStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -30422,6 +31034,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -30432,8 +31047,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDARKCLOUDCOVER advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdldarkcloudcoverStream( CdldarkcloudcoverStream other ) {
              this.core = other.core;
@@ -30469,12 +31092,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDARKCLOUDCOVER update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDARKCLOUDCOVER update: BadParam", RetCode.BadParam);
              core.cdldarkcloudcoverStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -31115,6 +31744,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -31125,8 +31757,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDOJI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdldojiStream( CdldojiStream other ) {
              this.core = other.core;
@@ -31156,12 +31796,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDOJI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJI update: BadParam", RetCode.BadParam);
              core.cdldojiStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -31840,6 +32486,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -31850,8 +32499,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDOJISTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdldojistarStream( CdldojistarStream other ) {
              this.core = other.core;
@@ -31892,12 +32549,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDOJISTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDOJISTAR update: BadParam", RetCode.BadParam);
              core.cdldojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -32635,6 +33298,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -32645,8 +33311,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDRAGONFLYDOJI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdldragonflydojiStream( CdldragonflydojiStream other ) {
              this.core = other.core;
@@ -32683,12 +33357,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLDRAGONFLYDOJI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLDRAGONFLYDOJI update: BadParam", RetCode.BadParam);
              core.cdldragonflydojiStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -33337,6 +34017,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -33347,8 +34030,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLENGULFING advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlengulfingStream( CdlengulfingStream other ) {
              this.core = other.core;
@@ -33373,12 +34064,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLENGULFING update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLENGULFING update: BadParam", RetCode.BadParam);
              core.cdlengulfingStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -34120,6 +34817,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -34130,8 +34830,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLEVENINGDOJISTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdleveningdojistarStream( CdleveningdojistarStream other ) {
              this.core = other.core;
@@ -34184,12 +34892,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLEVENINGDOJISTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLEVENINGDOJISTAR update: BadParam", RetCode.BadParam);
              core.cdleveningdojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -35035,6 +35749,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -35045,8 +35762,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLEVENINGSTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdleveningstarStream( CdleveningstarStream other ) {
              this.core = other.core;
@@ -35094,12 +35819,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLEVENINGSTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLEVENINGSTAR update: BadParam", RetCode.BadParam);
              core.cdleveningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -35872,6 +36603,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -35882,8 +36616,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLGAPSIDESIDEWHITE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlgapsidesidewhiteStream( CdlgapsidesidewhiteStream other ) {
              this.core = other.core;
@@ -35928,12 +36670,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLGAPSIDESIDEWHITE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLGAPSIDESIDEWHITE update: BadParam", RetCode.BadParam);
              core.cdlgapsidesidewhiteStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -36687,6 +37435,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -36697,8 +37448,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLGRAVESTONEDOJI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlgravestonedojiStream( CdlgravestonedojiStream other ) {
              this.core = other.core;
@@ -36735,12 +37494,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLGRAVESTONEDOJI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLGRAVESTONEDOJI update: BadParam", RetCode.BadParam);
              core.cdlgravestonedojiStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -37521,6 +38286,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -37531,8 +38299,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHAMMER advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlhammerStream( CdlhammerStream other ) {
              this.core = other.core;
@@ -37587,12 +38363,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHAMMER update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHAMMER update: BadParam", RetCode.BadParam);
              core.cdlhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -38486,6 +39268,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -38496,8 +39281,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHANGINGMAN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlhangingmanStream( CdlhangingmanStream other ) {
              this.core = other.core;
@@ -38552,12 +39345,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHANGINGMAN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHANGINGMAN update: BadParam", RetCode.BadParam);
              core.cdlhangingmanStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -39400,6 +40199,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -39410,8 +40212,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHARAMI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlharamiStream( CdlharamiStream other ) {
              this.core = other.core;
@@ -39452,12 +40262,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHARAMI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHARAMI update: BadParam", RetCode.BadParam);
              core.cdlharamiStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -40249,6 +41065,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -40259,8 +41078,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHARAMICROSS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlharamicrossStream( CdlharamicrossStream other ) {
              this.core = other.core;
@@ -40301,12 +41128,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHARAMICROSS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHARAMICROSS update: BadParam", RetCode.BadParam);
              core.cdlharamicrossStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -41069,6 +41902,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -41079,8 +41915,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHIGHWAVE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlhighwaveStream( CdlhighwaveStream other ) {
              this.core = other.core;
@@ -41117,12 +41961,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHIGHWAVE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIGHWAVE update: BadParam", RetCode.BadParam);
              core.cdlhighwaveStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -41845,6 +42695,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -41855,8 +42708,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHIKKAKE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlhikkakeStream( CdlhikkakeStream other ) {
              this.core = other.core;
@@ -41887,12 +42748,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHIKKAKE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKE update: BadParam", RetCode.BadParam);
              core.cdlhikkakeStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -42698,6 +43565,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -42708,8 +43578,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHIKKAKEMOD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlhikkakemodStream( CdlhikkakemodStream other ) {
              this.core = other.core;
@@ -42754,12 +43632,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHIKKAKEMOD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHIKKAKEMOD update: BadParam", RetCode.BadParam);
              core.cdlhikkakemodStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -43572,6 +44456,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -43582,8 +44469,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHOMINGPIGEON advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlhomingpigeonStream( CdlhomingpigeonStream other ) {
              this.core = other.core;
@@ -43625,12 +44520,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLHOMINGPIGEON update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLHOMINGPIGEON update: BadParam", RetCode.BadParam);
              core.cdlhomingpigeonStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -44399,6 +45300,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -44409,8 +45313,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLIDENTICAL3CROWS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdlidentical3crowsStream( Cdlidentical3crowsStream other ) {
              this.core = other.core;
@@ -44457,12 +45369,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLIDENTICAL3CROWS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLIDENTICAL3CROWS update: BadParam", RetCode.BadParam);
              core.cdlidentical3crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -45249,6 +46167,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -45259,8 +46180,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLINNECK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlinneckStream( CdlinneckStream other ) {
              this.core = other.core;
@@ -45303,12 +46232,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLINNECK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLINNECK update: BadParam", RetCode.BadParam);
              core.cdlinneckStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -46071,6 +47006,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -46081,8 +47019,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLINVERTEDHAMMER advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlinvertedhammerStream( CdlinvertedhammerStream other ) {
              this.core = other.core;
@@ -46128,12 +47074,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLINVERTEDHAMMER update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLINVERTEDHAMMER update: BadParam", RetCode.BadParam);
              core.cdlinvertedhammerStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -46918,6 +47870,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -46928,8 +47883,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLKICKING advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlkickingStream( CdlkickingStream other ) {
              this.core = other.core;
@@ -46972,12 +47935,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLKICKING update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLKICKING update: BadParam", RetCode.BadParam);
              core.cdlkickingStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -47744,6 +48713,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -47754,8 +48726,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLKICKINGBYLENGTH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlkickingbylengthStream( CdlkickingbylengthStream other ) {
              this.core = other.core;
@@ -47798,12 +48778,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLKICKINGBYLENGTH update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLKICKINGBYLENGTH update: BadParam", RetCode.BadParam);
              core.cdlkickingbylengthStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -48539,6 +49525,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -48549,8 +49538,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLLADDERBOTTOM advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlladderbottomStream( CdlladderbottomStream other ) {
              this.core = other.core;
@@ -48591,12 +49588,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLLADDERBOTTOM update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLADDERBOTTOM update: BadParam", RetCode.BadParam);
              core.cdlladderbottomStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -49310,6 +50313,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -49320,8 +50326,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLLONGLEGGEDDOJI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdllongleggeddojiStream( CdllongleggeddojiStream other ) {
              this.core = other.core;
@@ -49358,12 +50372,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLLONGLEGGEDDOJI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLONGLEGGEDDOJI update: BadParam", RetCode.BadParam);
              core.cdllongleggeddojiStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -50047,6 +51067,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -50057,8 +51080,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLLONGLINE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdllonglineStream( CdllonglineStream other ) {
              this.core = other.core;
@@ -50095,12 +51126,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLLONGLINE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLLONGLINE update: BadParam", RetCode.BadParam);
              core.cdllonglineStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -50795,6 +51832,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -50805,8 +51845,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMARUBOZU advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlmarubozuStream( CdlmarubozuStream other ) {
              this.core = other.core;
@@ -50843,12 +51891,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMARUBOZU update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMARUBOZU update: BadParam", RetCode.BadParam);
              core.cdlmarubozuStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -51516,6 +52570,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -51526,8 +52583,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMATCHINGLOW advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlmatchinglowStream( CdlmatchinglowStream other ) {
              this.core = other.core;
@@ -51562,12 +52627,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMATCHINGLOW update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATCHINGLOW update: BadParam", RetCode.BadParam);
              core.cdlmatchinglowStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -52319,6 +53390,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -52329,8 +53403,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMATHOLD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlmatholdStream( CdlmatholdStream other ) {
              this.core = other.core;
@@ -52385,12 +53467,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMATHOLD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMATHOLD update: BadParam", RetCode.BadParam);
              core.cdlmatholdStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -53280,6 +54368,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -53290,8 +54381,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMORNINGDOJISTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlmorningdojistarStream( CdlmorningdojistarStream other ) {
              this.core = other.core;
@@ -53344,12 +54443,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMORNINGDOJISTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMORNINGDOJISTAR update: BadParam", RetCode.BadParam);
              core.cdlmorningdojistarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -54203,6 +55308,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -54213,8 +55321,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMORNINGSTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlmorningstarStream( CdlmorningstarStream other ) {
              this.core = other.core;
@@ -54262,12 +55378,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLMORNINGSTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLMORNINGSTAR update: BadParam", RetCode.BadParam);
              core.cdlmorningstarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -55035,6 +56157,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -55045,8 +56170,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLONNECK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlonneckStream( CdlonneckStream other ) {
              this.core = other.core;
@@ -55089,12 +56222,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLONNECK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLONNECK update: BadParam", RetCode.BadParam);
              core.cdlonneckStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -55799,6 +56938,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -55809,8 +56951,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLPIERCING advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlpiercingStream( CdlpiercingStream other ) {
              this.core = other.core;
@@ -55845,12 +56995,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLPIERCING update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLPIERCING update: BadParam", RetCode.BadParam);
              core.cdlpiercingStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -56579,6 +57735,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -56589,8 +57748,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLRICKSHAWMAN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlrickshawmanStream( CdlrickshawmanStream other ) {
              this.core = other.core;
@@ -56634,12 +57801,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLRICKSHAWMAN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLRICKSHAWMAN update: BadParam", RetCode.BadParam);
              core.cdlrickshawmanStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -57458,6 +58631,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -57468,8 +58644,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLRISEFALL3METHODS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdlrisefall3methodsStream( Cdlrisefall3methodsStream other ) {
              this.core = other.core;
@@ -57523,12 +58707,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLRISEFALL3METHODS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLRISEFALL3METHODS update: BadParam", RetCode.BadParam);
              core.cdlrisefall3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -58380,6 +59570,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -58390,8 +59583,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSEPARATINGLINES advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlseparatinglinesStream( CdlseparatinglinesStream other ) {
              this.core = other.core;
@@ -58440,12 +59641,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSEPARATINGLINES update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSEPARATINGLINES update: BadParam", RetCode.BadParam);
              core.cdlseparatinglinesStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -59264,6 +60471,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -59274,8 +60484,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSHOOTINGSTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlshootingstarStream( CdlshootingstarStream other ) {
              this.core = other.core;
@@ -59321,12 +60539,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSHOOTINGSTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSHOOTINGSTAR update: BadParam", RetCode.BadParam);
              core.cdlshootingstarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -60088,6 +61312,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -60098,8 +61325,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSHORTLINE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlshortlineStream( CdlshortlineStream other ) {
              this.core = other.core;
@@ -60136,12 +61371,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSHORTLINE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSHORTLINE update: BadParam", RetCode.BadParam);
              core.cdlshortlineStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -60792,6 +62033,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -60802,8 +62046,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSPINNINGTOP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlspinningtopStream( CdlspinningtopStream other ) {
              this.core = other.core;
@@ -60833,12 +62085,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSPINNINGTOP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSPINNINGTOP update: BadParam", RetCode.BadParam);
              core.cdlspinningtopStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -61610,6 +62868,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -61620,8 +62881,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSTALLEDPATTERN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlstalledpatternStream( CdlstalledpatternStream other ) {
              this.core = other.core;
@@ -61683,12 +62952,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSTALLEDPATTERN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTALLEDPATTERN update: BadParam", RetCode.BadParam);
              core.cdlstalledpatternStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -62517,6 +63792,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -62527,8 +63805,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSTICKSANDWICH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlsticksandwichStream( CdlsticksandwichStream other ) {
              this.core = other.core;
@@ -62567,12 +63853,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLSTICKSANDWICH update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLSTICKSANDWICH update: BadParam", RetCode.BadParam);
              core.cdlsticksandwichStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -63298,6 +64590,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -63308,8 +64603,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTAKURI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdltakuriStream( CdltakuriStream other ) {
              this.core = other.core;
@@ -63353,12 +64656,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTAKURI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTAKURI update: BadParam", RetCode.BadParam);
              core.cdltakuriStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -64089,6 +65398,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -64099,8 +65411,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTASUKIGAP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdltasukigapStream( CdltasukigapStream other ) {
              this.core = other.core;
@@ -64137,12 +65457,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTASUKIGAP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTASUKIGAP update: BadParam", RetCode.BadParam);
              core.cdltasukigapStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -64875,6 +66201,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -64885,8 +66214,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTHRUSTING advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdlthrustingStream( CdlthrustingStream other ) {
              this.core = other.core;
@@ -64929,12 +66266,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTHRUSTING update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTHRUSTING update: BadParam", RetCode.BadParam);
              core.cdlthrustingStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -65648,6 +66991,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -65658,8 +67004,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTRISTAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CdltristarStream( CdltristarStream other ) {
              this.core = other.core;
@@ -65697,12 +67051,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLTRISTAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLTRISTAR update: BadParam", RetCode.BadParam);
              core.cdltristarStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -66427,6 +67787,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -66437,8 +67800,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLUNIQUE3RIVER advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdlunique3riverStream( Cdlunique3riverStream other ) {
              this.core = other.core;
@@ -66483,12 +67854,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLUNIQUE3RIVER update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLUNIQUE3RIVER update: BadParam", RetCode.BadParam);
              core.cdlunique3riverStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -67250,6 +68627,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -67260,8 +68640,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLUPSIDEGAP2CROWS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdlupsidegap2crowsStream( Cdlupsidegap2crowsStream other ) {
              this.core = other.core;
@@ -67306,12 +68694,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLUPSIDEGAP2CROWS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLUPSIDEGAP2CROWS update: BadParam", RetCode.BadParam);
              core.cdlupsidegap2crowsStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -67996,6 +69390,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -68006,8 +69403,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLXSIDEGAP3METHODS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other ) {
              this.core = other.core;
@@ -68034,12 +69439,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inOpen, double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CDLXSIDEGAP3METHODS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("CDLXSIDEGAP3METHODS update: BadParam", RetCode.BadParam);
              core.cdlxsidegap3methodsStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -68517,6 +69928,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -68527,8 +69941,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CEIL advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CeilStream( CeilStream other ) {
              this.core = other.core;
@@ -68551,12 +69973,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CEIL update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CEIL update: BadParam", RetCode.BadParam);
              core.ceilStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -69224,6 +70652,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -69234,8 +70665,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CMF advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CmfStream( CmfStream other ) {
              this.core = other.core;
@@ -69266,12 +70705,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CMF update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("CMF update: BadParam", RetCode.BadParam);
              core.cmfStepImpl(this, inHigh, inLow, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -70103,6 +71548,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -70113,8 +71561,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CMO advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CmoStream( CmoStream other ) {
              this.core = other.core;
@@ -70141,12 +71597,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CMO update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CMO update: BadParam", RetCode.BadParam);
              core.cmoStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -70990,6 +72452,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -71000,8 +72465,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CMOU advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CmouStream( CmouStream other ) {
              this.core = other.core;
@@ -71033,12 +72506,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CMOU update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CMOU update: BadParam", RetCode.BadParam);
              core.cmouStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -72068,6 +73547,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -72078,8 +73560,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("COPPOCK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CoppockStream( CoppockStream other ) {
              this.core = other.core;
@@ -72121,12 +73611,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("COPPOCK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COPPOCK update: BadParam", RetCode.BadParam);
              core.coppockStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -73302,6 +74798,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -73312,8 +74811,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CORREL advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CorrelStream( CorrelStream other ) {
              this.core = other.core;
@@ -73355,12 +74862,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal0, double inReal1 ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CORREL update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("CORREL update: BadParam", RetCode.BadParam);
              core.correlStepImpl(this, inReal0, inReal1);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -74326,6 +75839,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -74336,8 +75852,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("COS advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CosStream( CosStream other ) {
              this.core = other.core;
@@ -74360,12 +75884,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("COS update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COS update: BadParam", RetCode.BadParam);
              core.cosStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -74741,6 +76271,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -74751,8 +76284,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("COSH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CoshStream( CoshStream other ) {
              this.core = other.core;
@@ -74775,12 +76316,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("COSH update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("COSH update: BadParam", RetCode.BadParam);
              core.coshStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -75202,6 +76749,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -75212,8 +76762,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CUMSUM advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CumsumStream( CumsumStream other ) {
              this.core = other.core;
@@ -75237,12 +76795,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CUMSUM update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("CUMSUM update: BadParam", RetCode.BadParam);
              core.cumsumStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -75886,6 +77450,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -75896,8 +77463,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CVI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           CviStream( CviStream other ) {
              this.core = other.core;
@@ -75928,12 +77503,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("CVI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("CVI update: BadParam", RetCode.BadParam);
              core.cviStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -76665,6 +78246,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -76675,8 +78259,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DEMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           DemaStream( DemaStream other ) {
              this.core = other.core;
@@ -76703,12 +78295,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DEMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("DEMA update: BadParam", RetCode.BadParam);
              core.demaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -77247,6 +78845,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -77257,8 +78858,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DIV advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           DivStream( DivStream other ) {
              this.core = other.core;
@@ -77281,12 +78890,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal0, double inReal1 ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DIV update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("DIV update: BadParam", RetCode.BadParam);
              core.divStepImpl(this, inReal0, inReal1);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -77924,6 +79539,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -77934,8 +79552,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DONCHIAN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           DonchianStream( DonchianStream other ) {
              this.core = other.core;
@@ -77971,13 +79597,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, DonchianOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DONCHIAN update", RetCode.OutOfRangeEndIndex);
              requireArgument("DONCHIAN update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("DONCHIAN update: BadParam", RetCode.BadParam);
              core.donchianStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -78776,6 +80408,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -78786,8 +80421,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DPO advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           DpoStream( DpoStream other ) {
              this.core = other.core;
@@ -78818,12 +80461,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DPO update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("DPO update: BadParam", RetCode.BadParam);
              core.dpoStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -79847,6 +81496,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -79857,8 +81509,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           DxStream( DxStream other ) {
              this.core = other.core;
@@ -79889,12 +81549,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("DX update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("DX update: BadParam", RetCode.BadParam);
              core.dxStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -80916,6 +82582,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -80926,8 +82595,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("EFI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           EfiStream( EfiStream other ) {
              this.core = other.core;
@@ -80954,12 +82631,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("EFI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("EFI update: BadParam", RetCode.BadParam);
              core.efiStepImpl(this, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -81687,6 +83370,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -81697,8 +83383,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("EMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           EmaStream( EmaStream other ) {
              this.core = other.core;
@@ -81724,12 +83418,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("EMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EMA update: BadParam", RetCode.BadParam);
              core.emaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -82450,6 +84150,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -82460,8 +84163,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ER advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           ErStream( ErStream other ) {
              this.core = other.core;
@@ -82492,12 +84203,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ER update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ER update: BadParam", RetCode.BadParam);
              core.erStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -83333,6 +85050,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -83343,8 +85063,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ERI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           EriStream( EriStream other ) {
              this.core = other.core;
@@ -83371,13 +85099,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, EriOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ERI update", RetCode.OutOfRangeEndIndex);
              requireArgument("ERI update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ERI update: BadParam", RetCode.BadParam);
              core.eriStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.bullPower = this.cur_outBullPower;
              out.bearPower = this.cur_outBearPower;
           }
@@ -83965,6 +85699,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -83975,8 +85712,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("EXP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           ExpStream( ExpStream other ) {
              this.core = other.core;
@@ -83999,12 +85744,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("EXP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("EXP update: BadParam", RetCode.BadParam);
              core.expStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -84378,6 +86129,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -84388,8 +86142,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("FLOOR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           FloorStream( FloorStream other ) {
              this.core = other.core;
@@ -84412,12 +86174,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("FLOOR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("FLOOR update: BadParam", RetCode.BadParam);
              core.floorStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -85040,6 +86808,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -85050,8 +86821,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("FOSC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           FoscStream( FoscStream other ) {
              this.core = other.core;
@@ -85089,12 +86868,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("FOSC update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("FOSC update: BadParam", RetCode.BadParam);
              core.foscStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -85942,6 +87727,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -85952,8 +87740,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("FRACTAL advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           FractalStream( FractalStream other ) {
              this.core = other.core;
@@ -85983,13 +87779,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, FractalOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("FRACTAL update", RetCode.OutOfRangeEndIndex);
              requireArgument("FRACTAL update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("FRACTAL update: BadParam", RetCode.BadParam);
              core.fractalStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.swingHigh = this.cur_outSwingHigh;
              out.swingLow = this.cur_outSwingLow;
           }
@@ -86869,6 +88671,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -86879,8 +88684,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HaStream( HaStream other ) {
              this.core = other.core;
@@ -86908,13 +88721,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inOpen, double inHigh, double inLow, double inClose, HaOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HA update", RetCode.OutOfRangeEndIndex);
              requireArgument("HA update", "out", out);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("HA update: BadParam", RetCode.BadParam);
              core.haStepImpl(this, inOpen, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.haOpen = this.cur_outHAOpen;
              out.haHigh = this.cur_outHAHigh;
              out.haLow = this.cur_outHALow;
@@ -88207,6 +90026,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -88217,8 +90039,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HmaStream( HmaStream other ) {
              this.core = other.core;
@@ -88278,12 +90108,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HMA update: BadParam", RetCode.BadParam);
              core.hmaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -90202,6 +92038,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -90212,8 +92051,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_DCPERIOD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HtDcperiodStream( HtDcperiodStream other ) {
              this.core = other.core;
@@ -90281,12 +92128,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_DCPERIOD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_DCPERIOD update: BadParam", RetCode.BadParam);
              core.htDcperiodStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -92134,6 +93987,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -92144,8 +94000,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_DCPHASE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HtDcphaseStream( HtDcphaseStream other ) {
              this.core = other.core;
@@ -92219,12 +94083,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_DCPHASE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_DCPHASE update: BadParam", RetCode.BadParam);
              core.htDcphaseStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -94150,6 +96020,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -94160,8 +96033,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_PHASOR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HtPhasorStream( HtPhasorStream other ) {
              this.core = other.core;
@@ -94229,13 +96110,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, HtPhasorOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_PHASOR update", RetCode.OutOfRangeEndIndex);
              requireArgument("HT_PHASOR update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_PHASOR update: BadParam", RetCode.BadParam);
              core.htPhasorStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.inPhase = this.cur_outInPhase;
              out.quadrature = this.cur_outQuadrature;
           }
@@ -96081,6 +97968,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -96091,8 +97981,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_SINE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HtSineStream( HtSineStream other ) {
              this.core = other.core;
@@ -96168,13 +98066,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, HtSineOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_SINE update", RetCode.OutOfRangeEndIndex);
              requireArgument("HT_SINE update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_SINE update: BadParam", RetCode.BadParam);
              core.htSineStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.sine = this.cur_outSine;
              out.leadSine = this.cur_outLeadSine;
           }
@@ -98188,6 +100092,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -98198,8 +100105,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_TRENDLINE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HtTrendlineStream( HtTrendlineStream other ) {
              this.core = other.core;
@@ -98273,12 +100188,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_TRENDLINE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_TRENDLINE update: BadParam", RetCode.BadParam);
              core.htTrendlineStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -100406,6 +102327,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -100416,8 +102340,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_TRENDMODE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           HtTrendmodeStream( HtTrendmodeStream other ) {
              this.core = other.core;
@@ -100501,12 +102433,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("HT_TRENDMODE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("HT_TRENDMODE update: BadParam", RetCode.BadParam);
              core.htTrendmodeStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -102094,6 +104032,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -102104,8 +104045,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("IMI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           ImiStream( ImiStream other ) {
              this.core = other.core;
@@ -102133,12 +104082,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inOpen, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("IMI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("IMI update: BadParam", RetCode.BadParam);
              core.imiStepImpl(this, inOpen, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -103051,6 +105006,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -103061,8 +105019,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("KAMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           KamaStream( KamaStream other ) {
              this.core = other.core;
@@ -103096,12 +105062,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("KAMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("KAMA update: BadParam", RetCode.BadParam);
              core.kamaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -104118,6 +106090,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -104128,8 +106103,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("KC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           KcStream( KcStream other ) {
              this.core = other.core;
@@ -104160,13 +106143,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, KcOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("KC update", RetCode.OutOfRangeEndIndex);
              requireArgument("KC update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("KC update: BadParam", RetCode.BadParam);
              core.kcStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.realUpperBand = this.cur_outRealUpperBand;
              out.realMiddleBand = this.cur_outRealMiddleBand;
              out.realLowerBand = this.cur_outRealLowerBand;
@@ -104968,6 +106957,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -104978,8 +106970,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("KDJ advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           KdjStream( KdjStream other ) {
              this.core = other.core;
@@ -105010,13 +107010,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, KdjOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("KDJ update", RetCode.OutOfRangeEndIndex);
              requireArgument("KDJ update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("KDJ update: BadParam", RetCode.BadParam);
              core.kdjStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.k = this.cur_outK;
              out.d = this.cur_outD;
              out.j = this.cur_outJ;
@@ -105811,6 +107817,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -105821,8 +107830,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           LinearregStream( LinearregStream other ) {
              this.core = other.core;
@@ -105859,12 +107876,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG update: BadParam", RetCode.BadParam);
              core.linearregStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -106932,6 +108955,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -106942,8 +108968,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG_ANGLE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           LinearregAngleStream( LinearregAngleStream other ) {
              this.core = other.core;
@@ -106980,12 +109014,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG_ANGLE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_ANGLE update: BadParam", RetCode.BadParam);
              core.linearregAngleStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -108045,6 +110085,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -108055,8 +110098,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG_INTERCEPT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           LinearregInterceptStream( LinearregInterceptStream other ) {
              this.core = other.core;
@@ -108093,12 +110144,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG_INTERCEPT update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_INTERCEPT update: BadParam", RetCode.BadParam);
              core.linearregInterceptStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -109154,6 +111211,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -109164,8 +111224,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG_SLOPE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           LinearregSlopeStream( LinearregSlopeStream other ) {
              this.core = other.core;
@@ -109202,12 +111270,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LINEARREG_SLOPE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LINEARREG_SLOPE update: BadParam", RetCode.BadParam);
              core.linearregSlopeStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -109978,6 +112052,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -109988,8 +112065,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           LnStream( LnStream other ) {
              this.core = other.core;
@@ -110012,12 +112097,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LN update: BadParam", RetCode.BadParam);
              core.lnStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -110399,6 +112490,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -110409,8 +112503,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LOG10 advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Log10Stream( Log10Stream other ) {
              this.core = other.core;
@@ -110433,12 +112535,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("LOG10 update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("LOG10 update: BadParam", RetCode.BadParam);
              core.log10StepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -111170,6 +113278,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -111180,8 +113291,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MaStream( MaStream other ) {
              this.core = other.core;
@@ -111251,12 +113370,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MA update: BadParam", RetCode.BadParam);
              core.maStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -112545,6 +114670,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -112555,8 +114683,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MACD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MacdStream( MacdStream other ) {
              this.core = other.core;
@@ -112590,13 +114726,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, MacdOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MACD update", RetCode.OutOfRangeEndIndex);
              requireArgument("MACD update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACD update: BadParam", RetCode.BadParam);
              core.macdStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.macd = this.cur_outMACD;
              out.macdSignal = this.cur_outMACDSignal;
              out.macdHist = this.cur_outMACDHist;
@@ -113628,6 +115770,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -113638,8 +115783,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MACDEXT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MacdextStream( MacdextStream other ) {
              this.core = other.core;
@@ -113673,13 +115826,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, MacdextOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MACDEXT update", RetCode.OutOfRangeEndIndex);
              requireArgument("MACDEXT update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDEXT update: BadParam", RetCode.BadParam);
              core.macdextStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.macd = this.cur_outMACD;
              out.macdSignal = this.cur_outMACDSignal;
              out.macdHist = this.cur_outMACDHist;
@@ -114573,6 +116732,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -114583,8 +116745,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MACDFIX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MacdfixStream( MacdfixStream other ) {
              this.core = other.core;
@@ -114616,13 +116786,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, MacdfixOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MACDFIX update", RetCode.OutOfRangeEndIndex);
              requireArgument("MACDFIX update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MACDFIX update: BadParam", RetCode.BadParam);
              core.macdfixStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.macd = this.cur_outMACD;
              out.macdSignal = this.cur_outMACDSignal;
              out.macdHist = this.cur_outMACDHist;
@@ -116035,6 +118211,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -116045,8 +118224,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MamaStream( MamaStream other ) {
              this.core = other.core;
@@ -116119,13 +118306,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, MamaOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAMA update", RetCode.OutOfRangeEndIndex);
              requireArgument("MAMA update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAMA update: BadParam", RetCode.BadParam);
              core.mamaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.mama = this.cur_outMAMA;
              out.fama = this.cur_outFAMA;
           }
@@ -117379,6 +119572,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -117389,8 +119585,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MARKETFI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MarketfiStream( MarketfiStream other ) {
              this.core = other.core;
@@ -117413,12 +119617,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MARKETFI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("MARKETFI update: BadParam", RetCode.BadParam);
              core.marketfiStepImpl(this, inHigh, inLow, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -118215,6 +120425,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -118225,8 +120438,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MASSI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MassiStream( MassiStream other ) {
              this.core = other.core;
@@ -118259,12 +120480,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MASSI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MASSI update: BadParam", RetCode.BadParam);
              core.massiStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -119334,6 +121561,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -119344,8 +121574,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAVP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MavpStream( MavpStream other ) {
              this.core = other.core;
@@ -119375,12 +121613,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal, double inPeriods ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAVP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) || !Double.isFinite(inPeriods) )
                 throw new TaLibArgumentException("MAVP update: BadParam", RetCode.BadParam);
              core.mavpStepImpl(this, inReal, inPeriods);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -120119,6 +122363,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -120129,8 +122376,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MaxStream( MaxStream other ) {
              this.core = other.core;
@@ -120161,12 +122416,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAX update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAX update: BadParam", RetCode.BadParam);
              core.maxStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -120831,6 +123092,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -120841,8 +123105,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAXINDEX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MaxindexStream( MaxindexStream other ) {
              this.core = other.core;
@@ -120873,12 +123145,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MAXINDEX update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MAXINDEX update: BadParam", RetCode.BadParam);
              core.maxindexStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -121416,6 +123694,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -121426,8 +123707,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MEDPRICE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MedpriceStream( MedpriceStream other ) {
              this.core = other.core;
@@ -121450,12 +123739,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MEDPRICE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MEDPRICE update: BadParam", RetCode.BadParam);
              core.medpriceStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -122183,6 +124478,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -122193,8 +124491,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MFI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MfiStream( MfiStream other ) {
              this.core = other.core;
@@ -122227,12 +124533,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MFI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("MFI update: BadParam", RetCode.BadParam);
              core.mfiStepImpl(this, inHigh, inLow, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -123192,6 +125504,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -123202,8 +125517,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MIDPOINT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MidpointStream( MidpointStream other ) {
              this.core = other.core;
@@ -123236,12 +125559,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MIDPOINT update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MIDPOINT update: BadParam", RetCode.BadParam);
              core.midpointStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -124177,6 +126506,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -124187,8 +126519,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MIDPRICE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MidpriceStream( MidpriceStream other ) {
              this.core = other.core;
@@ -124222,12 +126562,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MIDPRICE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MIDPRICE update: BadParam", RetCode.BadParam);
              core.midpriceStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -125077,6 +127423,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -125087,8 +127436,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MIN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MinStream( MinStream other ) {
              this.core = other.core;
@@ -125119,12 +127476,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MIN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MIN update: BadParam", RetCode.BadParam);
              core.minStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -125787,6 +128150,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -125797,8 +128163,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MININDEX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MinindexStream( MinindexStream other ) {
              this.core = other.core;
@@ -125829,12 +128203,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public int update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MININDEX update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MININDEX update: BadParam", RetCode.BadParam);
              core.minindexStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outInteger;
           }
 
@@ -126685,6 +129065,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -126695,8 +129078,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINMAX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MinmaxStream( MinmaxStream other ) {
              this.core = other.core;
@@ -126730,13 +129121,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, MinmaxOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINMAX update", RetCode.OutOfRangeEndIndex);
              requireArgument("MINMAX update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAX update: BadParam", RetCode.BadParam);
              core.minmaxStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.min = this.cur_outMin;
              out.max = this.cur_outMax;
           }
@@ -127568,6 +129965,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -127578,8 +129978,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINMAXINDEX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MinmaxindexStream( MinmaxindexStream other ) {
              this.core = other.core;
@@ -127613,13 +130021,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, MinmaxindexOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINMAXINDEX update", RetCode.OutOfRangeEndIndex);
              requireArgument("MINMAXINDEX update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MINMAXINDEX update: BadParam", RetCode.BadParam);
              core.minmaxindexStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.minIdx = this.cur_outMinIdx;
              out.maxIdx = this.cur_outMaxIdx;
           }
@@ -128778,6 +131192,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -128788,8 +131205,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINUS_DI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MinusDiStream( MinusDiStream other ) {
              this.core = other.core;
@@ -128818,12 +131243,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINUS_DI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("MINUS_DI update: BadParam", RetCode.BadParam);
              core.minusDiStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -130146,6 +132577,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -130156,8 +132590,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINUS_DM advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MinusDmStream( MinusDmStream other ) {
              this.core = other.core;
@@ -130184,12 +132626,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MINUS_DM update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("MINUS_DM update: BadParam", RetCode.BadParam);
              core.minusDmStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -131044,6 +133492,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -131054,8 +133505,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MOM advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MomStream( MomStream other ) {
              this.core = other.core;
@@ -131082,12 +133541,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MOM update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MOM update: BadParam", RetCode.BadParam);
              core.momStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -131561,6 +134026,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -131571,8 +134039,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MULT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           MultStream( MultStream other ) {
              this.core = other.core;
@@ -131595,12 +134071,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal0, double inReal1 ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("MULT update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("MULT update: BadParam", RetCode.BadParam);
              core.multStepImpl(this, inReal0, inReal1);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -132342,6 +134824,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -132352,8 +134837,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("NATR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           NatrStream( NatrStream other ) {
              this.core = other.core;
@@ -132381,12 +134874,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("NATR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("NATR update: BadParam", RetCode.BadParam);
              core.natrStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -133120,6 +135619,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -133130,8 +135632,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("NVI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           NviStream( NviStream other ) {
              this.core = other.core;
@@ -133157,12 +135667,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("NVI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("NVI update: BadParam", RetCode.BadParam);
              core.nviStepImpl(this, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -133681,6 +136197,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -133691,8 +136210,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("OBV advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           ObvStream( ObvStream other ) {
              this.core = other.core;
@@ -133717,12 +136244,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("OBV update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("OBV update: BadParam", RetCode.BadParam);
              core.obvStepImpl(this, inReal, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -134414,6 +136947,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -134424,8 +136960,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PERCENTILE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PercentileStream( PercentileStream other ) {
              this.core = other.core;
@@ -134460,12 +137004,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PERCENTILE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("PERCENTILE update: BadParam", RetCode.BadParam);
              core.percentileStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -135158,6 +137708,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -135168,8 +137721,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PERCENTRANK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PercentrankStream( PercentrankStream other ) {
              this.core = other.core;
@@ -135196,12 +137757,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PERCENTRANK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("PERCENTRANK update: BadParam", RetCode.BadParam);
              core.percentrankStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -136212,6 +138779,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -136222,8 +138792,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PLUS_DI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PlusDiStream( PlusDiStream other ) {
              this.core = other.core;
@@ -136252,12 +138830,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PLUS_DI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("PLUS_DI update: BadParam", RetCode.BadParam);
              core.plusDiStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -137579,6 +140163,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -137589,8 +140176,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PLUS_DM advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PlusDmStream( PlusDmStream other ) {
              this.core = other.core;
@@ -137617,12 +140212,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PLUS_DM update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("PLUS_DM update: BadParam", RetCode.BadParam);
              core.plusDmStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -138566,6 +141167,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -138576,8 +141180,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PPO advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PpoStream( PpoStream other ) {
              this.core = other.core;
@@ -138605,12 +141217,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PPO update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("PPO update: BadParam", RetCode.BadParam);
              core.ppoStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -139184,6 +141802,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -139194,8 +141815,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PVI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PviStream( PviStream other ) {
              this.core = other.core;
@@ -139221,12 +141850,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PVI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("PVI update: BadParam", RetCode.BadParam);
              core.pviStepImpl(this, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -139896,6 +142531,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -139906,8 +142544,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PVO advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PvoStream( PvoStream other ) {
              this.core = other.core;
@@ -139935,12 +142581,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PVO update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("PVO update: BadParam", RetCode.BadParam);
              core.pvoStepImpl(this, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -140492,6 +143144,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -140502,8 +143157,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PVT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           PvtStream( PvtStream other ) {
              this.core = other.core;
@@ -140528,12 +143191,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("PVT update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("PVT update: BadParam", RetCode.BadParam);
              core.pvtStepImpl(this, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -141099,6 +143768,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -141109,8 +143781,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("QSTICK advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           QstickStream( QstickStream other ) {
              this.core = other.core;
@@ -141138,12 +143818,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inOpen, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("QSTICK update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inOpen) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("QSTICK update: BadParam", RetCode.BadParam);
              core.qstickStepImpl(this, inOpen, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -141818,6 +144504,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -141828,8 +144517,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RmaStream( RmaStream other ) {
              this.core = other.core;
@@ -141856,12 +144553,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RMA update: BadParam", RetCode.BadParam);
              core.rmaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -142423,6 +145126,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -142433,8 +145139,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RocStream( RocStream other ) {
              this.core = other.core;
@@ -142461,12 +145175,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROC update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROC update: BadParam", RetCode.BadParam);
              core.rocStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -143052,6 +145772,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -143062,8 +145785,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROCP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RocpStream( RocpStream other ) {
              this.core = other.core;
@@ -143090,12 +145821,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROCP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCP update: BadParam", RetCode.BadParam);
              core.rocpStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -143684,6 +146421,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -143694,8 +146434,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROCR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RocrStream( RocrStream other ) {
              this.core = other.core;
@@ -143722,12 +146470,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROCR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCR update: BadParam", RetCode.BadParam);
              core.rocrStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -144318,6 +147072,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -144328,8 +147085,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROCR100 advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           Rocr100Stream( Rocr100Stream other ) {
              this.core = other.core;
@@ -144356,12 +147121,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ROCR100 update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ROCR100 update: BadParam", RetCode.BadParam);
              core.rocr100StepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -145139,6 +147910,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -145149,8 +147923,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RSI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RsiStream( RsiStream other ) {
              this.core = other.core;
@@ -145177,12 +147959,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RSI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RSI update: BadParam", RetCode.BadParam);
              core.rsiStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -146327,6 +149115,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -146337,8 +149128,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RVI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RviStream( RviStream other ) {
              this.core = other.core;
@@ -146380,12 +149179,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RVI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("RVI update: BadParam", RetCode.BadParam);
              core.rviStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -147310,6 +150115,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -147320,8 +150128,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RVOL advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           RvolStream( RvolStream other ) {
              this.core = other.core;
@@ -147349,12 +150165,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("RVOL update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("RVOL update: BadParam", RetCode.BadParam);
              core.rvolStepImpl(this, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -148249,6 +151071,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -148259,8 +151084,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SarStream( SarStream other ) {
              this.core = other.core;
@@ -148291,12 +151124,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("SAR update: BadParam", RetCode.BadParam);
              core.sarStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -149823,6 +152662,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -149833,8 +152675,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SAREXT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SarextStream( SarextStream other ) {
              this.core = other.core;
@@ -149872,12 +152722,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SAREXT update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) )
                 throw new TaLibArgumentException("SAREXT update: BadParam", RetCode.BadParam);
              core.sarextStepImpl(this, inHigh, inLow);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -150838,6 +153694,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -150848,8 +153707,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SIN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SinStream( SinStream other ) {
              this.core = other.core;
@@ -150872,12 +153739,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SIN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SIN update: BadParam", RetCode.BadParam);
              core.sinStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -151251,6 +154124,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -151261,8 +154137,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SINH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SinhStream( SinhStream other ) {
              this.core = other.core;
@@ -151285,12 +154169,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SINH update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SINH update: BadParam", RetCode.BadParam);
              core.sinhStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -151784,6 +154674,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -151794,8 +154687,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SmaStream( SmaStream other ) {
              this.core = other.core;
@@ -151823,12 +154724,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SMA update: BadParam", RetCode.BadParam);
              core.smaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -152935,6 +155842,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -152945,8 +155855,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SMI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SmiStream( SmiStream other ) {
              this.core = other.core;
@@ -152993,13 +155911,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, SmiOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SMI update", RetCode.OutOfRangeEndIndex);
              requireArgument("SMI update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("SMI update: BadParam", RetCode.BadParam);
              core.smiStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.smi = this.cur_outSMI;
              out.smiSignal = this.cur_outSMISignal;
           }
@@ -153892,6 +156816,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -153902,8 +156829,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SQRT advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SqrtStream( SqrtStream other ) {
              this.core = other.core;
@@ -153926,12 +156861,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SQRT update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SQRT update: BadParam", RetCode.BadParam);
              core.sqrtStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -154427,6 +157368,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -154437,8 +157381,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STDDEV advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           StddevStream( StddevStream other ) {
              this.core = other.core;
@@ -154464,12 +157416,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STDDEV update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("STDDEV update: BadParam", RetCode.BadParam);
              core.stddevStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -155427,6 +158385,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -155437,8 +158398,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STOCH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           StochStream( StochStream other ) {
              this.core = other.core;
@@ -155480,13 +158449,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, StochOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STOCH update", RetCode.OutOfRangeEndIndex);
              requireArgument("STOCH update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("STOCH update: BadParam", RetCode.BadParam);
              core.stochStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.slowK = this.cur_outSlowK;
              out.slowD = this.cur_outSlowD;
           }
@@ -156740,6 +159715,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -156750,8 +159728,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STOCHF advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           StochfStream( StochfStream other ) {
              this.core = other.core;
@@ -156790,13 +159776,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, StochfOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STOCHF update", RetCode.OutOfRangeEndIndex);
              requireArgument("STOCHF update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("STOCHF update: BadParam", RetCode.BadParam);
              core.stochfStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.fastK = this.cur_outFastK;
              out.fastD = this.cur_outFastD;
           }
@@ -157844,6 +160836,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -157854,8 +160849,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STOCHRSI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           StochrsiStream( StochrsiStream other ) {
              this.core = other.core;
@@ -157885,13 +160888,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inReal, StochrsiOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("STOCHRSI update", RetCode.OutOfRangeEndIndex);
              requireArgument("STOCHRSI update", "out", out);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("STOCHRSI update: BadParam", RetCode.BadParam);
              core.stochrsiStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.fastK = this.cur_outFastK;
              out.fastD = this.cur_outFastD;
           }
@@ -158422,6 +161431,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -158432,8 +161444,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SUB advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SubStream( SubStream other ) {
              this.core = other.core;
@@ -158456,12 +161476,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal0, double inReal1 ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SUB update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal0) || !Double.isFinite(inReal1) )
                 throw new TaLibArgumentException("SUB update: BadParam", RetCode.BadParam);
              core.subStepImpl(this, inReal0, inReal1);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -158938,6 +161964,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -158948,8 +161977,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SUM advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SumStream( SumStream other ) {
              this.core = other.core;
@@ -158977,12 +162014,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SUM update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("SUM update: BadParam", RetCode.BadParam);
              core.sumStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -159853,6 +162896,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -159863,8 +162909,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SUPERTREND advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           SupertrendStream( SupertrendStream other ) {
              this.core = other.core;
@@ -159898,13 +162952,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, SupertrendOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("SUPERTREND update", RetCode.OutOfRangeEndIndex);
              requireArgument("SUPERTREND update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
              core.supertrendStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.real = this.cur_outReal;
              out.integer = this.cur_outInteger;
           }
@@ -160977,6 +164037,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -160987,8 +164050,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("T3 advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           T3Stream( T3Stream other ) {
              this.core = other.core;
@@ -161025,12 +164096,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("T3 update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("T3 update: BadParam", RetCode.BadParam);
              core.t3StepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -161614,6 +164691,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -161624,8 +164704,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TAN advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TanStream( TanStream other ) {
              this.core = other.core;
@@ -161648,12 +164736,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TAN update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TAN update: BadParam", RetCode.BadParam);
              core.tanStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -162029,6 +165123,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -162039,8 +165136,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TANH advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TanhStream( TanhStream other ) {
              this.core = other.core;
@@ -162063,12 +165168,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TANH update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TANH update: BadParam", RetCode.BadParam);
              core.tanhStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -162707,6 +165818,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -162717,8 +165831,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TEMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TemaStream( TemaStream other ) {
              this.core = other.core;
@@ -162746,12 +165868,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TEMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TEMA update: BadParam", RetCode.BadParam);
              core.temaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -163411,6 +166539,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -163421,8 +166552,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TRANGE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TrangeStream( TrangeStream other ) {
              this.core = other.core;
@@ -163446,12 +166585,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TRANGE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TRANGE update: BadParam", RetCode.BadParam);
              core.trangeStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -164336,6 +167481,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -164346,8 +167494,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TRIMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TrimaStream( TrimaStream other ) {
              this.core = other.core;
@@ -164382,12 +167538,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TRIMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TRIMA update: BadParam", RetCode.BadParam);
              core.trimaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -165536,6 +168698,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -165546,8 +168711,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TRIX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TrixStream( TrixStream other ) {
              this.core = other.core;
@@ -165575,12 +168748,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TRIX update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TRIX update: BadParam", RetCode.BadParam);
              core.trixStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -166379,6 +169558,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -166389,8 +169571,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TSF advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TsfStream( TsfStream other ) {
              this.core = other.core;
@@ -166427,12 +169617,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TSF update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TSF update: BadParam", RetCode.BadParam);
              core.tsfStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -167556,6 +170752,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -167566,8 +170765,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TSI advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TsiStream( TsiStream other ) {
              this.core = other.core;
@@ -167599,12 +170806,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TSI update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("TSI update: BadParam", RetCode.BadParam);
              core.tsiStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -168197,6 +171410,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -168207,8 +171423,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TYPPRICE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           TyppriceStream( TyppriceStream other ) {
              this.core = other.core;
@@ -168231,12 +171455,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("TYPPRICE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("TYPPRICE update: BadParam", RetCode.BadParam);
              core.typpriceStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -169199,6 +172429,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -169209,8 +172442,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ULTOSC advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           UltoscStream( UltoscStream other ) {
              this.core = other.core;
@@ -169251,12 +172492,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ULTOSC update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("ULTOSC update: BadParam", RetCode.BadParam);
              core.ultoscStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -170445,6 +173692,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -170455,8 +173705,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VAR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           VarStream( VarStream other ) {
              this.core = other.core;
@@ -170493,12 +173751,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VAR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("VAR update: BadParam", RetCode.BadParam);
              core.varStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -171462,6 +174726,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -171472,8 +174739,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VHF advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           VhfStream( VhfStream other ) {
              this.core = other.core;
@@ -171500,12 +174775,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VHF update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("VHF update: BadParam", RetCode.BadParam);
              core.vhfStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -172402,6 +175683,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -172412,8 +175696,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VORTEX advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           VortexStream( VortexStream other ) {
              this.core = other.core;
@@ -172451,13 +175743,19 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public void update( double inHigh, double inLow, double inClose, VortexOut out ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VORTEX update", RetCode.OutOfRangeEndIndex);
              requireArgument("VORTEX update", "out", out);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("VORTEX update: BadParam", RetCode.BadParam);
              core.vortexStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              out.plusVI = this.cur_outPlusVI;
              out.minusVI = this.cur_outMinusVI;
           }
@@ -173480,6 +176778,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -173490,8 +176791,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VWAP advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           VwapStream( VwapStream other ) {
              this.core = other.core;
@@ -173517,12 +176826,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VWAP update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("VWAP update: BadParam", RetCode.BadParam);
              core.vwapStepImpl(this, inHigh, inLow, inClose, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -174403,6 +177718,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -174413,8 +177731,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VWMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           VwmaStream( VwmaStream other ) {
              this.core = other.core;
@@ -174444,12 +177770,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal, double inVolume ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("VWMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) || !Double.isFinite(inVolume) )
                 throw new TaLibArgumentException("VWMA update: BadParam", RetCode.BadParam);
              core.vwmaStepImpl(this, inReal, inVolume);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -175164,6 +178496,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -175174,8 +178509,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WAD advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           WadStream( WadStream other ) {
              this.core = other.core;
@@ -175200,12 +178543,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WAD update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WAD update: BadParam", RetCode.BadParam);
              core.wadStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -175714,6 +179063,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -175724,8 +179076,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WCLPRICE advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           WclpriceStream( WclpriceStream other ) {
              this.core = other.core;
@@ -175748,12 +179108,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WCLPRICE update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WCLPRICE update: BadParam", RetCode.BadParam);
              core.wclpriceStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -176542,6 +179908,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -176552,8 +179921,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WILLR advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           WillrStream( WillrStream other ) {
              this.core = other.core;
@@ -176588,12 +179965,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inHigh, double inLow, double inClose ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WILLR update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inHigh) || !Double.isFinite(inLow) || !Double.isFinite(inClose) )
                 throw new TaLibArgumentException("WILLR update: BadParam", RetCode.BadParam);
              core.willrStepImpl(this, inHigh, inLow, inClose);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -177544,6 +180927,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -177554,8 +180940,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           WmaStream( WmaStream other ) {
              this.core = other.core;
@@ -177591,12 +180985,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("WMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("WMA update: BadParam", RetCode.BadParam);
              core.wmaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -178575,6 +181975,9 @@ class Core {
            * {@code clone()} carries it verbatim. A plain
            * {@code open} hands back only the last value, a subset of this range,
            * because the caller chose not to take the fill.
+           * <p>The last bar it can reach is {@link Core#MAX_INDEX}; past that
+           * {@code update} and {@code advance} throw
+           * {@link IndexOutOfBoundsException}.
            */
           public OutRange outRange() { return new OutRange(outRangeBegIdx, outRangeCount); }
 
@@ -178585,8 +181988,16 @@ class Core {
            * <p>For a bar the caller leaves out: one an {@code update} rejected
            * and that will not be re-fed, or a session with no print. Without it
            * two handles on one feed drift a bar apart when only one of them skips.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, the last one the batch tier
+           * can address and the last this handle will count. {@code update}
+           * throws the same there.
            */
-          public void advance() { if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++; }
+          public void advance() {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ZLEMA advance", RetCode.OutOfRangeEndIndex);
+             this.outRangeCount++;
+          }
 
           ZlemaStream( ZlemaStream other ) {
              this.core = other.core;
@@ -178615,12 +182026,18 @@ class Core {
            * the batch API, which computes on whatever it is given: a handle
            * retains its state, so a single non-finite bar would poison every
            * later value it produces.
+           * <p>Throws {@link IndexOutOfBoundsException} once {@link #outRange()}
+           * has reached bar {@link Core#MAX_INDEX}, which no re-feed clears: the
+           * handle has run out of index domain and only a shorter history can
+           * start a new one.
            */
           public double update( double inReal ) {
+             if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )
+                throw failure("ZLEMA update", RetCode.OutOfRangeEndIndex);
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("ZLEMA update: BadParam", RetCode.BadParam);
              core.zlemaStepImpl(this, inReal);
-             if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;
+             this.outRangeCount++;
              return this.cur_outReal;
           }
 
@@ -178905,7 +182322,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "8496467dba1c75e2";
+    static final String SPLICED_GENCODE_DIGEST = "bf57d4f692fa2f95";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

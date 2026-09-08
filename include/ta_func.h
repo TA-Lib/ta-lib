@@ -158,7 +158,8 @@ TA_LIB_API TA_RetCode TA_AC_Value( const TA_AC_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AC_OutRange( const TA_AC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -166,7 +167,8 @@ TA_LIB_API TA_RetCode TA_AC_OutRange( const TA_AC_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AC_Advance( TA_AC_Stream *stream );
 
@@ -250,7 +252,8 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_Value( const TA_ACCBANDS_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ACCBANDS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ACCBANDS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ACCBANDS_OutRange( const TA_ACCBANDS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -258,7 +261,8 @@ TA_LIB_API TA_RetCode TA_ACCBANDS_OutRange( const TA_ACCBANDS_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ACCBANDS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ACCBANDS_Advance( TA_ACCBANDS_Stream *stream );
 
@@ -326,7 +330,8 @@ TA_LIB_API TA_RetCode TA_ACOS_Value( const TA_ACOS_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ACOS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ACOS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ACOS_OutRange( const TA_ACOS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -334,7 +339,8 @@ TA_LIB_API TA_RetCode TA_ACOS_OutRange( const TA_ACOS_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ACOS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ACOS_Advance( TA_ACOS_Stream *stream );
 
@@ -408,7 +414,8 @@ TA_LIB_API TA_RetCode TA_AD_Value( const TA_AD_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AD_OutRange( const TA_AD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -416,7 +423,8 @@ TA_LIB_API TA_RetCode TA_AD_OutRange( const TA_AD_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AD_Advance( TA_AD_Stream *stream );
 
@@ -486,7 +494,8 @@ TA_LIB_API TA_RetCode TA_ADD_Value( const TA_ADD_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ADD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ADD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ADD_OutRange( const TA_ADD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -494,7 +503,8 @@ TA_LIB_API TA_RetCode TA_ADD_OutRange( const TA_ADD_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ADD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ADD_Advance( TA_ADD_Stream *stream );
 
@@ -582,7 +592,8 @@ TA_LIB_API TA_RetCode TA_ADOSC_Value( const TA_ADOSC_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ADOSC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ADOSC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ADOSC_OutRange( const TA_ADOSC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -590,7 +601,8 @@ TA_LIB_API TA_RetCode TA_ADOSC_OutRange( const TA_ADOSC_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ADOSC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ADOSC_Advance( TA_ADOSC_Stream *stream );
 
@@ -668,7 +680,8 @@ TA_LIB_API TA_RetCode TA_ADR_Value( const TA_ADR_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ADR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ADR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ADR_OutRange( const TA_ADR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -676,7 +689,8 @@ TA_LIB_API TA_RetCode TA_ADR_OutRange( const TA_ADR_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ADR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ADR_Advance( TA_ADR_Stream *stream );
 
@@ -756,7 +770,8 @@ TA_LIB_API TA_RetCode TA_ADX_Value( const TA_ADX_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ADX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ADX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ADX_OutRange( const TA_ADX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -764,7 +779,8 @@ TA_LIB_API TA_RetCode TA_ADX_OutRange( const TA_ADX_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ADX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ADX_Advance( TA_ADX_Stream *stream );
 
@@ -844,7 +860,8 @@ TA_LIB_API TA_RetCode TA_ADXR_Value( const TA_ADXR_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ADXR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ADXR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ADXR_OutRange( const TA_ADXR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -852,7 +869,8 @@ TA_LIB_API TA_RetCode TA_ADXR_OutRange( const TA_ADXR_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ADXR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ADXR_Advance( TA_ADXR_Stream *stream );
 
@@ -936,7 +954,8 @@ TA_LIB_API TA_RetCode TA_AO_Value( const TA_AO_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AO reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AO_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AO_OutRange( const TA_AO_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -944,7 +963,8 @@ TA_LIB_API TA_RetCode TA_AO_OutRange( const TA_AO_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AO_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AO_Advance( TA_AO_Stream *stream );
 
@@ -1031,7 +1051,8 @@ TA_LIB_API TA_RetCode TA_APO_Value( const TA_APO_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_APO reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_APO_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_APO_OutRange( const TA_APO_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1039,7 +1060,8 @@ TA_LIB_API TA_RetCode TA_APO_OutRange( const TA_APO_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_APO_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_APO_Advance( TA_APO_Stream *stream );
 
@@ -1119,7 +1141,8 @@ TA_LIB_API TA_RetCode TA_AROON_Value( const TA_AROON_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AROON reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AROON_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AROON_OutRange( const TA_AROON_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1127,7 +1150,8 @@ TA_LIB_API TA_RetCode TA_AROON_OutRange( const TA_AROON_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AROON_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AROON_Advance( TA_AROON_Stream *stream );
 
@@ -1205,7 +1229,8 @@ TA_LIB_API TA_RetCode TA_AROONOSC_Value( const TA_AROONOSC_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AROONOSC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AROONOSC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AROONOSC_OutRange( const TA_AROONOSC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1213,7 +1238,8 @@ TA_LIB_API TA_RetCode TA_AROONOSC_OutRange( const TA_AROONOSC_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AROONOSC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AROONOSC_Advance( TA_AROONOSC_Stream *stream );
 
@@ -1281,7 +1307,8 @@ TA_LIB_API TA_RetCode TA_ASIN_Value( const TA_ASIN_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ASIN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ASIN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ASIN_OutRange( const TA_ASIN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1289,7 +1316,8 @@ TA_LIB_API TA_RetCode TA_ASIN_OutRange( const TA_ASIN_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ASIN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ASIN_Advance( TA_ASIN_Stream *stream );
 
@@ -1357,7 +1385,8 @@ TA_LIB_API TA_RetCode TA_ATAN_Value( const TA_ATAN_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ATAN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ATAN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ATAN_OutRange( const TA_ATAN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1365,7 +1394,8 @@ TA_LIB_API TA_RetCode TA_ATAN_OutRange( const TA_ATAN_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ATAN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ATAN_Advance( TA_ATAN_Stream *stream );
 
@@ -1445,7 +1475,8 @@ TA_LIB_API TA_RetCode TA_ATR_Value( const TA_ATR_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ATR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ATR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ATR_OutRange( const TA_ATR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1453,7 +1484,8 @@ TA_LIB_API TA_RetCode TA_ATR_OutRange( const TA_ATR_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ATR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ATR_Advance( TA_ATR_Stream *stream );
 
@@ -1529,7 +1561,8 @@ TA_LIB_API TA_RetCode TA_AVGDEV_Value( const TA_AVGDEV_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AVGDEV reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AVGDEV_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AVGDEV_OutRange( const TA_AVGDEV_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1537,7 +1570,8 @@ TA_LIB_API TA_RetCode TA_AVGDEV_OutRange( const TA_AVGDEV_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AVGDEV_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AVGDEV_Advance( TA_AVGDEV_Stream *stream );
 
@@ -1611,7 +1645,8 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_Value( const TA_AVGPRICE_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_AVGPRICE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_AVGPRICE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_AVGPRICE_OutRange( const TA_AVGPRICE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1619,7 +1654,8 @@ TA_LIB_API TA_RetCode TA_AVGPRICE_OutRange( const TA_AVGPRICE_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_AVGPRICE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_AVGPRICE_Advance( TA_AVGPRICE_Stream *stream );
 
@@ -1716,7 +1752,8 @@ TA_LIB_API TA_RetCode TA_BBANDS_Value( const TA_BBANDS_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_BBANDS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_BBANDS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_BBANDS_OutRange( const TA_BBANDS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1724,7 +1761,8 @@ TA_LIB_API TA_RetCode TA_BBANDS_OutRange( const TA_BBANDS_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_BBANDS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_BBANDS_Advance( TA_BBANDS_Stream *stream );
 
@@ -1802,7 +1840,8 @@ TA_LIB_API TA_RetCode TA_BETA_Value( const TA_BETA_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_BETA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_BETA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_BETA_OutRange( const TA_BETA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1810,7 +1849,8 @@ TA_LIB_API TA_RetCode TA_BETA_OutRange( const TA_BETA_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_BETA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_BETA_Advance( TA_BETA_Stream *stream );
 
@@ -1884,7 +1924,8 @@ TA_LIB_API TA_RetCode TA_BOP_Value( const TA_BOP_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_BOP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_BOP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_BOP_OutRange( const TA_BOP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1892,7 +1933,8 @@ TA_LIB_API TA_RetCode TA_BOP_OutRange( const TA_BOP_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_BOP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_BOP_Advance( TA_BOP_Stream *stream );
 
@@ -1972,7 +2014,8 @@ TA_LIB_API TA_RetCode TA_CCI_Value( const TA_CCI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CCI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CCI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CCI_OutRange( const TA_CCI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -1980,7 +2023,8 @@ TA_LIB_API TA_RetCode TA_CCI_OutRange( const TA_CCI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CCI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CCI_Advance( TA_CCI_Stream *stream );
 
@@ -2054,7 +2098,8 @@ TA_LIB_API TA_RetCode TA_CDL2CROWS_Value( const TA_CDL2CROWS_Stream *stream, int
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL2CROWS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL2CROWS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL2CROWS_OutRange( const TA_CDL2CROWS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2062,7 +2107,8 @@ TA_LIB_API TA_RetCode TA_CDL2CROWS_OutRange( const TA_CDL2CROWS_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL2CROWS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL2CROWS_Advance( TA_CDL2CROWS_Stream *stream );
 
@@ -2136,7 +2182,8 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Value( const TA_CDL3BLACKCROWS_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL3BLACKCROWS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL3BLACKCROWS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_OutRange( const TA_CDL3BLACKCROWS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2144,7 +2191,8 @@ TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_OutRange( const TA_CDL3BLACKCROWS_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL3BLACKCROWS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL3BLACKCROWS_Advance( TA_CDL3BLACKCROWS_Stream *stream );
 
@@ -2218,7 +2266,8 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_Value( const TA_CDL3INSIDE_Stream *stream, i
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL3INSIDE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL3INSIDE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_OutRange( const TA_CDL3INSIDE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2226,7 +2275,8 @@ TA_LIB_API TA_RetCode TA_CDL3INSIDE_OutRange( const TA_CDL3INSIDE_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL3INSIDE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL3INSIDE_Advance( TA_CDL3INSIDE_Stream *stream );
 
@@ -2300,7 +2350,8 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Value( const TA_CDL3LINESTRIKE_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL3LINESTRIKE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL3LINESTRIKE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_OutRange( const TA_CDL3LINESTRIKE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2308,7 +2359,8 @@ TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_OutRange( const TA_CDL3LINESTRIKE_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL3LINESTRIKE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL3LINESTRIKE_Advance( TA_CDL3LINESTRIKE_Stream *stream );
 
@@ -2382,7 +2434,8 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Value( const TA_CDL3OUTSIDE_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL3OUTSIDE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL3OUTSIDE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OutRange( const TA_CDL3OUTSIDE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2390,7 +2443,8 @@ TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_OutRange( const TA_CDL3OUTSIDE_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL3OUTSIDE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL3OUTSIDE_Advance( TA_CDL3OUTSIDE_Stream *stream );
 
@@ -2464,7 +2518,8 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Value( const TA_CDL3STARSINSOUTH_Strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL3STARSINSOUTH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL3STARSINSOUTH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_OutRange( const TA_CDL3STARSINSOUTH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2472,7 +2527,8 @@ TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_OutRange( const TA_CDL3STARSINSOUTH_St
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL3STARSINSOUTH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL3STARSINSOUTH_Advance( TA_CDL3STARSINSOUTH_Stream *stream );
 
@@ -2546,7 +2602,8 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Value( const TA_CDL3WHITESOLDIERS_Str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDL3WHITESOLDIERS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDL3WHITESOLDIERS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_OutRange( const TA_CDL3WHITESOLDIERS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2554,7 +2611,8 @@ TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_OutRange( const TA_CDL3WHITESOLDIERS_
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDL3WHITESOLDIERS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDL3WHITESOLDIERS_Advance( TA_CDL3WHITESOLDIERS_Stream *stream );
 
@@ -2636,7 +2694,8 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Value( const TA_CDLABANDONEDBABY_Strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLABANDONEDBABY reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLABANDONEDBABY_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_OutRange( const TA_CDLABANDONEDBABY_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2644,7 +2703,8 @@ TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_OutRange( const TA_CDLABANDONEDBABY_St
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLABANDONEDBABY_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLABANDONEDBABY_Advance( TA_CDLABANDONEDBABY_Stream *stream );
 
@@ -2718,7 +2778,8 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Value( const TA_CDLADVANCEBLOCK_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLADVANCEBLOCK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLADVANCEBLOCK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_OutRange( const TA_CDLADVANCEBLOCK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2726,7 +2787,8 @@ TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_OutRange( const TA_CDLADVANCEBLOCK_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLADVANCEBLOCK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLADVANCEBLOCK_Advance( TA_CDLADVANCEBLOCK_Stream *stream );
 
@@ -2800,7 +2862,8 @@ TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Value( const TA_CDLBELTHOLD_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLBELTHOLD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLBELTHOLD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLBELTHOLD_OutRange( const TA_CDLBELTHOLD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2808,7 +2871,8 @@ TA_LIB_API TA_RetCode TA_CDLBELTHOLD_OutRange( const TA_CDLBELTHOLD_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLBELTHOLD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLBELTHOLD_Advance( TA_CDLBELTHOLD_Stream *stream );
 
@@ -2882,7 +2946,8 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Value( const TA_CDLBREAKAWAY_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLBREAKAWAY reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLBREAKAWAY_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_OutRange( const TA_CDLBREAKAWAY_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2890,7 +2955,8 @@ TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_OutRange( const TA_CDLBREAKAWAY_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLBREAKAWAY_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLBREAKAWAY_Advance( TA_CDLBREAKAWAY_Stream *stream );
 
@@ -2964,7 +3030,8 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Value( const TA_CDLCLOSINGMARUBOZU_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLCLOSINGMARUBOZU reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLCLOSINGMARUBOZU_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_OutRange( const TA_CDLCLOSINGMARUBOZU_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -2972,7 +3039,8 @@ TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_OutRange( const TA_CDLCLOSINGMARUBOZ
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLCLOSINGMARUBOZU_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLCLOSINGMARUBOZU_Advance( TA_CDLCLOSINGMARUBOZU_Stream *stream );
 
@@ -3046,7 +3114,8 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Value( const TA_CDLCONCEALBABYSWALL
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLCONCEALBABYSWALL reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLCONCEALBABYSWALL_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_OutRange( const TA_CDLCONCEALBABYSWALL_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3054,7 +3123,8 @@ TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_OutRange( const TA_CDLCONCEALBABYSW
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLCONCEALBABYSWALL_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLCONCEALBABYSWALL_Advance( TA_CDLCONCEALBABYSWALL_Stream *stream );
 
@@ -3128,7 +3198,8 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Value( const TA_CDLCOUNTERATTACK_Strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLCOUNTERATTACK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLCOUNTERATTACK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_OutRange( const TA_CDLCOUNTERATTACK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3136,7 +3207,8 @@ TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_OutRange( const TA_CDLCOUNTERATTACK_St
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLCOUNTERATTACK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLCOUNTERATTACK_Advance( TA_CDLCOUNTERATTACK_Stream *stream );
 
@@ -3218,7 +3290,8 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Value( const TA_CDLDARKCLOUDCOVER_Str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLDARKCLOUDCOVER reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLDARKCLOUDCOVER_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_OutRange( const TA_CDLDARKCLOUDCOVER_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3226,7 +3299,8 @@ TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_OutRange( const TA_CDLDARKCLOUDCOVER_
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLDARKCLOUDCOVER_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLDARKCLOUDCOVER_Advance( TA_CDLDARKCLOUDCOVER_Stream *stream );
 
@@ -3300,7 +3374,8 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_Value( const TA_CDLDOJI_Stream *stream, int *ou
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLDOJI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLDOJI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLDOJI_OutRange( const TA_CDLDOJI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3308,7 +3383,8 @@ TA_LIB_API TA_RetCode TA_CDLDOJI_OutRange( const TA_CDLDOJI_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLDOJI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLDOJI_Advance( TA_CDLDOJI_Stream *stream );
 
@@ -3382,7 +3458,8 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Value( const TA_CDLDOJISTAR_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLDOJISTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLDOJISTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR_OutRange( const TA_CDLDOJISTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3390,7 +3467,8 @@ TA_LIB_API TA_RetCode TA_CDLDOJISTAR_OutRange( const TA_CDLDOJISTAR_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLDOJISTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLDOJISTAR_Advance( TA_CDLDOJISTAR_Stream *stream );
 
@@ -3464,7 +3542,8 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Value( const TA_CDLDRAGONFLYDOJI_Strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLDRAGONFLYDOJI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLDRAGONFLYDOJI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_OutRange( const TA_CDLDRAGONFLYDOJI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3472,7 +3551,8 @@ TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_OutRange( const TA_CDLDRAGONFLYDOJI_St
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLDRAGONFLYDOJI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLDRAGONFLYDOJI_Advance( TA_CDLDRAGONFLYDOJI_Stream *stream );
 
@@ -3546,7 +3626,8 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_Value( const TA_CDLENGULFING_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLENGULFING reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLENGULFING_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLENGULFING_OutRange( const TA_CDLENGULFING_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3554,7 +3635,8 @@ TA_LIB_API TA_RetCode TA_CDLENGULFING_OutRange( const TA_CDLENGULFING_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLENGULFING_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLENGULFING_Advance( TA_CDLENGULFING_Stream *stream );
 
@@ -3636,7 +3718,8 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Value( const TA_CDLEVENINGDOJISTAR_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLEVENINGDOJISTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLEVENINGDOJISTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_OutRange( const TA_CDLEVENINGDOJISTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3644,7 +3727,8 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_OutRange( const TA_CDLEVENINGDOJISTA
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLEVENINGDOJISTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLEVENINGDOJISTAR_Advance( TA_CDLEVENINGDOJISTAR_Stream *stream );
 
@@ -3726,7 +3810,8 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_Value( const TA_CDLEVENINGSTAR_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLEVENINGSTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLEVENINGSTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_OutRange( const TA_CDLEVENINGSTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3734,7 +3819,8 @@ TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_OutRange( const TA_CDLEVENINGSTAR_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLEVENINGSTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLEVENINGSTAR_Advance( TA_CDLEVENINGSTAR_Stream *stream );
 
@@ -3808,7 +3894,8 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Value( const TA_CDLGAPSIDESIDEWHITE
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLGAPSIDESIDEWHITE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLGAPSIDESIDEWHITE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_OutRange( const TA_CDLGAPSIDESIDEWHITE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3816,7 +3903,8 @@ TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_OutRange( const TA_CDLGAPSIDESIDEWH
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLGAPSIDESIDEWHITE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLGAPSIDESIDEWHITE_Advance( TA_CDLGAPSIDESIDEWHITE_Stream *stream );
 
@@ -3890,7 +3978,8 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Value( const TA_CDLGRAVESTONEDOJI_Str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLGRAVESTONEDOJI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLGRAVESTONEDOJI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_OutRange( const TA_CDLGRAVESTONEDOJI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3898,7 +3987,8 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_OutRange( const TA_CDLGRAVESTONEDOJI_
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLGRAVESTONEDOJI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Advance( TA_CDLGRAVESTONEDOJI_Stream *stream );
 
@@ -3972,7 +4062,8 @@ TA_LIB_API TA_RetCode TA_CDLHAMMER_Value( const TA_CDLHAMMER_Stream *stream, int
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHAMMER reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHAMMER_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHAMMER_OutRange( const TA_CDLHAMMER_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -3980,7 +4071,8 @@ TA_LIB_API TA_RetCode TA_CDLHAMMER_OutRange( const TA_CDLHAMMER_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHAMMER_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHAMMER_Advance( TA_CDLHAMMER_Stream *stream );
 
@@ -4054,7 +4146,8 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Value( const TA_CDLHANGINGMAN_Stream *str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHANGINGMAN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHANGINGMAN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_OutRange( const TA_CDLHANGINGMAN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4062,7 +4155,8 @@ TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_OutRange( const TA_CDLHANGINGMAN_Stream *
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHANGINGMAN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHANGINGMAN_Advance( TA_CDLHANGINGMAN_Stream *stream );
 
@@ -4136,7 +4230,8 @@ TA_LIB_API TA_RetCode TA_CDLHARAMI_Value( const TA_CDLHARAMI_Stream *stream, int
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHARAMI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHARAMI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHARAMI_OutRange( const TA_CDLHARAMI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4144,7 +4239,8 @@ TA_LIB_API TA_RetCode TA_CDLHARAMI_OutRange( const TA_CDLHARAMI_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHARAMI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHARAMI_Advance( TA_CDLHARAMI_Stream *stream );
 
@@ -4218,7 +4314,8 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Value( const TA_CDLHARAMICROSS_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHARAMICROSS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHARAMICROSS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_OutRange( const TA_CDLHARAMICROSS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4226,7 +4323,8 @@ TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_OutRange( const TA_CDLHARAMICROSS_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHARAMICROSS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHARAMICROSS_Advance( TA_CDLHARAMICROSS_Stream *stream );
 
@@ -4300,7 +4398,8 @@ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Value( const TA_CDLHIGHWAVE_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHIGHWAVE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHIGHWAVE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_OutRange( const TA_CDLHIGHWAVE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4308,7 +4407,8 @@ TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_OutRange( const TA_CDLHIGHWAVE_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHIGHWAVE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHIGHWAVE_Advance( TA_CDLHIGHWAVE_Stream *stream );
 
@@ -4382,7 +4482,8 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Value( const TA_CDLHIKKAKE_Stream *stream, i
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHIKKAKE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHIKKAKE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_OutRange( const TA_CDLHIKKAKE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4390,7 +4491,8 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKE_OutRange( const TA_CDLHIKKAKE_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHIKKAKE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHIKKAKE_Advance( TA_CDLHIKKAKE_Stream *stream );
 
@@ -4464,7 +4566,8 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Value( const TA_CDLHIKKAKEMOD_Stream *str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHIKKAKEMOD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHIKKAKEMOD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_OutRange( const TA_CDLHIKKAKEMOD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4472,7 +4575,8 @@ TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_OutRange( const TA_CDLHIKKAKEMOD_Stream *
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHIKKAKEMOD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHIKKAKEMOD_Advance( TA_CDLHIKKAKEMOD_Stream *stream );
 
@@ -4546,7 +4650,8 @@ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Value( const TA_CDLHOMINGPIGEON_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLHOMINGPIGEON reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLHOMINGPIGEON_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_OutRange( const TA_CDLHOMINGPIGEON_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4554,7 +4659,8 @@ TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_OutRange( const TA_CDLHOMINGPIGEON_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLHOMINGPIGEON_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLHOMINGPIGEON_Advance( TA_CDLHOMINGPIGEON_Stream *stream );
 
@@ -4628,7 +4734,8 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Value( const TA_CDLIDENTICAL3CROWS_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLIDENTICAL3CROWS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLIDENTICAL3CROWS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_OutRange( const TA_CDLIDENTICAL3CROWS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4636,7 +4743,8 @@ TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_OutRange( const TA_CDLIDENTICAL3CROW
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLIDENTICAL3CROWS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLIDENTICAL3CROWS_Advance( TA_CDLIDENTICAL3CROWS_Stream *stream );
 
@@ -4710,7 +4818,8 @@ TA_LIB_API TA_RetCode TA_CDLINNECK_Value( const TA_CDLINNECK_Stream *stream, int
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLINNECK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLINNECK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLINNECK_OutRange( const TA_CDLINNECK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4718,7 +4827,8 @@ TA_LIB_API TA_RetCode TA_CDLINNECK_OutRange( const TA_CDLINNECK_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLINNECK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLINNECK_Advance( TA_CDLINNECK_Stream *stream );
 
@@ -4792,7 +4902,8 @@ TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Value( const TA_CDLINVERTEDHAMMER_Str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLINVERTEDHAMMER reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLINVERTEDHAMMER_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_OutRange( const TA_CDLINVERTEDHAMMER_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4800,7 +4911,8 @@ TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_OutRange( const TA_CDLINVERTEDHAMMER_
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLINVERTEDHAMMER_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLINVERTEDHAMMER_Advance( TA_CDLINVERTEDHAMMER_Stream *stream );
 
@@ -4874,7 +4986,8 @@ TA_LIB_API TA_RetCode TA_CDLKICKING_Value( const TA_CDLKICKING_Stream *stream, i
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLKICKING reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLKICKING_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLKICKING_OutRange( const TA_CDLKICKING_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4882,7 +4995,8 @@ TA_LIB_API TA_RetCode TA_CDLKICKING_OutRange( const TA_CDLKICKING_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLKICKING_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLKICKING_Advance( TA_CDLKICKING_Stream *stream );
 
@@ -4956,7 +5070,8 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Value( const TA_CDLKICKINGBYLENGTH_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLKICKINGBYLENGTH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLKICKINGBYLENGTH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_OutRange( const TA_CDLKICKINGBYLENGTH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -4964,7 +5079,8 @@ TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_OutRange( const TA_CDLKICKINGBYLENGT
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLKICKINGBYLENGTH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLKICKINGBYLENGTH_Advance( TA_CDLKICKINGBYLENGTH_Stream *stream );
 
@@ -5038,7 +5154,8 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Value( const TA_CDLLADDERBOTTOM_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLLADDERBOTTOM reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLLADDERBOTTOM_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_OutRange( const TA_CDLLADDERBOTTOM_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5046,7 +5163,8 @@ TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_OutRange( const TA_CDLLADDERBOTTOM_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLLADDERBOTTOM_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLLADDERBOTTOM_Advance( TA_CDLLADDERBOTTOM_Stream *stream );
 
@@ -5120,7 +5238,8 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Value( const TA_CDLLONGLEGGEDDOJI_Str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLLONGLEGGEDDOJI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLLONGLEGGEDDOJI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_OutRange( const TA_CDLLONGLEGGEDDOJI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5128,7 +5247,8 @@ TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_OutRange( const TA_CDLLONGLEGGEDDOJI_
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLLONGLEGGEDDOJI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLLONGLEGGEDDOJI_Advance( TA_CDLLONGLEGGEDDOJI_Stream *stream );
 
@@ -5202,7 +5322,8 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE_Value( const TA_CDLLONGLINE_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLLONGLINE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLLONGLINE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_OutRange( const TA_CDLLONGLINE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5210,7 +5331,8 @@ TA_LIB_API TA_RetCode TA_CDLLONGLINE_OutRange( const TA_CDLLONGLINE_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLLONGLINE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLLONGLINE_Advance( TA_CDLLONGLINE_Stream *stream );
 
@@ -5284,7 +5406,8 @@ TA_LIB_API TA_RetCode TA_CDLMARUBOZU_Value( const TA_CDLMARUBOZU_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLMARUBOZU reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLMARUBOZU_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLMARUBOZU_OutRange( const TA_CDLMARUBOZU_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5292,7 +5415,8 @@ TA_LIB_API TA_RetCode TA_CDLMARUBOZU_OutRange( const TA_CDLMARUBOZU_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLMARUBOZU_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLMARUBOZU_Advance( TA_CDLMARUBOZU_Stream *stream );
 
@@ -5366,7 +5490,8 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Value( const TA_CDLMATCHINGLOW_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLMATCHINGLOW reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLMATCHINGLOW_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_OutRange( const TA_CDLMATCHINGLOW_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5374,7 +5499,8 @@ TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_OutRange( const TA_CDLMATCHINGLOW_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLMATCHINGLOW_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLMATCHINGLOW_Advance( TA_CDLMATCHINGLOW_Stream *stream );
 
@@ -5456,7 +5582,8 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_Value( const TA_CDLMATHOLD_Stream *stream, i
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLMATHOLD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLMATHOLD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_OutRange( const TA_CDLMATHOLD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5464,7 +5591,8 @@ TA_LIB_API TA_RetCode TA_CDLMATHOLD_OutRange( const TA_CDLMATHOLD_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLMATHOLD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLMATHOLD_Advance( TA_CDLMATHOLD_Stream *stream );
 
@@ -5546,7 +5674,8 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Value( const TA_CDLMORNINGDOJISTAR_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLMORNINGDOJISTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLMORNINGDOJISTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_OutRange( const TA_CDLMORNINGDOJISTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5554,7 +5683,8 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_OutRange( const TA_CDLMORNINGDOJISTA
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLMORNINGDOJISTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLMORNINGDOJISTAR_Advance( TA_CDLMORNINGDOJISTAR_Stream *stream );
 
@@ -5636,7 +5766,8 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Value( const TA_CDLMORNINGSTAR_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLMORNINGSTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLMORNINGSTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_OutRange( const TA_CDLMORNINGSTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5644,7 +5775,8 @@ TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_OutRange( const TA_CDLMORNINGSTAR_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLMORNINGSTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLMORNINGSTAR_Advance( TA_CDLMORNINGSTAR_Stream *stream );
 
@@ -5718,7 +5850,8 @@ TA_LIB_API TA_RetCode TA_CDLONNECK_Value( const TA_CDLONNECK_Stream *stream, int
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLONNECK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLONNECK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLONNECK_OutRange( const TA_CDLONNECK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5726,7 +5859,8 @@ TA_LIB_API TA_RetCode TA_CDLONNECK_OutRange( const TA_CDLONNECK_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLONNECK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLONNECK_Advance( TA_CDLONNECK_Stream *stream );
 
@@ -5800,7 +5934,8 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_Value( const TA_CDLPIERCING_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLPIERCING reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLPIERCING_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLPIERCING_OutRange( const TA_CDLPIERCING_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5808,7 +5943,8 @@ TA_LIB_API TA_RetCode TA_CDLPIERCING_OutRange( const TA_CDLPIERCING_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLPIERCING_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLPIERCING_Advance( TA_CDLPIERCING_Stream *stream );
 
@@ -5882,7 +6018,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Value( const TA_CDLRICKSHAWMAN_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLRICKSHAWMAN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLRICKSHAWMAN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_OutRange( const TA_CDLRICKSHAWMAN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5890,7 +6027,8 @@ TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_OutRange( const TA_CDLRICKSHAWMAN_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLRICKSHAWMAN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLRICKSHAWMAN_Advance( TA_CDLRICKSHAWMAN_Stream *stream );
 
@@ -5964,7 +6102,8 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Value( const TA_CDLRISEFALL3METHODS
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLRISEFALL3METHODS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLRISEFALL3METHODS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_OutRange( const TA_CDLRISEFALL3METHODS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -5972,7 +6111,8 @@ TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_OutRange( const TA_CDLRISEFALL3METH
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLRISEFALL3METHODS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLRISEFALL3METHODS_Advance( TA_CDLRISEFALL3METHODS_Stream *stream );
 
@@ -6046,7 +6186,8 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Value( const TA_CDLSEPARATINGLINES_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLSEPARATINGLINES reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLSEPARATINGLINES_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_OutRange( const TA_CDLSEPARATINGLINES_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6054,7 +6195,8 @@ TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_OutRange( const TA_CDLSEPARATINGLINE
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLSEPARATINGLINES_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLSEPARATINGLINES_Advance( TA_CDLSEPARATINGLINES_Stream *stream );
 
@@ -6128,7 +6270,8 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Value( const TA_CDLSHOOTINGSTAR_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLSHOOTINGSTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLSHOOTINGSTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_OutRange( const TA_CDLSHOOTINGSTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6136,7 +6279,8 @@ TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_OutRange( const TA_CDLSHOOTINGSTAR_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLSHOOTINGSTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLSHOOTINGSTAR_Advance( TA_CDLSHOOTINGSTAR_Stream *stream );
 
@@ -6210,7 +6354,8 @@ TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Value( const TA_CDLSHORTLINE_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLSHORTLINE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLSHORTLINE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE_OutRange( const TA_CDLSHORTLINE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6218,7 +6363,8 @@ TA_LIB_API TA_RetCode TA_CDLSHORTLINE_OutRange( const TA_CDLSHORTLINE_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLSHORTLINE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLSHORTLINE_Advance( TA_CDLSHORTLINE_Stream *stream );
 
@@ -6292,7 +6438,8 @@ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Value( const TA_CDLSPINNINGTOP_Stream *s
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLSPINNINGTOP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLSPINNINGTOP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_OutRange( const TA_CDLSPINNINGTOP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6300,7 +6447,8 @@ TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_OutRange( const TA_CDLSPINNINGTOP_Stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLSPINNINGTOP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLSPINNINGTOP_Advance( TA_CDLSPINNINGTOP_Stream *stream );
 
@@ -6374,7 +6522,8 @@ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Value( const TA_CDLSTALLEDPATTERN_Str
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLSTALLEDPATTERN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLSTALLEDPATTERN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_OutRange( const TA_CDLSTALLEDPATTERN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6382,7 +6531,8 @@ TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_OutRange( const TA_CDLSTALLEDPATTERN_
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLSTALLEDPATTERN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLSTALLEDPATTERN_Advance( TA_CDLSTALLEDPATTERN_Stream *stream );
 
@@ -6456,7 +6606,8 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Value( const TA_CDLSTICKSANDWICH_Strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLSTICKSANDWICH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLSTICKSANDWICH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_OutRange( const TA_CDLSTICKSANDWICH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6464,7 +6615,8 @@ TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_OutRange( const TA_CDLSTICKSANDWICH_St
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLSTICKSANDWICH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLSTICKSANDWICH_Advance( TA_CDLSTICKSANDWICH_Stream *stream );
 
@@ -6538,7 +6690,8 @@ TA_LIB_API TA_RetCode TA_CDLTAKURI_Value( const TA_CDLTAKURI_Stream *stream, int
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLTAKURI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLTAKURI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLTAKURI_OutRange( const TA_CDLTAKURI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6546,7 +6699,8 @@ TA_LIB_API TA_RetCode TA_CDLTAKURI_OutRange( const TA_CDLTAKURI_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLTAKURI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLTAKURI_Advance( TA_CDLTAKURI_Stream *stream );
 
@@ -6620,7 +6774,8 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Value( const TA_CDLTASUKIGAP_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLTASUKIGAP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLTASUKIGAP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OutRange( const TA_CDLTASUKIGAP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6628,7 +6783,8 @@ TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_OutRange( const TA_CDLTASUKIGAP_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLTASUKIGAP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLTASUKIGAP_Advance( TA_CDLTASUKIGAP_Stream *stream );
 
@@ -6702,7 +6858,8 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Value( const TA_CDLTHRUSTING_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLTHRUSTING reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLTHRUSTING_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OutRange( const TA_CDLTHRUSTING_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6710,7 +6867,8 @@ TA_LIB_API TA_RetCode TA_CDLTHRUSTING_OutRange( const TA_CDLTHRUSTING_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLTHRUSTING_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLTHRUSTING_Advance( TA_CDLTHRUSTING_Stream *stream );
 
@@ -6784,7 +6942,8 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_Value( const TA_CDLTRISTAR_Stream *stream, i
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLTRISTAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLTRISTAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_OutRange( const TA_CDLTRISTAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6792,7 +6951,8 @@ TA_LIB_API TA_RetCode TA_CDLTRISTAR_OutRange( const TA_CDLTRISTAR_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLTRISTAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLTRISTAR_Advance( TA_CDLTRISTAR_Stream *stream );
 
@@ -6866,7 +7026,8 @@ TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Value( const TA_CDLUNIQUE3RIVER_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLUNIQUE3RIVER reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLUNIQUE3RIVER_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_OutRange( const TA_CDLUNIQUE3RIVER_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6874,7 +7035,8 @@ TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_OutRange( const TA_CDLUNIQUE3RIVER_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLUNIQUE3RIVER_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLUNIQUE3RIVER_Advance( TA_CDLUNIQUE3RIVER_Stream *stream );
 
@@ -6948,7 +7110,8 @@ TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_Value( const TA_CDLUPSIDEGAP2CROWS_S
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLUPSIDEGAP2CROWS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLUPSIDEGAP2CROWS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_OutRange( const TA_CDLUPSIDEGAP2CROWS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -6956,7 +7119,8 @@ TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_OutRange( const TA_CDLUPSIDEGAP2CROW
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLUPSIDEGAP2CROWS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLUPSIDEGAP2CROWS_Advance( TA_CDLUPSIDEGAP2CROWS_Stream *stream );
 
@@ -7030,7 +7194,8 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Value( const TA_CDLXSIDEGAP3METHODS
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CDLXSIDEGAP3METHODS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CDLXSIDEGAP3METHODS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_OutRange( const TA_CDLXSIDEGAP3METHODS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7038,7 +7203,8 @@ TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_OutRange( const TA_CDLXSIDEGAP3METH
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CDLXSIDEGAP3METHODS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CDLXSIDEGAP3METHODS_Advance( TA_CDLXSIDEGAP3METHODS_Stream *stream );
 
@@ -7106,7 +7272,8 @@ TA_LIB_API TA_RetCode TA_CEIL_Value( const TA_CEIL_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CEIL reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CEIL_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CEIL_OutRange( const TA_CEIL_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7114,7 +7281,8 @@ TA_LIB_API TA_RetCode TA_CEIL_OutRange( const TA_CEIL_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CEIL_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CEIL_Advance( TA_CEIL_Stream *stream );
 
@@ -7196,7 +7364,8 @@ TA_LIB_API TA_RetCode TA_CMF_Value( const TA_CMF_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CMF reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CMF_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CMF_OutRange( const TA_CMF_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7204,7 +7373,8 @@ TA_LIB_API TA_RetCode TA_CMF_OutRange( const TA_CMF_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CMF_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CMF_Advance( TA_CMF_Stream *stream );
 
@@ -7280,7 +7450,8 @@ TA_LIB_API TA_RetCode TA_CMO_Value( const TA_CMO_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CMO reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CMO_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CMO_OutRange( const TA_CMO_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7288,7 +7459,8 @@ TA_LIB_API TA_RetCode TA_CMO_OutRange( const TA_CMO_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CMO_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CMO_Advance( TA_CMO_Stream *stream );
 
@@ -7364,7 +7536,8 @@ TA_LIB_API TA_RetCode TA_CMOU_Value( const TA_CMOU_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CMOU reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CMOU_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CMOU_OutRange( const TA_CMOU_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7372,7 +7545,8 @@ TA_LIB_API TA_RetCode TA_CMOU_OutRange( const TA_CMOU_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CMOU_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CMOU_Advance( TA_CMOU_Stream *stream );
 
@@ -7460,7 +7634,8 @@ TA_LIB_API TA_RetCode TA_COPPOCK_Value( const TA_COPPOCK_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_COPPOCK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_COPPOCK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_COPPOCK_OutRange( const TA_COPPOCK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7468,7 +7643,8 @@ TA_LIB_API TA_RetCode TA_COPPOCK_OutRange( const TA_COPPOCK_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_COPPOCK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_COPPOCK_Advance( TA_COPPOCK_Stream *stream );
 
@@ -7546,7 +7722,8 @@ TA_LIB_API TA_RetCode TA_CORREL_Value( const TA_CORREL_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CORREL reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CORREL_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CORREL_OutRange( const TA_CORREL_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7554,7 +7731,8 @@ TA_LIB_API TA_RetCode TA_CORREL_OutRange( const TA_CORREL_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CORREL_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CORREL_Advance( TA_CORREL_Stream *stream );
 
@@ -7622,7 +7800,8 @@ TA_LIB_API TA_RetCode TA_COS_Value( const TA_COS_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_COS reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_COS_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_COS_OutRange( const TA_COS_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7630,7 +7809,8 @@ TA_LIB_API TA_RetCode TA_COS_OutRange( const TA_COS_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_COS_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_COS_Advance( TA_COS_Stream *stream );
 
@@ -7698,7 +7878,8 @@ TA_LIB_API TA_RetCode TA_COSH_Value( const TA_COSH_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_COSH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_COSH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_COSH_OutRange( const TA_COSH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7706,7 +7887,8 @@ TA_LIB_API TA_RetCode TA_COSH_OutRange( const TA_COSH_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_COSH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_COSH_Advance( TA_COSH_Stream *stream );
 
@@ -7774,7 +7956,8 @@ TA_LIB_API TA_RetCode TA_CUMSUM_Value( const TA_CUMSUM_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CUMSUM reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CUMSUM_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CUMSUM_OutRange( const TA_CUMSUM_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7782,7 +7965,8 @@ TA_LIB_API TA_RetCode TA_CUMSUM_OutRange( const TA_CUMSUM_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CUMSUM_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CUMSUM_Advance( TA_CUMSUM_Stream *stream );
 
@@ -7866,7 +8050,8 @@ TA_LIB_API TA_RetCode TA_CVI_Value( const TA_CVI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_CVI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_CVI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_CVI_OutRange( const TA_CVI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7874,7 +8059,8 @@ TA_LIB_API TA_RetCode TA_CVI_OutRange( const TA_CVI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_CVI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_CVI_Advance( TA_CVI_Stream *stream );
 
@@ -7950,7 +8136,8 @@ TA_LIB_API TA_RetCode TA_DEMA_Value( const TA_DEMA_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_DEMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_DEMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_DEMA_OutRange( const TA_DEMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -7958,7 +8145,8 @@ TA_LIB_API TA_RetCode TA_DEMA_OutRange( const TA_DEMA_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_DEMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_DEMA_Advance( TA_DEMA_Stream *stream );
 
@@ -8028,7 +8216,8 @@ TA_LIB_API TA_RetCode TA_DIV_Value( const TA_DIV_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_DIV reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_DIV_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_DIV_OutRange( const TA_DIV_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8036,7 +8225,8 @@ TA_LIB_API TA_RetCode TA_DIV_OutRange( const TA_DIV_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_DIV_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_DIV_Advance( TA_DIV_Stream *stream );
 
@@ -8118,7 +8308,8 @@ TA_LIB_API TA_RetCode TA_DONCHIAN_Value( const TA_DONCHIAN_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_DONCHIAN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_DONCHIAN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_DONCHIAN_OutRange( const TA_DONCHIAN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8126,7 +8317,8 @@ TA_LIB_API TA_RetCode TA_DONCHIAN_OutRange( const TA_DONCHIAN_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_DONCHIAN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_DONCHIAN_Advance( TA_DONCHIAN_Stream *stream );
 
@@ -8202,7 +8394,8 @@ TA_LIB_API TA_RetCode TA_DPO_Value( const TA_DPO_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_DPO reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_DPO_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_DPO_OutRange( const TA_DPO_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8210,7 +8403,8 @@ TA_LIB_API TA_RetCode TA_DPO_OutRange( const TA_DPO_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_DPO_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_DPO_Advance( TA_DPO_Stream *stream );
 
@@ -8290,7 +8484,8 @@ TA_LIB_API TA_RetCode TA_DX_Value( const TA_DX_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_DX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_DX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_DX_OutRange( const TA_DX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8298,7 +8493,8 @@ TA_LIB_API TA_RetCode TA_DX_OutRange( const TA_DX_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_DX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_DX_Advance( TA_DX_Stream *stream );
 
@@ -8376,7 +8572,8 @@ TA_LIB_API TA_RetCode TA_EFI_Value( const TA_EFI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_EFI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_EFI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_EFI_OutRange( const TA_EFI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8384,7 +8581,8 @@ TA_LIB_API TA_RetCode TA_EFI_OutRange( const TA_EFI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_EFI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_EFI_Advance( TA_EFI_Stream *stream );
 
@@ -8460,7 +8658,8 @@ TA_LIB_API TA_RetCode TA_EMA_Value( const TA_EMA_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_EMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_EMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_EMA_OutRange( const TA_EMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8468,7 +8667,8 @@ TA_LIB_API TA_RetCode TA_EMA_OutRange( const TA_EMA_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_EMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_EMA_Advance( TA_EMA_Stream *stream );
 
@@ -8544,7 +8744,8 @@ TA_LIB_API TA_RetCode TA_ER_Value( const TA_ER_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ER reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ER_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ER_OutRange( const TA_ER_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8552,7 +8753,8 @@ TA_LIB_API TA_RetCode TA_ER_OutRange( const TA_ER_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ER_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ER_Advance( TA_ER_Stream *stream );
 
@@ -8634,7 +8836,8 @@ TA_LIB_API TA_RetCode TA_ERI_Value( const TA_ERI_Stream *stream, double *outBull
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ERI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ERI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ERI_OutRange( const TA_ERI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8642,7 +8845,8 @@ TA_LIB_API TA_RetCode TA_ERI_OutRange( const TA_ERI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ERI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ERI_Advance( TA_ERI_Stream *stream );
 
@@ -8710,7 +8914,8 @@ TA_LIB_API TA_RetCode TA_EXP_Value( const TA_EXP_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_EXP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_EXP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_EXP_OutRange( const TA_EXP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8718,7 +8923,8 @@ TA_LIB_API TA_RetCode TA_EXP_OutRange( const TA_EXP_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_EXP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_EXP_Advance( TA_EXP_Stream *stream );
 
@@ -8786,7 +8992,8 @@ TA_LIB_API TA_RetCode TA_FLOOR_Value( const TA_FLOOR_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_FLOOR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_FLOOR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_FLOOR_OutRange( const TA_FLOOR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8794,7 +9001,8 @@ TA_LIB_API TA_RetCode TA_FLOOR_OutRange( const TA_FLOOR_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_FLOOR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_FLOOR_Advance( TA_FLOOR_Stream *stream );
 
@@ -8870,7 +9078,8 @@ TA_LIB_API TA_RetCode TA_FOSC_Value( const TA_FOSC_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_FOSC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_FOSC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_FOSC_OutRange( const TA_FOSC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8878,7 +9087,8 @@ TA_LIB_API TA_RetCode TA_FOSC_OutRange( const TA_FOSC_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_FOSC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_FOSC_Advance( TA_FOSC_Stream *stream );
 
@@ -8964,7 +9174,8 @@ TA_LIB_API TA_RetCode TA_FRACTAL_Value( const TA_FRACTAL_Stream *stream, int *ou
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_FRACTAL reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_FRACTAL_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_FRACTAL_OutRange( const TA_FRACTAL_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -8972,7 +9183,8 @@ TA_LIB_API TA_RetCode TA_FRACTAL_OutRange( const TA_FRACTAL_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_FRACTAL_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_FRACTAL_Advance( TA_FRACTAL_Stream *stream );
 
@@ -9052,7 +9264,8 @@ TA_LIB_API TA_RetCode TA_HA_Value( const TA_HA_Stream *stream, double *outHAOpen
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HA_OutRange( const TA_HA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9060,7 +9273,8 @@ TA_LIB_API TA_RetCode TA_HA_OutRange( const TA_HA_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HA_Advance( TA_HA_Stream *stream );
 
@@ -9136,7 +9350,8 @@ TA_LIB_API TA_RetCode TA_HMA_Value( const TA_HMA_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HMA_OutRange( const TA_HMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9144,7 +9359,8 @@ TA_LIB_API TA_RetCode TA_HMA_OutRange( const TA_HMA_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HMA_Advance( TA_HMA_Stream *stream );
 
@@ -9212,7 +9428,8 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Value( const TA_HT_DCPERIOD_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HT_DCPERIOD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HT_DCPERIOD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_OutRange( const TA_HT_DCPERIOD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9220,7 +9437,8 @@ TA_LIB_API TA_RetCode TA_HT_DCPERIOD_OutRange( const TA_HT_DCPERIOD_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HT_DCPERIOD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HT_DCPERIOD_Advance( TA_HT_DCPERIOD_Stream *stream );
 
@@ -9288,7 +9506,8 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_Value( const TA_HT_DCPHASE_Stream *stream, d
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HT_DCPHASE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HT_DCPHASE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_OutRange( const TA_HT_DCPHASE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9296,7 +9515,8 @@ TA_LIB_API TA_RetCode TA_HT_DCPHASE_OutRange( const TA_HT_DCPHASE_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HT_DCPHASE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HT_DCPHASE_Advance( TA_HT_DCPHASE_Stream *stream );
 
@@ -9366,7 +9586,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_Value( const TA_HT_PHASOR_Stream *stream, dou
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HT_PHASOR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HT_PHASOR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HT_PHASOR_OutRange( const TA_HT_PHASOR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9374,7 +9595,8 @@ TA_LIB_API TA_RetCode TA_HT_PHASOR_OutRange( const TA_HT_PHASOR_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HT_PHASOR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HT_PHASOR_Advance( TA_HT_PHASOR_Stream *stream );
 
@@ -9444,7 +9666,8 @@ TA_LIB_API TA_RetCode TA_HT_SINE_Value( const TA_HT_SINE_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HT_SINE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HT_SINE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HT_SINE_OutRange( const TA_HT_SINE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9452,7 +9675,8 @@ TA_LIB_API TA_RetCode TA_HT_SINE_OutRange( const TA_HT_SINE_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HT_SINE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HT_SINE_Advance( TA_HT_SINE_Stream *stream );
 
@@ -9520,7 +9744,8 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Value( const TA_HT_TRENDLINE_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HT_TRENDLINE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HT_TRENDLINE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_OutRange( const TA_HT_TRENDLINE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9528,7 +9753,8 @@ TA_LIB_API TA_RetCode TA_HT_TRENDLINE_OutRange( const TA_HT_TRENDLINE_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HT_TRENDLINE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HT_TRENDLINE_Advance( TA_HT_TRENDLINE_Stream *stream );
 
@@ -9596,7 +9822,8 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Value( const TA_HT_TRENDMODE_Stream *strea
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_HT_TRENDMODE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_HT_TRENDMODE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_OutRange( const TA_HT_TRENDMODE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9604,7 +9831,8 @@ TA_LIB_API TA_RetCode TA_HT_TRENDMODE_OutRange( const TA_HT_TRENDMODE_Stream *st
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_HT_TRENDMODE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_HT_TRENDMODE_Advance( TA_HT_TRENDMODE_Stream *stream );
 
@@ -9682,7 +9910,8 @@ TA_LIB_API TA_RetCode TA_IMI_Value( const TA_IMI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_IMI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_IMI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_IMI_OutRange( const TA_IMI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9690,7 +9919,8 @@ TA_LIB_API TA_RetCode TA_IMI_OutRange( const TA_IMI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_IMI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_IMI_Advance( TA_IMI_Stream *stream );
 
@@ -9766,7 +9996,8 @@ TA_LIB_API TA_RetCode TA_KAMA_Value( const TA_KAMA_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_KAMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_KAMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_KAMA_OutRange( const TA_KAMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9774,7 +10005,8 @@ TA_LIB_API TA_RetCode TA_KAMA_OutRange( const TA_KAMA_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_KAMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_KAMA_Advance( TA_KAMA_Stream *stream );
 
@@ -9870,7 +10102,8 @@ TA_LIB_API TA_RetCode TA_KC_Value( const TA_KC_Stream *stream, double *outRealUp
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_KC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_KC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_KC_OutRange( const TA_KC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9878,7 +10111,8 @@ TA_LIB_API TA_RetCode TA_KC_OutRange( const TA_KC_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_KC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_KC_Advance( TA_KC_Stream *stream );
 
@@ -9985,7 +10219,8 @@ TA_LIB_API TA_RetCode TA_KDJ_Value( const TA_KDJ_Stream *stream, double *outK, d
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_KDJ reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_KDJ_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_KDJ_OutRange( const TA_KDJ_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -9993,7 +10228,8 @@ TA_LIB_API TA_RetCode TA_KDJ_OutRange( const TA_KDJ_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_KDJ_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_KDJ_Advance( TA_KDJ_Stream *stream );
 
@@ -10069,7 +10305,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_Value( const TA_LINEARREG_Stream *stream, dou
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_LINEARREG reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_LINEARREG_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_OutRange( const TA_LINEARREG_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10077,7 +10314,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_OutRange( const TA_LINEARREG_Stream *stream, 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_LINEARREG_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_Advance( TA_LINEARREG_Stream *stream );
 
@@ -10153,7 +10391,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Value( const TA_LINEARREG_ANGLE_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_LINEARREG_ANGLE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_LINEARREG_ANGLE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_OutRange( const TA_LINEARREG_ANGLE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10161,7 +10400,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_OutRange( const TA_LINEARREG_ANGLE_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_LINEARREG_ANGLE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_ANGLE_Advance( TA_LINEARREG_ANGLE_Stream *stream );
 
@@ -10237,7 +10477,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Value( const TA_LINEARREG_INTERCEPT
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_LINEARREG_INTERCEPT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_LINEARREG_INTERCEPT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OutRange( const TA_LINEARREG_INTERCEPT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10245,7 +10486,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_OutRange( const TA_LINEARREG_INTERC
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_LINEARREG_INTERCEPT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_INTERCEPT_Advance( TA_LINEARREG_INTERCEPT_Stream *stream );
 
@@ -10321,7 +10563,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Value( const TA_LINEARREG_SLOPE_Stream 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_LINEARREG_SLOPE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_LINEARREG_SLOPE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OutRange( const TA_LINEARREG_SLOPE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10329,7 +10572,8 @@ TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_OutRange( const TA_LINEARREG_SLOPE_Stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_LINEARREG_SLOPE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_LINEARREG_SLOPE_Advance( TA_LINEARREG_SLOPE_Stream *stream );
 
@@ -10397,7 +10641,8 @@ TA_LIB_API TA_RetCode TA_LN_Value( const TA_LN_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_LN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_LN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_LN_OutRange( const TA_LN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10405,7 +10650,8 @@ TA_LIB_API TA_RetCode TA_LN_OutRange( const TA_LN_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_LN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_LN_Advance( TA_LN_Stream *stream );
 
@@ -10473,7 +10719,8 @@ TA_LIB_API TA_RetCode TA_LOG10_Value( const TA_LOG10_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_LOG10 reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_LOG10_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_LOG10_OutRange( const TA_LOG10_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10481,7 +10728,8 @@ TA_LIB_API TA_RetCode TA_LOG10_OutRange( const TA_LOG10_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_LOG10_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_LOG10_Advance( TA_LOG10_Stream *stream );
 
@@ -10562,7 +10810,8 @@ TA_LIB_API TA_RetCode TA_MA_Value( const TA_MA_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MA_OutRange( const TA_MA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10570,7 +10819,8 @@ TA_LIB_API TA_RetCode TA_MA_OutRange( const TA_MA_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MA_Advance( TA_MA_Stream *stream );
 
@@ -10662,7 +10912,8 @@ TA_LIB_API TA_RetCode TA_MACD_Value( const TA_MACD_Stream *stream, double *outMA
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MACD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MACD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MACD_OutRange( const TA_MACD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10670,7 +10921,8 @@ TA_LIB_API TA_RetCode TA_MACD_OutRange( const TA_MACD_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MACD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MACD_Advance( TA_MACD_Stream *stream );
 
@@ -10779,7 +11031,8 @@ TA_LIB_API TA_RetCode TA_MACDEXT_Value( const TA_MACDEXT_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MACDEXT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MACDEXT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MACDEXT_OutRange( const TA_MACDEXT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10787,7 +11040,8 @@ TA_LIB_API TA_RetCode TA_MACDEXT_OutRange( const TA_MACDEXT_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MACDEXT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MACDEXT_Advance( TA_MACDEXT_Stream *stream );
 
@@ -10867,7 +11121,8 @@ TA_LIB_API TA_RetCode TA_MACDFIX_Value( const TA_MACDFIX_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MACDFIX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MACDFIX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MACDFIX_OutRange( const TA_MACDFIX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10875,7 +11130,8 @@ TA_LIB_API TA_RetCode TA_MACDFIX_OutRange( const TA_MACDFIX_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MACDFIX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MACDFIX_Advance( TA_MACDFIX_Stream *stream );
 
@@ -10959,7 +11215,8 @@ TA_LIB_API TA_RetCode TA_MAMA_Value( const TA_MAMA_Stream *stream, double *outMA
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MAMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MAMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MAMA_OutRange( const TA_MAMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -10967,7 +11224,8 @@ TA_LIB_API TA_RetCode TA_MAMA_OutRange( const TA_MAMA_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MAMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MAMA_Advance( TA_MAMA_Stream *stream );
 
@@ -11039,7 +11297,8 @@ TA_LIB_API TA_RetCode TA_MARKETFI_Value( const TA_MARKETFI_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MARKETFI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MARKETFI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MARKETFI_OutRange( const TA_MARKETFI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11047,7 +11306,8 @@ TA_LIB_API TA_RetCode TA_MARKETFI_OutRange( const TA_MARKETFI_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MARKETFI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MARKETFI_Advance( TA_MARKETFI_Stream *stream );
 
@@ -11131,7 +11391,8 @@ TA_LIB_API TA_RetCode TA_MASSI_Value( const TA_MASSI_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MASSI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MASSI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MASSI_OutRange( const TA_MASSI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11139,7 +11400,8 @@ TA_LIB_API TA_RetCode TA_MASSI_OutRange( const TA_MASSI_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MASSI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MASSI_Advance( TA_MASSI_Stream *stream );
 
@@ -11228,7 +11490,8 @@ TA_LIB_API TA_RetCode TA_MAVP_Value( const TA_MAVP_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MAVP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MAVP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MAVP_OutRange( const TA_MAVP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11236,7 +11499,8 @@ TA_LIB_API TA_RetCode TA_MAVP_OutRange( const TA_MAVP_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MAVP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MAVP_Advance( TA_MAVP_Stream *stream );
 
@@ -11312,7 +11576,8 @@ TA_LIB_API TA_RetCode TA_MAX_Value( const TA_MAX_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MAX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MAX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MAX_OutRange( const TA_MAX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11320,7 +11585,8 @@ TA_LIB_API TA_RetCode TA_MAX_OutRange( const TA_MAX_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MAX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MAX_Advance( TA_MAX_Stream *stream );
 
@@ -11396,7 +11662,8 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Value( const TA_MAXINDEX_Stream *stream, int *
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MAXINDEX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MAXINDEX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MAXINDEX_OutRange( const TA_MAXINDEX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11404,7 +11671,8 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_OutRange( const TA_MAXINDEX_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MAXINDEX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MAXINDEX_Advance( TA_MAXINDEX_Stream *stream );
 
@@ -11474,7 +11742,8 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_Value( const TA_MEDPRICE_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MEDPRICE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MEDPRICE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MEDPRICE_OutRange( const TA_MEDPRICE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11482,7 +11751,8 @@ TA_LIB_API TA_RetCode TA_MEDPRICE_OutRange( const TA_MEDPRICE_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MEDPRICE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MEDPRICE_Advance( TA_MEDPRICE_Stream *stream );
 
@@ -11564,7 +11834,8 @@ TA_LIB_API TA_RetCode TA_MFI_Value( const TA_MFI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MFI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MFI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MFI_OutRange( const TA_MFI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11572,7 +11843,8 @@ TA_LIB_API TA_RetCode TA_MFI_OutRange( const TA_MFI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MFI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MFI_Advance( TA_MFI_Stream *stream );
 
@@ -11648,7 +11920,8 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_Value( const TA_MIDPOINT_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MIDPOINT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MIDPOINT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MIDPOINT_OutRange( const TA_MIDPOINT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11656,7 +11929,8 @@ TA_LIB_API TA_RetCode TA_MIDPOINT_OutRange( const TA_MIDPOINT_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MIDPOINT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MIDPOINT_Advance( TA_MIDPOINT_Stream *stream );
 
@@ -11734,7 +12008,8 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Value( const TA_MIDPRICE_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MIDPRICE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MIDPRICE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MIDPRICE_OutRange( const TA_MIDPRICE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11742,7 +12017,8 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_OutRange( const TA_MIDPRICE_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MIDPRICE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MIDPRICE_Advance( TA_MIDPRICE_Stream *stream );
 
@@ -11818,7 +12094,8 @@ TA_LIB_API TA_RetCode TA_MIN_Value( const TA_MIN_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MIN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MIN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MIN_OutRange( const TA_MIN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11826,7 +12103,8 @@ TA_LIB_API TA_RetCode TA_MIN_OutRange( const TA_MIN_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MIN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MIN_Advance( TA_MIN_Stream *stream );
 
@@ -11902,7 +12180,8 @@ TA_LIB_API TA_RetCode TA_MININDEX_Value( const TA_MININDEX_Stream *stream, int *
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MININDEX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MININDEX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MININDEX_OutRange( const TA_MININDEX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11910,7 +12189,8 @@ TA_LIB_API TA_RetCode TA_MININDEX_OutRange( const TA_MININDEX_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MININDEX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MININDEX_Advance( TA_MININDEX_Stream *stream );
 
@@ -11988,7 +12268,8 @@ TA_LIB_API TA_RetCode TA_MINMAX_Value( const TA_MINMAX_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MINMAX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MINMAX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MINMAX_OutRange( const TA_MINMAX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -11996,7 +12277,8 @@ TA_LIB_API TA_RetCode TA_MINMAX_OutRange( const TA_MINMAX_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MINMAX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MINMAX_Advance( TA_MINMAX_Stream *stream );
 
@@ -12074,7 +12356,8 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_Value( const TA_MINMAXINDEX_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MINMAXINDEX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MINMAXINDEX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_OutRange( const TA_MINMAXINDEX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12082,7 +12365,8 @@ TA_LIB_API TA_RetCode TA_MINMAXINDEX_OutRange( const TA_MINMAXINDEX_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MINMAXINDEX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MINMAXINDEX_Advance( TA_MINMAXINDEX_Stream *stream );
 
@@ -12162,7 +12446,8 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_Value( const TA_MINUS_DI_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MINUS_DI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MINUS_DI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MINUS_DI_OutRange( const TA_MINUS_DI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12170,7 +12455,8 @@ TA_LIB_API TA_RetCode TA_MINUS_DI_OutRange( const TA_MINUS_DI_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MINUS_DI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MINUS_DI_Advance( TA_MINUS_DI_Stream *stream );
 
@@ -12248,7 +12534,8 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_Value( const TA_MINUS_DM_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MINUS_DM reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MINUS_DM_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MINUS_DM_OutRange( const TA_MINUS_DM_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12256,7 +12543,8 @@ TA_LIB_API TA_RetCode TA_MINUS_DM_OutRange( const TA_MINUS_DM_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MINUS_DM_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MINUS_DM_Advance( TA_MINUS_DM_Stream *stream );
 
@@ -12332,7 +12620,8 @@ TA_LIB_API TA_RetCode TA_MOM_Value( const TA_MOM_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MOM reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MOM_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MOM_OutRange( const TA_MOM_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12340,7 +12629,8 @@ TA_LIB_API TA_RetCode TA_MOM_OutRange( const TA_MOM_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MOM_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MOM_Advance( TA_MOM_Stream *stream );
 
@@ -12410,7 +12700,8 @@ TA_LIB_API TA_RetCode TA_MULT_Value( const TA_MULT_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_MULT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_MULT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_MULT_OutRange( const TA_MULT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12418,7 +12709,8 @@ TA_LIB_API TA_RetCode TA_MULT_OutRange( const TA_MULT_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_MULT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_MULT_Advance( TA_MULT_Stream *stream );
 
@@ -12498,7 +12790,8 @@ TA_LIB_API TA_RetCode TA_NATR_Value( const TA_NATR_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_NATR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_NATR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_NATR_OutRange( const TA_NATR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12506,7 +12799,8 @@ TA_LIB_API TA_RetCode TA_NATR_OutRange( const TA_NATR_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_NATR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_NATR_Advance( TA_NATR_Stream *stream );
 
@@ -12576,7 +12870,8 @@ TA_LIB_API TA_RetCode TA_NVI_Value( const TA_NVI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_NVI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_NVI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_NVI_OutRange( const TA_NVI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12584,7 +12879,8 @@ TA_LIB_API TA_RetCode TA_NVI_OutRange( const TA_NVI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_NVI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_NVI_Advance( TA_NVI_Stream *stream );
 
@@ -12654,7 +12950,8 @@ TA_LIB_API TA_RetCode TA_OBV_Value( const TA_OBV_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_OBV reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_OBV_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_OBV_OutRange( const TA_OBV_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12662,7 +12959,8 @@ TA_LIB_API TA_RetCode TA_OBV_OutRange( const TA_OBV_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_OBV_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_OBV_Advance( TA_OBV_Stream *stream );
 
@@ -12744,7 +13042,8 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_Value( const TA_PERCENTILE_Stream *stream, d
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PERCENTILE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PERCENTILE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PERCENTILE_OutRange( const TA_PERCENTILE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12752,7 +13051,8 @@ TA_LIB_API TA_RetCode TA_PERCENTILE_OutRange( const TA_PERCENTILE_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PERCENTILE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PERCENTILE_Advance( TA_PERCENTILE_Stream *stream );
 
@@ -12828,7 +13128,8 @@ TA_LIB_API TA_RetCode TA_PERCENTRANK_Value( const TA_PERCENTRANK_Stream *stream,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PERCENTRANK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PERCENTRANK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PERCENTRANK_OutRange( const TA_PERCENTRANK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12836,7 +13137,8 @@ TA_LIB_API TA_RetCode TA_PERCENTRANK_OutRange( const TA_PERCENTRANK_Stream *stre
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PERCENTRANK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PERCENTRANK_Advance( TA_PERCENTRANK_Stream *stream );
 
@@ -12916,7 +13218,8 @@ TA_LIB_API TA_RetCode TA_PLUS_DI_Value( const TA_PLUS_DI_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PLUS_DI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PLUS_DI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PLUS_DI_OutRange( const TA_PLUS_DI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -12924,7 +13227,8 @@ TA_LIB_API TA_RetCode TA_PLUS_DI_OutRange( const TA_PLUS_DI_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PLUS_DI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PLUS_DI_Advance( TA_PLUS_DI_Stream *stream );
 
@@ -13002,7 +13306,8 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_Value( const TA_PLUS_DM_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PLUS_DM reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PLUS_DM_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PLUS_DM_OutRange( const TA_PLUS_DM_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13010,7 +13315,8 @@ TA_LIB_API TA_RetCode TA_PLUS_DM_OutRange( const TA_PLUS_DM_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PLUS_DM_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PLUS_DM_Advance( TA_PLUS_DM_Stream *stream );
 
@@ -13097,7 +13403,8 @@ TA_LIB_API TA_RetCode TA_PPO_Value( const TA_PPO_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PPO reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PPO_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PPO_OutRange( const TA_PPO_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13105,7 +13412,8 @@ TA_LIB_API TA_RetCode TA_PPO_OutRange( const TA_PPO_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PPO_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PPO_Advance( TA_PPO_Stream *stream );
 
@@ -13175,7 +13483,8 @@ TA_LIB_API TA_RetCode TA_PVI_Value( const TA_PVI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PVI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PVI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PVI_OutRange( const TA_PVI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13183,7 +13492,8 @@ TA_LIB_API TA_RetCode TA_PVI_OutRange( const TA_PVI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PVI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PVI_Advance( TA_PVI_Stream *stream );
 
@@ -13270,7 +13580,8 @@ TA_LIB_API TA_RetCode TA_PVO_Value( const TA_PVO_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PVO reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PVO_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PVO_OutRange( const TA_PVO_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13278,7 +13589,8 @@ TA_LIB_API TA_RetCode TA_PVO_OutRange( const TA_PVO_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PVO_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PVO_Advance( TA_PVO_Stream *stream );
 
@@ -13348,7 +13660,8 @@ TA_LIB_API TA_RetCode TA_PVT_Value( const TA_PVT_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_PVT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_PVT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_PVT_OutRange( const TA_PVT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13356,7 +13669,8 @@ TA_LIB_API TA_RetCode TA_PVT_OutRange( const TA_PVT_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_PVT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_PVT_Advance( TA_PVT_Stream *stream );
 
@@ -13434,7 +13748,8 @@ TA_LIB_API TA_RetCode TA_QSTICK_Value( const TA_QSTICK_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_QSTICK reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_QSTICK_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_QSTICK_OutRange( const TA_QSTICK_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13442,7 +13757,8 @@ TA_LIB_API TA_RetCode TA_QSTICK_OutRange( const TA_QSTICK_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_QSTICK_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_QSTICK_Advance( TA_QSTICK_Stream *stream );
 
@@ -13518,7 +13834,8 @@ TA_LIB_API TA_RetCode TA_RMA_Value( const TA_RMA_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_RMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_RMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_RMA_OutRange( const TA_RMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13526,7 +13843,8 @@ TA_LIB_API TA_RetCode TA_RMA_OutRange( const TA_RMA_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_RMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_RMA_Advance( TA_RMA_Stream *stream );
 
@@ -13602,7 +13920,8 @@ TA_LIB_API TA_RetCode TA_ROC_Value( const TA_ROC_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ROC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ROC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ROC_OutRange( const TA_ROC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13610,7 +13929,8 @@ TA_LIB_API TA_RetCode TA_ROC_OutRange( const TA_ROC_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ROC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ROC_Advance( TA_ROC_Stream *stream );
 
@@ -13686,7 +14006,8 @@ TA_LIB_API TA_RetCode TA_ROCP_Value( const TA_ROCP_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ROCP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ROCP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ROCP_OutRange( const TA_ROCP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13694,7 +14015,8 @@ TA_LIB_API TA_RetCode TA_ROCP_OutRange( const TA_ROCP_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ROCP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ROCP_Advance( TA_ROCP_Stream *stream );
 
@@ -13770,7 +14092,8 @@ TA_LIB_API TA_RetCode TA_ROCR_Value( const TA_ROCR_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ROCR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ROCR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ROCR_OutRange( const TA_ROCR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13778,7 +14101,8 @@ TA_LIB_API TA_RetCode TA_ROCR_OutRange( const TA_ROCR_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ROCR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ROCR_Advance( TA_ROCR_Stream *stream );
 
@@ -13854,7 +14178,8 @@ TA_LIB_API TA_RetCode TA_ROCR100_Value( const TA_ROCR100_Stream *stream, double 
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ROCR100 reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ROCR100_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ROCR100_OutRange( const TA_ROCR100_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13862,7 +14187,8 @@ TA_LIB_API TA_RetCode TA_ROCR100_OutRange( const TA_ROCR100_Stream *stream, int 
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ROCR100_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ROCR100_Advance( TA_ROCR100_Stream *stream );
 
@@ -13938,7 +14264,8 @@ TA_LIB_API TA_RetCode TA_RSI_Value( const TA_RSI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_RSI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_RSI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_RSI_OutRange( const TA_RSI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -13946,7 +14273,8 @@ TA_LIB_API TA_RetCode TA_RSI_OutRange( const TA_RSI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_RSI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_RSI_Advance( TA_RSI_Stream *stream );
 
@@ -14028,7 +14356,8 @@ TA_LIB_API TA_RetCode TA_RVI_Value( const TA_RVI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_RVI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_RVI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_RVI_OutRange( const TA_RVI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14036,7 +14365,8 @@ TA_LIB_API TA_RetCode TA_RVI_OutRange( const TA_RVI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_RVI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_RVI_Advance( TA_RVI_Stream *stream );
 
@@ -14112,7 +14442,8 @@ TA_LIB_API TA_RetCode TA_RVOL_Value( const TA_RVOL_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_RVOL reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_RVOL_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_RVOL_OutRange( const TA_RVOL_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14120,7 +14451,8 @@ TA_LIB_API TA_RetCode TA_RVOL_OutRange( const TA_RVOL_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_RVOL_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_RVOL_Advance( TA_RVOL_Stream *stream );
 
@@ -14204,7 +14536,8 @@ TA_LIB_API TA_RetCode TA_SAR_Value( const TA_SAR_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SAR_OutRange( const TA_SAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14212,7 +14545,8 @@ TA_LIB_API TA_RetCode TA_SAR_OutRange( const TA_SAR_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SAR_Advance( TA_SAR_Stream *stream );
 
@@ -14332,7 +14666,8 @@ TA_LIB_API TA_RetCode TA_SAREXT_Value( const TA_SAREXT_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SAREXT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SAREXT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SAREXT_OutRange( const TA_SAREXT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14340,7 +14675,8 @@ TA_LIB_API TA_RetCode TA_SAREXT_OutRange( const TA_SAREXT_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SAREXT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SAREXT_Advance( TA_SAREXT_Stream *stream );
 
@@ -14408,7 +14744,8 @@ TA_LIB_API TA_RetCode TA_SIN_Value( const TA_SIN_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SIN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SIN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SIN_OutRange( const TA_SIN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14416,7 +14753,8 @@ TA_LIB_API TA_RetCode TA_SIN_OutRange( const TA_SIN_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SIN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SIN_Advance( TA_SIN_Stream *stream );
 
@@ -14484,7 +14822,8 @@ TA_LIB_API TA_RetCode TA_SINH_Value( const TA_SINH_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SINH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SINH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SINH_OutRange( const TA_SINH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14492,7 +14831,8 @@ TA_LIB_API TA_RetCode TA_SINH_OutRange( const TA_SINH_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SINH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SINH_Advance( TA_SINH_Stream *stream );
 
@@ -14568,7 +14908,8 @@ TA_LIB_API TA_RetCode TA_SMA_Value( const TA_SMA_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SMA_OutRange( const TA_SMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14576,7 +14917,8 @@ TA_LIB_API TA_RetCode TA_SMA_OutRange( const TA_SMA_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SMA_Advance( TA_SMA_Stream *stream );
 
@@ -14676,7 +15018,8 @@ TA_LIB_API TA_RetCode TA_SMI_Value( const TA_SMI_Stream *stream, double *outSMI,
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SMI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SMI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SMI_OutRange( const TA_SMI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14684,7 +15027,8 @@ TA_LIB_API TA_RetCode TA_SMI_OutRange( const TA_SMI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SMI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SMI_Advance( TA_SMI_Stream *stream );
 
@@ -14752,7 +15096,8 @@ TA_LIB_API TA_RetCode TA_SQRT_Value( const TA_SQRT_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SQRT reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SQRT_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SQRT_OutRange( const TA_SQRT_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14760,7 +15105,8 @@ TA_LIB_API TA_RetCode TA_SQRT_OutRange( const TA_SQRT_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SQRT_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SQRT_Advance( TA_SQRT_Stream *stream );
 
@@ -14842,7 +15188,8 @@ TA_LIB_API TA_RetCode TA_STDDEV_Value( const TA_STDDEV_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_STDDEV reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_STDDEV_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_STDDEV_OutRange( const TA_STDDEV_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14850,7 +15197,8 @@ TA_LIB_API TA_RetCode TA_STDDEV_OutRange( const TA_STDDEV_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_STDDEV_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_STDDEV_Advance( TA_STDDEV_Stream *stream );
 
@@ -14955,7 +15303,8 @@ TA_LIB_API TA_RetCode TA_STOCH_Value( const TA_STOCH_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_STOCH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_STOCH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_STOCH_OutRange( const TA_STOCH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -14963,7 +15312,8 @@ TA_LIB_API TA_RetCode TA_STOCH_OutRange( const TA_STOCH_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_STOCH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_STOCH_Advance( TA_STOCH_Stream *stream );
 
@@ -15056,7 +15406,8 @@ TA_LIB_API TA_RetCode TA_STOCHF_Value( const TA_STOCHF_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_STOCHF reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_STOCHF_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_STOCHF_OutRange( const TA_STOCHF_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15064,7 +15415,8 @@ TA_LIB_API TA_RetCode TA_STOCHF_OutRange( const TA_STOCHF_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_STOCHF_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_STOCHF_Advance( TA_STOCHF_Stream *stream );
 
@@ -15159,7 +15511,8 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_Value( const TA_STOCHRSI_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_STOCHRSI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_STOCHRSI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_STOCHRSI_OutRange( const TA_STOCHRSI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15167,7 +15520,8 @@ TA_LIB_API TA_RetCode TA_STOCHRSI_OutRange( const TA_STOCHRSI_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_STOCHRSI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_STOCHRSI_Advance( TA_STOCHRSI_Stream *stream );
 
@@ -15237,7 +15591,8 @@ TA_LIB_API TA_RetCode TA_SUB_Value( const TA_SUB_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SUB reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SUB_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SUB_OutRange( const TA_SUB_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15245,7 +15600,8 @@ TA_LIB_API TA_RetCode TA_SUB_OutRange( const TA_SUB_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SUB_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SUB_Advance( TA_SUB_Stream *stream );
 
@@ -15321,7 +15677,8 @@ TA_LIB_API TA_RetCode TA_SUM_Value( const TA_SUM_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SUM reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SUM_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SUM_OutRange( const TA_SUM_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15329,7 +15686,8 @@ TA_LIB_API TA_RetCode TA_SUM_OutRange( const TA_SUM_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SUM_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SUM_Advance( TA_SUM_Stream *stream );
 
@@ -15417,7 +15775,8 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Value( const TA_SUPERTREND_Stream *stream, d
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_SUPERTREND reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_SUPERTREND_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_SUPERTREND_OutRange( const TA_SUPERTREND_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15425,7 +15784,8 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_OutRange( const TA_SUPERTREND_Stream *stream
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_SUPERTREND_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_SUPERTREND_Advance( TA_SUPERTREND_Stream *stream );
 
@@ -15507,7 +15867,8 @@ TA_LIB_API TA_RetCode TA_T3_Value( const TA_T3_Stream *stream, double *outReal )
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_T3 reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_T3_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_T3_OutRange( const TA_T3_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15515,7 +15876,8 @@ TA_LIB_API TA_RetCode TA_T3_OutRange( const TA_T3_Stream *stream, int *outBegIdx
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_T3_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_T3_Advance( TA_T3_Stream *stream );
 
@@ -15583,7 +15945,8 @@ TA_LIB_API TA_RetCode TA_TAN_Value( const TA_TAN_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TAN reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TAN_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TAN_OutRange( const TA_TAN_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15591,7 +15954,8 @@ TA_LIB_API TA_RetCode TA_TAN_OutRange( const TA_TAN_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TAN_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TAN_Advance( TA_TAN_Stream *stream );
 
@@ -15659,7 +16023,8 @@ TA_LIB_API TA_RetCode TA_TANH_Value( const TA_TANH_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TANH reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TANH_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TANH_OutRange( const TA_TANH_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15667,7 +16032,8 @@ TA_LIB_API TA_RetCode TA_TANH_OutRange( const TA_TANH_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TANH_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TANH_Advance( TA_TANH_Stream *stream );
 
@@ -15743,7 +16109,8 @@ TA_LIB_API TA_RetCode TA_TEMA_Value( const TA_TEMA_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TEMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TEMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TEMA_OutRange( const TA_TEMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15751,7 +16118,8 @@ TA_LIB_API TA_RetCode TA_TEMA_OutRange( const TA_TEMA_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TEMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TEMA_Advance( TA_TEMA_Stream *stream );
 
@@ -15823,7 +16191,8 @@ TA_LIB_API TA_RetCode TA_TRANGE_Value( const TA_TRANGE_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TRANGE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TRANGE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TRANGE_OutRange( const TA_TRANGE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15831,7 +16200,8 @@ TA_LIB_API TA_RetCode TA_TRANGE_OutRange( const TA_TRANGE_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TRANGE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TRANGE_Advance( TA_TRANGE_Stream *stream );
 
@@ -15907,7 +16277,8 @@ TA_LIB_API TA_RetCode TA_TRIMA_Value( const TA_TRIMA_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TRIMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TRIMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TRIMA_OutRange( const TA_TRIMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15915,7 +16286,8 @@ TA_LIB_API TA_RetCode TA_TRIMA_OutRange( const TA_TRIMA_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TRIMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TRIMA_Advance( TA_TRIMA_Stream *stream );
 
@@ -15991,7 +16363,8 @@ TA_LIB_API TA_RetCode TA_TRIX_Value( const TA_TRIX_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TRIX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TRIX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TRIX_OutRange( const TA_TRIX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -15999,7 +16372,8 @@ TA_LIB_API TA_RetCode TA_TRIX_OutRange( const TA_TRIX_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TRIX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TRIX_Advance( TA_TRIX_Stream *stream );
 
@@ -16075,7 +16449,8 @@ TA_LIB_API TA_RetCode TA_TSF_Value( const TA_TSF_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TSF reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TSF_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TSF_OutRange( const TA_TSF_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16083,7 +16458,8 @@ TA_LIB_API TA_RetCode TA_TSF_OutRange( const TA_TSF_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TSF_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TSF_Advance( TA_TSF_Stream *stream );
 
@@ -16165,7 +16541,8 @@ TA_LIB_API TA_RetCode TA_TSI_Value( const TA_TSI_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TSI reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TSI_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TSI_OutRange( const TA_TSI_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16173,7 +16550,8 @@ TA_LIB_API TA_RetCode TA_TSI_OutRange( const TA_TSI_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TSI_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TSI_Advance( TA_TSI_Stream *stream );
 
@@ -16245,7 +16623,8 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_Value( const TA_TYPPRICE_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_TYPPRICE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_TYPPRICE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_TYPPRICE_OutRange( const TA_TYPPRICE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16253,7 +16632,8 @@ TA_LIB_API TA_RetCode TA_TYPPRICE_OutRange( const TA_TYPPRICE_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_TYPPRICE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_TYPPRICE_Advance( TA_TYPPRICE_Stream *stream );
 
@@ -16345,7 +16725,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC_Value( const TA_ULTOSC_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ULTOSC reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ULTOSC_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ULTOSC_OutRange( const TA_ULTOSC_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16353,7 +16734,8 @@ TA_LIB_API TA_RetCode TA_ULTOSC_OutRange( const TA_ULTOSC_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ULTOSC_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ULTOSC_Advance( TA_ULTOSC_Stream *stream );
 
@@ -16435,7 +16817,8 @@ TA_LIB_API TA_RetCode TA_VAR_Value( const TA_VAR_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_VAR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_VAR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_VAR_OutRange( const TA_VAR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16443,7 +16826,8 @@ TA_LIB_API TA_RetCode TA_VAR_OutRange( const TA_VAR_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_VAR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_VAR_Advance( TA_VAR_Stream *stream );
 
@@ -16519,7 +16903,8 @@ TA_LIB_API TA_RetCode TA_VHF_Value( const TA_VHF_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_VHF reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_VHF_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_VHF_OutRange( const TA_VHF_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16527,7 +16912,8 @@ TA_LIB_API TA_RetCode TA_VHF_OutRange( const TA_VHF_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_VHF_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_VHF_Advance( TA_VHF_Stream *stream );
 
@@ -16609,7 +16995,8 @@ TA_LIB_API TA_RetCode TA_VORTEX_Value( const TA_VORTEX_Stream *stream, double *o
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_VORTEX reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_VORTEX_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_VORTEX_OutRange( const TA_VORTEX_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16617,7 +17004,8 @@ TA_LIB_API TA_RetCode TA_VORTEX_OutRange( const TA_VORTEX_Stream *stream, int *o
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_VORTEX_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_VORTEX_Advance( TA_VORTEX_Stream *stream );
 
@@ -16691,7 +17079,8 @@ TA_LIB_API TA_RetCode TA_VWAP_Value( const TA_VWAP_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_VWAP reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_VWAP_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_VWAP_OutRange( const TA_VWAP_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16699,7 +17088,8 @@ TA_LIB_API TA_RetCode TA_VWAP_OutRange( const TA_VWAP_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_VWAP_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_VWAP_Advance( TA_VWAP_Stream *stream );
 
@@ -16777,7 +17167,8 @@ TA_LIB_API TA_RetCode TA_VWMA_Value( const TA_VWMA_Stream *stream, double *outRe
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_VWMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_VWMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_VWMA_OutRange( const TA_VWMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16785,7 +17176,8 @@ TA_LIB_API TA_RetCode TA_VWMA_OutRange( const TA_VWMA_Stream *stream, int *outBe
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_VWMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_VWMA_Advance( TA_VWMA_Stream *stream );
 
@@ -16857,7 +17249,8 @@ TA_LIB_API TA_RetCode TA_WAD_Value( const TA_WAD_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_WAD reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_WAD_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_WAD_OutRange( const TA_WAD_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16865,7 +17258,8 @@ TA_LIB_API TA_RetCode TA_WAD_OutRange( const TA_WAD_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_WAD_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_WAD_Advance( TA_WAD_Stream *stream );
 
@@ -16937,7 +17331,8 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_Value( const TA_WCLPRICE_Stream *stream, doubl
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_WCLPRICE reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_WCLPRICE_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_WCLPRICE_OutRange( const TA_WCLPRICE_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -16945,7 +17340,8 @@ TA_LIB_API TA_RetCode TA_WCLPRICE_OutRange( const TA_WCLPRICE_Stream *stream, in
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_WCLPRICE_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_WCLPRICE_Advance( TA_WCLPRICE_Stream *stream );
 
@@ -17025,7 +17421,8 @@ TA_LIB_API TA_RetCode TA_WILLR_Value( const TA_WILLR_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_WILLR reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_WILLR_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_WILLR_OutRange( const TA_WILLR_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -17033,7 +17430,8 @@ TA_LIB_API TA_RetCode TA_WILLR_OutRange( const TA_WILLR_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_WILLR_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_WILLR_Advance( TA_WILLR_Stream *stream );
 
@@ -17109,7 +17507,8 @@ TA_LIB_API TA_RetCode TA_WMA_Value( const TA_WMA_Stream *stream, double *outReal
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_WMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_WMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_WMA_OutRange( const TA_WMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -17117,7 +17516,8 @@ TA_LIB_API TA_RetCode TA_WMA_OutRange( const TA_WMA_Stream *stream, int *outBegI
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_WMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_WMA_Advance( TA_WMA_Stream *stream );
 
@@ -17193,7 +17593,8 @@ TA_LIB_API TA_RetCode TA_ZLEMA_Value( const TA_ZLEMA_Stream *stream, double *out
  * coordinates — [*outBegIdx, *outBegIdx + *outNBElement), what TA_ZLEMA reports
  * over the same bars. Open seeds it; every accepted Update and every
  * TA_ZLEMA_Advance adds one; a rejected Update and a Peek change nothing. The
- * count stops at TA_MAX_INDEX.
+ * last bar it can reach is TA_MAX_INDEX: past that Update and Advance answer
+ * TA_OUT_OF_RANGE_END_INDEX, and the handle is done.
  */
 TA_LIB_API TA_RetCode TA_ZLEMA_OutRange( const TA_ZLEMA_Stream *stream, int *outBegIdx, int *outNBElement );
 
@@ -17201,7 +17602,8 @@ TA_LIB_API TA_RetCode TA_ZLEMA_OutRange( const TA_ZLEMA_Stream *stream, int *out
  * Advance: count one bar this stream was not fed — one an Update rejected and
  * that will not be re-fed, or a session with no print. The range moves by one
  * and nothing else does, so TA_ZLEMA_Value keeps answering the previous output,
- * which is this bar's output too.
+ * which is this bar's output too. TA_OUT_OF_RANGE_END_INDEX once the range has
+ * reached TA_MAX_INDEX.
  */
 TA_LIB_API TA_RetCode TA_ZLEMA_Advance( TA_ZLEMA_Stream *stream );
 

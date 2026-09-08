@@ -697,6 +697,9 @@ fn emit_handle_class_with_members(
          \x20      * {{@code clone()}} carries it verbatim. A plain\n\
          \x20      * {{@code open}} hands back only the last value, a subset of this range,\n\
          \x20      * because the caller chose not to take the fill.\n\
+         \x20      * <p>The last bar it can reach is {{@link Core#MAX_INDEX}}; past that\n\
+         \x20      * {{@code update}} and {{@code advance}} throw\n\
+         \x20      * {{@link IndexOutOfBoundsException}}.\n\
          \x20      */\n\
          \x20     public OutRange outRange() {{ return new OutRange(outRangeBegIdx, outRangeCount); }}",
         base = base_name(func)
@@ -710,8 +713,16 @@ fn emit_handle_class_with_members(
          \x20      * <p>For a bar the caller leaves out: one an {{@code update}} rejected\n\
          \x20      * and that will not be re-fed, or a session with no print. Without it\n\
          \x20      * two handles on one feed drift a bar apart when only one of them skips.\n\
+         \x20      * <p>Throws {{@link IndexOutOfBoundsException}} once {{@link #outRange()}}\n\
+         \x20      * has reached bar {{@link Core#MAX_INDEX}}, the last one the batch tier\n\
+         \x20      * can address and the last this handle will count. {{@code update}}\n\
+         \x20      * throws the same there.\n\
          \x20      */\n\
-         \x20     public void advance() {{ {} }}",
+         \x20     public void advance() {{\n\
+         {}\
+         \x20        {}\n\
+         \x20     }}",
+        out_range_ceiling_guard(func, "         ", "advance"),
         advance_out_range(),
         vlink = value_link(func)
     );
@@ -854,12 +865,29 @@ fn assert_single_output(func: &FuncDef, site: &str) {
     );
 }
 
-/// The one spelling of the `outRange` advance. Saturating: nothing bounds how
-/// many bars a live stream is fed, and past `MAX_INDEX` the count has left the
-/// batch index domain anyway. Every site that moves the count goes through here,
-/// or the saturation guard exists in two places and only one of them gets fixed.
+/// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
+/// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
+/// cannot answer it before its parent).
+///
+/// `>` and not `>=`: an opener may legally take `MAX_INDEX + 1` bars (rule S2),
+/// so a handle can be born holding the last bar in the domain and it is the NEXT
+/// one that has nowhere to go.
+///
+/// Through `failure(...)`, so the code is spelled here exactly as
+/// `requireHistory` spells it for rule S2 and not as a fourth exception type.
+fn out_range_ceiling_guard(func: &FuncDef, indent: &str, verb: &str) -> String {
+    format!(
+        "{indent}if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )\n\
+         {indent}   throw failure(\"{} {verb}\", RetCode.OutOfRangeEndIndex);\n",
+        func.name
+    )
+}
+
+/// The one spelling of the `outRange` advance. Unconditional: every site that
+/// reaches it has already answered [`out_range_ceiling_guard`], which is what
+/// bounds the count.
 fn advance_out_range() -> &'static str {
-    "if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;"
+    "this.outRangeCount++;"
 }
 
 /// The per-bar finite-input rejection for `update`/`peek`: one `Double.isFinite`
@@ -935,10 +963,17 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          \x20      * the batch API, which computes on whatever it is given: a handle\n\
          \x20      * retains its state, so a single non-finite bar would poison every\n\
          \x20      * later value it produces.\n\
+         \x20      * <p>Throws {{@link IndexOutOfBoundsException}} once {{@link #outRange()}}\n\
+         \x20      * has reached bar {{@link Core#MAX_INDEX}}, which no re-feed clears: the\n\
+         \x20      * handle has run out of index domain and only a shorter history can\n\
+         \x20      * start a new one.\n\
          \x20      */"
     );
     let _ = writeln!(o, "      public {vt} update( {sig_bars}{sink} ) {{");
-    // U2 before U3: an absent sink is a fault in the call, not in the bar.
+    // U4 first, then U2 before U3: the index domain ahead of the call's
+    // arguments, as an opener answers S1/S2 ahead of S4; and an absent sink is a
+    // fault in the call, not in the bar.
+    o.push_str(&out_range_ceiling_guard(func, "         ", "update"));
     o.push_str(&require_sink(func, "         ", "update"));
     o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");

@@ -36,13 +36,13 @@ double[] history = /* ...your closing prices... */;
 Core.SmaStream s = core.SmaOpen(history, 30);  // Value starts at the last history bar
 
 // Each time a bar closes:
-double v = s.Update(newClose);                   // throws only on a non-finite bar
+double v = s.Update(newClose);                   // throws on a non-finite bar, or past MAX_INDEX
 
 // Intra-bar, on the not-yet-closed bar (repeat as the price ticks):
 double provisional = s.Peek(formingClose);       // state left unchanged
 ```
 
-`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
+`Open` returns the stream directly; its `Value` starts at the last history bar's value. After a successful `Open`, what `Update` and `Peek` reject is invalid input such as NaN or ±Inf; `Update` also rejects a bar past `Core.MAX_INDEX`, the last index the batch API addresses. A rejection changes nothing at all — no state, no value, and no range. To count a rejected bar rather than re-feed it, call `Advance()`; `Value` then answers the value(s) at the last bar the stream counted (see [Utility Calls](#utility-calls)).
 
 ## Rules
 
@@ -117,13 +117,14 @@ See [Rules](#rules) for when concurrent reads of these are safe.
 
 ## Error model
 
-`Open` and `OpenAndFill` throw. After a successful open the only thing `Update` and `Peek` reject is invalid input such as NaN or ±Inf. A rejection changes nothing at all — no state, no value, and no range; to count a rejected bar rather than re-feed it, call `Advance()`. `Value`, `Clone()`, `OutRange` and `Advance()` never throw.
+`Open` and `OpenAndFill` throw. After a successful open, `Update` and `Peek` reject invalid input such as NaN or ±Inf, and `Update` also rejects a bar past `Core.MAX_INDEX`. A rejection changes nothing at all — no state, no value, and no range; to count a rejected bar rather than re-feed it, call `Advance()`. `Value`, `Clone()` and `OutRange` never throw; `Advance()` throws only at the `MAX_INDEX` ceiling.
 
 | Condition | Exception |
 |---|---|
 | Fewer than `lookback + 1` history bars | `InsufficientHistoryException` |
 | An optional parameter outside its documented range | `ArgumentException` |
 | A non-finite bar (NaN or ±Inf), or a non-finite real parameter | `ArgumentException` |
+| A bar past `Core.MAX_INDEX` — from `Update` or `Advance`; `Peek` counts no bar and is not subject to it | `ArgumentException` carrying `RetCode.OutOfRangeEndIndex`. It does not clear: open a new stream on a shorter history. |
 
 `InsufficientHistoryException` derives from `ArgumentException`, so you can catch it specifically — it is the one routine, data-dependent rejection — or catch every open failure uniformly. Messages carry a stable `"<NAME> open: "` prefix, and it is always the *called* function's name: `core.MaOpen(...)` rejecting reports `MA open:`, never the name of whatever moving average it delegates to.
 
@@ -131,7 +132,7 @@ Insufficient history is knowable in advance, so it need not be exceptional in yo
 
 ## Absolute-index outputs
 
-`MININDEX`, `MAXINDEX` and `MINMAXINDEX` report bar indices. In the streaming tier those count bars fed to the stream rather than positions in an array, and the basis is shifted once that count passes 2^30 — so treat an index as a position within the current window, not as an identifier to store and compare against one read much later.
+`MININDEX`, `MAXINDEX` and `MINMAXINDEX` report bar indices. In the streaming tier those count bars fed to the stream rather than positions in an array — so treat an index as a position within this handle's own window, not as one you can compare against an index a different handle reported.
 
 ## Discovering streamable functions
 

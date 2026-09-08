@@ -307,10 +307,10 @@ not a capacity fault: the value is still computed, the handle still reports it,
 and nothing is written out (footnote [6], Appendix F).
 
 [8] All four converge on `TA_INSUFFICIENT_HISTORY`, which leaves a history
-*longer* than `MAX_INDEX + 1` (rule S2) as the only producer of
-`TA_OUT_OF_RANGE_END_INDEX` in this tier. Verified as uniform, not incidental:
-across every streaming function in every backend, each short-history arm reports
-this code and no other. What the four answered before the code existed, and why
+*longer* than `MAX_INDEX + 1` (rule S2) as this tier's only producer of
+`TA_OUT_OF_RANGE_END_INDEX` — U4 is the other, one tier down. Verified as
+uniform, not incidental: across every streaming function in every backend, each
+short-history arm reports this code and no other. What the four answered before the code existed, and why
 the borrowed one was wrong on its face, is Appendix D item 8.
 
 [9] **Withdrawn.** The warm-up history is an input *array*, and the library
@@ -321,11 +321,12 @@ than a rule. What the scan cost, and why folding it into the fill loop was not
 the alternative, are in `docs/streaming-api-design.md`. U3 is untouched: a bar
 handed to `Update` or `Peek` is a single value.
 
-### 2.4 Streaming tier — advancing (`Update`, `Peek`)
+### 2.4 Streaming tier — advancing (`Update`, `Peek`, `Advance`)
 
 | Rule | Condition (in order) | RetCode | C | Rust | Java | C# |
 |---|---|---|:---:|:---:|:---:|:---:|
 | U1 | The handle was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; | —<br>&nbsp; |
+| U4 | The bar this call would COUNT leaves the index domain: `begIdx + count > MAX_INDEX`. `Update` and `Advance` only — `Peek` is exempt for performance, and counts no bar | `TA_OUT_OF_RANGE_END_INDEX` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
 | U2 | The output was not supplied | `TA_BAD_PARAM` | ✅<br>&nbsp; | —<br>&nbsp; | ✅<br>&nbsp; | —<br>&nbsp; |
 | U6a | An output is **declined** — null, or zero-length where the language cannot spell null. Accepted only where the .yaml marks that output `nullable` (Appendix F) | `TA_BAD_PARAM` | ✅<br>&nbsp; | n/a<br>[10] | n/a<br>[10] | n/a<br>[10] |
 | U3 | **Per bar**, after the rules above: the bar is non-finite | `TA_BAD_PARAM` | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; | ✅<br>&nbsp; |
@@ -337,6 +338,42 @@ return the value, and Java writes every field of a caller-owned sink.
 written, and `OutRange` does not advance — a rejected `Update` costs the caller
 nothing but the call, and the handle is intact and usable for the next bar, so a
 transient bad print clears itself. `Peek` is the same, under any outcome.
+
+**U4 is the one rejection that does not clear.** It is S2 read one bar at a
+time: the next bar's index is `begIdx + count`, and once that leaves
+`[0, MAX_INDEX]` the handle is being asked for a bar `TA_<N>(startIdx, endIdx)`
+refuses to address — so `Update` and `Advance` both answer it and neither moves
+anything, permanently. The recovery is a new handle over a shorter history, not a
+re-feed. `Advance` is in the section header because of it: U1 is the only other
+rule that reaches that call, and the rest of the table is about a bar it is not
+given.
+
+It is evaluated where the opener evaluates S1 and S2 — ahead of every presence
+check, with only the handle's own null test in front of it — because it is the
+same fault read on the same domain, and a caller who fixed the argument the
+presence check named would only get U4 back.
+
+`Peek` is exempt for performance — it commits no bar.
+
+A composed step drives its sub-handles through their public `Update`, so each of
+them re-reads U4. It cannot fire there first, and that is load-bearing rather
+than incidental: every handle over one history satisfies
+`begIdx + count == historyLen` at open, an accepted `Update` moves a parent and
+its sub-handles together, and `Advance` moves the parent alone — so the parent is
+never behind, and its own guard answers before any sub-handle is stepped. Without
+that, MAVP's bank would be left with its leading slots stepped and the parent's
+count unmoved.
+
+No cross-language gate can reach U4 — `stream_verify` runs 240 bars and
+`MAX_INDEX` is 100 000 000 — so it is pinned by one source gate and one runtime
+probe per backend. `only_an_accepted_bar_advances_the_range` asserts the guard's
+*position* — first, with only C's handle check allowed in front of it — the code
+it names, and its ABSENCE from `Peek`, in all four backends over the whole
+corpus. Then each of `test_stream_finite.c`, `stream_out_range.rs`,
+`StreamSmokeTest` and `StreamApiTest` drives one handle to the ceiling and
+demands the refusal, the code, and that nothing moved. The code is asserted twice
+because the type cannot stand in for it: Java renders S1's code and U4's as one
+exception class.
 
 That leaves the caller two ways to answer a bar `Update` turned down, and having
 to pick one is the point. **Re-feed** it when a corrected value arrives — that is
@@ -418,9 +455,10 @@ rather than a field: `TA_<N>_OutRange` answers `TA_BAD_PARAM` for a NULL
 handle **and** for either NULL out-parameter. The other three read a field on an
 object that cannot be absent.
 
-**Advancing it** the same way: `TA_<N>_Advance` answers `TA_BAD_PARAM` for a
-NULL handle and nothing else; the other three take no argument to reject. The
-count it moves saturates at `TA_MAX_INDEX` exactly as `Update`'s does.
+**Advancing it** answers two: `TA_BAD_PARAM` for a NULL handle, which C alone
+can be handed, and U4 once the range has reached `TA_MAX_INDEX`, which every
+backend answers. Rust spells the second as `Result<(), RetCode>`; Java and C#
+throw, since a `void` accessor has nowhere else to put it.
 
 **One documented hole.** A composed function drives its sub-streams through their
 *public* entry points, so a sub-stream re-checks a value the library itself
@@ -555,7 +593,7 @@ C and Rust report a code; Java and C# raise. Stated here once so no rule has to.
 | `TA_SUCCESS` | `Ok(OutRange)` | returns `OutRange` | returns `OutRange` |
 | `TA_BAD_PARAM` | `Err(RetCode::BadParam)` | `IllegalArgumentException` | `ArgumentException` |
 | `TA_OUT_OF_RANGE_START_INDEX` | `Err(RetCode::OutOfRangeStartIndex)` | `IndexOutOfBoundsException` | `ArgumentOutOfRangeException("startIdx")` |
-| `TA_OUT_OF_RANGE_END_INDEX` | `Err(RetCode::OutOfRangeEndIndex)` | `IndexOutOfBoundsException` | `ArgumentOutOfRangeException("endIdx")` |
+| `TA_OUT_OF_RANGE_END_INDEX` | `Err(RetCode::OutOfRangeEndIndex)` | `IndexOutOfBoundsException` | `ArgumentOutOfRangeException("endIdx")` [S] |
 | `TA_INSUFFICIENT_HISTORY` | `Err(RetCode::InsufficientHistory)` | `InsufficientHistoryException` | `InsufficientHistoryException` |
 | `TA_ALLOC_ERR` | `Err(RetCode::AllocErr)` | `IllegalStateException` | `InvalidOperationException` |
 | `TA_INTERNAL_ERROR` | `Err(RetCode::InternalError)` | `IllegalStateException` | `InvalidOperationException` |
@@ -572,6 +610,15 @@ than leaving it to the core's shared streaming ladder. Unprobed in both for the
 reason rule S2 is ⚠️ there (footnote [5]): reaching it needs a
 100 000 001-element array.
 
+**[S] U4 takes the same code through each backend's own streaming ladder**, the
+one place a `RetCode` becomes an exception at this tier: Java's `failure(...)`
+gives the table's `IndexOutOfBoundsException`, C#'s `Core.StreamFailure(...)`
+gives an `ArgumentException`. C# deviates from the table on purpose and says so
+in its own source — `Update`, `Peek` and `Advance` have no `endIdx` parameter to
+name, so `ArgumentOutOfRangeException("endIdx")` would name one that does not
+exist. The code is the contract and is identical in all four; the exception type
+is the language's.
+
 **Where the `OutRange` arrives** differs by tier as well as by backend:
 
 | Tier | C | Rust | Java | C# |
@@ -582,8 +629,8 @@ reason rule S2 is ⚠️ there (footnote [5]): reaching it needs a
 
 The stream accessor answers the same question in all four: the bars this handle
 has an output for. An open over `historyLen` bars starts at `(lookback,
-historyLen - lookback)`, and the count saturates at `MAX_INDEX` rather than
-overflowing. `Open`, `Update` and `Peek` still hand back one value rather than a
+historyLen - lookback)`, and `begIdx + count` never passes `MAX_INDEX + 1` —
+rule U4 refuses the bar that would take it there. `Open`, `Update` and `Peek` still hand back one value rather than a
 range. The range's two members are named for each language:
 `beg_idx` / `count` in Rust, `begIdx` / `count` in Java, `BegIdx` / `Count` in
 C#.

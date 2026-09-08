@@ -23831,7 +23831,7 @@ fn sv_ac(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -23991,7 +23991,7 @@ fn sv_accbands(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -24142,7 +24142,7 @@ fn sv_acos(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -24285,7 +24285,7 @@ fn sv_ad(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -24428,7 +24428,7 @@ fn sv_add(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -24574,7 +24574,7 @@ fn sv_adosc(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -24718,7 +24718,7 @@ fn sv_adr(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -24863,7 +24863,7 @@ fn sv_adx(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25008,7 +25008,7 @@ fn sv_adxr(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25153,7 +25153,7 @@ fn sv_ao(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25308,7 +25308,7 @@ fn sv_apo(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25460,7 +25460,7 @@ fn sv_aroon(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25608,7 +25608,7 @@ fn sv_aroonosc(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25751,7 +25751,7 @@ fn sv_asin(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -25894,7 +25894,7 @@ fn sv_atan(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26039,7 +26039,7 @@ fn sv_atr(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26183,7 +26183,7 @@ fn sv_avgdev(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26326,7 +26326,7 @@ fn sv_avgprice(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26498,7 +26498,7 @@ fn sv_bbands(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26650,7 +26650,7 @@ fn sv_beta(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26793,7 +26793,7 @@ fn sv_bop(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -26937,7 +26937,7 @@ fn sv_cci(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27084,7 +27084,7 @@ fn sv_cdl2crows(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27231,7 +27231,7 @@ fn sv_cdl3blackcrows(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27378,7 +27378,7 @@ fn sv_cdl3inside(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27525,7 +27525,7 @@ fn sv_cdl3linestrike(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27672,7 +27672,7 @@ fn sv_cdl3outside(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27819,7 +27819,7 @@ fn sv_cdl3starsinsouth(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -27966,7 +27966,7 @@ fn sv_cdl3whitesoldiers(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28114,7 +28114,7 @@ fn sv_cdlabandonedbaby(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28261,7 +28261,7 @@ fn sv_cdladvanceblock(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28408,7 +28408,7 @@ fn sv_cdlbelthold(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28555,7 +28555,7 @@ fn sv_cdlbreakaway(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28702,7 +28702,7 @@ fn sv_cdlclosingmarubozu(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28849,7 +28849,7 @@ fn sv_cdlconcealbabyswall(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -28996,7 +28996,7 @@ fn sv_cdlcounterattack(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -29144,7 +29144,7 @@ fn sv_cdldarkcloudcover(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -29291,7 +29291,7 @@ fn sv_cdldoji(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -29438,7 +29438,7 @@ fn sv_cdldojistar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -29585,7 +29585,7 @@ fn sv_cdldragonflydoji(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -29732,7 +29732,7 @@ fn sv_cdlengulfing(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -29880,7 +29880,7 @@ fn sv_cdleveningdojistar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30028,7 +30028,7 @@ fn sv_cdleveningstar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30175,7 +30175,7 @@ fn sv_cdlgapsidesidewhite(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30322,7 +30322,7 @@ fn sv_cdlgravestonedoji(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30469,7 +30469,7 @@ fn sv_cdlhammer(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30616,7 +30616,7 @@ fn sv_cdlhangingman(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30763,7 +30763,7 @@ fn sv_cdlharami(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -30910,7 +30910,7 @@ fn sv_cdlharamicross(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31057,7 +31057,7 @@ fn sv_cdlhighwave(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31204,7 +31204,7 @@ fn sv_cdlhikkake(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31351,7 +31351,7 @@ fn sv_cdlhikkakemod(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31498,7 +31498,7 @@ fn sv_cdlhomingpigeon(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31645,7 +31645,7 @@ fn sv_cdlidentical3crows(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31792,7 +31792,7 @@ fn sv_cdlinneck(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -31939,7 +31939,7 @@ fn sv_cdlinvertedhammer(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32086,7 +32086,7 @@ fn sv_cdlkicking(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32233,7 +32233,7 @@ fn sv_cdlkickingbylength(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32380,7 +32380,7 @@ fn sv_cdlladderbottom(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32527,7 +32527,7 @@ fn sv_cdllongleggeddoji(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32674,7 +32674,7 @@ fn sv_cdllongline(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32821,7 +32821,7 @@ fn sv_cdlmarubozu(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -32968,7 +32968,7 @@ fn sv_cdlmatchinglow(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -33116,7 +33116,7 @@ fn sv_cdlmathold(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -33264,7 +33264,7 @@ fn sv_cdlmorningdojistar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -33412,7 +33412,7 @@ fn sv_cdlmorningstar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -33559,7 +33559,7 @@ fn sv_cdlonneck(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -33706,7 +33706,7 @@ fn sv_cdlpiercing(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -33853,7 +33853,7 @@ fn sv_cdlrickshawman(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34000,7 +34000,7 @@ fn sv_cdlrisefall3methods(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34147,7 +34147,7 @@ fn sv_cdlseparatinglines(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34294,7 +34294,7 @@ fn sv_cdlshootingstar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34441,7 +34441,7 @@ fn sv_cdlshortline(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34588,7 +34588,7 @@ fn sv_cdlspinningtop(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34735,7 +34735,7 @@ fn sv_cdlstalledpattern(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -34882,7 +34882,7 @@ fn sv_cdlsticksandwich(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35029,7 +35029,7 @@ fn sv_cdltakuri(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35176,7 +35176,7 @@ fn sv_cdltasukigap(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35323,7 +35323,7 @@ fn sv_cdlthrusting(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35470,7 +35470,7 @@ fn sv_cdltristar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35617,7 +35617,7 @@ fn sv_cdlunique3river(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35764,7 +35764,7 @@ fn sv_cdlupsidegap2crows(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -35911,7 +35911,7 @@ fn sv_cdlxsidegap3methods(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36054,7 +36054,7 @@ fn sv_ceil(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36198,7 +36198,7 @@ fn sv_cmf(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36343,7 +36343,7 @@ fn sv_cmo(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36487,7 +36487,7 @@ fn sv_cmou(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36633,7 +36633,7 @@ fn sv_coppock(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36777,7 +36777,7 @@ fn sv_correl(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -36920,7 +36920,7 @@ fn sv_cos(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37063,7 +37063,7 @@ fn sv_cosh(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37206,7 +37206,7 @@ fn sv_cumsum(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37352,7 +37352,7 @@ fn sv_cvi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37497,7 +37497,7 @@ fn sv_dema(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37640,7 +37640,7 @@ fn sv_div(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37800,7 +37800,7 @@ fn sv_donchian(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -37952,7 +37952,7 @@ fn sv_dpo(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38097,7 +38097,7 @@ fn sv_dx(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38241,7 +38241,7 @@ fn sv_efi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38386,7 +38386,7 @@ fn sv_ema(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38530,7 +38530,7 @@ fn sv_er(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38683,7 +38683,7 @@ fn sv_eri(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38830,7 +38830,7 @@ fn sv_exp(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -38973,7 +38973,7 @@ fn sv_floor(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -39117,7 +39117,7 @@ fn sv_fosc(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -39270,7 +39270,7 @@ fn sv_fractal(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -39442,7 +39442,7 @@ fn sv_ha(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -39598,7 +39598,7 @@ fn sv_hma(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -39742,7 +39742,7 @@ fn sv_ht_dcperiod(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -39886,7 +39886,7 @@ fn sv_ht_dcphase(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40038,7 +40038,7 @@ fn sv_ht_phasor(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40194,7 +40194,7 @@ fn sv_ht_sine(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40342,7 +40342,7 @@ fn sv_ht_trendline(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40486,7 +40486,7 @@ fn sv_ht_trendmode(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40630,7 +40630,7 @@ fn sv_imi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40775,7 +40775,7 @@ fn sv_kama(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -40939,7 +40939,7 @@ fn sv_kc(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41124,7 +41124,7 @@ fn sv_kdj(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41276,7 +41276,7 @@ fn sv_linearreg(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41420,7 +41420,7 @@ fn sv_linearreg_angle(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41564,7 +41564,7 @@ fn sv_linearreg_intercept(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41708,7 +41708,7 @@ fn sv_linearreg_slope(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41851,7 +41851,7 @@ fn sv_ln(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -41994,7 +41994,7 @@ fn sv_log10(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -42148,7 +42148,7 @@ fn sv_ma(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -42311,7 +42311,7 @@ fn sv_macd(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -42501,7 +42501,7 @@ fn sv_macdext(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -42670,7 +42670,7 @@ fn sv_macdfix(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -42832,7 +42832,7 @@ fn sv_mama(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -42979,7 +42979,7 @@ fn sv_marketfi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -43125,7 +43125,7 @@ fn sv_massi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -43281,7 +43281,7 @@ fn sv_mavp(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -43425,7 +43425,7 @@ fn sv_max(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -43569,7 +43569,7 @@ fn sv_maxindex(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -43712,7 +43712,7 @@ fn sv_medprice(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -43856,7 +43856,7 @@ fn sv_mfi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44000,7 +44000,7 @@ fn sv_midpoint(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44144,7 +44144,7 @@ fn sv_midprice(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44288,7 +44288,7 @@ fn sv_min(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44432,7 +44432,7 @@ fn sv_minindex(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44584,7 +44584,7 @@ fn sv_minmax(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44740,7 +44740,7 @@ fn sv_minmaxindex(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -44889,7 +44889,7 @@ fn sv_minus_di(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45034,7 +45034,7 @@ fn sv_minus_dm(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45178,7 +45178,7 @@ fn sv_mom(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45321,7 +45321,7 @@ fn sv_mult(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45466,7 +45466,7 @@ fn sv_natr(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45609,7 +45609,7 @@ fn sv_nvi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45752,7 +45752,7 @@ fn sv_obv(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -45897,7 +45897,7 @@ fn sv_percentile(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46041,7 +46041,7 @@ fn sv_percentrank(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46186,7 +46186,7 @@ fn sv_plus_di(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46331,7 +46331,7 @@ fn sv_plus_dm(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46486,7 +46486,7 @@ fn sv_ppo(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46629,7 +46629,7 @@ fn sv_pvi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46784,7 +46784,7 @@ fn sv_pvo(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -46927,7 +46927,7 @@ fn sv_pvt(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47071,7 +47071,7 @@ fn sv_qstick(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47216,7 +47216,7 @@ fn sv_rma(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47360,7 +47360,7 @@ fn sv_roc(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47504,7 +47504,7 @@ fn sv_rocp(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47648,7 +47648,7 @@ fn sv_rocr(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47792,7 +47792,7 @@ fn sv_rocr100(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -47937,7 +47937,7 @@ fn sv_rsi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48083,7 +48083,7 @@ fn sv_rvi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48227,7 +48227,7 @@ fn sv_rvol(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48372,7 +48372,7 @@ fn sv_sar(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48523,7 +48523,7 @@ fn sv_sarext(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48666,7 +48666,7 @@ fn sv_sin(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48809,7 +48809,7 @@ fn sv_sinh(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -48953,7 +48953,7 @@ fn sv_sma(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -49109,7 +49109,7 @@ fn sv_smi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -49256,7 +49256,7 @@ fn sv_sqrt(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -49401,7 +49401,7 @@ fn sv_stddev(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -49570,7 +49570,7 @@ fn sv_stoch(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -49737,7 +49737,7 @@ fn sv_stochf(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -49906,7 +49906,7 @@ fn sv_stochrsi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50053,7 +50053,7 @@ fn sv_sub(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50197,7 +50197,7 @@ fn sv_sum(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50351,7 +50351,7 @@ fn sv_supertrend(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50501,7 +50501,7 @@ fn sv_t3(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50644,7 +50644,7 @@ fn sv_tan(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50787,7 +50787,7 @@ fn sv_tanh(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -50932,7 +50932,7 @@ fn sv_tema(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51075,7 +51075,7 @@ fn sv_trange(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51219,7 +51219,7 @@ fn sv_trima(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51364,7 +51364,7 @@ fn sv_trix(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51508,7 +51508,7 @@ fn sv_tsf(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51654,7 +51654,7 @@ fn sv_tsi(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51797,7 +51797,7 @@ fn sv_typprice(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -51943,7 +51943,7 @@ fn sv_ultosc(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52088,7 +52088,7 @@ fn sv_var(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52232,7 +52232,7 @@ fn sv_vhf(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52384,7 +52384,7 @@ fn sv_vortex(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52531,7 +52531,7 @@ fn sv_vwap(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52675,7 +52675,7 @@ fn sv_vwma(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52818,7 +52818,7 @@ fn sv_wad(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -52961,7 +52961,7 @@ fn sv_wclprice(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -53105,7 +53105,7 @@ fn sv_willr(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -53249,7 +53249,7 @@ fn sv_wma(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }
@@ -53394,7 +53394,7 @@ fn sv_zlema(core: &Core, params: &Value) -> String {
                         range_checked = 1; range_legs += 1; range_sites |= 2;
                         if st.out_range().beg_idx != beg || st.out_range().count != nb { range_ok = false; }
                         range_legs += 1; range_sites |= 16;
-                        st.advance();
+                        if st.advance().is_err() { range_ok = false; }
                         if st.out_range().beg_idx != beg || st.out_range().count != nb + 1 { range_ok = false; }
                     }
                 }

@@ -425,10 +425,13 @@ TA_RetCode TA_WAD_OpenAndFillInternal( struct TA_WAD_Stream **stream, const doub
 
 TA_LIB_API TA_RetCode TA_WAD_Update( TA_WAD_Stream *stream, double inHigh, double inLow, double inClose, double *outReal )
 {
-   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_WAD_StepImpl( stream, inHigh, inLow, inClose, outReal );
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -488,7 +491,9 @@ TA_LIB_API TA_RetCode TA_WAD_OutRange( const TA_WAD_Stream *stream, int *outBegI
 TA_LIB_API TA_RetCode TA_WAD_Advance( TA_WAD_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

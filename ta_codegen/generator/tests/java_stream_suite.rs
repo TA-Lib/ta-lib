@@ -143,8 +143,8 @@ fn test_java_sma_ring_stream_section() {
         "the plain open reads the range back off the numerics it just ran:\n{scalar}"
     );
     assert!(
-        s.contains("if( this.outRangeCount < MAX_INDEX ) this.outRangeCount++;"),
-        "update advances the count, saturating"
+        s.contains("this.outRangeCount++;"),
+        "update advances the count"
     );
     // The copy constructor carries it — the one path left that copies a handle,
     // now that peek runs a frame instead of restoring a scratch.

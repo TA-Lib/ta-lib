@@ -452,7 +452,9 @@ static int sfAdvValueTracks;/* Value after the next good bar: that bar's value *
 static int sfAdvSkips;      /* TA_<N>_Advance: exactly +1, begIdx put */
 static int sfAdvSkipHolds;  /* Value across TA_<N>_Advance: same bits */
 static int sfAdvNullRejects;/* TA_<N>_Advance(NULL) */
-static int sfAdvSaturates;  /* the count stopping at TA_MAX_INDEX */
+static int sfAdvCeilings;   /* the last bar in the index domain, reached */
+static int sfAdvCeilingRejects;/* every call about the bar past it, refused */
+static int sfAdvCeilingHolds;  /* and the refusals moving nothing */
 
 /* An output slot is seeded with this, never with zero: a rejected call that
  * left the slot alone and one that wrote a plausible zero are the same reading
@@ -910,34 +912,76 @@ static ErrorNumber sf_advance( void )
    }
    sfAdvNullRejects++;
 
-   /* Saturation, which no feed reaches: TA_MAX_INDEX is 100 million bars, and
-    * this is the only call that moves the count without O(period) work. The
-    * first compare fails an advance that stopped moving the count at all, the
-    * second one that lost the ceiling. */
+   /* Rule U4, which no feed reaches: TA_MAX_INDEX is 100 million bars, and
+    * Advance is the only call that moves the count without O(period) work.
+    *
+    * The ceiling is on the BAR -- outRangeBegIdx + outRangeCount -- not on the
+    * count, so the trip count comes from the range the opener reported. An
+    * Advance that refuses early fails inside the loop; one that never refuses
+    * fails right after it. */
    {
       TA_SMA_Stream *s = NULL;
-      double seed = 0.0;
+      double seed = 0.0, v = SF_ADV_CANARY;
       int b0, n0, b1, n1;
       if( TA_SMA_Open( &s, sfClose, warm, 10, &seed ) != TA_SUCCESS )
          return TA_STREAM_ADVANCE_SETUP_FAILED;
-      for( k = 0; k < TA_MAX_INDEX; k++ )
-         TA_SMA_Advance( s );
-      SF_ADV_READ( SMA, "SMA(saturate)", s, b0, n0 );
-      if( n0 != TA_MAX_INDEX )
+      SF_ADV_READ( SMA, "SMA(ceiling)", s, b0, n0 );
+      for( k = b0 + n0; k <= TA_MAX_INDEX; k++ )
       {
-         printf( "  SMA(saturate): the count reached %d, expected %d\n", n0, TA_MAX_INDEX );
+         if( TA_SMA_Advance( s ) != TA_SUCCESS )
+         {
+            printf( "  SMA(ceiling): Advance refused bar %d, inside the domain\n", k );
+            TA_SMA_Close( s );
+            return TA_STREAM_ADVANCE_WRONG_COUNT;
+         }
+      }
+      SF_ADV_READ( SMA, "SMA(ceiling)", s, b1, n1 );
+      if( b1 != b0 || b1 + n1 != TA_MAX_INDEX + 1 )
+      {
+         printf( "  SMA(ceiling): the last bar counted was %d, expected %d\n",
+                 b1 + n1 - 1, TA_MAX_INDEX );
          TA_SMA_Close( s );
          return TA_STREAM_ADVANCE_WRONG_COUNT;
       }
-      TA_SMA_Advance( s );
-      SF_ADV_READ( SMA, "SMA(saturate)", s, b1, n1 );
-      TA_SMA_Close( s );
-      if( b1 != b0 || n1 != TA_MAX_INDEX )
+      sfAdvCeilings++;
+
+      /* Past it, every call that would count a bar answers the same code.
+       * Terminal, unlike the non-finite rejection above: the repeat proves no
+       * call clears it. Peek is exempt and must still answer. */
+      if( TA_SMA_Advance( s ) != TA_OUT_OF_RANGE_END_INDEX ||
+          TA_SMA_Update( s, sfClose[warm], &v ) != TA_OUT_OF_RANGE_END_INDEX ||
+          TA_SMA_Advance( s ) != TA_OUT_OF_RANGE_END_INDEX )
       {
-         printf( "  SMA(saturate): the count did not saturate (%d,%d)\n", b1, n1 );
+         printf( "  SMA(ceiling): a call past TA_MAX_INDEX was not refused\n" );
+         TA_SMA_Close( s );
+         return TA_STREAM_ADVANCE_NOT_REJECTED;
+      }
+      /* Its own compare, not SF_ADV_HELD's: that one feeds U3's floor, and a new
+       * axis borrowing an old counter lets the old axis shrink by one. Read
+       * before the Peek below, which legitimately writes the slot. */
+      if( v != SF_ADV_CANARY )
+      {
+         printf( "  SMA(ceiling): a refused Update wrote %.17g into the output\n", v );
+         TA_SMA_Close( s );
+         return TA_STREAM_ADVANCE_VALUE_MOVED;
+      }
+      if( TA_SMA_Peek( s, sfClose[warm], &v ) != TA_SUCCESS )
+      {
+         printf( "  SMA(ceiling): Peek was refused; it counts no bar\n" );
+         TA_SMA_Close( s );
+         return TA_STREAM_ADVANCE_NOT_REJECTED;
+      }
+      sfAdvCeilingRejects++;
+
+      SF_ADV_READ( SMA, "SMA(ceiling)", s, b0, n0 );
+      TA_SMA_Close( s );
+      if( b0 != b1 || n0 != n1 )
+      {
+         printf( "  SMA(ceiling): a refused call moved (%d,%d) -> (%d,%d)\n",
+                 b1, n1, b0, n0 );
          return TA_STREAM_ADVANCE_WRONG_COUNT;
       }
-      sfAdvSaturates++;
+      sfAdvCeilingHolds++;
    }
    return TA_TEST_PASS;
 }
@@ -955,7 +999,8 @@ ErrorNumber test_func_stream_finite( TA_History *history )
    sfAdvRejects = sfAdvHolds = sfAdvResumes = sfAdvValues = sfAdvPeekStills = 0;
    sfAdvValueHolds = sfAdvValueTracks = 0;
    sfAdvSkips = sfAdvSkipHolds = 0;
-   sfAdvNullRejects = sfAdvSaturates = 0;
+   sfAdvNullRejects = 0;
+   sfAdvCeilings = sfAdvCeilingRejects = sfAdvCeilingHolds = 0;
 
    if( ( errNb = sf_sma()       ) != TA_TEST_PASS ) return errNb;
    if( ( errNb = sf_minus_di()  ) != TA_TEST_PASS ) return errNb;
@@ -979,7 +1024,8 @@ ErrorNumber test_func_stream_finite( TA_History *history )
        sfAdvValues < 33 || sfAdvPeekStills < 48 ||
        sfAdvValueHolds < 33 || sfAdvValueTracks < 33 ||
        sfAdvSkips < 24 || sfAdvSkipHolds < 33 ||
-       sfAdvNullRejects < 1 || sfAdvSaturates < 1 )
+       sfAdvNullRejects < 1 || sfAdvCeilings < 1 ||
+       sfAdvCeilingRejects < 1 || sfAdvCeilingHolds < 1 )
    {
       printf( "  Failed: the rejected-Update advance gate ran fewer checks "
               "than it was written with\n" );

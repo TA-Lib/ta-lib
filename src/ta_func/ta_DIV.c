@@ -230,10 +230,13 @@ TA_RetCode TA_DIV_OpenAndFillInternal( struct TA_DIV_Stream **stream, const doub
 
 TA_LIB_API TA_RetCode TA_DIV_Update( TA_DIV_Stream *stream, double inReal0, double inReal1, double *outReal )
 {
-   if( !stream || !outReal ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outReal ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inReal0 ) || !TA_IS_FINITE( inReal1 ) ) return TA_BAD_PARAM;
    TA_DIV_StepImpl( stream, inReal0, inReal1, outReal );
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -269,7 +272,9 @@ TA_LIB_API TA_RetCode TA_DIV_OutRange( const TA_DIV_Stream *stream, int *outBegI
 TA_LIB_API TA_RetCode TA_DIV_Advance( TA_DIV_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

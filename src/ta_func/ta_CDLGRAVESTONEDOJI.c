@@ -501,10 +501,13 @@ TA_RetCode TA_CDLGRAVESTONEDOJI_OpenAndFillInternal( struct TA_CDLGRAVESTONEDOJI
 
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Update( TA_CDLGRAVESTONEDOJI_Stream *stream, double inOpen, double inHigh, double inLow, double inClose, int *outInteger )
 {
-   if( !stream || !outInteger ) return TA_BAD_PARAM;
+   if( !stream ) return TA_BAD_PARAM;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   if( !outInteger ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inOpen ) || !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    TA_CDLGRAVESTONEDOJI_StepImpl( stream, inOpen, inHigh, inLow, inClose, outInteger );
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
@@ -548,7 +551,9 @@ TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_OutRange( const TA_CDLGRAVESTONEDOJI_
 TA_LIB_API TA_RetCode TA_CDLGRAVESTONEDOJI_Advance( TA_CDLGRAVESTONEDOJI_Stream *stream )
 {
    if( !stream ) return TA_BAD_PARAM;
-   if( stream->outRangeCount < TA_MAX_INDEX ) stream->outRangeCount++;
+   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
+      return TA_OUT_OF_RANGE_END_INDEX;
+   stream->outRangeCount++;
    return TA_SUCCESS;
 }
 

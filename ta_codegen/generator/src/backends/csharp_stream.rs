@@ -860,16 +860,13 @@ fn emit_handle_class_with_members(
     );
     // Absolute-index outputs need a streaming-specific caveat the batch prose
     // cannot carry: batch describes them as an index INTO the input array, and
-    // in this tier there is no array — the bar argument is a scalar. The basis
-    // is also rebased once the bar count passes 2^30, so the value is a window
-    // position, never a durable bar id.
+    // in this tier there is no array — the bar argument is a scalar.
     if has_absolute_index_output(func) {
         d.para(
             "This indicator reports absolute bar indices. In the streaming tier they \
-             count bars fed to this stream rather than positions in an array, and the \
-             basis is shifted once that count passes 2^30 — so treat an index as a \
-             position within the current window, not as an identifier you can store \
-             and compare against one read much later.",
+             count bars fed to this stream rather than positions in an array — so treat \
+             an index as a position within this handle's own window, not as one you can \
+             compare against an index a different handle reported.",
         );
     }
     d.close("remarks");
@@ -909,6 +906,10 @@ fn emit_handle_class_with_members(
          <c>Open</c> hands back only the last value, a subset of this range, because the \
          caller chose not to take the fill."
     ));
+    d.para(
+        "The last bar it can reach is <see cref=\"Core.MAX_INDEX\"/>; past that \
+         <c>Update</c> and <c>Advance</c> throw.",
+    );
     d.close("remarks");
     o.push('\n');
     o.push_str(&d.render(6));
@@ -932,11 +933,18 @@ fn emit_handle_class_with_members(
          that will not be re-fed, or a session with no print. Without it two handles on \
          one feed drift a bar apart when only one of them skips.",
     );
+    d.para(
+        "Throws <see cref=\"System.ArgumentException\"/> once <see cref=\"OutRange\"/> has \
+         reached bar <see cref=\"Core.MAX_INDEX\"/>, the last one the batch tier can \
+         address and the last this handle will count. <c>Update</c> throws the same \
+         there.",
+    );
     d.close("remarks");
     o.push('\n');
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public void Advance()");
     let _ = writeln!(o, "      {{");
+    o.push_str(&out_range_ceiling_guard(func, "         ", "advance"));
     o.push_str(&advance_out_range("         "));
     let _ = writeln!(o, "      }}");
 
@@ -1040,14 +1048,29 @@ fn fresh_value_expr(func: &FuncDef, handle_var: &str) -> String {
     }
 }
 
-/// The handle's produced-bar count, bumped by one.
+/// Rule U4 — the opener's index-pair check read on a live handle, one bar at a
+/// time (`docs/error-handling-spec.md` §2.4, which carries why a sub-handle
+/// cannot answer it before its parent).
 ///
-/// Saturating: nothing bounds how many bars a live stream is fed, and past
-/// `MAX_INDEX` the count has left the batch index domain anyway. Every entry
-/// point that advances renders it from here, so the guard cannot drift between
-/// them.
+/// `>` and not `>=`: an opener may legally take `MAX_INDEX + 1` bars (rule S2),
+/// so a handle can be born holding the last bar in the domain and it is the NEXT
+/// one that has nowhere to go.
+///
+/// Through `Core.StreamFailure` like every other rejection at this tier, so the
+/// prefix and the type match the open rejections exactly.
+fn out_range_ceiling_guard(func: &FuncDef, indent: &str, what: &str) -> String {
+    let n = base_name(func);
+    format!(
+        "{indent}if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )\n\
+         {indent}   throw Core.StreamFailure(\"{n}\", \"{what}\", RetCode.OutOfRangeEndIndex);\n"
+    )
+}
+
+/// The handle's produced-bar count, bumped by one. Unconditional: every entry
+/// point that reaches it has already answered [`out_range_ceiling_guard`], which
+/// is what bounds the count.
 fn advance_out_range(indent: &str) -> String {
-    format!("{indent}if( outRangeCount < Core.MAX_INDEX ) outRangeCount++;\n")
+    format!("{indent}outRangeCount++;\n")
 }
 
 /// The per-bar finite-input rejection for `Update`/`Peek`: one `double.IsFinite`
@@ -1108,6 +1131,11 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
          on whatever it is given: a handle retains its state, so a single non-finite bar \
          would poison every later value it produces.",
     );
+    d.para(
+        "Throws <see cref=\"System.ArgumentException\"/> once <see cref=\"OutRange\"/> has \
+         reached bar <see cref=\"Core.MAX_INDEX\"/>, which no re-feed clears: the handle \
+         has run out of index domain and only a shorter history can start a new one.",
+    );
     d.close("remarks");
     for input in &inputs {
         d.param(input, &bar_param_desc(input));
@@ -1117,6 +1145,7 @@ fn emit_update_method(o: &mut String, func: &FuncDef) {
     o.push_str(&d.render(6));
     let _ = writeln!(o, "      public {vt} Update( {sig_bars} )");
     let _ = writeln!(o, "      {{");
+    o.push_str(&out_range_ceiling_guard(func, "         ", "update"));
     o.push_str(&finite_bar_check(func, "         ", "update"));
     let _ = writeln!(o, "         core.{base}StepImpl(this, {fwd_bars});");
     // The accepted bar's own bump; a rejected bar is not counted at all.

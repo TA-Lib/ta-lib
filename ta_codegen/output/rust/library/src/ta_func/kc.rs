@@ -741,8 +741,15 @@ impl KcStream {
     /// a corrected value arrives, or call [`Self::advance`] to count it and
     /// carry on — two handles on one feed drift a bar apart if neither
     /// happens.
+    ///
+    /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached
+    /// bar [`Core::MAX_INDEX`], which no re-feed clears: the handle has run
+    /// out of index domain and only a shorter history can start a new one.
     #[doc(alias = "TA_KC_Update")]
     pub fn update(&mut self, inHigh: f64, inLow: f64, inClose: f64) -> Result<(f64, f64, f64), RetCode> {
+        if self.out.beg_idx + self.out.count > Core::MAX_INDEX {
+            return Err(RetCode::OutOfRangeEndIndex);
+        }
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
@@ -753,9 +760,7 @@ impl KcStream {
         self.state.cur_outRealUpperBand = outRealUpperBand;
         self.state.cur_outRealMiddleBand = outRealMiddleBand;
         self.state.cur_outRealLowerBand = outRealLowerBand;
-        if self.out.count < Core::MAX_INDEX {
-            self.out.count += 1;
-        }
+        self.out.count += 1;
         Ok((outRealUpperBand, outRealMiddleBand, outRealLowerBand))
     }
 
@@ -829,6 +834,9 @@ impl KcStream {
     /// `peek` — and a clone carries it verbatim. A plain `Open` hands back
     /// only the last value, a subset of this range, because the caller chose
     /// not to take the fill.
+    ///
+    /// The last bar it can reach is [`Core::MAX_INDEX`]; past that `update`
+    /// and `advance` answer [`RetCode::OutOfRangeEndIndex`].
     #[doc(alias = "TA_KC_OutRange")]
     pub fn out_range(&self) -> OutRange {
         self.out
@@ -841,11 +849,19 @@ impl KcStream {
     /// For a bar the caller leaves out: one an `update` rejected and that
     /// will not be re-fed, or a session with no print. Without it two handles
     /// on one feed drift a bar apart when only one of them skips.
+    ///
+    /// # Errors
+    ///
+    /// [`RetCode::OutOfRangeEndIndex`] once [`Self::out_range`] has reached
+    /// bar [`Core::MAX_INDEX`] — the last one the batch tier can address, and
+    /// the last this handle will count. `update` answers the same there.
     #[doc(alias = "TA_KC_Advance")]
-    pub fn advance(&mut self) {
-        if self.out.count < Core::MAX_INDEX {
-            self.out.count += 1;
+    pub fn advance(&mut self) -> Result<(), RetCode> {
+        if self.out.beg_idx + self.out.count > Core::MAX_INDEX {
+            return Err(RetCode::OutOfRangeEndIndex);
         }
+        self.out.count += 1;
+        Ok(())
     }
 }
 

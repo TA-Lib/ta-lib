@@ -304,7 +304,7 @@ fn a_rejected_bar_costs_nothing_and_the_caller_chooses() {
     // moves, so the skipped bar's output is the previous one, held.
     let held = s.value();
     let at = s.out_range();
-    s.advance();
+    s.advance().expect("inside the index domain");
     assert_eq!(
         s.out_range(),
         OutRange { beg_idx: at.beg_idx, count: at.count + 1 },
@@ -317,25 +317,34 @@ fn a_rejected_bar_costs_nothing_and_the_caller_chooses() {
     assert_eq!(s.out_range().count, at.count + 2, "and the handle is still usable");
 }
 
-/// The saturation guard, which no feed-driven test can reach: `MAX_INDEX` bars
-/// is 100 million, and `advance` is the only call that moves the count without
-/// also doing O(period) work per bar.
+/// Rule U4, which no feed-driven test can reach: `MAX_INDEX` is 100 million
+/// bars, and `advance` is the only call that moves the count without also doing
+/// O(period) work per bar.
+///
+/// The ceiling is on the BAR, `beg_idx + count`, not on the count — a handle
+/// warmed to a lookback of 13 tops out 13 short of `MAX_INDEX` — so the trip
+/// count is computed from the range the opener actually reported.
 #[test]
-fn advance_saturates_at_max_index() {
+fn the_last_bar_a_stream_can_count_is_max_index() {
     let core = Core::new();
     let (_, _, close, _, _) = series(N);
     let (mut s, _) = core.sma_open(&close[..WARM], 14).expect("open");
-    // Bounded, so an `advance` that stopped moving the count FAILS here instead
-    // of spinning: a test that hangs on its own regression reports nothing.
-    let mut spins = 0usize;
-    while s.out_range().count < Core::MAX_INDEX {
-        s.advance();
-        spins += 1;
-        assert!(spins <= Core::MAX_INDEX, "advance stopped moving the count short of MAX_INDEX");
+    let at = s.out_range();
+    assert_eq!(at.beg_idx + at.count, WARM, "the opener reports the bars it consumed");
+    for _ in 0..(Core::MAX_INDEX + 1 - at.beg_idx - at.count) {
+        s.advance().expect("inside the index domain");
     }
-    assert_eq!(s.out_range().count, Core::MAX_INDEX);
-    s.advance();
-    assert_eq!(s.out_range().count, Core::MAX_INDEX, "the count saturates rather than wrapping");
+    let full = s.out_range();
+    assert_eq!(full.beg_idx + full.count, Core::MAX_INDEX + 1, "the last bar is MAX_INDEX");
+
+    // Past it, every call that would COUNT a bar answers the same code, and none
+    // of them moves anything. Terminal, unlike the non-finite rejection above:
+    // no re-feed clears it.
+    assert_eq!(s.advance(), Err(RetCode::OutOfRangeEndIndex));
+    assert_eq!(s.update(close[WARM]), Err(RetCode::OutOfRangeEndIndex));
+    assert!(s.peek(close[WARM]).is_ok(), "peek counts no bar, so it stays answerable");
+    assert_eq!(s.out_range(), full, "a rejection past the ceiling moves nothing");
+    assert_eq!(s.advance(), Err(RetCode::OutOfRangeEndIndex), "and it does not clear");
 }
 
 /// The anchored openers: `<N>_OpenInternal` begins at `max(startIdx, lookback)`,

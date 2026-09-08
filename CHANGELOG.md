@@ -87,6 +87,8 @@ See [github commits](https://github.com/TA-Lib/ta-lib/commits) for complete list
 - (#129) API: `TA_FUNC_UNST_ADXR` and `TA_FUNC_UNST_STOCHRSI` enum constants removed.
 - (#180) API: `startIdx` and `endIdx` are now capped at the new `TA_MAX_INDEX` (100,000,000);
   above it a call returns `TA_OUT_OF_RANGE_START_INDEX` / `TA_OUT_OF_RANGE_END_INDEX`.
+  A stream handle lives in the same domain: the last bar it can count is `TA_MAX_INDEX`,
+  and past it `Update` and `Advance` report `TA_OUT_OF_RANGE_END_INDEX`.
 - (#144) API: `TA_FUNC_UNST_NONE` enum constant removed. It could not be passed in
   (it is rejected) and was never returned, so it had no use in the public API.
 - (#122) Removed the `ide/` directory (Visual Studio/Xcode/MSVC project files). Use autotools, CMake and vcpkg instead.

@@ -784,6 +784,9 @@ fn method<'a>(src: &'a str, sig: &str, what: &str) -> &'a str {
 /// declinable pointer must reach the step unchanged — the step's own
 /// `if( out != NULL )` is what turns a declination into a suppressed write
 /// rather than a suppressed computation.
+///
+/// The handle is not in the guard: it is checked on its own line ahead of rule
+/// U4, which has to read the range head (`docs/error-handling-spec.md` §2.4).
 #[test]
 fn test_a_nullable_output_is_declinable_at_update_in_c() {
     let registry = make_registry();
@@ -792,13 +795,13 @@ fn test_a_nullable_output_is_declinable_at_update_in_c() {
         (
             "MAMA",
             load_indicator("mama"),
-            "if( !stream || !outMAMA ) return TA_BAD_PARAM;",
+            "if( !outMAMA ) return TA_BAD_PARAM;",
             "TA_MAMA_StepImpl( stream, inReal, outMAMA, outFAMA );",
         ),
         (
             "SYNTH10",
             load_synth("synth10"),
-            "if( !stream || !outRequired ) return TA_BAD_PARAM;",
+            "if( !outRequired ) return TA_BAD_PARAM;",
             "TA_SYNTH10_StepImpl( stream, inReal, outFirstOptional, outRequired, outSecondOptional );",
         ),
     ] {

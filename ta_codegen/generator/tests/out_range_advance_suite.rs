@@ -118,30 +118,93 @@ fn body_of(src: &str, sig: impl Fn(&str) -> bool) -> String {
     src[j..=k].to_string()
 }
 
-/// The one spelling per backend of the saturating advance, of the bare
-/// increment, and of a rejection. The advance is matched on its guard: an
-/// increment that lost the `MAX_INDEX` bound is a defect of its own (#180) and
-/// must not read as an advance here.
-fn spellings(lang: &str) -> (&'static str, &'static str, &'static str) {
+/// The one spelling per backend of the advance and of a U3 rejection. The
+/// advance used to be matched on the `MAX_INDEX` clamp that wrapped it; rule U4
+/// answers that bound ahead of the step instead, so what is left to match is the
+/// increment itself.
+fn spellings(lang: &str) -> (&'static str, &'static str) {
     match lang {
-        "c" => ("outRangeCount < TA_MAX_INDEX", "outRangeCount++", "return TA_BAD_PARAM;"),
-        "rust" => (
-            "self.out.count < Core::MAX_INDEX",
-            "out.count += 1",
-            "return Err(RetCode::BadParam);",
-        ),
-        "java" => (
-            "this.outRangeCount < MAX_INDEX",
-            "outRangeCount++",
-            "throw new TaLibArgumentException(",
-        ),
-        "csharp" => (
-            "outRangeCount < Core.MAX_INDEX",
-            "outRangeCount++",
-            "throw Core.StreamFailure(",
-        ),
+        "c" => ("outRangeCount++", "return TA_BAD_PARAM;"),
+        "rust" => ("out.count += 1", "return Err(RetCode::BadParam);"),
+        "java" => ("outRangeCount++", "throw new TaLibArgumentException("),
+        "csharp" => ("outRangeCount++", "throw Core.StreamFailure("),
         other => panic!("unknown backend {other}"),
     }
+}
+
+/// Rule U4's guard, asserted in the ONE slot §2.4 puts it in: first, with only
+/// the handle-presence check allowed in front of it — exactly as only `!stream`
+/// may precede an opener's S1/S2 pair.
+///
+/// Position, not presence. C is matched as one two-line substring because its
+/// `Peek` opens with declarations (C89) and so has no "first statement"; the
+/// other three are matched on the body's leading statements, trimmed, so the
+/// assertion cannot drift off a re-indent.
+/// Rule U4's condition, per backend — the anchor both the presence assertion
+/// and `Peek`'s absence assertion key on, so the two cannot drift apart.
+fn ceiling_needle(lang: &str) -> &'static str {
+    match lang {
+        "c" => "stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX",
+        "rust" => "if self.out.beg_idx + self.out.count > Core::MAX_INDEX {",
+        "java" => "if( this.outRangeBegIdx + this.outRangeCount > MAX_INDEX )",
+        "csharp" => "if( outRangeBegIdx + outRangeCount > Core.MAX_INDEX )",
+        other => panic!("unknown backend {other}"),
+    }
+}
+
+fn assert_ceiling_is_answered_first(what: &str, lang: &str, body: &str) {
+    if lang == "c" {
+        let want = concat!(
+            "   if( !stream ) return TA_BAD_PARAM;\n",
+            "   if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )\n",
+            "      return TA_OUT_OF_RANGE_END_INDEX;\n"
+        );
+        assert!(
+            body.contains(want),
+            "{what}: rule U4 is not answered right after the handle check:\n{body}"
+        );
+        return;
+    }
+    // (condition, how it rejects, the code it names). The code is a separate
+    // needle from the throw: Java's `failure(...)` and C#'s `StreamFailure(...)`
+    // render several codes, so matching the call alone would let U4 answer any
+    // of them -- and Java's own runtime probe cannot tell them apart either,
+    // since `failure` maps both index codes to one exception type.
+    let want: [&str; 3] = match lang {
+        "rust" => [
+            ceiling_needle("rust"),
+            "return Err(",
+            "RetCode::OutOfRangeEndIndex",
+        ],
+        "java" => [
+            ceiling_needle("java"),
+            "throw failure(",
+            "RetCode.OutOfRangeEndIndex",
+        ],
+        "csharp" => [
+            ceiling_needle("csharp"),
+            "throw Core.StreamFailure(",
+            "RetCode.OutOfRangeEndIndex",
+        ],
+        other => panic!("unknown backend {other}"),
+    };
+    let head: Vec<&str> = body
+        .trim_start_matches(['{', '\n'])
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .take(2)
+        .collect();
+    assert_eq!(head.len(), 2, "{what}: body too short to carry rule U4:\n{body}");
+    assert_eq!(head[0], want[0], "{what}: rule U4 is not the first thing answered:\n{body}");
+    assert!(
+        head[1].starts_with(want[1]),
+        "{what}: rule U4 does not reject:\n{body}"
+    );
+    assert!(
+        head[1].contains(want[2]),
+        "{what}: rule U4 does not answer TA_OUT_OF_RANGE_END_INDEX:\n{body}"
+    );
 }
 
 /// The full non-finite test, as that backend spells it — every bar input, joined
@@ -226,16 +289,18 @@ fn no_advance_on_any_reject(
     sites.len()
 }
 
-/// The per-handle `advance`, in every backend. Matched on its signature and on
-/// the saturating guard in its body, so an accessor that lost the `MAX_INDEX`
-/// bound (#180) does not read as present.
+/// The per-handle `advance`, in every backend, matched on its signature. Rust's
+/// is fallible because rule U4 gave it something to answer; the other three
+/// carry the rejection as a throw or a returned code and keep their shape.
 fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
     match lang {
         "c" => {
             let c = format!("TA_RetCode TA_{upper}_Advance( ");
             Box::new(move |l: &str| l.starts_with("TA_LIB_API ") && l.contains(&c))
         }
-        "rust" => Box::new(|l: &str| l.starts_with("pub fn advance(&mut self) {")),
+        "rust" => {
+            Box::new(|l: &str| l.starts_with("pub fn advance(&mut self) -> Result<(), RetCode> {"))
+        }
         "java" => Box::new(|l: &str| l.starts_with("public void advance() {")),
         "csharp" => Box::new(|l: &str| l.starts_with("public void Advance()")),
         other => panic!("unknown backend {other}"),
@@ -248,6 +313,10 @@ fn advance_entry_sig(lang: &str, upper: &str) -> Box<dyn Fn(&str) -> bool> {
 fn only_an_accepted_bar_advances_the_range() {
     let (mut updates, mut peeks, mut guards) = (0usize, 0usize, 0usize);
     let mut advancers = 0usize;
+    // Rule U4's own counter, not a share of the others: it is asserted on three
+    // entry points where they cover one or two, so a sweep that stopped reaching
+    // `advance` would still saturate theirs.
+    let mut ceilings = 0usize;
     let mut no_bars = Vec::new();
     for name in streaming_funcs() {
         let upper = name.to_uppercase();
@@ -261,7 +330,7 @@ fn only_an_accepted_bar_advances_the_range() {
         }
         for lang in LANGS {
             let s = section(&name, lang);
-            let (guard, increment, reject) = spellings(lang);
+            let (advance, reject) = spellings(lang);
 
             let upd = body_of(&s, entry_sig(lang, &upper, "update"));
             let scalar = finite_test(lang, &bars);
@@ -269,12 +338,12 @@ fn only_an_accepted_bar_advances_the_range() {
                 &format!("{name}/{lang} Update"),
                 &upd,
                 &scalar,
-                guard,
+                advance,
                 reject,
             );
             // The accepted bar IS still counted, so deleting the advance
             // outright fails here rather than passing the check above.
-            let advances = positions(&upd, guard);
+            let advances = positions(&upd, advance);
             assert!(
                 !advances.is_empty(),
                 "{name}: {lang} Update no longer counts the accepted bar:\n{upd}"
@@ -294,20 +363,36 @@ fn only_an_accepted_bar_advances_the_range() {
             // moves the range without a bar.
             let adv = body_of(&s, advance_entry_sig(lang, &upper));
             assert!(
-                adv.contains(guard),
-                "{name}: {lang} advance() does not move the count under the \
-                 MAX_INDEX guard:\n{adv}"
+                adv.contains(advance),
+                "{name}: {lang} advance() does not move the count:\n{adv}"
             );
             advancers += 1;
 
             let peek = body_of(&s, entry_sig(lang, &upper, "peek"));
             assert!(
-                !peek.contains(guard) && !peek.contains(increment),
+                !peek.contains(advance),
                 "{name}: {lang} Peek moves the range. A peek that counts a bar is a peek \
                  that writes the handle, and the receiver being const/&self is the whole \
                  contract:\n{peek}"
             );
             peeks += 1;
+
+            // Rule U4, on the two entry points that count a bar. `Peek` is
+            // exempt and must stay so.
+            for (verb, body) in [("Update", &upd), ("Advance", &adv)] {
+                assert_ceiling_is_answered_first(
+                    &format!("{name}/{lang} {verb}"),
+                    lang,
+                    body,
+                );
+                ceilings += 1;
+            }
+            assert!(
+                !peek.contains(ceiling_needle(lang)),
+                "{name}: {lang} Peek answers rule U4. It counts no bar, so it has no \
+                 index to leave the domain, and the guard is a measurable share of a \
+                 cheap peek:\n{peek}"
+            );
         }
     }
     assert!(
@@ -324,9 +409,10 @@ fn only_an_accepted_bar_advances_the_range() {
     // Its own counter, not a share of the others: a sweep that stopped reaching
     // `advance` would still saturate the Update and Peek ones.
     assert!(advancers >= 800, "only {advancers} advance() bodies were checked");
+    assert!(ceilings >= 1600, "only {ceilings} rule-U4 guards were checked");
     println!(
         "checked {updates} Update reject sites, {peeks} peeks, {guards} guards, \
-         {advancers} advance() bodies across {} backends",
+         {advancers} advance() bodies, {ceilings} U4 ceilings across {} backends",
         LANGS.len()
     );
 }

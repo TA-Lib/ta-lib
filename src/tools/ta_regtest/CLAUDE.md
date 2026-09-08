@@ -320,7 +320,7 @@ of floors: every streaming function must report a non-zero `peek_reps`, and
 refusals outnumbering completed probes on one request is a failure of its own.
 
 | **state equivalence** | the whole handle after `Open(P)` + `n-P` updates vs the handle after `Open(n)` | a defect present in BOTH tiers |
-| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `Advance` (which must report exactly one more) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
+| **range** | the handle's `OutRange` against the batch range, at five sites: the `OpenAndFill` handle, `Open(P)` + updates, the anchored `OpenInternal`, the forked handle, and the same prefix handle after one `Advance` (which must succeed and report exactly one more; rule U4's ceiling is 100 000 000 bars away at these sizes) | an anchor the history does not reach — every site keeps `lb < Sidx < svN - 1`, so the post-clamp history re-check is pinned in the generator instead |
 
 Of the five value families, two delegate to the batch transcription — the
 `OpenAndFill` and anchored `OpenInternal` legs — leaving the prefix sweep's
