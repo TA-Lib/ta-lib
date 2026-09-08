@@ -183,7 +183,7 @@
       return RetCode.Success ;
    }
    /**
-    * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+    * Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
     * 1994): a simple moving average of the candle body, close minus open. It
     * measures how bullish or bearish the bodies have been over the window,
     * independently of the wicks — above zero the bodies closed up on balance,
@@ -251,7 +251,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Tushar Chande and Stanley Kroll's Qstick (*The New Technical Trader*,
+    * Tushar Chande and Stanley Kroll's Qstick (<i>The New Technical Trader</i>,
     * 1994): a simple moving average of the candle body, close minus open. It
     * measures how bullish or bearish the bodies have been over the window,
     * independently of the wicks — above zero the bodies closed up on balance,

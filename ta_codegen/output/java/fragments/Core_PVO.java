@@ -209,8 +209,8 @@
    /**
     * Percentage Volume Oscillator: a variation of the <a
     * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
-    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
-    * price. It is the difference between a fast and slow moving average of
+    * (PPO, created by Gerald Appel) applied to the <b>volume</b> series instead
+    * of price. It is the difference between a fast and slow moving average of
     * volume, expressed as a percentage of the slow MA. Positive when short-term
     * volume is above its longer-term average (rising participation), negative
     * when below. The default periods (12, 26) match MACD and PPO.
@@ -286,8 +286,8 @@
    /**
     * Percentage Volume Oscillator: a variation of the <a
     * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
-    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
-    * price. It is the difference between a fast and slow moving average of
+    * (PPO, created by Gerald Appel) applied to the <b>volume</b> series instead
+    * of price. It is the difference between a fast and slow moving average of
     * volume, expressed as a percentage of the slow MA. Positive when short-term
     * volume is above its longer-term average (rising participation), negative
     * when below. The default periods (12, 26) match MACD and PPO.

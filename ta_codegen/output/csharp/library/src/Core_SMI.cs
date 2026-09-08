@@ -661,7 +661,7 @@ public partial class Core
    }
    /// <summary>
    /// Stochastic Momentum Index: where the close sits relative to the
-   /// **midpoint** of the recent high/low range, double-smoothed. Lane's
+   /// <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
    /// stochastic measures the close against the bottom of the range; Blau
    /// measures it against the middle, then smooths numerator and denominator
    /// separately with two exponential averages before dividing, which is what
@@ -755,7 +755,7 @@ public partial class Core
    }
    /// <summary>
    /// Stochastic Momentum Index: where the close sits relative to the
-   /// **midpoint** of the recent high/low range, double-smoothed. Lane's
+   /// <b>midpoint</b> of the recent high/low range, double-smoothed. Lane's
    /// stochastic measures the close against the bottom of the range; Blau
    /// measures it against the middle, then smooths numerator and denominator
    /// separately with two exponential averages before dividing, which is what

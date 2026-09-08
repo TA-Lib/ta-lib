@@ -347,8 +347,8 @@ public partial class Core
    }
    /// <summary>
    /// Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
-   /// measure from *Smarter Trading* (1995) — the net directional movement over
-   /// the period divided by the total path travelled to get there. 1.0 is a
+   /// measure from <i>Smarter Trading</i> (1995) — the net directional movement
+   /// over the period divided by the total path travelled to get there. 1.0 is a
    /// perfectly efficient (straight-line) move; values near 0 are churn. This is
    /// exactly the efficiency ratio
    /// <see href="https://ta-lib.org/functions/kama"><c>KAMA</c></see> computes
@@ -418,8 +418,8 @@ public partial class Core
    }
    /// <summary>
    /// Kaufman Efficiency Ratio (also searched as "KER"): Perry Kaufman's noise
-   /// measure from *Smarter Trading* (1995) — the net directional movement over
-   /// the period divided by the total path travelled to get there. 1.0 is a
+   /// measure from <i>Smarter Trading</i> (1995) — the net directional movement
+   /// over the period divided by the total path travelled to get there. 1.0 is a
    /// perfectly efficient (straight-line) move; values near 0 are churn. This is
    /// exactly the efficiency ratio
    /// <see href="https://ta-lib.org/functions/kama"><c>KAMA</c></see> computes

@@ -97,9 +97,9 @@
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
-    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
-    * every bar since the anchor contributes.
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
+    * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
+    * — every bar since the anchor contributes.
     * <p><b>Formula</b>
     * <pre>{@code
     * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -163,9 +163,9 @@
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
-    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
-    * every bar since the anchor contributes.
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a <i>rolling
+    * window</i> over {@code optInTimePeriod} bars; {@code CUMSUM} has no window
+    * — every bar since the anchor contributes.
     * <p><b>Formula</b>
     * <pre>{@code
     * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`

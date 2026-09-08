@@ -185,13 +185,13 @@
    }
    /**
     * Average Day Range: the arithmetic mean of the last {@code optInTimePeriod}
-    * bar ranges, high minus low. It answers how far price travels *within* a
-    * bar, and is read as a volatility budget — a stop or a target much smaller
-    * than ADR is inside the noise the instrument produces on an ordinary bar,
-    * one much larger asks for a move that rarely happens. Same family as ATR,
-    * and deliberately the narrower member: the range excludes the overnight
-    * gap, so on a gapping instrument ADR is systematically smaller than ATR.
-    * Having both is the point.
+    * bar ranges, high minus low. It answers how far price travels <i>within</i>
+    * a bar, and is read as a volatility budget — a stop or a target much
+    * smaller than ADR is inside the noise the instrument produces on an
+    * ordinary bar, one much larger asks for a move that rarely happens. Same
+    * family as ATR, and deliberately the narrower member: the range excludes
+    * the overnight gap, so on a gapping instrument ADR is systematically
+    * smaller than ATR. Having both is the point.
     * <p><b>Formula</b>
     * <pre>{@code
     * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
@@ -200,7 +200,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
-    * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes *are* the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
+    * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes <i>are</i> the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
     * <li>{@code high} below {@code low} is not rejected. The library validates ranges and parameters, not price sanity, so a bar entered upside down contributes a negative range and the average simply comes out lower, possibly negative, with no error.</li>
     * <li>Not the width of a Donchian channel. {@code MAX(high, n) - MIN(low, n)} is how far the window's extremes lie apart; ADR is the mean of the per-bar ranges, which is smaller whenever the window trends. {@code DONCHIAN} ships the two extremes that width is built from, not the width itself.</li>
     * <li>The request this function answers ({@code TA-Lib/ta-lib-python#575}) named "Average Day Range" but the freqtrade code behind it computes {@code MAX(close, 24) - MIN(close, 24)}, a channel width on the closes with no averaging and no high/low. That is a different series and already reachable, as {@code TA_SUB(TA_MAX(close, 24), TA_MIN(close, 24))}.</li>
@@ -268,13 +268,13 @@
    }
    /**
     * Average Day Range: the arithmetic mean of the last {@code optInTimePeriod}
-    * bar ranges, high minus low. It answers how far price travels *within* a
-    * bar, and is read as a volatility budget — a stop or a target much smaller
-    * than ADR is inside the noise the instrument produces on an ordinary bar,
-    * one much larger asks for a move that rarely happens. Same family as ATR,
-    * and deliberately the narrower member: the range excludes the overnight
-    * gap, so on a gapping instrument ADR is systematically smaller than ATR.
-    * Having both is the point.
+    * bar ranges, high minus low. It answers how far price travels <i>within</i>
+    * a bar, and is read as a volatility budget — a stop or a target much
+    * smaller than ADR is inside the noise the instrument produces on an
+    * ordinary bar, one much larger asks for a move that rarely happens. Same
+    * family as ATR, and deliberately the narrower member: the range excludes
+    * the overnight gap, so on a gapping instrument ADR is systematically
+    * smaller than ATR. Having both is the point.
     * <p><b>Formula</b>
     * <pre>{@code
     * Range_t = High_t - Low_t; ADR_t = ( Σ Range over the last `optInTimePeriod` bars ) / optInTimePeriod
@@ -283,7 +283,7 @@
     * <p><b>Notes</b>
     * <ul>
     * <li>The mean of the ranges, not the difference of the means. {@code SMA(high) - SMA(low)} is algebraically the same quantity and is what both TradingView pages spell, but it subtracts two price-magnitude averages to reach a range-magnitude answer and inherits the larger scale's rounding; TC2000's {@code AVG(H-L, x)} and kand's {@code SMA(High-Low, period)} spell the form implemented here.</li>
-    * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes *are* the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
+    * <li>The "day" is not a calendar day or a trading session. No TA-Lib function takes a timestamp or a session boundary, so the bars the caller passes <i>are</i> the days — pass daily bars for a daily range, hourly bars for an hourly one. This is the convention VWAP already ships under.</li>
     * <li>{@code high} below {@code low} is not rejected. The library validates ranges and parameters, not price sanity, so a bar entered upside down contributes a negative range and the average simply comes out lower, possibly negative, with no error.</li>
     * <li>Not the width of a Donchian channel. {@code MAX(high, n) - MIN(low, n)} is how far the window's extremes lie apart; ADR is the mean of the per-bar ranges, which is smaller whenever the window trends. {@code DONCHIAN} ships the two extremes that width is built from, not the width itself.</li>
     * <li>The request this function answers ({@code TA-Lib/ta-lib-python#575}) named "Average Day Range" but the freqtrade code behind it computes {@code MAX(close, 24) - MIN(close, 24)}, a channel width on the closes with no averaging and no high/low. That is a different series and already reachable, as {@code TA_SUB(TA_MAX(close, 24), TA_MIN(close, 24))}.</li>
