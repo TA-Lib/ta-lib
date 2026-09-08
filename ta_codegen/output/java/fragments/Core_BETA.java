@@ -932,12 +932,6 @@
          int pkSlot1 = -1;
          double pkVal1 = 0.0;
          int pkIdx0 = 0;
-         if( i >= 1073741824 ) {
-            int rebaseShift = trailingIdx & ~sp.xMask;
-            i -= rebaseShift;
-            trailingIdx -= rebaseShift;
-            j -= rebaseShift;
-         }
          pkSlot0 = i & sp.xMask;
          pkVal0 = inReal0;
          pkSlot1 = i & sp.xMask;
@@ -1146,12 +1140,6 @@
       int windowStart = 0;
       double x = 0.0;
       double y = 0.0;
-      if( sp.i >= 1073741824 ) {
-         int rebaseShift = sp.trailingIdx & ~sp.xMask;
-         sp.i -= rebaseShift;
-         sp.trailingIdx -= rebaseShift;
-         sp.j -= rebaseShift;
-      }
       sp.x_inReal0[sp.i & sp.xMask] = inReal0;
       sp.x_inReal1[sp.i & sp.xMask] = inReal1;
       tmp_real = sp.x_inReal0[sp.i & sp.xMask];

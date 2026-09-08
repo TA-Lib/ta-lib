@@ -892,21 +892,13 @@
          double prevDn = sp.prevDn;
          double prevUp = sp.prevUp;
          double shift = sp.shift;
-         int today = sp.today;
          int trailingIdx = sp.trailingIdx;
          int windowStart = sp.windowStart;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         if( today >= 1073741824 ) {
-            int rebaseShift = trailingIdx & ~sp.xMask;
-            today -= rebaseShift;
-            trailingIdx -= rebaseShift;
-            j -= rebaseShift;
-            windowStart -= rebaseShift;
-         }
-         pkSlot0 = today & sp.xMask;
+         pkSlot0 = sp.today & sp.xMask;
          pkVal0 = inReal;
-         tempReal = (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0) - shift;
+         tempReal = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0) - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
@@ -920,15 +912,15 @@
          barsSinceReseed -= 1;
          if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * sp.optInStdDevPeriod;
-            windowStart = today - sp.nbInitialElementNeeded;
+            windowStart = sp.today - sp.nbInitialElementNeeded;
             tempReal = 0.0;
-            for( j = windowStart; j <= today; j += 1 ) {
+            for( j = windowStart; j <= sp.today; j += 1 ) {
                tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
             }
             shift = tempReal * sp.invPeriod;
             periodTotal1 = 0.0;
             periodTotal2 = 0.0;
-            for( j = windowStart; j <= today; j += 1 ) {
+            for( j = windowStart; j <= sp.today; j += 1 ) {
                tempReal = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
                periodTotal1 += tempReal;
                tempReal *= tempReal;
@@ -945,7 +937,7 @@
             periodTotal2 -= tempReal;
          }
          sigma = Math.sqrt(variance);
-         delta = (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0) - ((((today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(today - 1) & sp.xMask] : pkVal0);
+         delta = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0) - ((((sp.today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(sp.today - 1) & sp.xMask] : pkVal0);
          upValue = 0.0;
          dnValue = 0.0;
          if( delta > 0.0 ) {
@@ -996,13 +988,6 @@
       double upValue = 0.0;
       double dnValue = 0.0;
       double total = 0.0;
-      if( sp.today >= 1073741824 ) {
-         int rebaseShift = sp.trailingIdx & ~sp.xMask;
-         sp.today -= rebaseShift;
-         sp.trailingIdx -= rebaseShift;
-         sp.j -= rebaseShift;
-         sp.windowStart -= rebaseShift;
-      }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
       tempReal = sp.x_inReal[sp.today & sp.xMask] - sp.shift;
       sp.periodTotal1 += tempReal;

@@ -476,12 +476,6 @@ impl Core {
         let mut tempValue1: f64 = 0.0_f64;
         let mut tempValue2: f64 = 0.0_f64;
         let mut weightedTrailing: f64 = 0.0_f64;
-        if sp.today >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.today -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.j -= rebaseShift;
-        }
         sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
         weightedTrailing = (sp.optInTimePeriod as f64) * sp.trailingValue;
         sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;
@@ -984,23 +978,16 @@ impl LinearregStream {
             let mut barsSinceReseed = sp.barsSinceReseed;
             let mut j = sp.j;
             let mut sumAbs = sp.sumAbs;
-            let mut today = sp.today;
             let mut trailingIdx = sp.trailingIdx;
             let mut trailingValue = sp.trailingValue;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            if today >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                today -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                j -= rebaseShift;
-            }
-            pkSlot0 = (today & sp.xMask) as usize;
+            pkSlot0 = (sp.today & sp.xMask) as usize;
             pkVal0 = inReal;
             weightedTrailing = (sp.optInTimePeriod as f64) * trailingValue;
             SumXY = SumXY + SumY - weightedTrailing;
-            SumY = SumY - trailingValue + (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 });
-            sumAbs = sumAbs - (trailingValue).abs() + ((if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 })).abs();
+            SumY = SumY - trailingValue + (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            sumAbs = sumAbs - (trailingValue).abs() + ((if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 })).abs();
             // Re-anchor: rebuild both sums from the window itself. #103 left them as
             // running totals that are never rebuilt, so each bar's rounding joins a
             // residue no later bar can subtract -- unbounded in the length of the
@@ -1062,14 +1049,14 @@ impl LinearregStream {
             barsSinceReseed -= 1;
             if barsSinceReseed <= 0 || (weightedTrailing).abs() > 100.0 * sumAbs {
                 barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (today - ((sp.lookbackTotal) as i32)) as usize;
+                windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
                 SumY = 0.0;
                 SumXY = 0.0;
                 sumAbs = 0.0;
                 tempValue2 = sp.lookbackTotal as f64;
-                // for( j = (windowStart) as i32; j <= today; j += 1 )
+                // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
                 j = (windowStart) as i32;
-                while j <= today {
+                while j <= sp.today {
                     tempValue1 = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
                     SumY += tempValue1;
                     SumXY += tempValue2 * tempValue1;

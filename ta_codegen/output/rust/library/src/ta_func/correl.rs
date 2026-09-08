@@ -522,12 +522,6 @@ impl Core {
         let mut spXY: f64 = 0.0_f64;
         let mut tempReal: f64 = 0.0_f64;
         let mut windowStart: usize = 0_usize;
-        if sp.today >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.today -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.j -= rebaseShift;
-        }
         sp.x_inReal0[(sp.today & sp.xMask) as usize] = inReal0;
         sp.x_inReal1[(sp.today & sp.xMask) as usize] = inReal1;
         // Add the incoming value, measured against the shift.
@@ -1165,27 +1159,20 @@ impl CorrelStream {
             let mut sumXY = sp.sumXY;
             let mut sumY = sp.sumY;
             let mut sumY2 = sp.sumY2;
-            let mut today = sp.today;
             let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
-            if today >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                today -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                j -= rebaseShift;
-            }
-            pkSlot0 = (today & sp.xMask) as usize;
+            pkSlot0 = (sp.today & sp.xMask) as usize;
             pkVal0 = inReal0;
-            pkSlot1 = (today & sp.xMask) as usize;
+            pkSlot1 = (sp.today & sp.xMask) as usize;
             pkVal1 = inReal1;
             // Add the incoming value, measured against the shift.
-            x = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(today & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
+            x = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(sp.today & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
             sumX += x;
             sumX2 += x * x;
-            y = (if ((today & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(today & sp.xMask) as usize] } else { pkVal1 }) - shiftY;
+            y = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(sp.today & sp.xMask) as usize] } else { pkVal1 }) - shiftY;
             sumXY += x * y;
             sumY += y;
             sumY2 += y * y;
@@ -1220,15 +1207,15 @@ impl CorrelStream {
             barsSinceReseed -= 1;
             if ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp.leavingX > 1000000.0 * sumX2 || sp.leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = (today - ((sp.lookbackTotal) as i32)) as usize;
+                windowStart = (sp.today - ((sp.lookbackTotal) as i32)) as usize;
                 // Both means in one pass over the window: the rebuild below is the
                 // only O(period) work on this function's hot path, so it is walked
                 // twice, not three times.
                 tempReal = 0.0;
                 shiftY = 0.0;
-                // for( j = (windowStart) as i32; j <= today; j += 1 )
+                // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
                 j = (windowStart) as i32;
-                while j <= today {
+                while j <= sp.today {
                     tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 });
                     shiftY += (if ((j & sp.xMask) as usize) != pkSlot1 { sp.x_inReal1[(j & sp.xMask) as usize] } else { pkVal1 });
                     j += 1;
@@ -1240,9 +1227,9 @@ impl CorrelStream {
                 sumY = sumX2;
                 sumX = sumY;
                 sumXY = sumX;
-                // for( j = (windowStart) as i32; j <= today; j += 1 )
+                // for( j = (windowStart) as i32; j <= sp.today; j += 1 )
                 j = (windowStart) as i32;
-                while j <= today {
+                while j <= sp.today {
                     x = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal0[(j & sp.xMask) as usize] } else { pkVal0 }) - shiftX;
                     sumX += x;
                     sumX2 += x * x;

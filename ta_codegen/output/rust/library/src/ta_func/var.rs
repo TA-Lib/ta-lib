@@ -445,13 +445,6 @@ impl Core {
         let mut tempReal: f64 = 0.0_f64;
         let mut meanValue1: f64 = 0.0_f64;
         let mut variance: f64 = 0.0_f64;
-        if sp.i >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.i -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.j -= rebaseShift;
-            sp.windowStart -= rebaseShift;
-        }
         sp.x_inReal[(sp.i & sp.xMask) as usize] = inReal;
         // Add the incoming value, measured against the shift.
         tempReal = sp.x_inReal[(sp.i & sp.xMask) as usize] - sp.shift;
@@ -966,7 +959,6 @@ impl VarStream {
             let mut meanValue1: f64 = 0.0_f64;
             let mut variance: f64 = 0.0_f64;
             let mut barsSinceReseed = sp.barsSinceReseed;
-            let mut i = sp.i;
             let mut j = sp.j;
             let mut periodTotal1 = sp.periodTotal1;
             let mut periodTotal2 = sp.periodTotal2;
@@ -975,17 +967,10 @@ impl VarStream {
             let mut windowStart = sp.windowStart;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            if i >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                i -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                j -= rebaseShift;
-                windowStart -= rebaseShift;
-            }
-            pkSlot0 = (i & sp.xMask) as usize;
+            pkSlot0 = (sp.i & sp.xMask) as usize;
             pkVal0 = inReal;
             // Add the incoming value, measured against the shift.
-            tempReal = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 }) - shift;
+            tempReal = (if ((sp.i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.i & sp.xMask) as usize] } else { pkVal0 }) - shift;
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
@@ -1012,20 +997,20 @@ impl VarStream {
             barsSinceReseed -= 1;
             if variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * sp.optInTimePeriod) as usize;
-                windowStart = i - ((sp.nbInitialElementNeeded) as i32);
+                windowStart = sp.i - ((sp.nbInitialElementNeeded) as i32);
                 tempReal = 0.0;
-                // for( j = windowStart; j <= i; j += 1 )
+                // for( j = windowStart; j <= sp.i; j += 1 )
                 j = windowStart;
-                while j <= i {
+                while j <= sp.i {
                     tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
                     j += 1;
                 }
                 shift = tempReal * sp.invPeriod;
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
-                // for( j = windowStart; j <= i; j += 1 )
+                // for( j = windowStart; j <= sp.i; j += 1 )
                 j = windowStart;
-                while j <= i {
+                while j <= sp.i {
                     tempReal = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                     periodTotal1 += tempReal;
                     tempReal *= tempReal;

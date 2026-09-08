@@ -814,27 +814,20 @@ public partial class Core
          double sumXY = sp.sumXY;
          double sumY = sp.sumY;
          double sumY2 = sp.sumY2;
-         int today = sp.today;
          int trailingIdx = sp.trailingIdx;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
          int pkSlot1 = -1;
          double pkVal1 = 0.0;
-         if( today >= 1073741824 ) {
-            int rebaseShift = trailingIdx & ~sp.xMask;
-            today -= rebaseShift;
-            trailingIdx -= rebaseShift;
-            j -= rebaseShift;
-         }
-         pkSlot0 = today & sp.xMask;
+         pkSlot0 = sp.today & sp.xMask;
          pkVal0 = inReal0;
-         pkSlot1 = today & sp.xMask;
+         pkSlot1 = sp.today & sp.xMask;
          pkVal1 = inReal1;
          /* Add the incoming value, measured against the shift. */
-         x = (((today & sp.xMask) != pkSlot0) ? sp.x_inReal0[today & sp.xMask] : pkVal0) - shiftX;
+         x = (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal0[sp.today & sp.xMask] : pkVal0) - shiftX;
          sumX += x;
          sumX2 += x * x;
-         y = (((today & sp.xMask) != pkSlot1) ? sp.x_inReal1[today & sp.xMask] : pkVal1) - shiftY;
+         y = (((sp.today & sp.xMask) != pkSlot1) ? sp.x_inReal1[sp.today & sp.xMask] : pkVal1) - shiftY;
          sumXY += x * y;
          sumY += y;
          sumY2 += y * y;
@@ -870,14 +863,14 @@ public partial class Core
          barsSinceReseed -= 1;
          if( ssX < 0.000001 * sumX2 || ssY < 0.000001 * sumY2 || sp.leavingX > 1000000.0 * sumX2 || sp.leavingY > 1000000.0 * sumY2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
-            windowStart = today - sp.lookbackTotal;
+            windowStart = sp.today - sp.lookbackTotal;
             /* Both means in one pass over the window: the rebuild below is the
              * only O(period) work on this function's hot path, so it is walked
              * twice, not three times.
              */
             tempReal = 0.0;
             shiftY = 0.0;
-            for( j = windowStart; j <= today; j += 1 ) {
+            for( j = windowStart; j <= sp.today; j += 1 ) {
                tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0;
                shiftY += ((j & sp.xMask) != pkSlot1) ? sp.x_inReal1[j & sp.xMask] : pkVal1;
             }
@@ -888,7 +881,7 @@ public partial class Core
             sumY = sumX2;
             sumX = sumY;
             sumXY = sumX;
-            for( j = windowStart; j <= today; j += 1 ) {
+            for( j = windowStart; j <= sp.today; j += 1 ) {
                x = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal0[j & sp.xMask] : pkVal0) - shiftX;
                sumX += x;
                sumX2 += x * x;
@@ -992,12 +985,6 @@ public partial class Core
       double spXY = 0.0;
       double tempReal = 0.0;
       int windowStart = 0;
-      if( sp.today >= 1073741824 ) {
-         int rebaseShift = sp.trailingIdx & ~sp.xMask;
-         sp.today -= rebaseShift;
-         sp.trailingIdx -= rebaseShift;
-         sp.j -= rebaseShift;
-      }
       sp.x_inReal0[sp.today & sp.xMask] = inReal0;
       sp.x_inReal1[sp.today & sp.xMask] = inReal1;
       /* Add the incoming value, measured against the shift. */

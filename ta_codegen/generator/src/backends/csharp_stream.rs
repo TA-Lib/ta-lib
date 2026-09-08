@@ -1512,16 +1512,8 @@ fn peek_frame_arm_named(
     let pad = " ".repeat(indent);
     let transition = streaming::build_transition(model, names).ok()?;
     let pt = streaming::peek_transition_widest(model, names, &transition, None).ok()?;
-    // The extrema rebase moves the cursor before the first store, so its
-    // targets localize with the transition's own.
-    let mut rebased: Vec<String> = Vec::new();
-    if let Some(ex) = model.extrema() {
-        rebased.push(model.cursor.clone());
-        rebased.push(ex.trailing.clone());
-        rebased.extend(ex.index_vars.iter().cloned());
-    }
     let bufs = streaming::transition_buffers(model, names);
-    let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
+    let (locals, body_ir) = localize_state_writes(func, &pt.body, &[], &bufs)?;
     // The transition's own early exit — the param-degenerate identity
     // short-circuit — is valueless, because a step returns `void`. Inline in
     // `Peek` it exits a method that answers a value.
@@ -1573,15 +1565,6 @@ fn peek_frame_arm_named(
     }
     for t in &pt.slot_temps {
         let _ = writeln!(out, "{pad}int {t} = 0;");
-    }
-    if let Some(ex) = model.extrema() {
-        let inner = " ".repeat(indent + 3);
-        let _ = writeln!(out, "{pad}if( {} >= 1073741824 ) {{", model.cursor);
-        let _ = writeln!(out, "{inner}int rebaseShift = {} & ~sp.xMask;", ex.trailing);
-        for v in &rebased {
-            let _ = writeln!(out, "{inner}{v} -= rebaseShift;");
-        }
-        let _ = writeln!(out, "{pad}}}");
     }
     for s in step_settings {
         let _ = writeln!(out, "{pad}int {s}_rangeType = sp.cs_{s}_rangeType;");
@@ -1651,7 +1634,6 @@ fn emit_step_body(
         let (cty, default) = field_type_and_default(ty);
         let _ = writeln!(o, "{pad}{cty} {name} = {default};");
     }
-    emit_extrema_rebase(o, model, indent);
     // Candle settings from the open-time snapshot (never the live table). The
     // local NAMES are load-bearing: `fma::expr_is_float_typed` types an operand
     // float by the `_factor` SUFFIX, and these three are emitted as text, never
@@ -1691,23 +1673,6 @@ fn emit_identity_step_branch(
     }
 }
 
-/// Extrema automatons carry batch-absolute int indices; rebase them by a
-/// multiple of the physical ring size long before `int.MaxValue` (mirrors C
-/// verbatim — index differences and `& xMask` slots are invariant).
-fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
-    if let Some(ex) = model.extrema() {
-        let pad = " ".repeat(indent);
-        let inner = " ".repeat(indent + 3);
-        let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
-        vars.extend(ex.index_vars.iter().cloned());
-        let _ = writeln!(o, "{pad}if( sp.{} >= 1073741824 ) {{", model.cursor);
-        let _ = writeln!(o, "{inner}int rebaseShift = sp.{} & ~sp.xMask;", ex.trailing);
-        for v in &vars {
-            let _ = writeln!(o, "{inner}sp.{v} -= rebaseShift;");
-        }
-        let _ = writeln!(o, "{pad}}}");
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Open transcription
@@ -4077,7 +4042,6 @@ fn emit_composed_step(
                 counter, indent, &declared,
             )?);
         } else {
-            emit_extrema_rebase(o, model, indent);
             // Same load-bearing local names as the loop tier — `fma::expr_is_float_typed`
             // types an operand float by the `_factor` SUFFIX and these are emitted
             // as text, never as IR VarDecls.

@@ -582,15 +582,6 @@ static void TA_MIDPRICE_StepImpl( struct TA_MIDPRICE_Stream *sp, double inHigh, 
    double tmpLow;
    double tmpHigh;
 
-   if( sp->today >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
-   }
    sp->x_inHigh[sp->today & sp->xMask] = inHigh;
    sp->x_inLow[sp->today & sp->xMask] = inLow;
    tmpHigh = sp->x_inHigh[sp->today & sp->xMask];
@@ -882,8 +873,6 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
    int i;
    double lowest;
    int lowestIdx;
-   int today;
-   int trailingIdx;
    double *x_inHigh;
    double *x_inLow;
    int pkSlot0 = -1;
@@ -898,32 +887,21 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
    i = sp->i;
    lowest = sp->lowest;
    lowestIdx = sp->lowestIdx;
-   today = sp->today;
-   trailingIdx = sp->trailingIdx;
    x_inHigh = sp->x_inHigh;
    x_inLow = sp->x_inLow;
-   if( today >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      today -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      highestIdx -= rebaseShift;
-      i -= rebaseShift;
-      lowestIdx -= rebaseShift;
-   }
-   pkSlot0 = today & sp->xMask;
+   pkSlot0 = sp->today & sp->xMask;
    pkVal0 = inHigh;
-   pkSlot1 = today & sp->xMask;
+   pkSlot1 = sp->today & sp->xMask;
    pkVal1 = inLow;
-   tmpHigh = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
-   tmpLow = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
-   if( highestIdx < trailingIdx )
+   tmpHigh = ((sp->today & sp->xMask) != pkSlot0) ? x_inHigh[sp->today & sp->xMask] : pkVal0;
+   tmpLow = ((sp->today & sp->xMask) != pkSlot1) ? x_inLow[sp->today & sp->xMask] : pkVal1;
+   if( highestIdx < sp->trailingIdx )
    {
-      highestIdx = trailingIdx;
+      highestIdx = sp->trailingIdx;
       highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
       i = highestIdx;
       TA_UNROLL(4)
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmpHigh = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
          if( tmpHigh > highest )
@@ -934,16 +912,16 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
       }
    } else if( tmpHigh >= highest )
    {
-      highestIdx = today;
+      highestIdx = sp->today;
       highest = tmpHigh;
    }
-   if( lowestIdx < trailingIdx )
+   if( lowestIdx < sp->trailingIdx )
    {
-      lowestIdx = trailingIdx;
+      lowestIdx = sp->trailingIdx;
       lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
       i = lowestIdx;
       TA_UNROLL(4)
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmpLow = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
          if( tmpLow < lowest )
@@ -954,7 +932,7 @@ TA_LIB_API TA_RetCode TA_MIDPRICE_Peek( const TA_MIDPRICE_Stream *stream, double
       }
    } else if( tmpLow <= lowest )
    {
-      lowestIdx = today;
+      lowestIdx = sp->today;
       lowest = tmpLow;
    }
    *outReal= (highest + lowest) / 2.0;

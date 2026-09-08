@@ -599,23 +599,16 @@
          double cur_outReal = 0.0;
          int j = sp.j;
          double sumAbs = sp.sumAbs;
-         int today = sp.today;
          int trailingIdx = sp.trailingIdx;
          double trailingValue = sp.trailingValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         if( today >= 1073741824 ) {
-            int rebaseShift = trailingIdx & ~sp.xMask;
-            today -= rebaseShift;
-            trailingIdx -= rebaseShift;
-            j -= rebaseShift;
-         }
-         pkSlot0 = today & sp.xMask;
+         pkSlot0 = sp.today & sp.xMask;
          pkVal0 = inReal;
          weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
          SumXY = SumXY + SumY - weightedTrailing;
-         SumY = SumY - trailingValue + (((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
-         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0);
+         SumY = SumY - trailingValue + (((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.abs(trailingValue) + Math.abs(((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0);
          /* Re-anchor: rebuild both sums from the window itself. #103 left them as
           * running totals that are never rebuilt, so each bar's rounding joins a
           * residue no later bar can subtract -- unbounded in the length of the
@@ -678,12 +671,12 @@
          barsSinceReseed -= 1;
          if( barsSinceReseed <= 0 || Math.abs(weightedTrailing) > 100.0 * sumAbs ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
-            windowStart = today - sp.lookbackTotal;
+            windowStart = sp.today - sp.lookbackTotal;
             SumY = 0;
             SumXY = 0;
             sumAbs = 0;
             tempValue2 = (double)sp.lookbackTotal;
-            for( j = windowStart; j <= today; j += 1 ) {
+            for( j = windowStart; j <= sp.today; j += 1 ) {
                tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
                SumY += tempValue1;
                SumXY += tempValue2 * tempValue1;
@@ -729,12 +722,6 @@
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
       double weightedTrailing = 0.0;
-      if( sp.today >= 1073741824 ) {
-         int rebaseShift = sp.trailingIdx & ~sp.xMask;
-         sp.today -= rebaseShift;
-         sp.trailingIdx -= rebaseShift;
-         sp.j -= rebaseShift;
-      }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
       weightedTrailing = (double)sp.optInTimePeriod * sp.trailingValue;
       sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;

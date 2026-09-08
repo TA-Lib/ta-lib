@@ -1519,7 +1519,6 @@ fn emit_composed_frame_body(
         for (name, ty) in &locals {
             o.push_str(&peek_seed("   ", name, ty, &streaming::NameMap::state(&names, name)));
         }
-        emit_extrema_rebase(o, model, frame);
         let mut body_c = String::new();
         for s in &transition {
             body_c.push_str(&render_statement_stream(s, 3, enums, registry, helpers, counter, &nullable_out_names(func)));
@@ -4076,16 +4075,8 @@ fn peek_localized(
     body: &[Statement],
 ) -> (Vec<(String, VarType)>, streaming::PeekTransition) {
 
-    // The extrema rebase moves the cursor before the first store, so its
-    // targets are localized with the transition's own.
-    let mut rebased: Vec<String> = Vec::new();
-    if let Some(ex) = model.extrema() {
-        rebased.push(model.cursor.clone());
-        rebased.push(ex.trailing.clone());
-        rebased.extend(ex.index_vars.iter().cloned());
-    }
     let bufs = streaming::transition_buffers(model, names);
-    let (written, bases, body) = localize_peek_state_writes(model.func, body, &rebased, &bufs)
+    let (written, bases, body) = localize_peek_state_writes(model.func, body, &[], &bufs)
         .unwrap_or_else(|| {
             panic!("{}: a peek local would shadow a bar input or an output", model.func.name)
         });
@@ -4094,11 +4085,7 @@ fn peek_localized(
     // Read-only binds carry no store, so the purge has nothing to say about
     // them; `temps_used` still drops one whose only reader the purge deleted.
     let bound = bases;
-    // The rebase is emitted as text beside the frame, so no statement shows the
-    // read that keeps its targets alive; hold them out of the purge entirely.
-    let pinned: std::collections::BTreeSet<&str> = rebased.iter().map(String::as_str).collect();
-    let mut purgeable: Vec<(String, VarType)> =
-        typed.iter().filter(|(n, _)| !pinned.contains(n.as_str())).cloned().collect();
+    let mut purgeable: Vec<(String, VarType)> = typed.clone();
     for sh in &pt.shadows {
         purgeable.push((sh.slot_var.clone(), VarType::Integer));
         purgeable.push((
@@ -4116,7 +4103,7 @@ fn peek_localized(
         streaming::temps_used(&bound, &body).into_iter().map(|(n, _)| n).collect();
     let live: Vec<(String, VarType)> = typed
         .into_iter()
-        .filter(|(n, _)| pinned.contains(n.as_str()) || kept.contains(n))
+        .filter(|(n, _)| kept.contains(n))
         .chain(bound.into_iter().filter(|(n, _)| read_kept.contains(n)))
         .collect();
     let pt = streaming::PeekTransition {
@@ -4195,7 +4182,6 @@ fn emit_step_inner(
     for (name, ty) in &locals {
         body.push_str(&peek_seed(&pad, name, ty, &streaming::NameMap::state(&CNames, name)));
     }
-    emit_extrema_rebase(body, model, frame);
     let mut body_c = String::new();
     for s in &transition {
         body_c.push_str(&render_statement_stream(s, indent, enums, registry, helpers, counter, &nullable_out_names(model.func)));
@@ -4261,35 +4247,6 @@ fn emit_identity_step_branch(
     }
 }
 
-/// Extrema automatons carry batch-absolute int indices that grow by one
-/// per bar. Rebase them by a multiple of the physical ring size long before
-/// INT_MAX: index differences and `& xMask` slots are invariant, so the
-/// automaton (and bit-exactness vs any batch-comparable range, which is
-/// itself bounded by int) is untouched. Index-observable outputs
-/// (MININDEX...) report the rebased position beyond ~2^30 bars — the
-/// batch contract is inherently vacuous past INT_MAX bars.
-fn emit_extrema_rebase(o: &mut String, model: &StreamModel, frame: StepFrame) {
-    if let Some(ex) = model.extrema() {
-        // A peek frame has already moved every one of these to a local.
-        let q = match frame {
-            StepFrame::Commit => "sp->",
-            StepFrame::Peek => "",
-        };
-        let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
-        vars.extend(ex.index_vars.iter().cloned());
-        let _ = writeln!(o, "   if( {q}{} >= 1073741824 )", model.cursor);
-        let _ = writeln!(o, "   {{");
-        let _ = writeln!(
-            o,
-            "      int rebaseShift = {q}{} & ~sp->xMask;",
-            ex.trailing
-        );
-        for v in &vars {
-            let _ = writeln!(o, "      {q}{v} -= rebaseShift;");
-        }
-        let _ = writeln!(o, "   }}");
-    }
-}
 
 /// Emit candle-settings unpacking lines only for the `<Set>_<prop>` locals
 /// the rendered code actually references.

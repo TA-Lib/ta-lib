@@ -584,13 +584,6 @@ impl Core {
         let mut upValue: f64 = 0.0_f64;
         let mut dnValue: f64 = 0.0_f64;
         let mut total: f64 = 0.0_f64;
-        if sp.today >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.today -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.j -= rebaseShift;
-            sp.windowStart -= rebaseShift;
-        }
         sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
         tempReal = sp.x_inReal[(sp.today & sp.xMask) as usize] - sp.shift;
         sp.periodTotal1 += tempReal;
@@ -1155,21 +1148,13 @@ impl RviStream {
             let mut prevDn = sp.prevDn;
             let mut prevUp = sp.prevUp;
             let mut shift = sp.shift;
-            let mut today = sp.today;
             let mut trailingIdx = sp.trailingIdx;
             let mut windowStart = sp.windowStart;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            if today >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                today -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                j -= rebaseShift;
-                windowStart -= rebaseShift;
-            }
-            pkSlot0 = (today & sp.xMask) as usize;
+            pkSlot0 = (sp.today & sp.xMask) as usize;
             pkVal0 = inReal;
-            tempReal = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 }) - shift;
+            tempReal = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 }) - shift;
             periodTotal1 += tempReal;
             tempReal *= tempReal;
             periodTotal2 += tempReal;
@@ -1183,20 +1168,20 @@ impl RviStream {
             barsSinceReseed -= 1;
             if variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 {
                 barsSinceReseed = (32 * sp.optInStdDevPeriod) as usize;
-                windowStart = today - ((sp.nbInitialElementNeeded) as i32);
+                windowStart = sp.today - ((sp.nbInitialElementNeeded) as i32);
                 tempReal = 0.0;
-                // for( j = windowStart; j <= today; j += 1 )
+                // for( j = windowStart; j <= sp.today; j += 1 )
                 j = windowStart;
-                while j <= today {
+                while j <= sp.today {
                     tempReal += (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 });
                     j += 1;
                 }
                 shift = tempReal * sp.invPeriod;
                 periodTotal1 = 0.0;
                 periodTotal2 = 0.0;
-                // for( j = windowStart; j <= today; j += 1 )
+                // for( j = windowStart; j <= sp.today; j += 1 )
                 j = windowStart;
-                while j <= today {
+                while j <= sp.today {
                     tempReal = (if ((j & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(j & sp.xMask) as usize] } else { pkVal0 }) - shift;
                     periodTotal1 += tempReal;
                     tempReal *= tempReal;
@@ -1214,7 +1199,7 @@ impl RviStream {
                 periodTotal2 -= tempReal;
             }
             sigma = (variance).sqrt();
-            delta = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 }) - (if ((today - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today - 1 & sp.xMask) as usize] } else { pkVal0 });
+            delta = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 }) - (if ((sp.today - 1 & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today - 1 & sp.xMask) as usize] } else { pkVal0 });
             upValue = 0.0;
             dnValue = 0.0;
             if delta > 0.0 {

@@ -371,14 +371,6 @@ impl Core {
     fn aroonosc_step_impl(sp: &mut AroonoscStreamState, inHigh: f64, inLow: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
         let mut aroon: f64 = 0.0_f64;
-        if sp.today >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.today -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.highestIdx -= rebaseShift;
-            sp.i -= rebaseShift;
-            sp.lowestIdx -= rebaseShift;
-        }
         sp.x_inHigh[(sp.today & sp.xMask) as usize] = inHigh;
         sp.x_inLow[(sp.today & sp.xMask) as usize] = inLow;
         // Keep track of the lowestIdx
@@ -771,31 +763,21 @@ impl AroonoscStream {
             let mut i = sp.i;
             let mut lowest = sp.lowest;
             let mut lowestIdx = sp.lowestIdx;
-            let mut today = sp.today;
-            let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
-            if today >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                today -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                highestIdx -= rebaseShift;
-                i -= rebaseShift;
-                lowestIdx -= rebaseShift;
-            }
-            pkSlot0 = (today & sp.xMask) as usize;
+            pkSlot0 = (sp.today & sp.xMask) as usize;
             pkVal0 = inHigh;
-            pkSlot1 = (today & sp.xMask) as usize;
+            pkSlot1 = (sp.today & sp.xMask) as usize;
             pkVal1 = inLow;
             // Keep track of the lowestIdx
-            tmp = (if ((today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(today & sp.xMask) as usize] } else { pkVal1 });
-            if lowestIdx < trailingIdx {
-                lowestIdx = trailingIdx;
+            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(sp.today & sp.xMask) as usize] } else { pkVal1 });
+            if lowestIdx < sp.trailingIdx {
+                lowestIdx = sp.trailingIdx;
                 lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(lowestIdx & sp.xMask) as usize] } else { pkVal1 });
                 i = lowestIdx;
-                while (({ i += 1; i }) as i32) <= today {
+                while (({ i += 1; i }) as i32) <= sp.today {
                     tmp = (if ((i & sp.xMask) as usize) != pkSlot1 { sp.x_inLow[(i & sp.xMask) as usize] } else { pkVal1 });
                     if tmp <= lowest {
                         lowestIdx = i;
@@ -803,16 +785,16 @@ impl AroonoscStream {
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = today;
+                lowestIdx = sp.today;
                 lowest = tmp;
             }
             // Keep track of the highestIdx
-            tmp = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(today & sp.xMask) as usize] } else { pkVal0 });
-            if highestIdx < trailingIdx {
-                highestIdx = trailingIdx;
+            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            if highestIdx < sp.trailingIdx {
+                highestIdx = sp.trailingIdx;
                 highest = (if ((highestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(highestIdx & sp.xMask) as usize] } else { pkVal0 });
                 i = highestIdx;
-                while (({ i += 1; i }) as i32) <= today {
+                while (({ i += 1; i }) as i32) <= sp.today {
                     tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inHigh[(i & sp.xMask) as usize] } else { pkVal0 });
                     if tmp >= highest {
                         highestIdx = i;
@@ -820,7 +802,7 @@ impl AroonoscStream {
                     }
                 }
             } else if tmp >= highest {
-                highestIdx = today;
+                highestIdx = sp.today;
                 highest = tmp;
             }
             // The oscillator is the following:

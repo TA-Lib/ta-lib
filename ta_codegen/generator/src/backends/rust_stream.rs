@@ -204,9 +204,9 @@ impl streaming::NameMap for RustStreamNames {
 // Typing oracle: the batch type-inference verdicts for every local, reused for
 // state-struct field types AND the render contexts (so cast insertion matches
 // batch decisions exactly). Extrema/AIA override: cursor/trailing/index fields
-// (and xMask) are forced `i32` — C's `int` — because the 2^30 rebase arithmetic
-// does not exist in batch bodies for the inference to type (usize subtraction
-// there could underflow in debug builds; index-only, zero FP impact).
+// (and xMask) are forced `i32` — C's `int` — because the transition subtracts
+// and compares them as batch-absolute indices, which a `usize` would underflow
+// on in a debug build (index-only, zero FP impact).
 // ---------------------------------------------------------------------------
 
 struct Typing {
@@ -1261,16 +1261,8 @@ fn peek_frame_arm(
     let transition = streaming::build_transition(model, names).ok()?;
     let pt =
         streaming::peek_transition_widest(model, names, &transition, Some(VarType::Index)).ok()?;
-    // The extrema rebase moves the cursor before the first store, so its
-    // targets are localized with the transition's own.
-    let mut rebased: Vec<String> = Vec::new();
-    if let Some(ex) = model.extrema() {
-        rebased.push(model.cursor.clone());
-        rebased.push(ex.trailing.clone());
-        rebased.extend(ex.index_vars.iter().cloned());
-    }
     let bufs = streaming::transition_buffers(model, names);
-    let (locals, body_ir) = localize_state_writes(func, &pt.body, &rebased, &bufs)?;
+    let (locals, body_ir) = localize_state_writes(func, &pt.body, &[], &bufs)?;
     // A localized field keeps its own name, so the renderer must classify the
     // bare spelling exactly as it classified `sp.<name>` — the sets carry both,
     // and the extrema override touches only one of the pair. Mirror the
@@ -1368,15 +1360,6 @@ fn peek_frame_arm(
     }
     for t in &pt.slot_temps {
         let _ = writeln!(out, "{pad}let mut {t}: usize = 0;");
-    }
-    if let Some(ex) = model.extrema() {
-        let inner = " ".repeat(indent + 4);
-        let _ = writeln!(out, "{pad}if {} >= 1073741824 {{", model.cursor);
-        let _ = writeln!(out, "{inner}let rebaseShift: i32 = {} & !sp.xMask;", ex.trailing);
-        for v in &rebased {
-            let _ = writeln!(out, "{inner}{v} -= rebaseShift;");
-        }
-        let _ = writeln!(out, "{pad}}}");
     }
     let output_names: Vec<String> = func.outputs.iter().map(|o| o.name.clone()).collect();
     let opt_real_params: Vec<String> = func
@@ -1565,7 +1548,6 @@ fn emit_step_body(
         let (rty, default) = field_type_and_default(typing, name, ty, false);
         o.push_str(&decl_line(&pad, name, &rty, default.as_ref()));
     }
-    emit_extrema_rebase(o, model, indent);
 
     let transition = streaming::build_transition(model, &RustStreamNames)
         .unwrap_or_else(|e| panic!("streaming transition: {e}"));
@@ -1658,27 +1640,6 @@ fn emit_identity_step_branch(
     }
 }
 
-/// Extrema automatons carry batch-absolute i32 indices; rebase them by a
-/// multiple of the physical ring size long before i32::MAX (mirrors C verbatim —
-/// index differences and `& xMask` slots are invariant).
-fn emit_extrema_rebase(o: &mut String, model: &StreamModel, indent: usize) {
-    if let Some(ex) = model.extrema() {
-        let pad = " ".repeat(indent);
-        let inner = " ".repeat(indent + 4);
-        let mut vars: Vec<String> = vec![model.cursor.clone(), ex.trailing.clone()];
-        vars.extend(ex.index_vars.iter().cloned());
-        let _ = writeln!(o, "{pad}if sp.{} >= 1073741824 {{", model.cursor);
-        let _ = writeln!(
-            o,
-            "{inner}let rebaseShift: i32 = sp.{} & !sp.xMask;",
-            ex.trailing
-        );
-        for v in &vars {
-            let _ = writeln!(o, "{inner}sp.{v} -= rebaseShift;");
-        }
-        let _ = writeln!(o, "{pad}}}");
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Open transcription
@@ -4354,7 +4315,6 @@ fn emit_composed_step(
                 func, model, &names, typing, &ctx, enums, registry, helpers, counter, indent,
             )?);
         } else {
-            emit_extrema_rebase(o, model, indent);
             let transition = streaming::build_transition(model, &names)
                 .unwrap_or_else(|e| panic!("streaming transition: {e}"));
             let mut body = String::new();

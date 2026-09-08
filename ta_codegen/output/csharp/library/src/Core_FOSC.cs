@@ -631,32 +631,25 @@ public partial class Core
          double cur_outReal = 0.0;
          int j = sp.j;
          double sumAbs = sp.sumAbs;
-         int today = sp.today;
          int trailingIdx = sp.trailingIdx;
          double trailingValue = sp.trailingValue;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         if( today >= 1073741824 ) {
-            int rebaseShift = trailingIdx & ~sp.xMask;
-            today -= rebaseShift;
-            trailingIdx -= rebaseShift;
-            j -= rebaseShift;
-         }
-         pkSlot0 = today & sp.xMask;
+         pkSlot0 = sp.today & sp.xMask;
          pkVal0 = inReal;
          weightedTrailing = (double)sp.optInTimePeriod * trailingValue;
          SumXY = SumXY + SumY - weightedTrailing;
-         SumY = SumY - trailingValue + ((((today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(today - 1) & sp.xMask] : pkVal0);
-         sumAbs = sumAbs - Math.Abs(trailingValue) + Math.Abs((((today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(today - 1) & sp.xMask] : pkVal0);
+         SumY = SumY - trailingValue + ((((sp.today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(sp.today - 1) & sp.xMask] : pkVal0);
+         sumAbs = sumAbs - Math.Abs(trailingValue) + Math.Abs((((sp.today - 1) & sp.xMask) != pkSlot0) ? sp.x_inReal[(sp.today - 1) & sp.xMask] : pkVal0);
          barsSinceReseed -= 1;
          if( barsSinceReseed <= 0 || Math.Abs(weightedTrailing) > 100.0 * sumAbs ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
-            windowStart = today - sp.lookbackTotal;
+            windowStart = sp.today - sp.lookbackTotal;
             SumY = 0;
             SumXY = 0;
             sumAbs = 0;
             tempValue2 = (double)(sp.optInTimePeriod - 1);
-            for( j = windowStart; j < today; j += 1 ) {
+            for( j = windowStart; j < sp.today; j += 1 ) {
                tempValue1 = ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
                SumY += tempValue1;
                SumXY += tempValue2 * tempValue1;
@@ -668,7 +661,7 @@ public partial class Core
          b = (SumY - m * sp.SumX) / (double)sp.optInTimePeriod;
          trailingValue = ((trailingIdx & sp.xMask) != pkSlot0) ? sp.x_inReal[trailingIdx & sp.xMask] : pkVal0;
          trailingIdx += 1;
-         closeValue = ((today & sp.xMask) != pkSlot0) ? sp.x_inReal[today & sp.xMask] : pkVal0;
+         closeValue = ((sp.today & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.today & sp.xMask] : pkVal0;
          if( closeValue != 0.0 ) {
             cur_outReal = 100.0 * (closeValue - (Math.FusedMultiplyAdd(m, (double)sp.optInTimePeriod, b))) / closeValue;
          } else {
@@ -703,12 +696,6 @@ public partial class Core
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
       double weightedTrailing = 0.0;
-      if( sp.today >= 1073741824 ) {
-         int rebaseShift = sp.trailingIdx & ~sp.xMask;
-         sp.today -= rebaseShift;
-         sp.trailingIdx -= rebaseShift;
-         sp.j -= rebaseShift;
-      }
       sp.x_inReal[sp.today & sp.xMask] = inReal;
       weightedTrailing = (double)sp.optInTimePeriod * sp.trailingValue;
       sp.SumXY = sp.SumXY + sp.SumY - weightedTrailing;

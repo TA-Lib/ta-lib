@@ -775,15 +775,6 @@ static void TA_SMI_StepImpl( struct TA_SMI_Stream *sp, double inHigh, double inL
    double prevSignal;
 
    prevSignal = sp->prevSignal;
-   if( sp->today >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
-   }
    sp->x_inHigh[sp->today & sp->xMask] = inHigh;
    sp->x_inLow[sp->today & sp->xMask] = inLow;
    sp->x_inClose[sp->today & sp->xMask] = inClose;
@@ -1312,8 +1303,6 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
    double lowest;
    int lowestIdx;
    double prevSignal;
-   int today;
-   int trailingIdx;
    double *x_inClose;
    double *x_inHigh;
    double *x_inLow;
@@ -1336,34 +1325,23 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
    lowest = sp->lowest;
    lowestIdx = sp->lowestIdx;
    prevSignal = sp->prevSignal;
-   today = sp->today;
-   trailingIdx = sp->trailingIdx;
    x_inClose = sp->x_inClose;
    x_inHigh = sp->x_inHigh;
    x_inLow = sp->x_inLow;
-   if( today >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      today -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      highestIdx -= rebaseShift;
-      i -= rebaseShift;
-      lowestIdx -= rebaseShift;
-   }
-   pkSlot0 = today & sp->xMask;
+   pkSlot0 = sp->today & sp->xMask;
    pkVal0 = inHigh;
-   pkSlot1 = today & sp->xMask;
+   pkSlot1 = sp->today & sp->xMask;
    pkVal1 = inLow;
-   pkSlot2 = today & sp->xMask;
+   pkSlot2 = sp->today & sp->xMask;
    pkVal2 = inClose;
    /* Set the lowest low */
-   tmp = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
-   if( lowestIdx < trailingIdx )
+   tmp = ((sp->today & sp->xMask) != pkSlot1) ? x_inLow[sp->today & sp->xMask] : pkVal1;
+   if( lowestIdx < sp->trailingIdx )
    {
-      lowestIdx = trailingIdx;
+      lowestIdx = sp->trailingIdx;
       lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
       i = lowestIdx;
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
          if( tmp < lowest )
@@ -1374,17 +1352,17 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
       }
    } else if( tmp <= lowest )
    {
-      lowestIdx = today;
+      lowestIdx = sp->today;
       lowest = tmp;
    }
    /* Set the highest high */
-   tmp = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
-   if( highestIdx < trailingIdx )
+   tmp = ((sp->today & sp->xMask) != pkSlot0) ? x_inHigh[sp->today & sp->xMask] : pkVal0;
+   if( highestIdx < sp->trailingIdx )
    {
-      highestIdx = trailingIdx;
+      highestIdx = sp->trailingIdx;
       highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
       i = highestIdx;
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
          if( tmp > highest )
@@ -1395,11 +1373,11 @@ TA_LIB_API TA_RetCode TA_SMI_Peek( const TA_SMI_Stream *stream, double inHigh, d
       }
    } else if( tmp >= highest )
    {
-      highestIdx = today;
+      highestIdx = sp->today;
       highest = tmp;
    }
    den = highest - lowest;
-   num = (((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2) - (highest + lowest) * 0.5;
+   num = (((sp->today & sp->xMask) != pkSlot2) ? x_inClose[sp->today & sp->xMask] : pkVal2) - (highest + lowest) * 0.5;
    emaSlowNum = fma(num - emaSlowNum, sp->kSlow, emaSlowNum);
    emaSlowDen = fma(den - emaSlowDen, sp->kSlow, emaSlowDen);
    emaFastNum = fma(emaSlowNum - emaFastNum, sp->kFast, emaFastNum);

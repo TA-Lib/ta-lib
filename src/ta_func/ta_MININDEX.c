@@ -274,14 +274,6 @@ static void TA_MININDEX_StepImpl( struct TA_MININDEX_Stream *sp, double inReal, 
 {
    double tmp;
 
-   if( sp->today >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
-   }
    sp->x_inReal[sp->today & sp->xMask] = inReal;
    tmp = sp->x_inReal[sp->today & sp->xMask];
    if( sp->lowestIdx < sp->trailingIdx )
@@ -495,8 +487,6 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
    int i;
    double lowest;
    int lowestIdx;
-   int today;
-   int trailingIdx;
    double *x_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
@@ -506,27 +496,17 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
    i = sp->i;
    lowest = sp->lowest;
    lowestIdx = sp->lowestIdx;
-   today = sp->today;
-   trailingIdx = sp->trailingIdx;
    x_inReal = sp->x_inReal;
-   if( today >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      today -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      i -= rebaseShift;
-      lowestIdx -= rebaseShift;
-   }
-   pkSlot0 = today & sp->xMask;
+   pkSlot0 = sp->today & sp->xMask;
    pkVal0 = inReal;
-   tmp = ((today & sp->xMask) != pkSlot0) ? x_inReal[today & sp->xMask] : pkVal0;
-   if( lowestIdx < trailingIdx )
+   tmp = ((sp->today & sp->xMask) != pkSlot0) ? x_inReal[sp->today & sp->xMask] : pkVal0;
+   if( lowestIdx < sp->trailingIdx )
    {
-      lowestIdx = trailingIdx;
+      lowestIdx = sp->trailingIdx;
       lowest = ((lowestIdx & sp->xMask) != pkSlot0) ? x_inReal[lowestIdx & sp->xMask] : pkVal0;
       i = lowestIdx;
       TA_UNROLL(4)
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0;
          if( tmp < lowest )
@@ -537,7 +517,7 @@ TA_LIB_API TA_RetCode TA_MININDEX_Peek( const TA_MININDEX_Stream *stream, double
       }
    } else if( tmp <= lowest )
    {
-      lowestIdx = today;
+      lowestIdx = sp->today;
       lowest = tmp;
    }
    *outInteger= lowestIdx;

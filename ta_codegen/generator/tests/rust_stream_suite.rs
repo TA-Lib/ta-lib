@@ -175,13 +175,14 @@ fn test_rust_cdldoji_candle_settings_and_int_output() {
 }
 
 #[test]
-fn test_rust_minmaxindex_extrema_i32_and_rebase() {
+fn test_rust_minmaxindex_extrema_i32() {
     let s = rust_stream_section("minmaxindex");
-    // AIA cursor machinery forced i32 (C's int) in the STATE...
+    // AIA cursor machinery forced i32 (C's int) in the STATE — every field the
+    // transition compares as a batch-absolute index, not just the mask.
     assert!(s.contains("xMask: i32,"));
-    // ...with the batch-absolute rebase guard mirrored verbatim.
-    assert!(s.contains("if sp.today >= 1073741824 {"));
-    assert!(s.contains("let rebaseShift: i32 ="));
+    assert!(s.contains("today: i32,"));
+    assert!(s.contains("trailingIdx: i32,"));
+    assert!(s.contains("highestIdx: i32,"));
     // Capture casts the still-live batch locals at the struct literal.
     assert!(s.contains("today: (today) as i32,"));
     // Index outputs stay batch-exact i32 pairs.

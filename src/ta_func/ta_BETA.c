@@ -789,13 +789,6 @@ static void TA_BETA_StepImpl( struct TA_BETA_Stream *sp, double inReal0, double 
    S_x = sp->S_x;
    S_y = sp->S_y;
    S_yy = sp->S_yy;
-   if( sp->i >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->i -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->j -= rebaseShift;
-   }
    sp->x_inReal0[sp->i & sp->xMask] = inReal0;
    sp->x_inReal1[sp->i & sp->xMask] = inReal1;
    tmp_real = sp->x_inReal0[sp->i & sp->xMask];
@@ -1518,13 +1511,6 @@ TA_LIB_API TA_RetCode TA_BETA_Peek( const TA_BETA_Stream *stream, double inReal0
    trailing_last_price_y = sp->trailing_last_price_y;
    x_inReal0 = sp->x_inReal0;
    x_inReal1 = sp->x_inReal1;
-   if( i >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      i -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      j -= rebaseShift;
-   }
    pkSlot0 = i & sp->xMask;
    pkVal0 = inReal0;
    pkSlot1 = i & sp->xMask;

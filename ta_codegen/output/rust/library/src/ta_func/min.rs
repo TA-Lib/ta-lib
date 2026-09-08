@@ -390,13 +390,6 @@ struct MinStreamState {
 impl Core {
     fn min_step_impl(sp: &mut MinStreamState, inReal: f64, outReal: &mut f64) {
         let mut tmp: f64 = 0.0_f64;
-        if sp.today >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.today -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.i -= rebaseShift;
-            sp.lowestIdx -= rebaseShift;
-        }
         sp.x_inReal[(sp.today & sp.xMask) as usize] = inReal;
         tmp = sp.x_inReal[(sp.today & sp.xMask) as usize];
         if sp.lowestIdx < sp.trailingIdx {
@@ -710,25 +703,16 @@ impl MinStream {
             let mut i = sp.i;
             let mut lowest = sp.lowest;
             let mut lowestIdx = sp.lowestIdx;
-            let mut today = sp.today;
-            let mut trailingIdx = sp.trailingIdx;
             let mut pkSlot0: usize = usize::MAX;
             let mut pkVal0: f64 = 0.0_f64;
-            if today >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                today -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                i -= rebaseShift;
-                lowestIdx -= rebaseShift;
-            }
-            pkSlot0 = (today & sp.xMask) as usize;
+            pkSlot0 = (sp.today & sp.xMask) as usize;
             pkVal0 = inReal;
-            tmp = (if ((today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(today & sp.xMask) as usize] } else { pkVal0 });
-            if lowestIdx < trailingIdx {
-                lowestIdx = trailingIdx;
+            tmp = (if ((sp.today & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(sp.today & sp.xMask) as usize] } else { pkVal0 });
+            if lowestIdx < sp.trailingIdx {
+                lowestIdx = sp.trailingIdx;
                 lowest = (if ((lowestIdx & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(lowestIdx & sp.xMask) as usize] } else { pkVal0 });
                 i = lowestIdx;
-                while (({ i += 1; i }) as i32) <= today {
+                while (({ i += 1; i }) as i32) <= sp.today {
                     tmp = (if ((i & sp.xMask) as usize) != pkSlot0 { sp.x_inReal[(i & sp.xMask) as usize] } else { pkVal0 });
                     if tmp < lowest {
                         lowestIdx = i;
@@ -736,7 +720,7 @@ impl MinStream {
                     }
                 }
             } else if tmp <= lowest {
-                lowestIdx = today;
+                lowestIdx = sp.today;
                 lowest = tmp;
             }
             (*outReal) = lowest;

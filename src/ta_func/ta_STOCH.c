@@ -630,15 +630,6 @@ static TA_RetCode TA_STOCH_StepImpl( struct TA_STOCH_Stream *sp, double inHigh, 
    double cur_outSlowD = 0.0;
    double tmp;
 
-   if( sp->today >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-      sp->lowestIdx -= rebaseShift;
-   }
    sp->x_inHigh[sp->today & sp->xMask] = inHigh;
    sp->x_inLow[sp->today & sp->xMask] = inLow;
    sp->x_inClose[sp->today & sp->xMask] = inClose;
@@ -1169,8 +1160,6 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    int i;
    double lowest;
    int lowestIdx;
-   int today;
-   int trailingIdx;
    double *x_inClose;
    double *x_inHigh;
    double *x_inLow;
@@ -1188,34 +1177,23 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
    i = sp->i;
    lowest = sp->lowest;
    lowestIdx = sp->lowestIdx;
-   today = sp->today;
-   trailingIdx = sp->trailingIdx;
    x_inClose = sp->x_inClose;
    x_inHigh = sp->x_inHigh;
    x_inLow = sp->x_inLow;
-   if( today >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      today -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      highestIdx -= rebaseShift;
-      i -= rebaseShift;
-      lowestIdx -= rebaseShift;
-   }
-   pkSlot0 = today & sp->xMask;
+   pkSlot0 = sp->today & sp->xMask;
    pkVal0 = inHigh;
-   pkSlot1 = today & sp->xMask;
+   pkSlot1 = sp->today & sp->xMask;
    pkVal1 = inLow;
-   pkSlot2 = today & sp->xMask;
+   pkSlot2 = sp->today & sp->xMask;
    pkVal2 = inClose;
    /* Set the lowest low */
-   tmp = ((today & sp->xMask) != pkSlot1) ? x_inLow[today & sp->xMask] : pkVal1;
-   if( lowestIdx < trailingIdx )
+   tmp = ((sp->today & sp->xMask) != pkSlot1) ? x_inLow[sp->today & sp->xMask] : pkVal1;
+   if( lowestIdx < sp->trailingIdx )
    {
-      lowestIdx = trailingIdx;
+      lowestIdx = sp->trailingIdx;
       lowest = ((lowestIdx & sp->xMask) != pkSlot1) ? x_inLow[lowestIdx & sp->xMask] : pkVal1;
       i = lowestIdx;
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot1) ? x_inLow[i & sp->xMask] : pkVal1;
          if( tmp < lowest )
@@ -1226,17 +1204,17 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
       }
    } else if( tmp <= lowest )
    {
-      lowestIdx = today;
+      lowestIdx = sp->today;
       lowest = tmp;
    }
    /* Set the highest high */
-   tmp = ((today & sp->xMask) != pkSlot0) ? x_inHigh[today & sp->xMask] : pkVal0;
-   if( highestIdx < trailingIdx )
+   tmp = ((sp->today & sp->xMask) != pkSlot0) ? x_inHigh[sp->today & sp->xMask] : pkVal0;
+   if( highestIdx < sp->trailingIdx )
    {
-      highestIdx = trailingIdx;
+      highestIdx = sp->trailingIdx;
       highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inHigh[highestIdx & sp->xMask] : pkVal0;
       i = highestIdx;
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot0) ? x_inHigh[i & sp->xMask] : pkVal0;
          if( tmp > highest )
@@ -1247,7 +1225,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
       }
    } else if( tmp >= highest )
    {
-      highestIdx = today;
+      highestIdx = sp->today;
       highest = tmp;
    }
    /* Divide by the range itself and scale after: the guard has to test the
@@ -1262,7 +1240,7 @@ TA_LIB_API TA_RetCode TA_STOCH_Peek( const TA_STOCH_Stream *stream, double inHig
     */
    if( !TA_IS_ZERO_SCALED(highest - lowest, fabs(highest) + fabs(lowest)) )
    {
-      cur_tempBuffer = ((((today & sp->xMask) != pkSlot2) ? x_inClose[today & sp->xMask] : pkVal2) - lowest) / (highest - lowest) * 100.0;
+      cur_tempBuffer = ((((sp->today & sp->xMask) != pkSlot2) ? x_inClose[sp->today & sp->xMask] : pkVal2) - lowest) / (highest - lowest) * 100.0;
    } else 
    {
       cur_tempBuffer = 0.0;

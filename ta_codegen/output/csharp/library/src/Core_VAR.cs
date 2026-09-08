@@ -689,7 +689,6 @@ public partial class Core
          double variance = 0.0;
          int barsSinceReseed = sp.barsSinceReseed;
          double cur_outReal = 0.0;
-         int i = sp.i;
          int j = sp.j;
          double periodTotal1 = sp.periodTotal1;
          double periodTotal2 = sp.periodTotal2;
@@ -698,17 +697,10 @@ public partial class Core
          int windowStart = sp.windowStart;
          int pkSlot0 = -1;
          double pkVal0 = 0.0;
-         if( i >= 1073741824 ) {
-            int rebaseShift = trailingIdx & ~sp.xMask;
-            i -= rebaseShift;
-            trailingIdx -= rebaseShift;
-            j -= rebaseShift;
-            windowStart -= rebaseShift;
-         }
-         pkSlot0 = i & sp.xMask;
+         pkSlot0 = sp.i & sp.xMask;
          pkVal0 = inReal;
          /* Add the incoming value, measured against the shift. */
-         tempReal = (((i & sp.xMask) != pkSlot0) ? sp.x_inReal[i & sp.xMask] : pkVal0) - shift;
+         tempReal = (((sp.i & sp.xMask) != pkSlot0) ? sp.x_inReal[sp.i & sp.xMask] : pkVal0) - shift;
          periodTotal1 += tempReal;
          tempReal *= tempReal;
          periodTotal2 += tempReal;
@@ -736,15 +728,15 @@ public partial class Core
          barsSinceReseed -= 1;
          if( variance < 0.000001 * (periodTotal2 * sp.invPeriod) || tempReal > 1000000.0 * periodTotal2 || barsSinceReseed <= 0 ) {
             barsSinceReseed = 32 * sp.optInTimePeriod;
-            windowStart = i - sp.nbInitialElementNeeded;
+            windowStart = sp.i - sp.nbInitialElementNeeded;
             tempReal = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
+            for( j = windowStart; j <= sp.i; j += 1 ) {
                tempReal += ((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0;
             }
             shift = tempReal * sp.invPeriod;
             periodTotal1 = 0.0;
             periodTotal2 = 0.0;
-            for( j = windowStart; j <= i; j += 1 ) {
+            for( j = windowStart; j <= sp.i; j += 1 ) {
                tempReal = (((j & sp.xMask) != pkSlot0) ? sp.x_inReal[j & sp.xMask] : pkVal0) - shift;
                periodTotal1 += tempReal;
                tempReal *= tempReal;
@@ -838,13 +830,6 @@ public partial class Core
       double tempReal = 0.0;
       double meanValue1 = 0.0;
       double variance = 0.0;
-      if( sp.i >= 1073741824 ) {
-         int rebaseShift = sp.trailingIdx & ~sp.xMask;
-         sp.i -= rebaseShift;
-         sp.trailingIdx -= rebaseShift;
-         sp.j -= rebaseShift;
-         sp.windowStart -= rebaseShift;
-      }
       sp.x_inReal[sp.i & sp.xMask] = inReal;
       /* Add the incoming value, measured against the shift. */
       tempReal = sp.x_inReal[sp.i & sp.xMask] - sp.shift;

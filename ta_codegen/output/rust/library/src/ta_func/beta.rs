@@ -624,12 +624,6 @@ impl Core {
         let mut windowStart: usize = 0_usize;
         let mut x: f64 = 0.0_f64;
         let mut y: f64 = 0.0_f64;
-        if sp.i >= 1073741824 {
-            let rebaseShift: i32 = sp.trailingIdx & !sp.xMask;
-            sp.i -= rebaseShift;
-            sp.trailingIdx -= rebaseShift;
-            sp.j -= rebaseShift;
-        }
         sp.x_inReal0[(sp.i & sp.xMask) as usize] = inReal0;
         sp.x_inReal1[(sp.i & sp.xMask) as usize] = inReal1;
         tmp_real = sp.x_inReal0[(sp.i & sp.xMask) as usize];
@@ -1412,12 +1406,6 @@ impl BetaStream {
             let mut pkSlot1: usize = usize::MAX;
             let mut pkVal1: f64 = 0.0_f64;
             let mut pkIdx0: usize = 0;
-            if i >= 1073741824 {
-                let rebaseShift: i32 = trailingIdx & !sp.xMask;
-                i -= rebaseShift;
-                trailingIdx -= rebaseShift;
-                j -= rebaseShift;
-            }
             pkSlot0 = (i & sp.xMask) as usize;
             pkVal0 = inReal0;
             pkSlot1 = (i & sp.xMask) as usize;

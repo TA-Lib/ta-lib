@@ -274,14 +274,6 @@ static void TA_MAXINDEX_StepImpl( struct TA_MAXINDEX_Stream *sp, double inReal, 
 {
    double tmp;
 
-   if( sp->today >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->highestIdx -= rebaseShift;
-      sp->i -= rebaseShift;
-   }
    sp->x_inReal[sp->today & sp->xMask] = inReal;
    tmp = sp->x_inReal[sp->today & sp->xMask];
    if( sp->highestIdx < sp->trailingIdx )
@@ -495,8 +487,6 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Peek( const TA_MAXINDEX_Stream *stream, double
    double highest;
    int highestIdx;
    int i;
-   int today;
-   int trailingIdx;
    double *x_inReal;
    int pkSlot0 = -1;
    double pkVal0 = 0.0;
@@ -506,27 +496,17 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Peek( const TA_MAXINDEX_Stream *stream, double
    highest = sp->highest;
    highestIdx = sp->highestIdx;
    i = sp->i;
-   today = sp->today;
-   trailingIdx = sp->trailingIdx;
    x_inReal = sp->x_inReal;
-   if( today >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      today -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      highestIdx -= rebaseShift;
-      i -= rebaseShift;
-   }
-   pkSlot0 = today & sp->xMask;
+   pkSlot0 = sp->today & sp->xMask;
    pkVal0 = inReal;
-   tmp = ((today & sp->xMask) != pkSlot0) ? x_inReal[today & sp->xMask] : pkVal0;
-   if( highestIdx < trailingIdx )
+   tmp = ((sp->today & sp->xMask) != pkSlot0) ? x_inReal[sp->today & sp->xMask] : pkVal0;
+   if( highestIdx < sp->trailingIdx )
    {
-      highestIdx = trailingIdx;
+      highestIdx = sp->trailingIdx;
       highest = ((highestIdx & sp->xMask) != pkSlot0) ? x_inReal[highestIdx & sp->xMask] : pkVal0;
       i = highestIdx;
       TA_UNROLL(4)
-      while( ++i <= today )
+      while( ++i <= sp->today )
       {
          tmp = ((i & sp->xMask) != pkSlot0) ? x_inReal[i & sp->xMask] : pkVal0;
          if( tmp > highest )
@@ -537,7 +517,7 @@ TA_LIB_API TA_RetCode TA_MAXINDEX_Peek( const TA_MAXINDEX_Stream *stream, double
       }
    } else if( tmp >= highest )
    {
-      highestIdx = today;
+      highestIdx = sp->today;
       highest = tmp;
    }
    *outInteger= highestIdx;

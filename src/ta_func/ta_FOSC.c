@@ -389,13 +389,6 @@ static void TA_FOSC_StepImpl( struct TA_FOSC_Stream *sp, double inReal, double *
    double tempValue2;
    double weightedTrailing;
 
-   if( sp->today >= 1073741824 )
-   {
-      int rebaseShift = sp->trailingIdx & ~sp->xMask;
-      sp->today -= rebaseShift;
-      sp->trailingIdx -= rebaseShift;
-      sp->j -= rebaseShift;
-   }
    sp->x_inReal[sp->today & sp->xMask] = inReal;
    weightedTrailing = (double)sp->optInTimePeriod * sp->trailingValue;
    sp->SumXY = sp->SumXY + sp->SumY - weightedTrailing;
@@ -687,7 +680,6 @@ TA_LIB_API TA_RetCode TA_FOSC_Peek( const TA_FOSC_Stream *stream, double inReal,
    int barsSinceReseed;
    int j;
    double sumAbs;
-   int today;
    int trailingIdx;
    double trailingValue;
    double *x_inReal;
@@ -701,33 +693,25 @@ TA_LIB_API TA_RetCode TA_FOSC_Peek( const TA_FOSC_Stream *stream, double inReal,
    barsSinceReseed = sp->barsSinceReseed;
    j = sp->j;
    sumAbs = sp->sumAbs;
-   today = sp->today;
    trailingIdx = sp->trailingIdx;
    trailingValue = sp->trailingValue;
    x_inReal = sp->x_inReal;
-   if( today >= 1073741824 )
-   {
-      int rebaseShift = trailingIdx & ~sp->xMask;
-      today -= rebaseShift;
-      trailingIdx -= rebaseShift;
-      j -= rebaseShift;
-   }
-   pkSlot0 = today & sp->xMask;
+   pkSlot0 = sp->today & sp->xMask;
    pkVal0 = inReal;
    weightedTrailing = (double)sp->optInTimePeriod * trailingValue;
    SumXY = SumXY + SumY - weightedTrailing;
-   SumY = SumY - trailingValue + ((((today - 1) & sp->xMask) != pkSlot0) ? x_inReal[(today - 1) & sp->xMask] : pkVal0);
-   sumAbs = sumAbs - fabs(trailingValue) + fabs((((today - 1) & sp->xMask) != pkSlot0) ? x_inReal[(today - 1) & sp->xMask] : pkVal0);
+   SumY = SumY - trailingValue + ((((sp->today - 1) & sp->xMask) != pkSlot0) ? x_inReal[(sp->today - 1) & sp->xMask] : pkVal0);
+   sumAbs = sumAbs - fabs(trailingValue) + fabs((((sp->today - 1) & sp->xMask) != pkSlot0) ? x_inReal[(sp->today - 1) & sp->xMask] : pkVal0);
    barsSinceReseed -= 1;
    if( barsSinceReseed <= 0 || fabs(weightedTrailing) > 100.0 * sumAbs )
    {
       barsSinceReseed = 32 * sp->optInTimePeriod;
-      windowStart = today - sp->lookbackTotal;
+      windowStart = sp->today - sp->lookbackTotal;
       SumY = 0;
       SumXY = 0;
       sumAbs = 0;
       tempValue2 = (double)(sp->optInTimePeriod - 1);
-      for( j = windowStart; j < today; j += 1 )
+      for( j = windowStart; j < sp->today; j += 1 )
       {
          tempValue1 = ((j & sp->xMask) != pkSlot0) ? x_inReal[j & sp->xMask] : pkVal0;
          SumY += tempValue1;
@@ -740,7 +724,7 @@ TA_LIB_API TA_RetCode TA_FOSC_Peek( const TA_FOSC_Stream *stream, double inReal,
    b = (SumY - m * sp->SumX) / (double)sp->optInTimePeriod;
    trailingValue = ((trailingIdx & sp->xMask) != pkSlot0) ? x_inReal[trailingIdx & sp->xMask] : pkVal0;
    trailingIdx += 1;
-   closeValue = ((today & sp->xMask) != pkSlot0) ? x_inReal[today & sp->xMask] : pkVal0;
+   closeValue = ((sp->today & sp->xMask) != pkSlot0) ? x_inReal[sp->today & sp->xMask] : pkVal0;
    if( closeValue != 0.0 )
    {
       *outReal= 100.0 * (closeValue - (fma(m, (double)sp->optInTimePeriod, b))) / closeValue;
