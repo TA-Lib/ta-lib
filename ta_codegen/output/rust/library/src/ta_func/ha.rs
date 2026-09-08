@@ -639,9 +639,8 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
-    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::ha_open`] rejects
-    /// is rejected here too.
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
+    /// Everything [`Core::ha_open`] rejects is rejected here too.
     ///
     /// # Examples
     ///
@@ -706,24 +705,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outHAClose.len() < _guardOutLen {
-            return Err(RetCode::BadParam);
-        }
-        if !outHAOpen.is_empty() && !outHAHigh.is_empty() && outHAOpen.as_ptr() == outHAHigh.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outHAOpen.is_empty() && !outHALow.is_empty() && outHAOpen.as_ptr() == outHALow.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outHAOpen.is_empty() && !outHAClose.is_empty() && outHAOpen.as_ptr() == outHAClose.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outHAHigh.is_empty() && !outHALow.is_empty() && outHAHigh.as_ptr() == outHALow.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outHAHigh.is_empty() && !outHAClose.is_empty() && outHAHigh.as_ptr() == outHAClose.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outHALow.is_empty() && !outHAClose.is_empty() && outHALow.as_ptr() == outHAClose.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

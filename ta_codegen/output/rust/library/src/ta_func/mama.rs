@@ -1438,9 +1438,8 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
-    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::mama_open`] rejects
-    /// is rejected here too.
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
+    /// Everything [`Core::mama_open`] rejects is rejected here too.
     ///
     /// # Examples
     ///
@@ -1482,11 +1481,6 @@ impl Core {
         }
         if outFAMA.as_deref().is_some_and(|o| o.len() < _guardOutLen) {
             return Err(RetCode::BadParam);
-        }
-        if let (Some(outMAMA_p), Some(outFAMA_p)) = (Some(&outMAMA[..]), outFAMA.as_deref()) {
-            if !outMAMA_p.is_empty() && !outFAMA_p.is_empty() && outMAMA_p.as_ptr() == outFAMA_p.as_ptr() {
-                return Err(RetCode::BadParam);
-            }
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;

@@ -70,27 +70,6 @@ pub fn stream_type_name(func: &FuncDef) -> String {
 }
 
 
-/// The output pairs the distinctness guard (#108) compares: every pair of the
-/// same element type.
-///
-/// A cross-typed pair is skipped because safe code cannot lay a `&mut [f64]`
-/// over a `&mut [i32]` to begin with, so there is nothing to detect — not
-/// because the compare is unspellable (both `as *const u8` would do).
-/// Appendix E of `docs/error-handling-spec.md`, #262.
-fn distinct_output_pairs(func: &FuncDef) -> Vec<(String, String)> {
-    let mut pairs = Vec::new();
-    for i in 0..func.outputs.len() {
-        for j in (i + 1)..func.outputs.len() {
-            let (a, b) = (&func.outputs[i], &func.outputs[j]);
-            if (a.param_type == ParamType::Integer) != (b.param_type == ParamType::Integer) {
-                continue;
-            }
-            pairs.push((a.name.clone(), b.name.clone()));
-        }
-    }
-    pairs
-}
-
 fn state_type_name(func: &FuncDef) -> String {
     format!("{}StreamState", common::pascal_words(&func.name))
 }
@@ -677,9 +656,9 @@ fn open_fill_capacity_guards(func: &FuncDef, with_pair: bool) -> String {
 
 /// `open_and_fill`: the fill wrapper onto `<n>_open_impl`. It owns the argument
 /// contract for the only path that writes caller-owned slices: the output
-/// capacity (S5) and the output mutual-distinctness guard (#108, S6). In-place
-/// is forbidden not because the fill would compute the wrong answer, but because
-/// the margin between its writes and the capture's seed reads is unasserted.
+/// capacity (S5). In-place is forbidden not because the fill would compute the
+/// wrong answer, but because the margin between its writes and the capture's
+/// seed reads is unasserted.
 fn emit_open_and_fill_wrapper(
     o: &mut String,
     func: &FuncDef,
@@ -689,9 +668,6 @@ fn emit_open_and_fill_wrapper(
     emit_open_sig(o, func, OutMode::Fill, enums);
     let outs: Vec<&str> = func.outputs.iter().map(|out| out.name.as_str()).collect();
     o.push_str(&open_fill_capacity_guards(func, true));
-    for (a, b) in distinct_output_pairs(func) {
-        let _ = writeln!(o, "{}", distinct_pair_guard(func, &a, &b));
-    }
     let _ = enums;
     let ins: Vec<String> = streaming::input_array_names(func);
     let opt_names: Vec<String> = func.optional_inputs.iter().map(|p| p.name.clone()).collect();
@@ -725,8 +701,7 @@ fn emit_open_and_fill_wrapper(
 }
 
 /// `open_and_fill_internal` for every tier that owns an `<n>_open_impl`: the same single
-/// pass as `OpenAndFill`, at the caller's `startIdx`. See [`OutMode::FillInternal`]
-/// for why it carries no distinctness guard.
+/// pass as `OpenAndFill`, at the caller's `startIdx`.
 fn emit_open_and_fill_internal_wrapper(
     o: &mut String,
     func: &FuncDef,
@@ -1831,7 +1806,7 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
             let outs = open_out_params(func, mode);
             let _ = writeln!(
                 o,
-                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{n}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —\n    /// or when two of them are the same slice. Everything [`Core::{sn}_open`] rejects\n    /// is rejected here too."
+                "    /// [`Core::{sn}_open`] that also fills the output array(s) bit-identically to\n    /// [`Core::{n}`] over `0..len` in the same single pass, and reports the range it\n    /// wrote as the [`OutRange`] beside the handle.\n    ///\n    /// # Errors\n    ///\n    /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`\n    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).\n    /// Everything [`Core::{sn}_open`] rejects is rejected here too."
             );
             // The example is the summary's own claim, made runnable.
             if let Some(doctest) = open_and_fill_doctest(func, enums) {
@@ -1857,10 +1832,9 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
                 outs.trim_start_matches(", ")
             );
         }
-        // `OpenAndFill` at the caller's startIdx. Carries no output-distinctness
-        // guard: the generator emits a call to it only for a sub-call whose
-        // destinations alias neither its sources nor each other, so the check
-        // could never fire. See `SubCallStep::is_fusable`.
+        // `OpenAndFill` at the caller's startIdx. A call to it is emitted only
+        // for a sub-call whose destinations alias neither its sources nor each
+        // other — see `SubCallStep::is_fusable`.
         OutMode::FillInternal => {
             let outs = open_out_params(func, mode);
             let _ = writeln!(
@@ -1873,33 +1847,6 @@ fn emit_open_sig(o: &mut String, func: &FuncDef, mode: OutMode, enums: &HashMap<
             );
         }
     }
-}
-
-/// The output-distinctness rejection for one pair (#108, rule S6), written so a
-/// declinable operand is compared only when it was supplied — the shape
-/// `rust_lang` already emits for the batch tier. Two declined outputs are not
-/// each other: `None` aliases nothing.
-fn distinct_pair_guard(func: &FuncDef, a: &str, b: &str) -> String {
-    let nullable = super::common::nullable_output_names(func);
-    let declinable = nullable.contains(a) || nullable.contains(b);
-    if !declinable {
-        // The common shape, unchanged: neither operand can be absent.
-        return format!(
-            "        if !{a}.is_empty() && !{b}.is_empty() && {a}.as_ptr() == {b}.as_ptr() {{\n            return Err(RetCode::BadParam);\n        }}"
-        );
-    }
-    let bind = |name: &str| {
-        if nullable.contains(name) {
-            format!("{name}.as_deref()")
-        } else {
-            format!("Some(&{name}[..])")
-        }
-    };
-    format!(
-        "        if let (Some({a}_p), Some({b}_p)) = ({}, {}) {{\n            if !{a}_p.is_empty() && !{b}_p.is_empty() && {a}_p.as_ptr() == {b}_p.as_ptr() {{\n                return Err(RetCode::BadParam);\n            }}\n        }}",
-        bind(a),
-        bind(b)
-    )
 }
 
 /// One output parameter per declared output, in declaration order.
@@ -1924,8 +1871,7 @@ fn open_out_params(func: &FuncDef, mode: OutMode) -> String {
 }
 
 /// The open validation head: the implied index pair, the equal-length input
-/// check, the Fill-mode output-distinctness guard (#108), then optional-param
-/// validation. Shared by every tier.
+/// check, then optional-param validation. Shared by every tier.
 ///
 /// The pair comes first because an opener is a batch call over
 /// `[0, historyLen - 1]`: S1 and S2 are B1 and B2 read on that range and answer
@@ -1979,11 +1925,6 @@ fn emit_open_validation_head(o: &mut String, func: &FuncDef, mode: OutMode, enum
         // output capacity (S5) as well — the merged tiers get theirs from
         // `emit_open_and_fill_wrapper`, which is their public frame.
         o.push_str(&open_fill_capacity_guards(func, false));
-        // Output mutual-distinctness (#108) — same guard the batch emits. FILL
-        // ONLY: the scalar path's sinks are its own locals, so it has no hazard.
-        for (a, b) in distinct_output_pairs(func) {
-            let _ = writeln!(o, "{}", distinct_pair_guard(func, &a, &b));
-        }
     }
 }
 

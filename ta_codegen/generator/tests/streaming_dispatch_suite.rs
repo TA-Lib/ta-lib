@@ -365,7 +365,7 @@ fn test_frames_index_outputs_by_declaration_position() {
 ///   reader meeting it would otherwise take it for a live guard.
 ///
 /// Counted per SITE against the same-typed rendering of the same function, and
-/// that is the whole strength of it: each backend emits the pair at more than
+/// that is the whole strength of it: a backend can emit the pair at more than
 /// one site, so a needle that only asks "is it compared somewhere" reads green
 /// while one site silently drops it — which is what the check this replaced did
 /// after C# learned the byte-range compare (#386). The same-typed pass is also

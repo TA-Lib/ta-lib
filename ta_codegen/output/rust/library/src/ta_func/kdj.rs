@@ -596,9 +596,8 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
-    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::kdj_open`] rejects
-    /// is rejected here too.
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
+    /// Everything [`Core::kdj_open`] rejects is rejected here too.
     ///
     /// # Examples
     ///
@@ -653,15 +652,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outJ.len() < _guardOutLen {
-            return Err(RetCode::BadParam);
-        }
-        if !outK.is_empty() && !outD.is_empty() && outK.as_ptr() == outD.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outK.is_empty() && !outJ.is_empty() && outK.as_ptr() == outJ.as_ptr() {
-            return Err(RetCode::BadParam);
-        }
-        if !outD.is_empty() && !outJ.is_empty() && outD.as_ptr() == outJ.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

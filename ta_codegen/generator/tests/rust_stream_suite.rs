@@ -345,32 +345,6 @@ fn rust_output_writes_are_stride_scaled() {
 }
 
 #[test]
-fn rust_fill_wrapper_keeps_the_output_distinctness_guard() {
-    // #108: the capture epilogue reads the input tail after writing the outputs,
-    // so two outputs may not share a slice. Rust's borrow checker rules out
-    // output-vs-input, but not output-vs-output.
-    let s = rust_stream_section("minmax");
-    let at = s.find("pub fn minmax_open_and_fill(").expect("fill wrapper");
-    let end = s[at..].find("\n    }\n").map_or(s.len() - at, |e| e + 6);
-    let body = &s[at..at + end];
-    assert!(
-        body.contains("outMin.as_ptr() == outMax.as_ptr()"),
-        "output distinctness survives on the fill wrapper:\n{body}"
-    );
-    // ...and after the capacity check, which the specified order puts first.
-    let cap = body.find("if outMax.len() < _guardOutLen").expect("S5 on the fill wrapper");
-    let alias = body.find("outMin.as_ptr() == outMax.as_ptr()").unwrap();
-    assert!(cap < alias, "S5 is specified ahead of S6:\n{body}");
-    // The scalar wrapper's sinks are its own locals — it must not pay for it.
-    let sat = s.find("fn minmax_open_internal(").expect("scalar wrapper");
-    let sbody = &s[sat..sat + 700.min(s.len() - sat)];
-    assert!(
-        !sbody.contains("as_ptr()"),
-        "Open has no aliasing hazard and must not carry the guard:\n{sbody}"
-    );
-}
-
-#[test]
 fn rust_multi_output_scalar_wrapper_rebuilds_the_value_tuple() {
     let s = rust_stream_section("minmax");
     let at = s.find("fn minmax_open_internal(").expect("scalar wrapper");

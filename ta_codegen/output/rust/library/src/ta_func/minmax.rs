@@ -701,9 +701,8 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
-    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::minmax_open`] rejects
-    /// is rejected here too.
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
+    /// Everything [`Core::minmax_open`] rejects is rejected here too.
     ///
     /// # Examples
     ///
@@ -744,9 +743,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outMax.len() < _guardOutLen {
-            return Err(RetCode::BadParam);
-        }
-        if !outMin.is_empty() && !outMax.is_empty() && outMin.as_ptr() == outMax.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;

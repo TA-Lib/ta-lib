@@ -111,11 +111,9 @@ fn test_composed_open_fuses_every_sub_call() {
 /// Rule S5 on EVERY Rust public `OpenAndFill` — corpus-wide, because Rust's own
 /// probe (`tests/stream_open_contract.rs`) names six functions and runs nightly.
 ///
-/// Two clauses. The width has to come from the function's OWN lookback, not from
-/// the history's length — `historyLen - lookback` is what the fill writes, and a
-/// bound of `historyLen` would reject every correctly-sized call. And the
-/// capacity has to precede the output-distinctness guard, which is the order the
-/// specification lists (S5, then S6).
+/// The width has to come from the function's OWN lookback, not from the
+/// history's length — `historyLen - lookback` is what the fill writes, and a
+/// bound of `historyLen` would reject every correctly-sized call.
 #[test]
 fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
     let registry = make_registry();
@@ -205,9 +203,6 @@ fn rust_public_fill_bounds_every_output_against_its_own_lookback() {
                 func.name,
                 out.name
             );
-            if let Some(at_alias) = body.find(&format!("{}_p.as_ptr() ==", out.name)) {
-                assert!(at_out < at_alias, "{}: S5 is specified ahead of S6", func.name);
-            }
         }
         checked += 1;
     }

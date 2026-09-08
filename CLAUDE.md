@@ -97,7 +97,9 @@ PRV  <N>_OpenImpl(sp, in, sIdx, params, outBeg, outNb, outs, outStride)
 Both public entries delegate at anchor 0, so **no seam is emitted unreachable**.
 The guard sits on the public frame because that is the only one handed an array
 it did not vet: the plain open sinks into fresh arrays, and a composed call's
-destination is already proved disjoint by `SubCallStep::is_fusable`. `MA`
+destination is already proved disjoint by `SubCallStep::is_fusable`. Rust emits
+none — two aliasing `&mut` slices are unspellable in safe code, which is why the
+spec scores rule S6 `—` there. `MA`
 (Dispatch) and `MAVP` (PeriodBank) are exempt and hand-roll a body per entry
 point — theirs differ by which callee tier they call and by an anchor clamp, not
 by a stride — so their `_OpenImpl` takes no `outStride`, which is the

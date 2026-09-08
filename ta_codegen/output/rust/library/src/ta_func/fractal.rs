@@ -611,9 +611,8 @@ impl Core {
     /// # Errors
     ///
     /// [`RetCode::BadParam`] when an output slice holds fewer than `len - lookback`
-    /// values — the batch tier's sizing rule, checked here as it is there (rule S5) —
-    /// or when two of them are the same slice. Everything [`Core::fractal_open`] rejects
-    /// is rejected here too.
+    /// values — the batch tier's sizing rule, checked here as it is there (rule S5).
+    /// Everything [`Core::fractal_open`] rejects is rejected here too.
     ///
     /// # Examples
     ///
@@ -656,9 +655,6 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         if outSwingLow.len() < _guardOutLen {
-            return Err(RetCode::BadParam);
-        }
-        if !outSwingHigh.is_empty() && !outSwingLow.is_empty() && outSwingHigh.as_ptr() == outSwingLow.as_ptr() {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
