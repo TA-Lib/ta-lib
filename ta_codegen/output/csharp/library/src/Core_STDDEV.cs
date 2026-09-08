@@ -70,8 +70,8 @@ public partial class Core
    /// </remarks>
    /// <param name="optInTimePeriod">Window length (default 5; range 2..100000; <c>int.MinValue</c> selects the
    /// default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int STDDEV_Lookback( int optInTimePeriod, double optInNbDev )
    {
@@ -243,8 +243,8 @@ public partial class Core
    /// <param name="inReal">Series to measure dispersion of.</param>
    /// <param name="optInTimePeriod">Window length (default 5; range 2..100000; <c>int.MinValue</c> selects the
    /// default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -314,8 +314,8 @@ public partial class Core
    /// <param name="inReal">Series to measure dispersion of.</param>
    /// <param name="optInTimePeriod">Window length (default 5; range 2..100000; <c>int.MinValue</c> selects the
    /// default).</param>
-   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDev">Multiplier applied to the standard deviation (default 1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Standard deviation at each bar, scaled by optInNbDev. Must hold at least
    /// <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -650,8 +650,7 @@ public partial class Core
    /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STDDEV_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

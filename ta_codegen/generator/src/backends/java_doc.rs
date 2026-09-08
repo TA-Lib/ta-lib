@@ -264,7 +264,7 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
         // and `Integer.MIN_VALUE` cannot be made into one (issue #162 — C, Rust
         // and C# all type it as an integer and must substitute).
         meta.push(match opt.param_type {
-            ParamType::Real => "{@code -4e37} selects the default".to_string(),
+            ParamType::Real => "{@link Core#REAL_DEFAULT} selects the default".to_string(),
             _ => "{@code Integer.MIN_VALUE} selects the default".to_string(),
         });
     }

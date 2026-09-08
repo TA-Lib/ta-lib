@@ -21,7 +21,8 @@
     *
     * @param optInPenetration Fraction of candle 1's real body that candle 2's
     *        close must penetrate below close[i-1]; larger values require deeper
-    *        penetration (default 0.5; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @return The lookback, or {@code -1} if a parameter is out of range.
     */
    public int CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
@@ -214,7 +215,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of candle 1's real body that candle 2's
     *        close must penetrate below close[i-1]; larger values require deeper
-    *        penetration (default 0.5; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outInteger -100 when the pattern is detected (always bearish), 0
     *        otherwise; never emits +100. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
@@ -288,7 +290,8 @@
     * @param inClose Close price of each bar.
     * @param optInPenetration Fraction of candle 1's real body that candle 2's
     *        close must penetrate below close[i-1]; larger values require deeper
-    *        penetration (default 0.5; minimum 0; {@code -4e37} selects the default).
+    *        penetration (default 0.5; minimum 0; {@link Core#REAL_DEFAULT} selects the
+    *        default).
     * @param outInteger -100 when the pattern is detected (always bearish), 0
     *        otherwise; never emits +100. Must hold at least
     *        {@code endIdx - startIdx + 1} values.

@@ -2607,7 +2607,7 @@ fn javadoc_wrap(text: &str) -> String {
 /// public `OpenAndFill` hoists the aliasing guard and then delegates to
 /// `OpenAndFillInternal`, exactly the way `Open` delegates to `OpenInternal`.
 /// That symmetry is what makes the anchored fill seam reachable for every
-/// function rather than only the sixteen something composes over.
+/// function rather than only the ones something composes over.
 ///
 /// The two exempt tiers (`Dispatch`, `PeriodBank`) hand-roll a RetCode-returning
 /// body per entry point — theirs differ by which callee tier they call and by an

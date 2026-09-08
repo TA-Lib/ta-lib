@@ -20,9 +20,10 @@ This file is the contract and the shape. The error model is
    `TA_INSUFFICIENT_HISTORY` — the library's one recoverable condition, which is
    why it carries its own code. The history may be freed afterwards.
 2. **`update(handle, bar) → value`** — once per CLOSED bar. Always produces the
-   new value, and **allocates nothing that grows with the period**: the handle is
-   sized at open. Java alone allocates at all, and only where a composed handle
-   drives a multi-output sub-handle: one sink per bar, a size the indicator fixes.
+   new value; the handle is sized at open. Java is the only backend that allocates
+   at all, and only where a composed handle drives a MULTI-OUTPUT sub-handle: one
+   fixed-size sink per such sub-call, so a handle driving three of them pays three,
+   and a period bank pays one per entry.
 3. **`peek(handle, bar) → value`** — a provisional bar, evaluated without
    committing. Call it as often as the forming bar is revised.
 4. **`close(handle)`** — explicit in C, nothing in the managed backends.
@@ -78,10 +79,8 @@ bit-identity has no room for a per-backend difference in what the frame rewrites
 
 No form writes the handle. That is what keeps Rust's `peek` a `&self` method and
 every backend's handles concurrently peekable, including two threads peeking the
-same handle. Costing nothing that grows with the period is the hard constraint;
-`peek` allocates nothing at all in C, Rust and C#, and in Java pays the same
-bounded sink `update` does — each generated `peek` doc comment says which of the
-two it is rather than claiming the stronger one everywhere.
+same handle. `peek` allocates nothing at all in C, Rust and C#, and in Java pays
+the same bounded sink `update` does.
 
 The property is structural, not observable: a peek that copied and then wrote
 the copy would still answer correctly, so no value gate can see the difference.

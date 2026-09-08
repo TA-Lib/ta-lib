@@ -87,10 +87,10 @@ public partial class Core
    /// </remarks>
    /// <param name="optInTimePeriod">Periods for the MA and standard deviation (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
@@ -678,10 +678,10 @@ public partial class Core
    /// <param name="inReal">Input data series.</param>
    /// <param name="optInTimePeriod">Periods for the MA and standard deviation (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
@@ -777,10 +777,10 @@ public partial class Core
    /// <param name="inReal">Input data series.</param>
    /// <param name="optInTimePeriod">Periods for the MA and standard deviation (default 20; range 2..100000;
    /// <c>int.MinValue</c> selects the default).</param>
-   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
-   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2; <c>-4e37</c>
-   /// selects the default).</param>
+   /// <param name="optInNbDevUp">Standard-deviation multiplier for the upper band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="optInNbDevDn">Standard-deviation multiplier for the lower band (default 2;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">Moving-average type for the middle band (default 0 = SMA; values: 0=SMA,
    /// 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA, 8=T3, 9=HMA,
    /// 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA; <c>MAType.DEFAULT</c> (or
@@ -1238,8 +1238,7 @@ public partial class Core
    /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

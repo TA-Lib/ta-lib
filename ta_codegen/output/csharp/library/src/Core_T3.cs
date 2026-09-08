@@ -82,8 +82,8 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
-   /// more DEMA-like sharpening) (default 0.7; range 0..1; <c>-4e37</c> selects
-   /// the default).</param>
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int T3_Lookback( int optInTimePeriod, double optInVFactor )
    {
@@ -449,8 +449,8 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
-   /// more DEMA-like sharpening) (default 0.7; range 0..1; <c>-4e37</c> selects
-   /// the default).</param>
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
@@ -523,8 +523,8 @@ public partial class Core
    /// <param name="optInTimePeriod">EMA period for each of the six stages (default 5; range 1..100000;
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">Volume factor weighting the coefficients (0 = plain triple EMA, higher =
-   /// more DEMA-like sharpening) (default 0.7; range 0..1; <c>-4e37</c> selects
-   /// the default).</param>
+   /// more DEMA-like sharpening) (default 0.7; range 0..1;
+   /// <see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
    /// <c>Count</c> how many were written.</returns>
@@ -1012,8 +1012,7 @@ public partial class Core
    /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
-   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
-   /// have different lengths.</exception>
+   /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range.</exception>
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>

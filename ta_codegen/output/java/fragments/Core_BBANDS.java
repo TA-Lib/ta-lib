@@ -43,9 +43,9 @@
     * @param optInTimePeriod Periods for the MA and standard deviation (default
     *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDevUp Standard-deviation multiplier for the upper band
-    *        (default 2; {@code -4e37} selects the default).
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInNbDevDn Standard-deviation multiplier for the lower band
-    *        (default 2; {@code -4e37} selects the default).
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
@@ -630,9 +630,9 @@
     * @param optInTimePeriod Periods for the MA and standard deviation (default
     *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDevUp Standard-deviation multiplier for the upper band
-    *        (default 2; {@code -4e37} selects the default).
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInNbDevDn Standard-deviation multiplier for the lower band
-    *        (default 2; {@code -4e37} selects the default).
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;
@@ -727,9 +727,9 @@
     * @param optInTimePeriod Periods for the MA and standard deviation (default
     *        20; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInNbDevUp Standard-deviation multiplier for the upper band
-    *        (default 2; {@code -4e37} selects the default).
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInNbDevDn Standard-deviation multiplier for the lower band
-    *        (default 2; {@code -4e37} selects the default).
+    *        (default 2; {@link Core#REAL_DEFAULT} selects the default).
     * @param optInMAType Moving-average type for the middle band (default 0 =
     *        SMA; values: 0=SMA, 1=EMA, 2=WMA, 3=DEMA, 4=TEMA, 5=TRIMA, 6=KAMA, 7=MAMA,
     *        8=T3, 9=HMA, 10=DISABLED, 11=DEFAULT, 12=ZLEMA, 13=RMA;

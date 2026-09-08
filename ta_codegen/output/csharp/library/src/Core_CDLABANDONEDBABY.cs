@@ -65,7 +65,8 @@ public partial class Core
    /// output.
    /// </remarks>
    /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate
-   /// (default 0.3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 0.3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLABANDONEDBABY_Lookback( double optInPenetration )
    {
@@ -342,7 +343,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate
-   /// (default 0.3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 0.3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outInteger">+100 at a bullish abandoned baby bottom (3rd candle white), -100 at a
    /// bearish abandoned baby top (3rd candle black), 0 otherwise; sign = color
    /// of the 3rd candle. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
@@ -418,7 +420,8 @@ public partial class Core
    /// <param name="inLow">Low price of each bar.</param>
    /// <param name="inClose">Close price of each bar.</param>
    /// <param name="optInPenetration">Fraction of the 1st candle's real body the 3rd close must penetrate
-   /// (default 0.3; minimum 0; <c>-4e37</c> selects the default).</param>
+   /// (default 0.3; minimum 0; <see cref="Core.REAL_DEFAULT"/> selects the
+   /// default).</param>
    /// <param name="outInteger">+100 at a bullish abandoned baby bottom (3rd candle white), -100 at a
    /// bearish abandoned baby top (3rd candle black), 0 otherwise; sign = color
    /// of the 3rd candle. Must hold at least <c>endIdx - startIdx + 1</c> values.</param>
