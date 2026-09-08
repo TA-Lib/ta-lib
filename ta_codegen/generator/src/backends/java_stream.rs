@@ -3107,14 +3107,17 @@ fn emit_dispatch(
                 }
             }
         }
-        // `return`, not `break`: the switch is the whole method body, so this
-        // costs a byte where the jump to the end cost three, and the step frame
-        // is 4 bytes over the same 325-byte budget the peek frame is kept under.
+        // Every arm returns, including `default` below, which is what makes
+        // javac reject anything emitted after this switch. Nothing may go
+        // there: the arms are the only writers of `sp.cur_*` and a tail would
+        // be dead on every real MAType, reached only by the unreachable
+        // default. Keep the two in step -- a `break` default silently restores
+        // the trap, at no saving.
         let _ = writeln!(o, "         return;");
         let _ = writeln!(o, "      }}");
     }
     let _ = writeln!(o, "      default:");
-    let _ = writeln!(o, "         break; /* unreachable: open rejects arms without a sub-stream */");
+    let _ = writeln!(o, "         return; /* unreachable: open rejects arms without a sub-stream */");
     let _ = writeln!(o, "      }}");
     let _ = writeln!(o, "   }}");
 

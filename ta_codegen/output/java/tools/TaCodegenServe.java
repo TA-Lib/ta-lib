@@ -113509,7 +113509,7 @@ class Core {
              return;
           }
           default:
-             break; /* unreachable: open rejects arms without a sub-stream */
+             return; /* unreachable: open rejects arms without a sub-stream */
           }
        }
        private RetCode maOpenImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
@@ -182174,7 +182174,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "5582353372fbe611";
+    static final String SPLICED_GENCODE_DIGEST = "854b585951e2c854";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];

@@ -826,7 +826,7 @@
          return;
       }
       default:
-         break; /* unreachable: open rejects arms without a sub-stream */
+         return; /* unreachable: open rejects arms without a sub-stream */
       }
    }
    private RetCode maOpenImpl( MaStream sp, double inReal[], int startIdx, int optInTimePeriod, MAType optInMAType )
