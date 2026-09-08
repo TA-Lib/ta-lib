@@ -113368,67 +113368,52 @@ class Core {
              if( !Double.isFinite(inReal) )
                 throw new TaLibArgumentException("MA peek: BadParam", RetCode.BadParam);
              MaStream sp = this;
-             double cur_outReal = 0.0;
              if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
-                cur_outReal = inReal;
-                return cur_outReal;
+                return inReal;
              }
              switch( sp.optInMAType )
              {
              case SMA: {
-                cur_outReal = ((SmaStream) sp.sub).peek(inReal);
-                break;
+                return ((SmaStream) sp.sub).peek(inReal);
              }
              case EMA: {
-                cur_outReal = ((EmaStream) sp.sub).peek(inReal);
-                break;
+                return ((EmaStream) sp.sub).peek(inReal);
              }
              case WMA: {
-                cur_outReal = ((WmaStream) sp.sub).peek(inReal);
-                break;
+                return ((WmaStream) sp.sub).peek(inReal);
              }
              case DEMA: {
-                cur_outReal = ((DemaStream) sp.sub).peek(inReal);
-                break;
+                return ((DemaStream) sp.sub).peek(inReal);
              }
              case TEMA: {
-                cur_outReal = ((TemaStream) sp.sub).peek(inReal);
-                break;
+                return ((TemaStream) sp.sub).peek(inReal);
              }
              case TRIMA: {
-                cur_outReal = ((TrimaStream) sp.sub).peek(inReal);
-                break;
+                return ((TrimaStream) sp.sub).peek(inReal);
              }
              case KAMA: {
-                cur_outReal = ((KamaStream) sp.sub).peek(inReal);
-                break;
+                return ((KamaStream) sp.sub).peek(inReal);
              }
              case MAMA: {
                 MamaOut subValue = new MamaOut();
                 ((MamaStream) sp.sub).peek(inReal, subValue);
-                cur_outReal = subValue.mama;
-                break;
+                return subValue.mama;
              }
              case T3: {
-                cur_outReal = ((T3Stream) sp.sub).peek(inReal);
-                break;
+                return ((T3Stream) sp.sub).peek(inReal);
              }
              case HMA: {
-                cur_outReal = ((HmaStream) sp.sub).peek(inReal);
-                break;
+                return ((HmaStream) sp.sub).peek(inReal);
              }
              case ZLEMA: {
-                cur_outReal = ((ZlemaStream) sp.sub).peek(inReal);
-                break;
+                return ((ZlemaStream) sp.sub).peek(inReal);
              }
              case RMA: {
-                cur_outReal = ((RmaStream) sp.sub).peek(inReal);
-                break;
+                return ((RmaStream) sp.sub).peek(inReal);
              }
              default:
                 throw new IllegalStateException("unreachable: open rejects arms without a sub-stream");
              }
-             return cur_outReal;
           }
 
           /**
@@ -113467,53 +113452,53 @@ class Core {
           {
           case SMA: {
              sp.cur_outReal = ((SmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case EMA: {
              sp.cur_outReal = ((EmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case WMA: {
              sp.cur_outReal = ((WmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case DEMA: {
              sp.cur_outReal = ((DemaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case TEMA: {
              sp.cur_outReal = ((TemaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case TRIMA: {
              sp.cur_outReal = ((TrimaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case KAMA: {
              sp.cur_outReal = ((KamaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case MAMA: {
              MamaOut subOut = new MamaOut();
              ((MamaStream) sp.sub).update(inReal, subOut);
              sp.cur_outReal = subOut.mama;
-             break;
+             return;
           }
           case T3: {
              sp.cur_outReal = ((T3Stream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case HMA: {
              sp.cur_outReal = ((HmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case ZLEMA: {
              sp.cur_outReal = ((ZlemaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           case RMA: {
              sp.cur_outReal = ((RmaStream) sp.sub).update(inReal);
-             break;
+             return;
           }
           default:
              break; /* unreachable: open rejects arms without a sub-stream */
@@ -182166,7 +182151,7 @@ class Core {
 
 public class TaCodegenServe {
     static Core core = new Core();
-    static final String SPLICED_GENCODE_DIGEST = "cba6202f40b8d21a";
+    static final String SPLICED_GENCODE_DIGEST = "861471d115c85ebe";
     static final int MAX_ARRAY_SIZE = 200000;
     static double[] refOpen = new double[MAX_ARRAY_SIZE];
     static double[] refHigh = new double[MAX_ARRAY_SIZE];
