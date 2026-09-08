@@ -241,10 +241,10 @@ public partial class Core
    /// range a window covered divided by the path it actually travelled. Bounded
    /// in [0,1]. Values near 1 mean the market covered most of its path in one
    /// direction (trending); values near 0 mean it retraced repeatedly and went
-   /// nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-   /// but it uses no smoothing and carries no recursion. A common use is regime
-   /// selection: run trend-following logic while VHF is high, oscillator logic
-   /// while it is low.
+   /// nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+   /// direction, but it uses no smoothing and carries no recursion. A common use
+   /// is regime selection: run trend-following logic while VHF is high,
+   /// oscillator logic while it is low.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -311,10 +311,10 @@ public partial class Core
    /// range a window covered divided by the path it actually travelled. Bounded
    /// in [0,1]. Values near 1 mean the market covered most of its path in one
    /// direction (trending); values near 0 mean it retraced repeatedly and went
-   /// nowhere (choppy). Like ADX it measures trend *strength*, not direction,
-   /// but it uses no smoothing and carries no recursion. A common use is regime
-   /// selection: run trend-following logic while VHF is high, oscillator logic
-   /// while it is low.
+   /// nowhere (choppy). Like ADX it measures trend <i>strength</i>, not
+   /// direction, but it uses no smoothing and carries no recursion. A common use
+   /// is regime selection: run trend-following logic while VHF is high,
+   /// oscillator logic while it is low.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

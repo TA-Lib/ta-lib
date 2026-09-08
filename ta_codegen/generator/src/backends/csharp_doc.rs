@@ -286,15 +286,34 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
 // ---------------------------------------------------------------------------
 
 /// Turn canonical Markdown-ish prose into XML-doc-safe text: `&`/`<`/`>` become
-/// entities (CS1570 otherwise), backtick spans become `<c>...</c>`, and a
-/// Markdown inline link becomes a `<see href>`.
+/// entities (CS1570 otherwise), backtick spans become `<c>...</c>`, `**bold**`
+/// and `*italic*` become `<b>` and `<i>` — the XML docs are rendered as markup,
+/// so a delimiter left alone reaches the reader as an asterisk — and a Markdown
+/// inline link becomes a `<see href>`.
 pub(super) fn csdoc(text: &str) -> String {
     let mut out = String::new();
     let mut in_code = false;
+    // The delimiter length and closing tag of the emphasis run we are inside.
+    let mut emphasis: Option<(usize, &str)> = None;
     let chars: Vec<char> = text.chars().collect();
     let mut i = 0;
     while i < chars.len() {
         let c = chars[i];
+        if !in_code {
+            if let Some((len, close)) = emphasis {
+                if super::common::asterisks_at(&chars, i, len) {
+                    out.push_str(close);
+                    emphasis = None;
+                    i += len;
+                    continue;
+                }
+            } else if let Some(len) = super::common::emphasis_open(&chars, i) {
+                out.push_str(if len == 2 { "<b>" } else { "<i>" });
+                emphasis = Some((len, if len == 2 { "</b>" } else { "</i>" }));
+                i += len;
+                continue;
+            }
+        }
         match c {
             '`' => {
                 out.push_str(if in_code { "</c>" } else { "<c>" });
@@ -325,6 +344,9 @@ pub(super) fn csdoc(text: &str) -> String {
         // Unbalanced backtick in the source — close it rather than emit bad XML.
         out.push_str("</c>");
     }
+    // `emphasis` is unreachable here: a run only opens once its closer is
+    // found, and nothing between them consumes it.
+    debug_assert!(emphasis.is_none(), "emphasis opened without its closer: {text:?}");
     out
 }
 

@@ -111,7 +111,7 @@
       return RetCode.Success ;
    }
    /**
-    * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+    * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
     * price range a bar travelled per unit of volume traded — how much movement
     * the market "facilitated" per tick. A rising index on rising volume is read
     * as a move the market is absorbing; a rising index on falling volume as one
@@ -184,7 +184,7 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Bill Williams' Market Facilitation Index (*Trading Chaos*, 1995): the
+    * Bill Williams' Market Facilitation Index (<i>Trading Chaos</i>, 1995): the
     * price range a bar travelled per unit of volume traded — how much movement
     * the market "facilitated" per tick. A rising index on rising volume is read
     * as a move the market is absorbing; a rising index on falling volume as one
