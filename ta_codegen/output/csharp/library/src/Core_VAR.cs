@@ -81,9 +81,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return -1;
       }
       return optInTimePeriod - 1 ;
@@ -125,9 +125,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inReal) && outReal != inReal) ) {
@@ -320,9 +320,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inReal)) ) {
@@ -971,9 +971,9 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 1e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -1200,7 +1200,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>VAR_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1233,7 +1233,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">As in the batch call; see <see cref="VAR_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Rolling population variance. Must hold at least <c>historyLen -
    /// VAR_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

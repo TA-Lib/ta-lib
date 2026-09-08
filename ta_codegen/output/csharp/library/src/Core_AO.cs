@@ -321,7 +321,7 @@ public partial class Core
    /// bars — which is why the sign and the bar-to-bar change matter more than
    /// the level. The oscillator is the first leg of Williams' Profitunity
    /// system, alongside the Alligator and the Accelerator/Decelerator
-   /// ([<c>AC</c>](/functions/ac)).
+   /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -399,7 +399,7 @@ public partial class Core
    /// bars — which is why the sign and the bar-to-bar change matter more than
    /// the level. The oscillator is the first leg of Williams' Profitunity
    /// system, alongside the Alligator and the Accelerator/Decelerator
-   /// ([<c>AC</c>](/functions/ac)).
+   /// (<see href="https://ta-lib.org/functions/ac"><c>AC</c></see>).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

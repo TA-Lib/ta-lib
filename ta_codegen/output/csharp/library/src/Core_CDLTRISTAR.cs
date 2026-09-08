@@ -245,7 +245,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>This reversal pattern does not verify the prior trend it classically assumes.</description></item>
-   /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</description></item>
+   /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<see href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -312,7 +312,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>This reversal pattern does not verify the prior trend it classically assumes.</description></item>
-   /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</description></item>
+   /// <item><description>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<see href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

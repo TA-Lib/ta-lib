@@ -1398,11 +1398,11 @@ public partial class Core
    /// <param name="optInSlowK_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSlowD_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCH_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1443,11 +1443,11 @@ public partial class Core
    /// <param name="optInSlowK_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSlowD_Period">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">As in the batch call; see <see cref="STOCH_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outSlowK">Raw FastK smoothed by SlowK_Period MA. Must hold at least <c>historyLen -
    /// STOCH_Lookback(...)</c> values.</param>
    /// <param name="outSlowD">Signal line: SlowK smoothed by SlowD_Period MA. Must hold at least

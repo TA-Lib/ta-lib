@@ -342,7 +342,7 @@ fn csharp_enum_literal(enum_name: &str, value: i32, enums: &HashMap<String, Enum
 }
 
 /// Optional-parameter validation prologue (C#): map the `int.MinValue` /
-/// `TA_REAL_DEFAULT` sentinels to the documented default value, then reject
+/// `REAL_DEFAULT` sentinels to the documented default value, then reject
 /// out-of-range values. One source of truth for both variants: guarded
 /// functions fail with `RetCode.BadParam`, lookback functions fail with `-1`.
 ///
@@ -387,7 +387,7 @@ pub(crate) fn emit_opt_param_validation(
             ParamType::Real => {
                 if let Some(default_val) = opt.default {
                     out.push_str(&format!(
-                        "      if( {name} == TA_REAL_DEFAULT ) {{\n         {name} = {val:e};\n      }}",
+                        "      if( {name} == REAL_DEFAULT ) {{\n         {name} = {val:e};\n      }}",
                         name = opt.name,
                         val = default_val
                     ));
@@ -397,8 +397,8 @@ pub(crate) fn emit_opt_param_validation(
                             " else if( {cond} ) {{\n         return {fail};\n      }}",
                             cond = super::common::real_range_reject(
                                 &opt.name,
-                                &super::common::real_bound_literal(min, "TA_"),
-                                &super::common::real_bound_literal(max, "TA_"),
+                                &super::common::real_bound_literal(min, ""),
+                                &super::common::real_bound_literal(max, ""),
                                 false
                             )
                         ));

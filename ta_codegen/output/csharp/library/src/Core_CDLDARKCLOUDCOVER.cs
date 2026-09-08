@@ -70,9 +70,9 @@ public partial class Core
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int CDLDARKCLOUDCOVER_Lookback( double optInPenetration )
    {
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return -1;
       }
       int BodyLong_rangeType = (int)this.candleSettings[(int)CandleSettingType.BodyLong].rangeType;
@@ -108,9 +108,9 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -205,9 +205,9 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inOpen)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
@@ -628,9 +628,9 @@ public partial class Core
       if( inHigh.Length != inOpen.Length || inLow.Length != inOpen.Length || inClose.Length != inOpen.Length ) {
          return RetCode.BadParam;
       }
-      if( optInPenetration == TA_REAL_DEFAULT ) {
+      if( optInPenetration == REAL_DEFAULT ) {
          optInPenetration = 5e-1;
-      } else if( !(optInPenetration >= 0e0 && optInPenetration <= TA_REAL_MAX) ) {
+      } else if( !(optInPenetration >= 0e0 && optInPenetration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -770,7 +770,7 @@ public partial class Core
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInPenetration">As in the batch call; see <see cref="CDLDARKCLOUDCOVER_Lookback"/> for its
-   /// default and range (<c>-4e37</c> selects the default).</param>
+   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>CDLDARKCLOUDCOVER_Lookback(...) + 1</c>
    /// bars.</exception>
@@ -813,7 +813,7 @@ public partial class Core
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inClose">Close price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInPenetration">As in the batch call; see <see cref="CDLDARKCLOUDCOVER_Lookback"/> for its
-   /// default and range (<c>-4e37</c> selects the default).</param>
+   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outInteger">-100 when the pattern is detected (always bearish), 0 otherwise; never
    /// emits +100. Must hold at least <c>historyLen -
    /// CDLDARKCLOUDCOVER_Lookback(...)</c> values.</param>

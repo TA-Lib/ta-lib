@@ -48,14 +48,14 @@ namespace TALib;
 /// first output value and how many were written. An indicator consumes a
 /// number of leading bars (its <em>lookback</em>) before producing output —
 /// query it with the matching <c>*Lookback</c> method. Integer parameters
-/// accept <c>int.MinValue</c>, and real parameters <c>-4e37</c>, to select
-/// their documented default.
+/// accept <see cref="INTEGER_DEFAULT"/>, and real parameters
+/// <see cref="REAL_DEFAULT"/>, to select their documented default.
 /// <para>Per-instance settings — unstable periods and candlestick thresholds —
 /// take their documented defaults unless chosen up front with
 /// <see cref="Builder"/>. A <c>Core</c> whose settings are never mutated is safe
 /// to share read-only across threads.</para>
 /// </remarks>
-public partial class Core
+public sealed partial class Core
 {
     /// <summary>The catalogue of every indicator, for choosing one at run
     /// time.</summary>
@@ -64,14 +64,22 @@ public partial class Core
     /// <see cref="TALib.Metadata.FunctionCatalog"/>.</remarks>
     public static TALib.Metadata.FunctionCatalog Functions => TALib.Metadata.FunctionCatalog.Default;
 
-    /* The parameter sentinels the generated validation names. Values match
-     * the C library's ta_defs.h. */
-    internal const double TA_REAL_DEFAULT = -4e37;
-    internal const double TA_REAL_MIN = -3e37;
-    internal const double TA_REAL_MAX = 3e37;
-    internal const int TA_INTEGER_DEFAULT = int.MinValue;
-    internal const int TA_INTEGER_MIN = int.MinValue + 1;
-    internal const int TA_INTEGER_MAX = int.MaxValue;
+    /// <summary>Pass this for a <c>double</c> optional parameter to select its
+    /// documented default — C's <c>TA_REAL_DEFAULT</c>.</summary>
+    /// <remarks>It sits deliberately outside <see cref="REAL_MIN"/>..<see cref="REAL_MAX"/>,
+    /// so it can never collide with real data. <see cref="INTEGER_DEFAULT"/> is the
+    /// <c>int</c> equivalent.</remarks>
+    public const double REAL_DEFAULT = -4e37;
+    /// <summary>Lowest value a <c>double</c> optional parameter may take.</summary>
+    public const double REAL_MIN = -3e37;
+    /// <summary>Highest value a <c>double</c> optional parameter may take.</summary>
+    public const double REAL_MAX = 3e37;
+    /// <summary>Selects an <c>int</c> optional parameter's documented default.</summary>
+    public const int INTEGER_DEFAULT = int.MinValue;
+    /// <summary>Lowest value an <c>int</c> optional parameter may take.</summary>
+    public const int INTEGER_MIN = int.MinValue + 1;
+    /// <summary>Highest value an <c>int</c> optional parameter may take.</summary>
+    public const int INTEGER_MAX = int.MaxValue;
 
     /// <summary>Largest value <c>startIdx</c> or <c>endIdx</c> may take. Above
     /// it a call returns <see cref="RetCode.OutOfRangeStartIndex"/> or

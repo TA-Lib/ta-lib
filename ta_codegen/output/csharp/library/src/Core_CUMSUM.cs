@@ -151,9 +151,9 @@ public partial class Core
    /// the A/D Line is <c>CUMSUM(SUB(advances, declines))</c>, the A/D Volume
    /// Line is <c>CUMSUM(SUB(advancingVolume, decliningVolume))</c>, and the
    /// McClellan Summation Index is <c>CUMSUM</c> of the McClellan Oscillator.
-   /// [<c>SUM</c>](/functions/sum) is a *rolling window* over
-   /// <c>optInTimePeriod</c> bars; <c>CUMSUM</c> has no window — every bar since
-   /// the anchor contributes.
+   /// <see href="https://ta-lib.org/functions/sum"><c>SUM</c></see> is a
+   /// *rolling window* over <c>optInTimePeriod</c> bars; <c>CUMSUM</c> has no
+   /// window — every bar since the anchor contributes.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -220,9 +220,9 @@ public partial class Core
    /// the A/D Line is <c>CUMSUM(SUB(advances, declines))</c>, the A/D Volume
    /// Line is <c>CUMSUM(SUB(advancingVolume, decliningVolume))</c>, and the
    /// McClellan Summation Index is <c>CUMSUM</c> of the McClellan Oscillator.
-   /// [<c>SUM</c>](/functions/sum) is a *rolling window* over
-   /// <c>optInTimePeriod</c> bars; <c>CUMSUM</c> has no window — every bar since
-   /// the anchor contributes.
+   /// <see href="https://ta-lib.org/functions/sum"><c>SUM</c></see> is a
+   /// *rolling window* over <c>optInTimePeriod</c> bars; <c>CUMSUM</c> has no
+   /// window — every bar since the anchor contributes.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

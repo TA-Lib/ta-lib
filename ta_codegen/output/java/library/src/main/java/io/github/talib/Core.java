@@ -850,19 +850,20 @@ public final class Core {
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator
-    * ([{@code AO}](/functions/ao)) measures momentum, this measures the change
-    * in that momentum, by taking the oscillator's distance above or below its
-    * own moving average. Because acceleration turns before speed does, the
-    * reading changes sign ahead of the oscillator it is built from — it is
-    * meant as the early half of a pair, not as a signal on its own. Above zero
-    * acceleration is with the bulls, below zero with the bears, and it is drawn
-    * as a zero-centred histogram whose colour convention is the bar-to-bar
-    * change: rising bars accelerating, falling bars decelerating. Williams'
-    * rule of thumb is that two same-coloured bars are what confirms the turn,
-    * which is why the sign and the direction matter more than the level. The
-    * oscillator is one leg of Williams' Profitunity system, alongside the
-    * Awesome Oscillator ([{@code AO}](/functions/ao)) and the Alligator.
+    * up or slowing down. Where the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
+    * this measures the change in that momentum, by taking the oscillator's
+    * distance above or below its own moving average. Because acceleration turns
+    * before speed does, the reading changes sign ahead of the oscillator it is
+    * built from — it is meant as the early half of a pair, not as a signal on
+    * its own. Above zero acceleration is with the bulls, below zero with the
+    * bears, and it is drawn as a zero-centred histogram whose colour convention
+    * is the bar-to-bar change: rising bars accelerating, falling bars
+    * decelerating. Williams' rule of thumb is that two same-coloured bars are
+    * what confirms the turn, which is why the sign and the direction matter
+    * more than the level. The oscillator is one leg of Williams' Profitunity
+    * system, alongside the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -888,9 +889,10 @@ public final class Core {
     * @param optInSignalPeriod Number of bars in the moving average taken over
     *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
-    * @param outReal Distance of the Awesome Oscillator
-    *        ([{@code AO}](/functions/ao)) from its own moving average, centred on
-    *        zero. Must hold at least {@code endIdx - startIdx + 1} values.
+    * @param outReal Distance of the Awesome Oscillator (<a
+    *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
+    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
+    *        values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -938,19 +940,20 @@ public final class Core {
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator
-    * ([{@code AO}](/functions/ao)) measures momentum, this measures the change
-    * in that momentum, by taking the oscillator's distance above or below its
-    * own moving average. Because acceleration turns before speed does, the
-    * reading changes sign ahead of the oscillator it is built from — it is
-    * meant as the early half of a pair, not as a signal on its own. Above zero
-    * acceleration is with the bulls, below zero with the bears, and it is drawn
-    * as a zero-centred histogram whose colour convention is the bar-to-bar
-    * change: rising bars accelerating, falling bars decelerating. Williams'
-    * rule of thumb is that two same-coloured bars are what confirms the turn,
-    * which is why the sign and the direction matter more than the level. The
-    * oscillator is one leg of Williams' Profitunity system, alongside the
-    * Awesome Oscillator ([{@code AO}](/functions/ao)) and the Alligator.
+    * up or slowing down. Where the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
+    * this measures the change in that momentum, by taking the oscillator's
+    * distance above or below its own moving average. Because acceleration turns
+    * before speed does, the reading changes sign ahead of the oscillator it is
+    * built from — it is meant as the early half of a pair, not as a signal on
+    * its own. Above zero acceleration is with the bulls, below zero with the
+    * bears, and it is drawn as a zero-centred histogram whose colour convention
+    * is the bar-to-bar change: rising bars accelerating, falling bars
+    * decelerating. Williams' rule of thumb is that two same-coloured bars are
+    * what confirms the turn, which is why the sign and the direction matter
+    * more than the level. The oscillator is one leg of Williams' Profitunity
+    * system, alongside the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -979,9 +982,10 @@ public final class Core {
     * @param optInSignalPeriod Number of bars in the moving average taken over
     *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
-    * @param outReal Distance of the Awesome Oscillator
-    *        ([{@code AO}](/functions/ao)) from its own moving average, centred on
-    *        zero. Must hold at least {@code endIdx - startIdx + 1} values.
+    * @param outReal Distance of the Awesome Oscillator (<a
+    *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
+    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
+    *        values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1578,8 +1582,8 @@ public final class Core {
     * <p>The history must hold at least {@code AC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -2559,8 +2563,8 @@ public final class Core {
     * <p>The history must hold at least {@code ACCBANDS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -3010,9 +3014,7 @@ public final class Core {
     * to {@link Core#ACOS} at that bar.
     * <p>The history must hold at least {@code ACOS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -3592,9 +3594,7 @@ public final class Core {
     * to {@link Core#AD} at that bar.
     * <p>The history must hold at least {@code AD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -4049,9 +4049,7 @@ public final class Core {
     * to {@link Core#ADD} at that bar.
     * <p>The history must hold at least {@code ADD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -4931,8 +4929,8 @@ public final class Core {
     * <p>The history must hold at least {@code ADOSC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -5663,8 +5661,8 @@ public final class Core {
     * <p>The history must hold at least {@code ADR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -7196,8 +7194,8 @@ public final class Core {
     * <p>The history must hold at least {@code ADX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -7859,8 +7857,8 @@ public final class Core {
     * <p>The history must hold at least {@code ADXR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -8171,8 +8169,8 @@ public final class Core {
     * crossings, the twin-peaks divergence, and the run of consecutive same-side
     * bars — which is why the sign and the bar-to-bar change matter more than
     * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator
-    * ([{@code AC}](/functions/ac)).
+    * system, alongside the Alligator and the Accelerator/Decelerator (<a
+    * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -8250,8 +8248,8 @@ public final class Core {
     * crossings, the twin-peaks divergence, and the run of consecutive same-side
     * bars — which is why the sign and the bar-to-bar change matter more than
     * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator
-    * ([{@code AC}](/functions/ac)).
+    * system, alongside the Alligator and the Accelerator/Decelerator (<a
+    * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -8759,8 +8757,8 @@ public final class Core {
     * <p>The history must hold at least {@code AO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -9467,8 +9465,8 @@ public final class Core {
     * <p>The history must hold at least {@code APO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -10379,8 +10377,8 @@ public final class Core {
     * <p>The history must hold at least {@code AROON_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -11296,8 +11294,8 @@ public final class Core {
     * <p>The history must hold at least {@code AROONOSC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -11743,9 +11741,7 @@ public final class Core {
     * to {@link Core#ASIN} at that bar.
     * <p>The history must hold at least {@code ASIN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -12179,9 +12175,7 @@ public final class Core {
     * to {@link Core#ATAN} at that bar.
     * <p>The history must hold at least {@code ATAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -13097,8 +13091,8 @@ public final class Core {
     * <p>The history must hold at least {@code ATR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -13703,8 +13697,8 @@ public final class Core {
     * <p>The history must hold at least {@code AVGDEV_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -14176,9 +14170,7 @@ public final class Core {
     * to {@link Core#AVGPRICE} at that bar.
     * <p>The history must hold at least {@code AVGPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -15431,8 +15423,9 @@ public final class Core {
     * <p>The history must hold at least {@code BBANDS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE}, {@link Core#REAL_DEFAULT} and
+    * {@link MAType#DEFAULT} select a parameter's documented default, as in
+    * the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -17227,8 +17220,8 @@ public final class Core {
     * <p>The history must hold at least {@code BETA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -17752,9 +17745,7 @@ public final class Core {
     * to {@link Core#BOP} at that bar.
     * <p>The history must hold at least {@code BOP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -18648,8 +18639,8 @@ public final class Core {
     * <p>The history must hold at least {@code CCI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -18877,7 +18868,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
-    * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</li>
+    * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<a href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -18945,7 +18936,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
-    * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. ([thepatternsite.com](https://thepatternsite.com/TwoCrows.html))</li>
+    * <li>Bulkowski's testing found this reverses bearishly only 54% of the time — "near random" — despite the pattern's classic always-bearish label; the breakout direction cannot be predicted with any real accuracy. (<a href="https://thepatternsite.com/TwoCrows.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -19395,9 +19386,7 @@ public final class Core {
     * to {@link Core#CDL2CROWS} at that bar.
     * <p>The history must hold at least {@code CDL2CROWS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -20200,9 +20189,7 @@ public final class Core {
     * to {@link Core#CDL3BLACKCROWS} at that bar.
     * <p>The history must hold at least {@code CDL3BLACKCROWS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -20465,7 +20452,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
-    * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))</li>
+    * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. (<a href="https://thepatternsite.com/ThreeInsideUp.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -20535,7 +20522,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three inside up is meaningful in a downtrend, three inside down in an uptrend).</li>
-    * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. ([thepatternsite.com](https://thepatternsite.com/ThreeInsideUp.html))</li>
+    * <li>Bulkowski's testing found Three Inside Up succeeds as a bullish reversal 65% of the time (rank 20 of 103 overall) and Three Inside Down succeeds as a bearish reversal 60% of the time (rank 56 of 103) — both meaningfully better than a coin flip. (<a href="https://thepatternsite.com/ThreeInsideUp.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -21048,9 +21035,7 @@ public final class Core {
     * to {@link Core#CDL3INSIDE} at that bar.
     * <p>The history must hold at least {@code CDL3INSIDE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -21871,9 +21856,7 @@ public final class Core {
     * to {@link Core#CDL3LINESTRIKE} at that bar.
     * <p>The history must hold at least {@code CDL3LINESTRIKE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -22069,7 +22052,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
-    * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. ([thepatternsite.com](https://thepatternsite.com/ThreeOutsideUp.html))</li>
+    * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. (<a href="https://thepatternsite.com/ThreeOutsideUp.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -22138,7 +22121,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (three outside up is meaningful in a downtrend, three outside down in an uptrend).</li>
-    * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. ([thepatternsite.com](https://thepatternsite.com/ThreeOutsideUp.html))</li>
+    * <li>Bulkowski's testing puts Three Outside Up at a 75% bullish-reversal success rate versus 69% for Three Outside Down — both notably higher than the closely related Three Inside Up/Down (65%/60%), i.e. the engulfing "outside" variant tests as more reliable than the harami "inside" variant. (<a href="https://thepatternsite.com/ThreeOutsideUp.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -22510,9 +22493,7 @@ public final class Core {
     * to {@link Core#CDL3OUTSIDE} at that bar.
     * <p>The history must hold at least {@code CDL3OUTSIDE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -22855,7 +22836,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
-    * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))</li>
+    * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<a href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -22925,7 +22906,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
-    * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. ([thepatternsite.com](https://thepatternsite.com/ThreeStarsSouth.html))</li>
+    * <li>Thomas Bulkowski's statistical study found this has the best reversal rate of the 103 candlestick patterns he tracked (86% bullish reversal) — but that rests on just 9 occurrences in 4.7 million candle lines, and its overall post-breakout performance ranks dead last, 103rd of 103. (<a href="https://thepatternsite.com/ThreeStarsSouth.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -23585,9 +23566,7 @@ public final class Core {
     * to {@link Core#CDL3STARSINSOUTH} at that bar.
     * <p>The history must hold at least {@code CDL3STARSINSOUTH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -23949,7 +23928,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
-    * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</li>
+    * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. (<a href="https://thepatternsite.com/ThreeWhiteSoldiers.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -24017,7 +23996,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior downtrend the pattern classically assumes for significance.</li>
-    * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. ([thepatternsite.com](https://thepatternsite.com/ThreeWhiteSoldiers.html))</li>
+    * <li>Bulkowski's testing found this reverses a downtrend 82% of the time, but cautions the high rate mostly reflects how rare downward breakouts are afterward — moves following an upward breakout perform poorly. (<a href="https://thepatternsite.com/ThreeWhiteSoldiers.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -24688,9 +24667,7 @@ public final class Core {
     * to {@link Core#CDL3WHITESOLDIERS} at that bar.
     * <p>The history must hold at least {@code CDL3WHITESOLDIERS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -25010,7 +24987,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
-    * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</li>
+    * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -25083,7 +25060,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes for significance.</li>
-    * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). ([thepatternsite.com](https://thepatternsite.com/AbandonBabyBull.html))</li>
+    * <li>Bulkowski found the Abandoned Baby both very rare (293 occurrences out of 4.7 million candle lines, frequency rank 92 of 103) and unusually reliable when it does occur (70% success as a reversal, overall performance rank 9 of 103). (<a href="https://thepatternsite.com/AbandonBabyBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -25683,8 +25660,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLABANDONEDBABY_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -26090,7 +26067,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
-    * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))</li>
+    * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. (<a href="https://thepatternsite.com/AdvanceBlock.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -26158,7 +26135,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior uptrend the pattern classically assumes for significance.</li>
-    * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. ([thepatternsite.com](https://thepatternsite.com/AdvanceBlock.html))</li>
+    * <li>Although classically read as a bearish reversal, Bulkowski's testing found the Advance Block actually acts as a bullish continuation 64% of the time. (<a href="https://thepatternsite.com/AdvanceBlock.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -26909,9 +26886,7 @@ public final class Core {
     * to {@link Core#CDLADVANCEBLOCK} at that bar.
     * <p>The history must hold at least {@code CDLADVANCEBLOCK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -27168,7 +27143,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
-    * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))</li>
+    * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. (<a href="https://thepatternsite.com/BeltHoldBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -27241,7 +27216,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that the pattern's bullish/bearish reading classically assumes.</li>
-    * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. ([thepatternsite.com](https://thepatternsite.com/BeltHoldBull.html))</li>
+    * <li>Bulkowski's testing ranks the bullish Belt-Hold's 71% reversal rate 11th of 103 patterns for pure reversal reliability (bearish reverses 68% of the time) — though its overall post-breakout performance rank is a more middling 62nd/63rd of 103. (<a href="https://thepatternsite.com/BeltHoldBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -27702,9 +27677,7 @@ public final class Core {
     * to {@link Core#CDLBELTHOLD} at that bar.
     * <p>The history must hold at least {@code CDLBELTHOLD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -27948,7 +27921,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
-    * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</li>
+    * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<a href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -28017,7 +27990,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</li>
-    * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</li>
+    * <li>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<a href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -28535,9 +28508,7 @@ public final class Core {
     * to {@link Core#CDLBREAKAWAY} at that bar.
     * <p>The history must hold at least {@code CDLBREAKAWAY_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -28792,7 +28763,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</li>
+    * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<a href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -28863,7 +28834,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</li>
+    * <li>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<a href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -29324,9 +29295,7 @@ public final class Core {
     * to {@link Core#CDLCLOSINGMARUBOZU} at that bar.
     * <p>The history must hold at least {@code CDLCLOSINGMARUBOZU_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -29574,7 +29543,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
-    * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<a href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -29640,7 +29609,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend the pattern classically assumes.</li>
-    * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/ConcealBaby.html))</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this pattern actually behaves as a bearish continuation 75% of the time — though the finding rests on just 4 occurrences out of 4.7 million candle lines, and it ranks 101st of 103 patterns overall. (<a href="https://thepatternsite.com/ConcealBaby.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -30129,9 +30098,7 @@ public final class Core {
     * to {@link Core#CDLCONCEALBABYSWALL} at that bar.
     * <p>The history must hold at least {@code CDLCONCEALBABYSWALL_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -30396,7 +30363,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
-    * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))</li>
+    * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<a href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -30464,7 +30431,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
-    * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. ([thepatternsite.com](https://thepatternsite.com/MeetingLinesBear.html))</li>
+    * <li>Bulkowski's testing found the bearish Counterattack/Meeting Lines does not reliably reverse at all — it acts as a bullish CONTINUATION 51% of the time — and the bullish version reverses only 56% of the time, both "near random" by his classification. (<a href="https://thepatternsite.com/MeetingLinesBear.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -30953,9 +30920,7 @@ public final class Core {
     * to {@link Core#CDLCOUNTERATTACK} at that bar.
     * <p>The history must hold at least {@code CDLCOUNTERATTACK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -31713,8 +31678,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLDARKCLOUDCOVER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -32383,9 +32348,7 @@ public final class Core {
     * to {@link Core#CDLDOJI} at that bar.
     * <p>The history must hold at least {@code CDLDOJI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -32648,7 +32611,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
-    * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))</li>
+    * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. (<a href="https://thepatternsite.com/DojiStarBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -32725,7 +32688,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the reversal signal classically assumes.</li>
-    * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. ([thepatternsite.com](https://thepatternsite.com/DojiStarBull.html))</li>
+    * <li>Bulkowski's testing contradicts the classic reading for the bullish case: theory says a bullish Doji Star (gapping down after a black candle) should be a bullish reversal, but he found it instead acts as a bearish CONTINUATION 64% of the time — almost 2 out of 3, the opposite of the textbook signal. (<a href="https://thepatternsite.com/DojiStarBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -33212,9 +33175,7 @@ public final class Core {
     * to {@link Core#CDLDOJISTAR} at that bar.
     * <p>The history must hold at least {@code CDLDOJISTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -33470,7 +33431,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
-    * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))</li>
+    * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. (<a href="https://thepatternsite.com/Dragonfly.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -33545,7 +33506,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
-    * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Dragonfly.html))</li>
+    * <li>Bulkowski's testing found this reverses the prior trend only about 50% of the time — statistically no better than a coin flip — and ranks 98th of 103 candlestick patterns for post-breakout performance. (<a href="https://thepatternsite.com/Dragonfly.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -33995,9 +33956,7 @@ public final class Core {
     * to {@link Core#CDLDRAGONFLYDOJI} at that bar.
     * <p>The history must hold at least {@code CDLDRAGONFLYDOJI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -34207,7 +34166,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
-    * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))</li>
+    * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. (<a href="https://thepatternsite.com/BearEngulfing.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -34277,7 +34236,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (down for bullish, up for bearish) the reversal classically assumes.</li>
-    * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. ([thepatternsite.com](https://thepatternsite.com/BearEngulfing.html))</li>
+    * <li>Bulkowski's testing found bearish Engulfing has a strong 79% reversal rate (5th-best of 103 patterns by that measure alone) but a weak overall post-breakout performance rank of 91st of 103 — the reversal fires reliably but rarely sustains. Bullish Engulfing reverses 63% of the time with a similarly weak overall rank of 84th of 103. (<a href="https://thepatternsite.com/BearEngulfing.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -34662,9 +34621,7 @@ public final class Core {
     * to {@link Core#CDLENGULFING} at that bar.
     * <p>The history must hold at least {@code CDLENGULFING_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -35627,8 +35584,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLEVENINGDOJISTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -36516,8 +36473,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLEVENINGSTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -36782,7 +36739,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
-    * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))</li>
+    * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -36851,7 +36808,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend the continuation signal classically assumes.</li>
-    * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. ([thepatternsite.com](https://thepatternsite.com/SidebySideWhiteLinesBull.html))</li>
+    * <li>Bulkowski's data shows the bullish form is rare (984 occurrences out of 4.7 million candle lines, frequency rank 73/103) but continues as labeled 66% of the time; the bearish form is rarer still (frequency rank 86/103) and its 56% continuation rate is "near random" — Bulkowski cautions the bearish sample is too thin to trust. (<a href="https://thepatternsite.com/SidebySideWhiteLinesBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -37359,9 +37316,7 @@ public final class Core {
     * to {@link Core#CDLGAPSIDESIDEWHITE} at that bar.
     * <p>The history must hold at least {@code CDLGAPSIDESIDEWHITE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -37617,7 +37572,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
-    * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</li>
+    * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/Gravestone.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -37692,7 +37647,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend that determines the pattern's bullish/bearish meaning.</li>
-    * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Gravestone.html))</li>
+    * <li>Bulkowski's testing found the bearish reversal traders expect actually shows up only 51% of the time — essentially random — and it ranks 77th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/Gravestone.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -38142,9 +38097,7 @@ public final class Core {
     * to {@link Core#CDLGRAVESTONEDOJI} at that bar.
     * <p>The history must hold at least {@code CDLGRAVESTONEDOJI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -38461,7 +38414,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
-    * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Hammer.html))</li>
+    * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/Hammer.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -38528,7 +38481,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; confirm the trend context yourself.</li>
-    * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/Hammer.html))</li>
+    * <li>Bulkowski's testing found the Hammer reverses a preceding downtrend about 60% of the time — in his words "not far from random (50%)" — and it ranks a modest 65th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/Hammer.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -39124,9 +39077,7 @@ public final class Core {
     * to {@link Core#CDLHAMMER} at that bar.
     * <p>The history must hold at least {@code CDLHAMMER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -39444,7 +39395,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
-    * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</li>
+    * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/HangingMan.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -39512,7 +39463,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding uptrend that the pattern classically assumes; confirm the trend context yourself.</li>
-    * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HangingMan.html))</li>
+    * <li>Bulkowski's testing found this acts as a bullish continuation 59% of the time — the opposite of the bearish-reversal reading it's named for ("near random") — and it ranks 87th of 103 patterns for post-breakout performance. (<a href="https://thepatternsite.com/HangingMan.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -40108,9 +40059,7 @@ public final class Core {
     * to {@link Core#CDLHANGINGMAN} at that bar.
     * <p>The history must hold at least {@code CDLHANGINGMAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -40392,7 +40341,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
-    * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</li>
+    * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). (<a href="https://thepatternsite.com/HaramiBear.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -40459,7 +40408,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
-    * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). ([thepatternsite.com](https://thepatternsite.com/HaramiBear.html))</li>
+    * <li>Bulkowski's testing found the bearish Harami actually acts as a bullish CONTINUATION 53% of the time — more often than it reverses the prior uptrend — rating the pattern "near random" overall (rank 72 of 103). (<a href="https://thepatternsite.com/HaramiBear.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -40978,9 +40927,7 @@ public final class Core {
     * to {@link Core#CDLHARAMI} at that bar.
     * <p>The history must hold at least {@code CDLHARAMI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -41259,7 +41206,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
-    * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))</li>
+    * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. (<a href="https://thepatternsite.com/HaramiCrossBear.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -41327,7 +41274,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the prior trend (downtrend for bullish, uptrend for bearish) that the reversal signal assumes.</li>
-    * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. ([thepatternsite.com](https://thepatternsite.com/HaramiCrossBear.html))</li>
+    * <li>Bulkowski's testing found the bearish Harami Cross behaves opposite its textbook label even more strongly than the plain Harami: it acts as a bullish CONTINUATION 57% of the time rather than a bearish reversal, and the bullish Harami Cross likewise fails to reverse the downtrend 55% of the time. (<a href="https://thepatternsite.com/HaramiCrossBear.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -41840,9 +41787,7 @@ public final class Core {
     * to {@link Core#CDLHARAMICROSS} at that bar.
     * <p>The history must hold at least {@code CDLHARAMICROSS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -42094,7 +42039,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</li>
+    * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -42168,7 +42113,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. ([thepatternsite.com](https://thepatternsite.com/HighWave.html))</li>
+    * <li>Bulkowski's testing found the High-Wave candle acts as a reversal only 51% of the time — statistically indistinguishable from random — which he notes actually agrees with the pattern's theoretical meaning of pure indecision. (<a href="https://thepatternsite.com/HighWave.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -42617,9 +42562,7 @@ public final class Core {
     * to {@link Core#CDLHIGHWAVE} at that bar.
     * <p>The history must hold at least {@code CDLHIGHWAVE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -42905,7 +42848,7 @@ public final class Core {
     * 200 flags the confirming bar.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))</li>
+    * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -42972,7 +42915,7 @@ public final class Core {
     * 200 flags the confirming bar.
     * <p><b>Notes</b>
     * <ul>
-    * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. ([thepatternsite.com](https://thepatternsite.com/HikkakeBull.html))</li>
+    * <li>The name comes from the Japanese word for a deceptive move or "trap" — fitting, since the pattern exists to catch traders acting on a false breakout. Bulkowski's testing of the confirmed pattern found the trap itself barely beats a coin flip: the bullish variant continues as expected only 52% of the time and the bearish variant exactly 50% ("random"), both ranking in the bottom fifth (83rd-84th of 105) for post-breakout performance. (<a href="https://thepatternsite.com/HikkakeBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -43428,9 +43371,7 @@ public final class Core {
     * to {@link Core#CDLHIKKAKE} at that bar.
     * <p>The history must hold at least {@code CDLHIKKAKE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -44394,9 +44335,7 @@ public final class Core {
     * to {@link Core#CDLHIKKAKEMOD} at that bar.
     * <p>The history must hold at least {@code CDLHIKKAKEMOD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -44656,7 +44595,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
-    * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<a href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -44726,7 +44665,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the bullish reversal classically assumes.</li>
-    * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. ([thepatternsite.com](https://thepatternsite.com/HomingPigeon.html))</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this behaves as a bearish continuation 56% of the time — "near random" by his own description — though its overall post-breakout performance rank (21st of 103) is comparatively strong. (<a href="https://thepatternsite.com/HomingPigeon.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -45209,9 +45148,7 @@ public final class Core {
     * to {@link Core#CDLHOMINGPIGEON} at that bar.
     * <p>The history must hold at least {@code CDLHOMINGPIGEON_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -46104,9 +46041,7 @@ public final class Core {
     * to {@link Core#CDLIDENTICAL3CROWS} at that bar.
     * <p>The history must hold at least {@code CDLIDENTICAL3CROWS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -46367,7 +46302,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
-    * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -46439,7 +46374,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bearish continuation pattern assumes.</li>
-    * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. ([thepatternsite.com](https://www.thepatternsite.com/InNeck.html))</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 53% of the time — "near random" — though its overall post-breakout performance still ranks a strong 17th of 103. (<a href="https://www.thepatternsite.com/InNeck.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -46924,9 +46859,7 @@ public final class Core {
     * to {@link Core#CDLINNECK} at that bar.
     * <p>The history must hold at least {@code CDLINNECK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -47210,7 +47143,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
-    * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. (<a href="https://thepatternsite.com/HammerInv.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -47277,7 +47210,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that the pattern classically assumes; it only checks the gap down from the immediately preceding candle.</li>
-    * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. ([thepatternsite.com](https://thepatternsite.com/HammerInv.html))</li>
+    * <li>Despite the bullish-reversal label, Bulkowski's testing found this actually behaves as a bearish continuation 65% of the time — yet its overall post-breakout performance rank (6th of 103) is among the best of all candlestick patterns he studied. (<a href="https://thepatternsite.com/HammerInv.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -47805,9 +47738,7 @@ public final class Core {
     * to {@link Core#CDLINVERTEDHAMMER} at that bar.
     * <p>The history must hold at least {@code CDLINVERTEDHAMMER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -48080,7 +48011,7 @@ public final class Core {
     * is set by the second candle's color.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</li>
+    * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -48146,7 +48077,7 @@ public final class Core {
     * is set by the second candle's color.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). ([thepatternsite.com](https://thepatternsite.com/KickingBull.html))</li>
+    * <li>Bulkowski's testing found Kicking reverses only 53% (bullish) / 54% (bearish) of the time — both "near random" — and it's also one of the rarest patterns he tracked (frequency rank 100/103 bullish, 102/103 bearish). (<a href="https://thepatternsite.com/KickingBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -48655,9 +48586,7 @@ public final class Core {
     * to {@link Core#CDLKICKING} at that bar.
     * <p>The history must hold at least {@code CDLKICKING_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -49501,9 +49430,7 @@ public final class Core {
     * to {@link Core#CDLKICKINGBYLENGTH} at that bar.
     * <p>The history must hold at least {@code CDLKICKINGBYLENGTH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -49738,7 +49665,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
-    * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))</li>
+    * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -49807,7 +49734,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Does not verify the preceding downtrend that this bullish reversal classically assumes.</li>
-    * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/LadderBottom.html))</li>
+    * <li>Bulkowski's testing found this reverses a downtrend only 56% of the time — "near random" — and it is extremely rare (451 occurrences out of 4.7 million candle lines), ranking 41st of 103 patterns for overall performance. (<a href="https://thepatternsite.com/LadderBottom.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -50275,9 +50202,7 @@ public final class Core {
     * to {@link Core#CDLLADDERBOTTOM} at that bar.
     * <p>The history must hold at least {@code CDLLADDERBOTTOM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -50528,7 +50453,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
-    * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</li>
+    * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." (<a href="https://thepatternsite.com/LongLegDoji.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -50600,7 +50525,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>Only one long shadow (upper or lower) is required, whereas the classic pattern shows both long upper and lower shadows.</li>
-    * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." ([thepatternsite.com](https://thepatternsite.com/LongLegDoji.html))</li>
+    * <li>Bulkowski's testing found this continues in the direction of the prior trend only 51% of the time — statistically random — and ranks 37th of 103 patterns overall; in his words, "it means nothing." (<a href="https://thepatternsite.com/LongLegDoji.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -51048,9 +50973,7 @@ public final class Core {
     * to {@link Core#CDLLONGLEGGEDDOJI} at that bar.
     * <p>The history must hold at least {@code CDLLONGLEGGEDDOJI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -51803,9 +51726,7 @@ public final class Core {
     * to {@link Core#CDLLONGLINE} at that bar.
     * <p>The history must hold at least {@code CDLLONGLINE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -52054,7 +51975,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))</li>
+    * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -52124,7 +52045,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." ([thepatternsite.com](https://thepatternsite.com/BlackMarubozu.html))</li>
+    * <li>Despite the shape's strong-conviction reputation, Bulkowski's testing found a Marubozu continues in its expected direction only about 53% (black) to 56% (white) of the time — both "near random." (<a href="https://thepatternsite.com/BlackMarubozu.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -52570,9 +52491,7 @@ public final class Core {
     * to {@link Core#CDLMARUBOZU} at that bar.
     * <p>The history must hold at least {@code CDLMARUBOZU_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -52798,7 +52717,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
-    * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))</li>
+    * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/MatchingLow.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -52868,7 +52787,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The bullish-reversal reading assumes a prior downtrend, which is not verified.</li>
-    * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/MatchingLow.html))</li>
+    * <li>Although classically read as a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 61% of the time — even so, it still ranks a strong 8th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/MatchingLow.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -53283,9 +53202,7 @@ public final class Core {
     * to {@link Core#CDLMATCHINGLOW} at that bar.
     * <p>The history must hold at least {@code CDLMATCHINGLOW_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -53594,7 +53511,7 @@ public final class Core {
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
     * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
-    * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</li>
+    * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -53666,7 +53583,7 @@ public final class Core {
     * <ul>
     * <li>The colors of the third and fourth (reaction) candles are not checked, although they are classically black.</li>
     * <li>The continuation reading assumes a prior uptrend, which is not verified.</li>
-    * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." ([thepatternsite.com](https://thepatternsite.com/MatHold.html))</li>
+    * <li>Bulkowski's own dataset contains only 52 Mat Hold occurrences out of 4.7 million candle lines; he explicitly warns the 78% continuation rate he measured "will likely be wrong or at least subject to large change as additional samples become available." (<a href="https://thepatternsite.com/MatHold.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -54253,8 +54170,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLMATHOLD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -55224,8 +55141,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLMORNINGDOJISTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -55517,7 +55434,7 @@ public final class Core {
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
     * <li>A prior downtrend is not verified.</li>
-    * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. ([thepatternsite.com](https://thepatternsite.com/MorningStar.html))</li>
+    * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. (<a href="https://thepatternsite.com/MorningStar.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -55592,7 +55509,7 @@ public final class Core {
     * <ul>
     * <li>The gap-down is measured between the candles' real bodies, not between their high/low ranges.</li>
     * <li>A prior downtrend is not verified.</li>
-    * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. ([thepatternsite.com](https://thepatternsite.com/MorningStar.html))</li>
+    * <li>Bulkowski ranks the Morning Star unusually high — 6th of 103 for reversal rate (78%) and 12th of 103 for overall post-breakout performance — one of the few classic candle patterns whose textbook reputation his statistics confirm rather than debunk. (<a href="https://thepatternsite.com/MorningStar.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -56121,8 +56038,8 @@ public final class Core {
     * <p>The history must hold at least {@code CDLMORNINGSTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -56383,7 +56300,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
-    * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<a href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -56454,7 +56371,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The bearish-continuation reading assumes a prior downtrend, which is not verified.</li>
-    * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</li>
+    * <li>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<a href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -56938,9 +56855,7 @@ public final class Core {
     * to {@link Core#CDLONNECK} at that bar.
     * <p>The history must hold at least {@code CDLONNECK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -57681,9 +57596,7 @@ public final class Core {
     * to {@link Core#CDLPIERCING} at that bar.
     * <p>The history must hold at least {@code CDLPIERCING_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -57967,7 +57880,7 @@ public final class Core {
     * indecision/uncertainty; neutral, neither bullish nor bearish.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</li>
+    * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -58034,7 +57947,7 @@ public final class Core {
     * indecision/uncertainty; neutral, neither bullish nor bearish.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</li>
+    * <li>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<a href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -58556,9 +58469,7 @@ public final class Core {
     * to {@link Core#CDLRICKSHAWMAN} at that bar.
     * <p>The history must hold at least {@code CDLRICKSHAWMAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -58850,7 +58761,7 @@ public final class Core {
     * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
     * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
     * <li>The prior trend the continuation reading assumes is not verified.</li>
-    * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))</li>
+    * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -58921,7 +58832,7 @@ public final class Core {
     * <li>Only the three-small-candle variant is detected; the classic pattern allowing two or more small candles is not supported.</li>
     * <li>The middle candles need only partially overlap the first candle's range, not be fully contained within it.</li>
     * <li>The prior trend the continuation reading assumes is not verified.</li>
-    * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. ([thepatternsite.com](https://thepatternsite.com/Rising3Methods.html))</li>
+    * <li>Bulkowski's testing found Rising Three Methods continues 74% of the time (102 examples out of 4.7M candle lines) and Falling Three Methods continues 71% of the time (just 64 examples) — both act as classically labeled, but Bulkowski flags the samples as too thin to trust: Falling Three Methods is so rare he omitted its statistics from his book entirely. (<a href="https://thepatternsite.com/Rising3Methods.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -59506,9 +59417,7 @@ public final class Core {
     * to {@link Core#CDLRISEFALL3METHODS} at that bar.
     * <p>The history must hold at least {@code CDLRISEFALL3METHODS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -60417,9 +60326,7 @@ public final class Core {
     * to {@link Core#CDLSEPARATINGLINES} at that bar.
     * <p>The history must hold at least {@code CDLSEPARATINGLINES_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -60704,7 +60611,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
-    * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</li>
+    * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. (<a href="https://thepatternsite.com/ShootingStar.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -60773,7 +60680,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>A preceding uptrend is not verified.</li>
-    * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. ([thepatternsite.com](https://thepatternsite.com/ShootingStar.html))</li>
+    * <li>Bulkowski found this reverses only 59% of the time — "near random," summarized in his words as "this candle looks better than it performs" — ranking 55th of 103 patterns. (<a href="https://thepatternsite.com/ShootingStar.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -61302,9 +61209,7 @@ public final class Core {
     * to {@link Core#CDLSHOOTINGSTAR} at that bar.
     * <p>The history must hold at least {@code CDLSHOOTINGSTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -62073,9 +61978,7 @@ public final class Core {
     * to {@link Core#CDLSHORTLINE} at that bar.
     * <p>The history must hold at least {@code CDLSHORTLINE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -62744,9 +62647,7 @@ public final class Core {
     * to {@link Core#CDLSPINNINGTOP} at that bar.
     * <p>The history must hold at least {@code CDLSPINNINGTOP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -63093,7 +62994,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
-    * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</li>
+    * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. (<a href="https://thepatternsite.com/Deliberation.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -63161,7 +63062,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically appears in an uptrend, but this function does not verify a prior uptrend; the caller must confirm it.</li>
-    * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. ([thepatternsite.com](https://thepatternsite.com/Deliberation.html))</li>
+    * <li>Bulkowski's testing shows this classically-bearish pattern actually acts as a bullish continuation 77% of the time — the reverse of the label — because price tends to close above the pattern's top rather than turning down. (<a href="https://thepatternsite.com/Deliberation.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -63815,9 +63716,7 @@ public final class Core {
     * to {@link Core#CDLSTALLEDPATTERN} at that bar.
     * <p>The history must hold at least {@code CDLSTALLEDPATTERN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -64044,7 +63943,7 @@ public final class Core {
     * not verify).
     * <p><b>Notes</b>
     * <ul>
-    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))</li>
+    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -64111,7 +64010,7 @@ public final class Core {
     * not verify).
     * <p><b>Notes</b>
     * <ul>
-    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. ([thepatternsite.com](https://thepatternsite.com/StickSandwich.html))</li>
+    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found it actually acts as a bearish continuation 62% of the time — despite that, it still ranks a respectable 14th of 103 patterns for overall performance. (<a href="https://thepatternsite.com/StickSandwich.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -64552,9 +64451,7 @@ public final class Core {
     * to {@link Core#CDLSTICKSANDWICH} at that bar.
     * <p>The history must hold at least {@code CDLSTICKSANDWICH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -65413,9 +65310,7 @@ public final class Core {
     * to {@link Core#CDLTAKURI} at that bar.
     * <p>The history must hold at least {@code CDLTAKURI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -65654,7 +65549,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
-    * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</li>
+    * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). (<a href="https://thepatternsite.com/DownsideTasukiGap.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -65722,7 +65617,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
-    * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). ([thepatternsite.com](https://thepatternsite.com/DownsideTasukiGap.html))</li>
+    * <li>Bulkowski's testing found the downside Tasuki Gap actually acts as a bullish REVERSAL 54% of the time — opposite its textbook bearish-continuation label — while the upside variant does continue as labeled, but only 57% of the time ("near random"). (<a href="https://thepatternsite.com/DownsideTasukiGap.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -66188,9 +66083,7 @@ public final class Core {
     * to {@link Core#CDLTASUKIGAP} at that bar.
     * <p>The history must hold at least {@code CDLTASUKIGAP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -66451,7 +66344,7 @@ public final class Core {
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
     * <li>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</li>
-    * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</li>
+    * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. (<a href="https://www.thepatternsite.com/Thrusting.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -66521,7 +66414,7 @@ public final class Core {
     * <ul>
     * <li>The pattern is classically meaningful only in a downtrend, but this function does not verify any prior trend.</li>
     * <li>Although the pattern can be read as bullish in an uptrend or when it recurs, this function ignores trend and always reports it as bearish.</li>
-    * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. ([thepatternsite.com](https://www.thepatternsite.com/Thrusting.html))</li>
+    * <li>Bulkowski's testing found this classically-bearish continuation pattern actually acts as a bullish reversal 57% of the time — "near random" — though it ranks a strong 15th of 103 patterns for overall performance. (<a href="https://www.thepatternsite.com/Thrusting.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -67008,9 +66901,7 @@ public final class Core {
     * to {@link Core#CDLTHRUSTING} at that bar.
     * <p>The history must hold at least {@code CDLTHRUSTING_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -67249,7 +67140,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
-    * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</li>
+    * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -67317,7 +67208,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>This reversal pattern does not verify the prior trend it classically assumes.</li>
-    * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. ([thepatternsite.com](https://thepatternsite.com/TriStarBull.html))</li>
+    * <li>Bulkowski's testing found both Tristar variants reverse only marginally better than chance — bullish 60% of the time (rank 28/103 overall, but rare: frequency rank 79/103) and bearish just 52% of the time (rank 76/103) — despite the "exhaustion signal" framing, one of the weaker reversal signals in his candlestick set. (<a href="https://thepatternsite.com/TriStarBull.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -67778,9 +67669,7 @@ public final class Core {
     * to {@link Core#CDLTRISTAR} at that bar.
     * <p>The history must hold at least {@code CDLTRISTAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -68041,7 +67930,7 @@ public final class Core {
     * downtrend, which the function does not verify.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))</li>
+    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -68109,7 +67998,7 @@ public final class Core {
     * downtrend, which the function does not verify.
     * <p><b>Notes</b>
     * <ul>
-    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. ([thepatternsite.com](https://thepatternsite.com/Unique3RiverBottom.html))</li>
+    * <li>Although classically a bullish reversal (and TA-Lib only emits +100), Bulkowski's testing found the opposite: it acts as a bearish continuation 60% of the time, ranking 60th of 103 patterns overall. (<a href="https://thepatternsite.com/Unique3RiverBottom.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -68618,9 +68507,7 @@ public final class Core {
     * to {@link Core#CDLUNIQUE3RIVER} at that bar.
     * <p>The history must hold at least {@code CDLUNIQUE3RIVER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -68884,7 +68771,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
-    * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))</li>
+    * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<a href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -68952,7 +68839,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The pattern classically assumes a prior uptrend, but this function does not verify any trend.</li>
-    * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." ([thepatternsite.com](https://www.thepatternsite.com/UpGapTwoCrows.html))</li>
+    * <li>Although classically a bearish reversal, Bulkowski's testing found this actually acts as a bullish continuation 60% of the time, and even when it does work "the price move is often lousy." (<a href="https://www.thepatternsite.com/UpGapTwoCrows.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -69462,9 +69349,7 @@ public final class Core {
     * to {@link Core#CDLUPSIDEGAP2CROWS} at that bar.
     * <p>The history must hold at least {@code CDLUPSIDEGAP2CROWS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -69664,7 +69549,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
-    * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</li>
+    * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<a href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -69733,7 +69618,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>This continuation pattern does not verify the prior trend it classically assumes; the caller must confirm the trend.</li>
-    * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. ([thepatternsite.com](https://thepatternsite.com/UpGap3Methods.html))</li>
+    * <li>Bulkowski's testing found BOTH directions of this pattern actually act as reversals more often than not, opposite the classic continuation label: the upside variant reverses bearish 59% of the time, the downside variant reverses bullish 62% of the time. (<a href="https://thepatternsite.com/UpGap3Methods.html">thepatternsite.com</a>)</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -70112,9 +69997,7 @@ public final class Core {
     * to {@link Core#CDLXSIDEGAP3METHODS} at that bar.
     * <p>The history must hold at least {@code CDLXSIDEGAP3METHODS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -70556,9 +70439,7 @@ public final class Core {
     * to {@link Core#CEIL} at that bar.
     * <p>The history must hold at least {@code CEIL_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -70881,10 +70762,11 @@ public final class Core {
     * distribution, and the distance from zero measures conviction. Because the
     * divisor is the window's own volume, the output is comparable across
     * instruments and across time in a way a raw accumulation total is not.
-    * Created by Marc Chaikin, who also authored the [{@code AD}](/functions/ad)
-    * line this shares its per-bar multiplier with. CMF is that same multiplier
-    * summed over a fixed window and normalised, where AD accumulates it from
-    * the start of the series without bound.
+    * Created by Marc Chaikin, who also authored the <a
+    * href="https://ta-lib.org/functions/ad">{@code AD}</a> line this shares its
+    * per-bar multiplier with. CMF is that same multiplier summed over a fixed
+    * window and normalised, where AD accumulates it from the start of the
+    * series without bound.
     * <p><b>Formula</b>
     * <pre>{@code
     * t = high[i] - low[i]
@@ -70895,7 +70777,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
-    * <li>Each bar's close is expected to lie within its own {@code [low, high]}, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [{@code AD}](/functions/ad) does.</li>
+    * <li>Each bar's close is expected to lie within its own {@code [low, high]}, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as <a href="https://ta-lib.org/functions/ad">{@code AD}</a> does.</li>
     * <li>A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.</li>
     * <li>A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.</li>
     * <li>Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.</li>
@@ -70975,10 +70857,11 @@ public final class Core {
     * distribution, and the distance from zero measures conviction. Because the
     * divisor is the window's own volume, the output is comparable across
     * instruments and across time in a way a raw accumulation total is not.
-    * Created by Marc Chaikin, who also authored the [{@code AD}](/functions/ad)
-    * line this shares its per-bar multiplier with. CMF is that same multiplier
-    * summed over a fixed window and normalised, where AD accumulates it from
-    * the start of the series without bound.
+    * Created by Marc Chaikin, who also authored the <a
+    * href="https://ta-lib.org/functions/ad">{@code AD}</a> line this shares its
+    * per-bar multiplier with. CMF is that same multiplier summed over a fixed
+    * window and normalised, where AD accumulates it from the start of the
+    * series without bound.
     * <p><b>Formula</b>
     * <pre>{@code
     * t = high[i] - low[i]
@@ -70989,7 +70872,7 @@ public final class Core {
     * <p><b>Notes</b>
     * <ul>
     * <li>The output is the raw ratio in {@code [-1, +1]}, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</li>
-    * <li>Each bar's close is expected to lie within its own {@code [low, high]}, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [{@code AD}](/functions/ad) does.</li>
+    * <li>Each bar's close is expected to lie within its own {@code [low, high]}, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as <a href="https://ta-lib.org/functions/ad">{@code AD}</a> does.</li>
     * <li>A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.</li>
     * <li>A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.</li>
     * <li>Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.</li>
@@ -71465,8 +71348,8 @@ public final class Core {
     * <p>The history must hold at least {@code CMF_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -72382,8 +72265,8 @@ public final class Core {
     * <p>The history must hold at least {@code CMO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -72740,7 +72623,8 @@ public final class Core {
     * negative = net downward. CMOU is the version as defined by Chande in his
     * book *The New Technical Trader* (1994), and is the more common
     * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-    * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
+    * pandas-ta's default. See <a
+    * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -72803,7 +72687,8 @@ public final class Core {
     * negative = net downward. CMOU is the version as defined by Chande in his
     * book *The New Technical Trader* (1994), and is the more common
     * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-    * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
+    * pandas-ta's default. See <a
+    * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -73354,8 +73239,8 @@ public final class Core {
     * <p>The history must hold at least {@code CMOU_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -73819,7 +73704,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into [{@code WMA}](/functions/wma).</li>
+    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
     * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -73890,7 +73775,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into [{@code WMA}](/functions/wma).</li>
+    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
     * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -74584,8 +74469,8 @@ public final class Core {
     * <p>The history must hold at least {@code COPPOCK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -76027,8 +75912,8 @@ public final class Core {
     * <p>The history must hold at least {@code CORREL_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -76466,9 +76351,7 @@ public final class Core {
     * to {@link Core#COS} at that bar.
     * <p>The history must hold at least {@code COS_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -76900,9 +76783,7 @@ public final class Core {
     * to {@link Core#COSH} at that bar.
     * <p>The history must hold at least {@code COSH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -77036,9 +76917,9 @@ public final class Core {
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * [{@code SUM}](/functions/sum) is a *rolling window* over
-    * {@code optInTimePeriod} bars; {@code CUMSUM} has no window — every bar
-    * since the anchor contributes.
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
+    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
+    * every bar since the anchor contributes.
     * <p><b>Formula</b>
     * <pre>{@code
     * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -77102,9 +76983,9 @@ public final class Core {
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * [{@code SUM}](/functions/sum) is a *rolling window* over
-    * {@code optInTimePeriod} bars; {@code CUMSUM} has no window — every bar
-    * since the anchor contributes.
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
+    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
+    * every bar since the anchor contributes.
     * <p><b>Formula</b>
     * <pre>{@code
     * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -77403,9 +77284,7 @@ public final class Core {
     * to {@link Core#CUMSUM} at that bar.
     * <p>The history must hold at least {@code CUMSUM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -78221,8 +78100,8 @@ public final class Core {
     * <p>The history must hold at least {@code CVI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -79033,8 +78912,8 @@ public final class Core {
     * <p>The history must hold at least {@code DEMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -79485,9 +79364,7 @@ public final class Core {
     * to {@link Core#DIV} at that bar.
     * <p>The history must hold at least {@code DIV_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -80448,8 +80325,8 @@ public final class Core {
     * <p>The history must hold at least {@code DONCHIAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -81166,8 +81043,8 @@ public final class Core {
     * <p>The history must hold at least {@code DPO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -82540,8 +82417,8 @@ public final class Core {
     * <p>The history must hold at least {@code DX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -83412,8 +83289,8 @@ public final class Core {
     * <p>The history must hold at least {@code EFI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -84079,8 +83956,8 @@ public final class Core {
     * <p>The history must hold at least {@code EMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -84414,7 +84291,8 @@ public final class Core {
     * measure from *Smarter Trading* (1995) — the net directional movement over
     * the period divided by the total path travelled to get there. 1.0 is a
     * perfectly efficient (straight-line) move; values near 0 are churn. This is
-    * exactly the efficiency ratio [{@code KAMA}](/functions/kama) computes
+    * exactly the efficiency ratio <a
+    * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
     * <p><b>Formula</b>
@@ -84487,7 +84365,8 @@ public final class Core {
     * measure from *Smarter Trading* (1995) — the net directional movement over
     * the period divided by the total path travelled to get there. 1.0 is a
     * perfectly efficient (straight-line) move; values near 0 are churn. This is
-    * exactly the efficiency ratio [{@code KAMA}](/functions/kama) computes
+    * exactly the efficiency ratio <a
+    * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
     * <p><b>Formula</b>
@@ -85027,8 +84906,8 @@ public final class Core {
     * <p>The history must hold at least {@code ER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -85894,8 +85773,8 @@ public final class Core {
     * <p>The history must hold at least {@code ERI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -86334,9 +86213,7 @@ public final class Core {
     * to {@link Core#EXP} at that bar.
     * <p>The history must hold at least {@code EXP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -86766,9 +86643,7 @@ public final class Core {
     * to {@link Core#FLOOR} at that bar.
     * <p>The history must hold at least {@code FLOOR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -87682,8 +87557,8 @@ public final class Core {
     * <p>The history must hold at least {@code FOSC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -88573,8 +88448,8 @@ public final class Core {
     * <p>The history must hold at least {@code FRACTAL_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -88907,7 +88782,7 @@ public final class Core {
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
     * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
     * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
-    * <li>Averaging four prices of one bar is also what [{@code AVGPRICE}](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.</li>
+    * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
     * {@link OutRange} says where they start and how many there are; nothing
@@ -89006,7 +88881,7 @@ public final class Core {
     * <li>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</li>
     * <li>Both divisors are exact powers of two, so implementations that scale by {@code 0.5} and {@code 0.25} produce the same doubles as those that divide by 2 and 4.</li>
     * <li>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</li>
-    * <li>Averaging four prices of one bar is also what [{@code AVGPRICE}](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.</li>
+    * <li>Averaging four prices of one bar is also what <a href="https://ta-lib.org/functions/avgprice">{@code AVGPRICE}</a> computes, but it sums them in a different order, so the two can differ in the last bits.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
     * {@code double} before being written to the {@code double[]} output, so a
@@ -89523,9 +89398,7 @@ public final class Core {
     * to {@link Core#HA} at that bar.
     * <p>The history must hold at least {@code HA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -90251,17 +90124,20 @@ public final class Core {
    }
    /**
     * Hull Moving Average, published by Alan Hull in 2005: a moving average
-    * built to track price with far less lag than an
-    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
-    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
-    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
-    * and subtracting the full-period one — extrapolating the average toward
-    * current price — then smooths that de-lagged series with a final WMA over
-    * the square root of the period. HMA is also selectable as a moving-average
-    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
-    * accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * built to track price with far less lag than an <a
+    * href="https://ta-lib.org/functions/sma">{@code SMA}</a>, <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> or <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> of the same length
+    * while staying smooth. It first removes lag by doubling a half-period <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> and subtracting
+    * the full-period one — extrapolating the average toward current price —
+    * then smooths that de-lagged series with a final WMA over the square root
+    * of the period. HMA is also selectable as a moving-average type
+    * ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
@@ -90328,17 +90204,20 @@ public final class Core {
    }
    /**
     * Hull Moving Average, published by Alan Hull in 2005: a moving average
-    * built to track price with far less lag than an
-    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
-    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
-    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
-    * and subtracting the full-period one — extrapolating the average toward
-    * current price — then smooths that de-lagged series with a final WMA over
-    * the square root of the period. HMA is also selectable as a moving-average
-    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
-    * accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * built to track price with far less lag than an <a
+    * href="https://ta-lib.org/functions/sma">{@code SMA}</a>, <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> or <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> of the same length
+    * while staying smooth. It first removes lag by doubling a half-period <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> and subtracting
+    * the full-period one — extrapolating the average toward current price —
+    * then smooths that de-lagged series with a final WMA over the square root
+    * of the period. HMA is also selectable as a moving-average type
+    * ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
@@ -91602,8 +91481,8 @@ public final class Core {
     * <p>The history must hold at least {@code HMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -93413,9 +93292,7 @@ public final class Core {
     * to {@link Core#HT_DCPERIOD} at that bar.
     * <p>The history must hold at least {@code HT_DCPERIOD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -95554,9 +95431,7 @@ public final class Core {
     * to {@link Core#HT_DCPHASE} at that bar.
     * <p>The history must hold at least {@code HT_DCPHASE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -97377,9 +97252,7 @@ public final class Core {
     * to {@link Core#HT_PHASOR} at that bar.
     * <p>The history must hold at least {@code HT_PHASOR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -99578,9 +99451,7 @@ public final class Core {
     * to {@link Core#HT_SINE} at that bar.
     * <p>The history must hold at least {@code HT_SINE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -101607,9 +101478,7 @@ public final class Core {
     * to {@link Core#HT_TRENDLINE} at that bar.
     * <p>The history must hold at least {@code HT_TRENDLINE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -104140,9 +104009,7 @@ public final class Core {
     * to {@link Core#HT_TRENDMODE} at that bar.
     * <p>The history must hold at least {@code HT_TRENDMODE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -104788,8 +104655,8 @@ public final class Core {
     * <p>The history must hold at least {@code IMI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -106037,8 +105904,8 @@ public final class Core {
     * <p>The history must hold at least {@code KAMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -106907,8 +106774,8 @@ public final class Core {
     * <p>The history must hold at least {@code KC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -107740,8 +107607,8 @@ public final class Core {
     * <p>The history must hold at least {@code KDJ_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -108874,8 +108741,8 @@ public final class Core {
     * <p>The history must hold at least {@code LINEARREG_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -109994,8 +109861,8 @@ public final class Core {
     * <p>The history must hold at least {@code LINEARREG_ANGLE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -111113,8 +110980,8 @@ public final class Core {
     * <p>The history must hold at least {@code LINEARREG_INTERCEPT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -112221,8 +112088,8 @@ public final class Core {
     * <p>The history must hold at least {@code LINEARREG_SLOPE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -112662,9 +112529,7 @@ public final class Core {
     * to {@link Core#LN} at that bar.
     * <p>The history must hold at least {@code LN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -113102,9 +112967,7 @@ public final class Core {
     * to {@link Core#LOG10} at that bar.
     * <p>The history must hold at least {@code LOG10_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -114415,8 +114278,8 @@ public final class Core {
     * <p>The history must hold at least {@code MA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -115546,8 +115409,8 @@ public final class Core {
     * <p>The history must hold at least {@code MACD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -116593,8 +116456,8 @@ public final class Core {
     * <p>The history must hold at least {@code MACDEXT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -117585,8 +117448,8 @@ public final class Core {
     * <p>The history must hold at least {@code MACDFIX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -119681,8 +119544,8 @@ public final class Core {
     * <p>The history must hold at least {@code MAMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -120256,9 +120119,7 @@ public final class Core {
     * to {@link Core#MARKETFI} at that bar.
     * <p>The history must hold at least {@code MARKETFI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -121265,8 +121126,8 @@ public final class Core {
     * <p>The history must hold at least {@code MASSI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -122303,8 +122164,8 @@ public final class Core {
     * <p>The history must hold at least {@code MAVP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -123134,8 +122995,8 @@ public final class Core {
     * <p>The history must hold at least {@code MAX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -123839,8 +123700,8 @@ public final class Core {
     * <p>The history must hold at least {@code MAXINDEX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -124306,9 +124167,7 @@ public final class Core {
     * to {@link Core#MEDPRICE} at that bar.
     * <p>The history must hold at least {@code MEDPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -125347,8 +125206,8 @@ public final class Core {
     * <p>The history must hold at least {@code MFI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -126326,8 +126185,8 @@ public final class Core {
     * <p>The history must hold at least {@code MIDPOINT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -127322,8 +127181,8 @@ public final class Core {
     * <p>The history must hold at least {@code MIDPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -128136,8 +127995,8 @@ public final class Core {
     * <p>The history must hold at least {@code MIN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -128841,8 +128700,8 @@ public final class Core {
     * <p>The history must hold at least {@code MININDEX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -129856,8 +129715,8 @@ public final class Core {
     * <p>The history must hold at least {@code MINMAX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -130723,8 +130582,8 @@ public final class Core {
     * <p>The history must hold at least {@code MINMAXINDEX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -132314,8 +132173,8 @@ public final class Core {
     * <p>The history must hold at least {@code MINUS_DI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -133472,8 +133331,8 @@ public final class Core {
     * <p>The history must hold at least {@code MINUS_DM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -134097,8 +133956,8 @@ public final class Core {
     * <p>The history must hold at least {@code MOM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -134553,9 +134412,7 @@ public final class Core {
     * to {@link Core#MULT} at that bar.
     * <p>The history must hold at least {@code MULT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -135608,8 +135465,8 @@ public final class Core {
     * <p>The history must hold at least {@code NATR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -136248,9 +136105,7 @@ public final class Core {
     * to {@link Core#NVI} at that bar.
     * <p>The history must hold at least {@code NVI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -136759,9 +136614,7 @@ public final class Core {
     * to {@link Core#OBV} at that bar.
     * <p>The history must hold at least {@code OBV_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -137678,8 +137531,8 @@ public final class Core {
     * <p>The history must hold at least {@code PERCENTILE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -138321,8 +138174,8 @@ public final class Core {
     * <p>The history must hold at least {@code PERCENTRANK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -139919,8 +139772,8 @@ public final class Core {
     * <p>The history must hold at least {@code PLUS_DI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -141076,8 +140929,8 @@ public final class Core {
     * <p>The history must hold at least {@code PLUS_DM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -141811,8 +141664,8 @@ public final class Core {
     * <p>The history must hold at least {@code PPO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -142445,9 +142298,7 @@ public final class Core {
     * to {@link Core#PVI} at that bar.
     * <p>The history must hold at least {@code PVI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -142695,13 +142546,13 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Percentage Volume Oscillator: a variation of the [Percentage Price
-    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-    * **volume** series instead of price. It is the difference between a fast
-    * and slow moving average of volume, expressed as a percentage of the slow
-    * MA. Positive when short-term volume is above its longer-term average
-    * (rising participation), negative when below. The default periods (12, 26)
-    * match MACD and PPO.
+    * Percentage Volume Oscillator: a variation of the <a
+    * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
+    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
+    * price. It is the difference between a fast and slow moving average of
+    * volume, expressed as a percentage of the slow MA. Positive when short-term
+    * volume is above its longer-term average (rising participation), negative
+    * when below. The default periods (12, 26) match MACD and PPO.
     * <p><b>Formula</b>
     * <pre>{@code
     * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
@@ -142772,13 +142623,13 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Percentage Volume Oscillator: a variation of the [Percentage Price
-    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-    * **volume** series instead of price. It is the difference between a fast
-    * and slow moving average of volume, expressed as a percentage of the slow
-    * MA. Positive when short-term volume is above its longer-term average
-    * (rising participation), negative when below. The default periods (12, 26)
-    * match MACD and PPO.
+    * Percentage Volume Oscillator: a variation of the <a
+    * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
+    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
+    * price. It is the difference between a fast and slow moving average of
+    * volume, expressed as a percentage of the slow MA. Positive when short-term
+    * volume is above its longer-term average (rising participation), negative
+    * when below. The default periods (12, 26) match MACD and PPO.
     * <p><b>Formula</b>
     * <pre>{@code
     * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
@@ -143179,8 +143030,8 @@ public final class Core {
     * <p>The history must hold at least {@code PVO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -143728,9 +143579,7 @@ public final class Core {
     * to {@link Core#PVT} at that bar.
     * <p>The history must hold at least {@code PVT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -144424,8 +144273,8 @@ public final class Core {
     * <p>The history must hold at least {@code QSTICK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -144668,12 +144517,14 @@ public final class Core {
     * Read it as a slow trend line — direction and slope matter, individual
     * crossings much less than on a faster average. RMA is also selectable as a
     * moving-average type ({@code TA_MAType_RMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
-    * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
-    * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
-    * WilderMA (Wealth-Lab).
+    * {@code optInMAType} parameter is accepted (<a
+    * href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...). It
+    * travels under five names for one object: RMA (TradingView, pandas-ta),
+    * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
+    * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
     * <p><b>Formula</b>
     * <pre>{@code
     * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
@@ -144754,12 +144605,14 @@ public final class Core {
     * Read it as a slow trend line — direction and slope matter, individual
     * crossings much less than on a faster average. RMA is also selectable as a
     * moving-average type ({@code TA_MAType_RMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
-    * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
-    * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
-    * WilderMA (Wealth-Lab).
+    * {@code optInMAType} parameter is accepted (<a
+    * href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...). It
+    * travels under five names for one object: RMA (TradingView, pandas-ta),
+    * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
+    * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
     * <p><b>Formula</b>
     * <pre>{@code
     * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
@@ -145127,8 +144980,8 @@ public final class Core {
     * <p>The history must hold at least {@code RMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -145777,8 +145630,8 @@ public final class Core {
     * <p>The history must hold at least {@code ROC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -146425,8 +146278,8 @@ public final class Core {
     * <p>The history must hold at least {@code ROCP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -147076,8 +146929,8 @@ public final class Core {
     * <p>The history must hold at least {@code ROCR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -147729,8 +147582,8 @@ public final class Core {
     * <p>The history must hold at least {@code ROCR100_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -148672,8 +148525,8 @@ public final class Core {
     * <p>The history must hold at least {@code RSI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -150099,8 +149952,8 @@ public final class Core {
     * <p>The history must hold at least {@code RVI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -150757,8 +150610,8 @@ public final class Core {
     * <p>The history must hold at least {@code RVOL_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -152100,8 +151953,8 @@ public final class Core {
     * <p>The history must hold at least {@code SAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -153808,8 +153661,8 @@ public final class Core {
     * <p>The history must hold at least {@code SAREXT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Core#REAL_DEFAULT} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -154245,9 +154098,7 @@ public final class Core {
     * to {@link Core#SIN} at that bar.
     * <p>The history must hold at least {@code SIN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -154677,9 +154528,7 @@ public final class Core {
     * to {@link Core#SINH} at that bar.
     * <p>The history must hold at least {@code SINH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -155318,8 +155167,8 @@ public final class Core {
     * <p>The history must hold at least {@code SMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -156915,8 +156764,8 @@ public final class Core {
     * <p>The history must hold at least {@code SMI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -157357,9 +157206,7 @@ public final class Core {
     * to {@link Core#SQRT} at that bar.
     * <p>The history must hold at least {@code SQRT_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -157989,8 +157836,8 @@ public final class Core {
     * <p>The history must hold at least {@code STDDEV_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -159370,8 +159217,8 @@ public final class Core {
     * <p>The history must hold at least {@code STOCH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -160654,8 +160501,8 @@ public final class Core {
     * <p>The history must hold at least {@code STOCHF_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -161501,8 +161348,8 @@ public final class Core {
     * <p>The history must hold at least {@code STOCHRSI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -161950,9 +161797,7 @@ public final class Core {
     * to {@link Core#SUB} at that bar.
     * <p>The history must hold at least {@code SUB_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -162566,8 +162411,8 @@ public final class Core {
     * <p>The history must hold at least {@code SUM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -162658,8 +162503,8 @@ public final class Core {
                             double optInMultiplier,
                             MInteger outBegIdx,
                             MInteger outNBElement,
-                            double outReal[],
-                            int outInteger[] )
+                            double outSupertrend[],
+                            int outTrend[] )
    {
       int i = 0;
       int today = 0;
@@ -162778,8 +162623,8 @@ public final class Core {
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = inClose[startIdx];
-      outReal[0] = finalLower;
-      outInteger[0] = 1;
+      outSupertrend[0] = finalLower;
+      outTrend[0] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx ) {
@@ -162831,11 +162676,11 @@ public final class Core {
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            outReal[outIdx] = finalLower;
-            outInteger[outIdx] = 1;
+            outSupertrend[outIdx] = finalLower;
+            outTrend[outIdx] = 1;
          } else {
-            outReal[outIdx] = finalUpper;
-            outInteger[outIdx] = 0 - 1;
+            outSupertrend[outIdx] = finalUpper;
+            outTrend[outIdx] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -162854,8 +162699,8 @@ public final class Core {
                             double optInMultiplier,
                             MInteger outBegIdx,
                             MInteger outNBElement,
-                            double outReal[],
-                            int outInteger[] )
+                            double outSupertrend[],
+                            int outTrend[] )
    {
       int i = 0;
       int today = 0;
@@ -162951,8 +162796,8 @@ public final class Core {
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = (double)inClose[startIdx];
-      outReal[0] = finalLower;
-      outInteger[0] = 1;
+      outSupertrend[0] = finalLower;
+      outTrend[0] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx ) {
@@ -162988,11 +162833,11 @@ public final class Core {
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            outReal[outIdx] = finalLower;
-            outInteger[outIdx] = 1;
+            outSupertrend[outIdx] = finalLower;
+            outTrend[outIdx] = 1;
          } else {
-            outReal[outIdx] = finalUpper;
-            outInteger[outIdx] = 0 - 1;
+            outSupertrend[outIdx] = finalUpper;
+            outTrend[outIdx] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -163042,10 +162887,10 @@ public final class Core {
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
     *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
-    * @param outReal The SuperTrend line: the band the trend is currently
+    * @param outSupertrend The SuperTrend line: the band the trend is currently
     *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
-    * @param outInteger Trend direction: +1 while the trend rides the lower
-    *        band, -1 while it rides the upper one. Must hold at least
+    * @param outTrend Trend direction: +1 while the trend rides the lower band,
+    *        -1 while it rides the upper one. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
@@ -163074,8 +162919,8 @@ public final class Core {
                                double inClose[],
                                int optInTimePeriod,
                                double optInMultiplier,
-                               double outReal[],
-                               int outInteger[] )
+                               double outSupertrend[],
+                               int outTrend[] )
    {
       requireIndexRange("SUPERTREND", startIdx, endIdx);
       int guardStart = clampedStart("SUPERTREND", startIdx, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
@@ -163084,11 +162929,11 @@ public final class Core {
       requireLength("SUPERTREND", "inHigh", inHigh, guardInLen);
       requireLength("SUPERTREND", "inLow", inLow, guardInLen);
       requireLength("SUPERTREND", "inClose", inClose, guardInLen);
-      requireLength("SUPERTREND", "outReal", outReal, guardOutLen);
-      requireLength("SUPERTREND", "outInteger", outInteger, guardOutLen);
+      requireLength("SUPERTREND", "outSupertrend", outSupertrend, guardOutLen);
+      requireLength("SUPERTREND", "outTrend", outTrend, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger);
+      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend);
       if( retCode != RetCode.Success ) {
          throw failure("SUPERTREND", retCode);
       }
@@ -163137,10 +162982,10 @@ public final class Core {
     *        10; range 2..100000; {@code Integer.MIN_VALUE} selects the default).
     * @param optInMultiplier Multiplier applied to the Average True Range to set
     *        the band width (default 3; minimum 0; {@code -4e37} selects the default).
-    * @param outReal The SuperTrend line: the band the trend is currently
+    * @param outSupertrend The SuperTrend line: the band the trend is currently
     *        riding. Must hold at least {@code endIdx - startIdx + 1} values.
-    * @param outInteger Trend direction: +1 while the trend rides the lower
-    *        band, -1 while it rides the upper one. Must hold at least
+    * @param outTrend Trend direction: +1 while the trend rides the lower band,
+    *        -1 while it rides the upper one. Must hold at least
     *        {@code endIdx - startIdx + 1} values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
@@ -163169,8 +163014,8 @@ public final class Core {
                                float inClose[],
                                int optInTimePeriod,
                                double optInMultiplier,
-                               double outReal[],
-                               int outInteger[] )
+                               double outSupertrend[],
+                               int outTrend[] )
    {
       requireIndexRange("SUPERTREND", startIdx, endIdx);
       int guardStart = clampedStart("SUPERTREND", startIdx, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
@@ -163179,11 +163024,11 @@ public final class Core {
       requireLength("SUPERTREND", "inHigh", inHigh, guardInLen);
       requireLength("SUPERTREND", "inLow", inLow, guardInLen);
       requireLength("SUPERTREND", "inClose", inClose, guardInLen);
-      requireLength("SUPERTREND", "outReal", outReal, guardOutLen);
-      requireLength("SUPERTREND", "outInteger", outInteger, guardOutLen);
+      requireLength("SUPERTREND", "outSupertrend", outSupertrend, guardOutLen);
+      requireLength("SUPERTREND", "outTrend", outTrend, guardOutLen);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger);
+      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend);
       if( retCode != RetCode.Success ) {
          throw failure("SUPERTREND", retCode);
       }
@@ -163217,8 +163062,8 @@ public final class Core {
       double finalLower;
       double prevClose;
       double lag1_inClose;
-      double cur_outReal;
-      int cur_outInteger;
+      double cur_outSupertrend;
+      int cur_outTrend;
       int outRangeBegIdx;
       int outRangeCount;
 
@@ -163270,8 +163115,8 @@ public final class Core {
          this.finalLower = other.finalLower;
          this.prevClose = other.prevClose;
          this.lag1_inClose = other.lag1_inClose;
-         this.cur_outReal = other.cur_outReal;
-         this.cur_outInteger = other.cur_outInteger;
+         this.cur_outSupertrend = other.cur_outSupertrend;
+         this.cur_outTrend = other.cur_outTrend;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -163303,8 +163148,8 @@ public final class Core {
             throw new TaLibArgumentException("SUPERTREND update: BadParam", RetCode.BadParam);
          core.supertrendStepImpl(this, inHigh, inLow, inClose);
          this.outRangeCount++;
-         out.real = this.cur_outReal;
-         out.integer = this.cur_outInteger;
+         out.supertrend = this.cur_outSupertrend;
+         out.trend = this.cur_outTrend;
       }
 
       /**
@@ -163334,8 +163179,8 @@ public final class Core {
          double basicUpper = 0.0;
          double basicLower = 0.0;
          double closeToday = 0.0;
-         int cur_outInteger = 0;
-         double cur_outReal = 0.0;
+         double cur_outSupertrend = 0.0;
+         int cur_outTrend = 0;
          double finalLower = sp.finalLower;
          double finalUpper = sp.finalUpper;
          int isUptrend = sp.isUptrend;
@@ -163388,14 +163233,14 @@ public final class Core {
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            cur_outReal = finalLower;
-            cur_outInteger = 1;
+            cur_outSupertrend = finalLower;
+            cur_outTrend = 1;
          } else {
-            cur_outReal = finalUpper;
-            cur_outInteger = 0 - 1;
+            cur_outSupertrend = finalUpper;
+            cur_outTrend = 0 - 1;
          }
-         out.real = cur_outReal;
-         out.integer = cur_outInteger;
+         out.supertrend = cur_outSupertrend;
+         out.trend = cur_outTrend;
       }
 
       /**
@@ -163406,8 +163251,8 @@ public final class Core {
        */
       public void value( SupertrendOut out ) {
          requireArgument("SUPERTREND value", "out", out);
-         out.real = this.cur_outReal;
-         out.integer = this.cur_outInteger;
+         out.supertrend = this.cur_outSupertrend;
+         out.trend = this.cur_outTrend;
       }
 
       /**
@@ -163444,9 +163289,9 @@ public final class Core {
     */
    public static final class SupertrendOut {
       /** The SuperTrend line: the band the trend is currently riding. */
-      public double real;
+      public double supertrend;
       /** Trend direction: +1 while the trend rides the lower band, -1 while it rides the upper one. */
-      public int integer;
+      public int trend;
    }
    void supertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
    {
@@ -163509,16 +163354,16 @@ public final class Core {
          sp.isUptrend = 1;
       }
       if( (sp.isUptrend) != 0 ) {
-         sp.cur_outReal = sp.finalLower;
-         sp.cur_outInteger = 1;
+         sp.cur_outSupertrend = sp.finalLower;
+         sp.cur_outTrend = 1;
       } else {
-         sp.cur_outReal = sp.finalUpper;
-         sp.cur_outInteger = 0 - 1;
+         sp.cur_outSupertrend = sp.finalUpper;
+         sp.cur_outTrend = 0 - 1;
       }
       sp.prevClose = closeToday;
       sp.lag1_inClose = inClose;
    }
-   private RetCode supertrendOpenImpl( SupertrendStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outInteger[], int outStride )
+   private RetCode supertrendOpenImpl( SupertrendStream sp, double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outSupertrend[], int outTrend[], int outStride )
    {
       int i = 0;
       int today = 0;
@@ -163647,8 +163492,8 @@ public final class Core {
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = inClose[startIdx];
-      outReal[0 * outStride] = finalLower;
-      outInteger[0 * outStride] = 1;
+      outSupertrend[0 * outStride] = finalLower;
+      outTrend[0 * outStride] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx ) {
@@ -163700,11 +163545,11 @@ public final class Core {
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            outReal[outIdx * outStride] = finalLower;
-            outInteger[outIdx * outStride] = 1;
+            outSupertrend[outIdx * outStride] = finalLower;
+            outTrend[outIdx * outStride] = 1;
          } else {
-            outReal[outIdx * outStride] = finalUpper;
-            outInteger[outIdx * outStride] = 0 - 1;
+            outSupertrend[outIdx * outStride] = finalUpper;
+            outTrend[outIdx * outStride] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -163723,15 +163568,15 @@ public final class Core {
       sp.finalLower = finalLower;
       sp.prevClose = prevClose;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cur_outReal = outReal[(outNBElement.value - 1) * outStride];
-      sp.cur_outInteger = outInteger[(outNBElement.value - 1) * outStride];
+      sp.cur_outSupertrend = outSupertrend[(outNBElement.value - 1) * outStride];
+      sp.cur_outTrend = outTrend[(outNBElement.value - 1) * outStride];
       return RetCode.Success;
    }
    /* supertrendOpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   SupertrendStream supertrendOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outReal[], int outInteger[] )
+   SupertrendStream supertrendOpenAndFillInternal( double inHigh[], double inLow[], double inClose[], int startIdx, int optInTimePeriod, double optInMultiplier, MInteger outBegIdx, MInteger outNBElement, double outSupertrend[], int outTrend[] )
    {
       SupertrendStream sp = new SupertrendStream(this);
-      RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger, 1);
+      RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -163751,9 +163596,9 @@ public final class Core {
       SupertrendStream sp = new SupertrendStream(this);
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      double[] sink_outReal = new double[1];
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, sink_outReal, sink_outInteger, 0);
+      double[] sink_outSupertrend = new double[1];
+      int[] sink_outTrend = new int[1];
+      RetCode retCode = supertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, sink_outSupertrend, sink_outTrend, 0);
       sp.outRangeBegIdx = outBegIdx.value;
       sp.outRangeCount = outNBElement.value;
       if( retCode == RetCode.Success ) {
@@ -163774,8 +163619,8 @@ public final class Core {
     * <p>The history must hold at least {@code SUPERTREND_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -163801,7 +163646,7 @@ public final class Core {
     * <p>The range written is on the returned handle:
     * {@link SupertrendStream#outRange()}.
     */
-   public SupertrendStream supertrendOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier, double outReal[], int outInteger[] )
+   public SupertrendStream supertrendOpenAndFill( double inHigh[], double inLow[], double inClose[], int optInTimePeriod, double optInMultiplier, double outSupertrend[], int outTrend[] )
    {
       requireArgument("SUPERTREND openAndFill", "inHigh", inHigh);
       requireHistory("SUPERTREND openAndFill", inHigh.length);
@@ -163810,14 +163655,14 @@ public final class Core {
       int guardOutLen = openFillCount("SUPERTREND openAndFill", inHigh.length, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
       requireHistoryLength("SUPERTREND openAndFill", "inLow", inLow.length, inHigh.length);
       requireHistoryLength("SUPERTREND openAndFill", "inClose", inClose.length, inHigh.length);
-      requireLength("SUPERTREND openAndFill", "outReal", outReal, guardOutLen);
-      requireLength("SUPERTREND openAndFill", "outInteger", outInteger, guardOutLen);
-      if( (Object)outReal == (Object)inHigh || (Object)outReal == (Object)inLow || (Object)outReal == (Object)inClose || (Object)outInteger == (Object)inHigh || (Object)outInteger == (Object)inLow || (Object)outInteger == (Object)inClose || (Object)outReal == (Object)outInteger ) {
+      requireLength("SUPERTREND openAndFill", "outSupertrend", outSupertrend, guardOutLen);
+      requireLength("SUPERTREND openAndFill", "outTrend", outTrend, guardOutLen);
+      if( (Object)outSupertrend == (Object)inHigh || (Object)outSupertrend == (Object)inLow || (Object)outSupertrend == (Object)inClose || (Object)outTrend == (Object)inHigh || (Object)outTrend == (Object)inLow || (Object)outTrend == (Object)inClose || (Object)outSupertrend == (Object)outTrend ) {
          throw new TaLibArgumentException("SUPERTREND openAndFill: " + RetCode.BadParam, RetCode.BadParam);
       }
       MInteger outBegIdx = new MInteger();
       MInteger outNBElement = new MInteger();
-      return supertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger);
+      return supertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend);
    }
 /* List of contributors:
  *
@@ -164779,8 +164624,8 @@ public final class Core {
     * <p>The history must hold at least {@code T3_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -165214,9 +165059,7 @@ public final class Core {
     * to {@link Core#TAN} at that bar.
     * <p>The history must hold at least {@code TAN_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -165648,9 +165491,7 @@ public final class Core {
     * to {@link Core#TANH} at that bar.
     * <p>The history must hold at least {@code TANH_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -166527,8 +166368,8 @@ public final class Core {
     * <p>The history must hold at least {@code TEMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -167162,9 +167003,7 @@ public final class Core {
     * to {@link Core#TRANGE} at that bar.
     * <p>The history must hold at least {@code TRANGE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -168576,8 +168415,8 @@ public final class Core {
     * <p>The history must hold at least {@code TRIMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -169368,8 +169207,8 @@ public final class Core {
     * <p>The history must hold at least {@code TRIX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -170496,8 +170335,8 @@ public final class Core {
     * <p>The history must hold at least {@code TSF_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -171478,8 +171317,8 @@ public final class Core {
     * <p>The history must hold at least {@code TSI_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -171941,9 +171780,7 @@ public final class Core {
     * to {@link Core#TYPPRICE} at that bar.
     * <p>The history must hold at least {@code TYPPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -173471,8 +173308,8 @@ public final class Core {
     * <p>The history must hold at least {@code ULTOSC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -174658,8 +174495,8 @@ public final class Core {
     * <p>The history must hold at least {@code VAR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link Core#REAL_DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -175398,8 +175235,8 @@ public final class Core {
     * <p>The history must hold at least {@code VHF_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -175824,7 +175661,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [{@code TRANGE}](/functions/trange) consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
+    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
     * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -175904,7 +175741,7 @@ public final class Core {
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [{@code TRANGE}](/functions/trange) consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
+    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
     * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -176663,8 +176500,8 @@ public final class Core {
     * <p>The history must hold at least {@code VORTEX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -177591,9 +177428,7 @@ public final class Core {
     * to {@link Core#VWAP} at that bar.
     * <p>The history must hold at least {@code VWAP_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -177871,7 +177706,8 @@ public final class Core {
     * {@code optInTimePeriod} bars, each bar weighted by its own volume. Heavily
     * traded bars pull the average toward their price; quiet bars barely move
     * it. Read like any moving average — price above is strength, below is
-    * weakness. Against a plain [{@code SMA}](/functions/sma) of the same window
+    * weakness. Against a plain <a
+    * href="https://ta-lib.org/functions/sma">{@code SMA}</a> of the same window
     * it leads on high-volume moves and lags on low-volume drift, so the gap
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
@@ -177946,7 +177782,8 @@ public final class Core {
     * {@code optInTimePeriod} bars, each bar weighted by its own volume. Heavily
     * traded bars pull the average toward their price; quiet bars barely move
     * it. Read like any moving average — price above is strength, below is
-    * weakness. Against a plain [{@code SMA}](/functions/sma) of the same window
+    * weakness. Against a plain <a
+    * href="https://ta-lib.org/functions/sma">{@code SMA}</a> of the same window
     * it leads on high-volume moves and lags on low-volume drift, so the gap
     * between the two lines measures how volume-confirmed a move is. It has no
     * attributable inventor — charting-package folklore — and every published
@@ -178430,8 +178267,8 @@ public final class Core {
     * <p>The history must hold at least {@code VWMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -179123,9 +178960,7 @@ public final class Core {
     * to {@link Core#WAD} at that bar.
     * <p>The history must hold at least {@code WAD_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -179595,9 +179430,7 @@ public final class Core {
     * to {@link Core#WCLPRICE} at that bar.
     * <p>The history must hold at least {@code WCLPRICE_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -180706,8 +180539,8 @@ public final class Core {
     * <p>The history must hold at least {@code WILLR_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -181848,8 +181681,8 @@ public final class Core {
     * <p>The history must hold at least {@code WMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.
@@ -182099,19 +181932,21 @@ public final class Core {
       return RetCode.Success ;
    }
    /**
-    * Zero-Lag Exponential Moving Average: an [{@code EMA}](/functions/ema)
-    * applied not to price but to a de-lagged series that extrapolates price
-    * forward by the EMA's own lag, cancelling that lag to first order. It
-    * tracks a trend far more closely than an EMA of the same length, at the
-    * cost of overshooting sharp reversals — the extrapolation keeps pushing in
-    * the old direction for a bar or two. Read it as an EMA that turns sooner:
-    * crossings of price and average, and changes in its slope, arrive earlier
-    * than the equivalent EMA signal, and its overshoot after a spike is a
-    * property of the filter rather than a move in the market. ZLEMA is also
-    * selectable as a moving-average type ({@code TA_MAType_ZLEMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * Zero-Lag Exponential Moving Average: an <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> applied not to
+    * price but to a de-lagged series that extrapolates price forward by the
+    * EMA's own lag, cancelling that lag to first order. It tracks a trend far
+    * more closely than an EMA of the same length, at the cost of overshooting
+    * sharp reversals — the extrapolation keeps pushing in the old direction for
+    * a bar or two. Read it as an EMA that turns sooner: crossings of price and
+    * average, and changes in its slope, arrive earlier than the equivalent EMA
+    * signal, and its overshoot after a spike is a property of the filter rather
+    * than a move in the market. ZLEMA is also selectable as a moving-average
+    * type ({@code TA_MAType_ZLEMA}) wherever an {@code optInMAType} parameter
+    * is accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * lag = Integer( (n - 1) / 2 )
@@ -182183,19 +182018,21 @@ public final class Core {
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Zero-Lag Exponential Moving Average: an [{@code EMA}](/functions/ema)
-    * applied not to price but to a de-lagged series that extrapolates price
-    * forward by the EMA's own lag, cancelling that lag to first order. It
-    * tracks a trend far more closely than an EMA of the same length, at the
-    * cost of overshooting sharp reversals — the extrapolation keeps pushing in
-    * the old direction for a bar or two. Read it as an EMA that turns sooner:
-    * crossings of price and average, and changes in its slope, arrive earlier
-    * than the equivalent EMA signal, and its overshoot after a spike is a
-    * property of the filter rather than a move in the market. ZLEMA is also
-    * selectable as a moving-average type ({@code TA_MAType_ZLEMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * Zero-Lag Exponential Moving Average: an <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> applied not to
+    * price but to a de-lagged series that extrapolates price forward by the
+    * EMA's own lag, cancelling that lag to first order. It tracks a trend far
+    * more closely than an EMA of the same length, at the cost of overshooting
+    * sharp reversals — the extrapolation keeps pushing in the old direction for
+    * a bar or two. Read it as an EMA that turns sooner: crossings of price and
+    * average, and changes in its slope, arrive earlier than the equivalent EMA
+    * signal, and its overshoot after a spike is a property of the filter rather
+    * than a move in the market. ZLEMA is also selectable as a moving-average
+    * type ({@code TA_MAType_ZLEMA}) wherever an {@code optInMAType} parameter
+    * is accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * lag = Integer( (n - 1) / 2 )
@@ -182618,8 +182455,8 @@ public final class Core {
     * <p>The history must hold at least {@code ZLEMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

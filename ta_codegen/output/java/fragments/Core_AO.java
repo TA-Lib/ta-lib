@@ -266,8 +266,8 @@
     * crossings, the twin-peaks divergence, and the run of consecutive same-side
     * bars — which is why the sign and the bar-to-bar change matter more than
     * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator
-    * ([{@code AC}](/functions/ac)).
+    * system, alongside the Alligator and the Accelerator/Decelerator (<a
+    * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -345,8 +345,8 @@
     * crossings, the twin-peaks divergence, and the run of consecutive same-side
     * bars — which is why the sign and the bar-to-bar change matter more than
     * the level. The oscillator is the first leg of Williams' Profitunity
-    * system, alongside the Alligator and the Accelerator/Decelerator
-    * ([{@code AC}](/functions/ac)).
+    * system, alongside the Alligator and the Accelerator/Decelerator (<a
+    * href="https://ta-lib.org/functions/ac">{@code AC}</a>).
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -854,8 +854,8 @@
     * <p>The history must hold at least {@code AO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

@@ -320,7 +320,8 @@
     * negative = net downward. CMOU is the version as defined by Chande in his
     * book *The New Technical Trader* (1994), and is the more common
     * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-    * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
+    * pandas-ta's default. See <a
+    * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -383,7 +384,8 @@
     * negative = net downward. CMOU is the version as defined by Chande in his
     * book *The New Technical Trader* (1994), and is the more common
     * implementation used by TradingView ({@code ta.cmo}), QuantConnect and
-    * pandas-ta's default. See [{@code CMO}](/functions/cmo) for a smoothed
+    * pandas-ta's default. See <a
+    * href="https://ta-lib.org/functions/cmo">{@code CMO}</a> for a smoothed
     * variant of CMOU.
     * <p><b>Formula</b>
     * <pre>{@code
@@ -934,8 +936,8 @@
     * <p>The history must hold at least {@code CMOU_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

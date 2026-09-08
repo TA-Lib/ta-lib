@@ -76,7 +76,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInPercentile == TA_REAL_DEFAULT ) {
+      if( optInPercentile == REAL_DEFAULT ) {
          optInPercentile = 5e1;
       } else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) ) {
          return -1;
@@ -122,7 +122,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInPercentile == TA_REAL_DEFAULT ) {
+      if( optInPercentile == REAL_DEFAULT ) {
          optInPercentile = 5e1;
       } else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) ) {
          return RetCode.BadParam;
@@ -265,7 +265,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInPercentile == TA_REAL_DEFAULT ) {
+      if( optInPercentile == REAL_DEFAULT ) {
          optInPercentile = 5e1;
       } else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) ) {
          return RetCode.BadParam;
@@ -761,7 +761,7 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInPercentile == TA_REAL_DEFAULT ) {
+      if( optInPercentile == REAL_DEFAULT ) {
          optInPercentile = 5e1;
       } else if( !(optInPercentile >= 0e0 && optInPercentile <= 1e2) ) {
          return RetCode.BadParam;
@@ -932,7 +932,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="PERCENTILE_Lookback"/> for its
    /// default and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">As in the batch call; see <see cref="PERCENTILE_Lookback"/> for its
-   /// default and range (<c>-4e37</c> selects the default).</param>
+   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PERCENTILE_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -968,7 +968,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="PERCENTILE_Lookback"/> for its
    /// default and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInPercentile">As in the batch call; see <see cref="PERCENTILE_Lookback"/> for its
-   /// default and range (<c>-4e37</c> selects the default).</param>
+   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">The value at the requested rank within the trailing window. Must hold at
    /// least <c>historyLen - PERCENTILE_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

@@ -77,9 +77,9 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInMultiplier == TA_REAL_DEFAULT ) {
+      if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
-      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) ) {
+      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
          return -1;
       }
       /* Every output bar needs the Average True Range at the same bar, and nothing
@@ -98,8 +98,8 @@ public partial class Core
                                      double optInMultiplier,
                                      out int outBegIdx,
                                      out int outNBElement,
-                                     Span<double> outReal,
-                                     Span<int> outInteger )
+                                     Span<double> outSupertrend,
+                                     Span<int> outTrend )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -137,15 +137,15 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInMultiplier == TA_REAL_DEFAULT ) {
+      if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
-      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) ) {
+      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger)) ) {
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
          return RetCode.BadParam ;
       }
-      if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) || (outReal.Overlaps(inClose) && outReal != inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+      if( (outSupertrend.Overlaps(inHigh) && outSupertrend != inHigh) || (outSupertrend.Overlaps(inLow) && outSupertrend != inLow) || (outSupertrend.Overlaps(inClose) && outSupertrend != inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
       outBegIdx = 0;
@@ -226,8 +226,8 @@ public partial class Core
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = inClose[startIdx];
-      outReal[0] = finalLower;
-      outInteger[0] = 1;
+      outSupertrend[0] = finalLower;
+      outTrend[0] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx ) {
@@ -279,11 +279,11 @@ public partial class Core
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            outReal[outIdx] = finalLower;
-            outInteger[outIdx] = 1;
+            outSupertrend[outIdx] = finalLower;
+            outTrend[outIdx] = 1;
          } else {
-            outReal[outIdx] = finalUpper;
-            outInteger[outIdx] = 0 - 1;
+            outSupertrend[outIdx] = finalUpper;
+            outTrend[outIdx] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -302,8 +302,8 @@ public partial class Core
                                      double optInMultiplier,
                                      out int outBegIdx,
                                      out int outNBElement,
-                                     Span<double> outReal,
-                                     Span<int> outInteger )
+                                     Span<double> outSupertrend,
+                                     Span<int> outTrend )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -341,15 +341,15 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInMultiplier == TA_REAL_DEFAULT ) {
+      if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
-      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) ) {
+      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger)) ) {
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
          return RetCode.BadParam ;
       }
-      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
+      if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) ) {
          return RetCode.BadParam ;
       }
       outBegIdx = 0;
@@ -407,8 +407,8 @@ public partial class Core
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = (double)inClose[startIdx];
-      outReal[0] = finalLower;
-      outInteger[0] = 1;
+      outSupertrend[0] = finalLower;
+      outTrend[0] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx ) {
@@ -444,11 +444,11 @@ public partial class Core
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            outReal[outIdx] = finalLower;
-            outInteger[outIdx] = 1;
+            outSupertrend[outIdx] = finalLower;
+            outTrend[outIdx] = 1;
          } else {
-            outReal[outIdx] = finalUpper;
-            outInteger[outIdx] = 0 - 1;
+            outSupertrend[outIdx] = finalUpper;
+            outTrend[outIdx] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -501,9 +501,9 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
    /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
-   /// <param name="outReal">The SuperTrend line: the band the trend is currently riding. Must hold at
+   /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
-   /// <param name="outInteger">Trend direction: +1 while the trend rides the lower band, -1 while it
+   /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it
    /// rides the upper one. Must hold at least <c>endIdx - startIdx + 1</c>
    /// values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -531,8 +531,8 @@ public partial class Core
                                ReadOnlySpan<double> inClose,
                                int optInTimePeriod,
                                double optInMultiplier,
-                               Span<double> outReal,
-                               Span<int> outInteger )
+                               Span<double> outSupertrend,
+                               Span<int> outTrend )
    {
       int guardStart = ClampedStart(startIdx, endIdx, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
@@ -540,9 +540,9 @@ public partial class Core
       RequireLength("SUPERTREND", "inHigh", inHigh.Length, guardInLen);
       RequireLength("SUPERTREND", "inLow", inLow.Length, guardInLen);
       RequireLength("SUPERTREND", "inClose", inClose.Length, guardInLen);
-      RequireLength("SUPERTREND", "outReal", outReal.Length, guardOutLen);
-      RequireLength("SUPERTREND", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, out int outBegIdx, out int outNBElement, outReal, outInteger);
+      RequireLength("SUPERTREND", "outSupertrend", outSupertrend.Length, guardOutLen);
+      RequireLength("SUPERTREND", "outTrend", outTrend.Length, guardOutLen);
+      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, out int outBegIdx, out int outNBElement, outSupertrend, outTrend);
       if( retCode != RetCode.Success ) {
          throw Failure("SUPERTREND", retCode);
       }
@@ -597,9 +597,9 @@ public partial class Core
    /// <c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">Multiplier applied to the Average True Range to set the band width
    /// (default 3; minimum 0; <c>-4e37</c> selects the default).</param>
-   /// <param name="outReal">The SuperTrend line: the band the trend is currently riding. Must hold at
+   /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>endIdx - startIdx + 1</c> values.</param>
-   /// <param name="outInteger">Trend direction: +1 while the trend rides the lower band, -1 while it
+   /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it
    /// rides the upper one. Must hold at least <c>endIdx - startIdx + 1</c>
    /// values.</param>
    /// <returns>The range written: <c>BegIdx</c> is the first bar with a value,
@@ -629,8 +629,8 @@ public partial class Core
                                ReadOnlySpan<float> inClose,
                                int optInTimePeriod,
                                double optInMultiplier,
-                               Span<double> outReal,
-                               Span<int> outInteger )
+                               Span<double> outSupertrend,
+                               Span<int> outTrend )
    {
       int guardStart = ClampedStart(startIdx, endIdx, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
       int guardInLen = guardStart < 0 ? 0 : endIdx + 1;
@@ -638,9 +638,9 @@ public partial class Core
       RequireLength("SUPERTREND", "inHigh", inHigh.Length, guardInLen);
       RequireLength("SUPERTREND", "inLow", inLow.Length, guardInLen);
       RequireLength("SUPERTREND", "inClose", inClose.Length, guardInLen);
-      RequireLength("SUPERTREND", "outReal", outReal.Length, guardOutLen);
-      RequireLength("SUPERTREND", "outInteger", outInteger.Length, guardOutLen);
-      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, out int outBegIdx, out int outNBElement, outReal, outInteger);
+      RequireLength("SUPERTREND", "outSupertrend", outSupertrend.Length, guardOutLen);
+      RequireLength("SUPERTREND", "outTrend", outTrend.Length, guardOutLen);
+      RetCode retCode = SUPERTREND_Impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, out int outBegIdx, out int outNBElement, outSupertrend, outTrend);
       if( retCode != RetCode.Success ) {
          throw Failure("SUPERTREND", retCode);
       }
@@ -657,10 +657,10 @@ public partial class Core
    /// <see cref="System.BitConverter.DoubleToInt64Bits(double)"/> per component
    /// when bit-level identity is what you mean.</para>
    /// </remarks>
-   /// <param name="Real">The SuperTrend line: the band the trend is currently riding.</param>
-   /// <param name="Integer">Trend direction: +1 while the trend rides the lower band, -1 while it
+   /// <param name="Supertrend">The SuperTrend line: the band the trend is currently riding.</param>
+   /// <param name="Trend">Trend direction: +1 while the trend rides the lower band, -1 while it
    /// rides the upper one.</param>
-   public readonly record struct SupertrendValue( double Real, int Integer );
+   public readonly record struct SupertrendValue( double Supertrend, int Trend );
 
    /// <summary>A live <c>SUPERTREND</c> stream: one value per closed bar, bit-identical
    /// to <c>SUPERTREND</c> over the same series.</summary>
@@ -691,8 +691,8 @@ public partial class Core
       internal double finalLower;
       internal double prevClose;
       internal double lag1_inClose;
-      internal double cur_outReal;
-      internal int cur_outInteger;
+      internal double cur_outSupertrend;
+      internal int cur_outTrend;
       internal int outRangeBegIdx;
       internal int outRangeCount;
 
@@ -744,8 +744,8 @@ public partial class Core
          this.finalLower = other.finalLower;
          this.prevClose = other.prevClose;
          this.lag1_inClose = other.lag1_inClose;
-         this.cur_outReal = other.cur_outReal;
-         this.cur_outInteger = other.cur_outInteger;
+         this.cur_outSupertrend = other.cur_outSupertrend;
+         this.cur_outTrend = other.cur_outTrend;
          this.outRangeBegIdx = other.outRangeBegIdx;
          this.outRangeCount = other.outRangeCount;
       }
@@ -778,7 +778,7 @@ public partial class Core
          if( !double.IsFinite(inHigh) || !double.IsFinite(inLow) || !double.IsFinite(inClose) ) throw Core.StreamFailure("SUPERTREND", "update", RetCode.BadParam);
          core.SupertrendStepImpl(this, inHigh, inLow, inClose);
          outRangeCount++;
-         return new SupertrendValue(cur_outReal, cur_outInteger);
+         return new SupertrendValue(cur_outSupertrend, cur_outTrend);
       }
 
       /// <summary>Evaluate a forming bar without committing it.</summary>
@@ -813,8 +813,8 @@ public partial class Core
          double basicUpper = 0.0;
          double basicLower = 0.0;
          double closeToday = 0.0;
-         int cur_outInteger = 0;
-         double cur_outReal = 0.0;
+         double cur_outSupertrend = 0.0;
+         int cur_outTrend = 0;
          double finalLower = sp.finalLower;
          double finalUpper = sp.finalUpper;
          int isUptrend = sp.isUptrend;
@@ -867,13 +867,13 @@ public partial class Core
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            cur_outReal = finalLower;
-            cur_outInteger = 1;
+            cur_outSupertrend = finalLower;
+            cur_outTrend = 1;
          } else {
-            cur_outReal = finalUpper;
-            cur_outInteger = 0 - 1;
+            cur_outSupertrend = finalUpper;
+            cur_outTrend = 0 - 1;
          }
-         return new SupertrendValue(cur_outReal, cur_outInteger);
+         return new SupertrendValue(cur_outSupertrend, cur_outTrend);
       }
 
       /// <summary>The value at the last bar this stream counted — the bar
@@ -882,7 +882,7 @@ public partial class Core
       /// <remarks>
       /// <para><see cref="Peek"/> does not change it.</para>
       /// </remarks>
-      public SupertrendValue Value => new SupertrendValue(cur_outReal, cur_outInteger);
+      public SupertrendValue Value => new SupertrendValue(cur_outSupertrend, cur_outTrend);
 
       /// <summary>An independent deep copy of this stream: both evolve separately from here
       /// on.</summary>
@@ -954,17 +954,17 @@ public partial class Core
          sp.isUptrend = 1;
       }
       if( (sp.isUptrend) != 0 ) {
-         sp.cur_outReal = sp.finalLower;
-         sp.cur_outInteger = 1;
+         sp.cur_outSupertrend = sp.finalLower;
+         sp.cur_outTrend = 1;
       } else {
-         sp.cur_outReal = sp.finalUpper;
-         sp.cur_outInteger = 0 - 1;
+         sp.cur_outSupertrend = sp.finalUpper;
+         sp.cur_outTrend = 0 - 1;
       }
       sp.prevClose = closeToday;
       sp.lag1_inClose = inClose;
    }
 
-   private RetCode SupertrendOpenImpl( SupertrendStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, double optInMultiplier, out int outBegIdx, out int outNBElement, Span<double> outReal, Span<int> outInteger, int outStride )
+   private RetCode SupertrendOpenImpl( SupertrendStream sp, ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, double optInMultiplier, out int outBegIdx, out int outNBElement, Span<double> outSupertrend, Span<int> outTrend, int outStride )
    {
       outBegIdx = 0;
       outNBElement = 0;
@@ -1007,9 +1007,9 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInMultiplier == TA_REAL_DEFAULT ) {
+      if( optInMultiplier == REAL_DEFAULT ) {
          optInMultiplier = 3e0;
-      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= TA_REAL_MAX) ) {
+      } else if( !(optInMultiplier >= 0e0 && optInMultiplier <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -1095,8 +1095,8 @@ public partial class Core
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = inClose[startIdx];
-      outReal[0 * outStride] = finalLower;
-      outInteger[0 * outStride] = 1;
+      outSupertrend[0 * outStride] = finalLower;
+      outTrend[0 * outStride] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx ) {
@@ -1148,11 +1148,11 @@ public partial class Core
             isUptrend = 1;
          }
          if( (isUptrend) != 0 ) {
-            outReal[outIdx * outStride] = finalLower;
-            outInteger[outIdx * outStride] = 1;
+            outSupertrend[outIdx * outStride] = finalLower;
+            outTrend[outIdx * outStride] = 1;
          } else {
-            outReal[outIdx * outStride] = finalUpper;
-            outInteger[outIdx * outStride] = 0 - 1;
+            outSupertrend[outIdx * outStride] = finalUpper;
+            outTrend[outIdx * outStride] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -1171,16 +1171,16 @@ public partial class Core
       sp.finalLower = finalLower;
       sp.prevClose = prevClose;
       sp.lag1_inClose = inClose[historyLen - 1];
-      sp.cur_outReal = outReal[(outNBElement - 1) * outStride];
-      sp.cur_outInteger = outInteger[(outNBElement - 1) * outStride];
+      sp.cur_outSupertrend = outSupertrend[(outNBElement - 1) * outStride];
+      sp.cur_outTrend = outTrend[(outNBElement - 1) * outStride];
       return RetCode.Success;
    }
 
    /* SupertrendOpenAndFill anchored at startIdx — the composed-open fusion seam. */
-   internal SupertrendStream SupertrendOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, double optInMultiplier, out int outBegIdx, out int outNBElement, Span<double> outReal, Span<int> outInteger )
+   internal SupertrendStream SupertrendOpenAndFillInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, double optInMultiplier, out int outBegIdx, out int outNBElement, Span<double> outSupertrend, Span<int> outTrend )
    {
       SupertrendStream sp = new SupertrendStream(this);
-      RetCode retCode = SupertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, out outBegIdx, out outNBElement, outReal, outInteger, 1);
+      RetCode retCode = SupertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, out outBegIdx, out outNBElement, outSupertrend, outTrend, 1);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1193,9 +1193,9 @@ public partial class Core
    internal SupertrendStream SupertrendOpenInternal( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int startIdx, int optInTimePeriod, double optInMultiplier )
    {
       SupertrendStream sp = new SupertrendStream(this);
-      double[] sink_outReal = new double[1];
-      int[] sink_outInteger = new int[1];
-      RetCode retCode = SupertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, out int outBegIdx, out int outNBElement, sink_outReal, sink_outInteger, 0);
+      double[] sink_outSupertrend = new double[1];
+      int[] sink_outTrend = new int[1];
+      RetCode retCode = SupertrendOpenImpl(sp, inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, out int outBegIdx, out int outNBElement, sink_outSupertrend, sink_outTrend, 0);
       sp.outRangeBegIdx = outBegIdx;
       sp.outRangeCount = outNBElement;
       if( retCode == RetCode.Success ) {
@@ -1219,7 +1219,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="SUPERTREND_Lookback"/> for its
    /// default and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">As in the batch call; see <see cref="SUPERTREND_Lookback"/> for its
-   /// default and range (<c>-4e37</c> selects the default).</param>
+   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SUPERTREND_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1260,10 +1260,10 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="SUPERTREND_Lookback"/> for its
    /// default and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMultiplier">As in the batch call; see <see cref="SUPERTREND_Lookback"/> for its
-   /// default and range (<c>-4e37</c> selects the default).</param>
-   /// <param name="outReal">The SuperTrend line: the band the trend is currently riding. Must hold at
+   /// default and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
+   /// <param name="outSupertrend">The SuperTrend line: the band the trend is currently riding. Must hold at
    /// least <c>historyLen - SUPERTREND_Lookback(...)</c> values.</param>
-   /// <param name="outInteger">Trend direction: +1 while the trend rides the lower band, -1 while it
+   /// <param name="outTrend">Trend direction: +1 while the trend rides the lower band, -1 while it
    /// rides the upper one. Must hold at least <c>historyLen -
    /// SUPERTREND_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>
@@ -1274,7 +1274,7 @@ public partial class Core
    /// <exception cref="System.ArgumentOutOfRangeException">The history is empty — which is what a null array becomes, since a span
    /// cannot be null — or it is longer than <see cref="Core.MAX_INDEX"/> + 1,
    /// the two index faults an opener can have (rules S1 and S2).</exception>
-   public SupertrendStream SupertrendOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier, Span<double> outReal, Span<int> outInteger )
+   public SupertrendStream SupertrendOpenAndFill( ReadOnlySpan<double> inHigh, ReadOnlySpan<double> inLow, ReadOnlySpan<double> inClose, int optInTimePeriod, double optInMultiplier, Span<double> outSupertrend, Span<int> outTrend )
    {
       if( inHigh.IsEmpty ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND openAndFill: history is empty", RetCode.OutOfRangeStartIndex);
       if( inHigh.Length > MAX_INDEX + 1 ) throw new TaLibArgumentOutOfRangeException(nameof(inHigh), "SUPERTREND openAndFill: history is longer than MAX_INDEX + 1", RetCode.OutOfRangeEndIndex);
@@ -1283,11 +1283,11 @@ public partial class Core
       int guardOutLen = OpenFillCount("SUPERTREND", "openAndFill", inHigh.Length, SUPERTREND_Lookback(optInTimePeriod, optInMultiplier));
       RequireHistoryLength("SUPERTREND", "openAndFill", "inLow", inLow.Length, inHigh.Length);
       RequireHistoryLength("SUPERTREND", "openAndFill", "inClose", inClose.Length, inHigh.Length);
-      RequireFillLength("SUPERTREND", "openAndFill", "outReal", outReal.Length, guardOutLen);
-      RequireFillLength("SUPERTREND", "openAndFill", "outInteger", outInteger.Length, guardOutLen);
-      if( outReal.Overlaps(inHigh) || outReal.Overlaps(inLow) || outReal.Overlaps(inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outInteger)) ) {
+      RequireFillLength("SUPERTREND", "openAndFill", "outSupertrend", outSupertrend.Length, guardOutLen);
+      RequireFillLength("SUPERTREND", "openAndFill", "outTrend", outTrend.Length, guardOutLen);
+      if( outSupertrend.Overlaps(inHigh) || outSupertrend.Overlaps(inLow) || outSupertrend.Overlaps(inClose) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inClose)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outSupertrend).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(outTrend)) ) {
          throw StreamFailure("SUPERTREND", "openAndFill", RetCode.BadParam);
       }
-      return SupertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, out _, out _, outReal, outInteger);
+      return SupertrendOpenAndFillInternal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, out _, out _, outSupertrend, outTrend);
    }
 }

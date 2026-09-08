@@ -340,10 +340,10 @@ public partial class Core
    /// from zero measures conviction. Because the divisor is the window's own
    /// volume, the output is comparable across instruments and across time in a
    /// way a raw accumulation total is not. Created by Marc Chaikin, who also
-   /// authored the [<c>AD</c>](/functions/ad) line this shares its per-bar
-   /// multiplier with. CMF is that same multiplier summed over a fixed window
-   /// and normalised, where AD accumulates it from the start of the series
-   /// without bound.
+   /// authored the <see href="https://ta-lib.org/functions/ad"><c>AD</c></see>
+   /// line this shares its per-bar multiplier with. CMF is that same multiplier
+   /// summed over a fixed window and normalised, where AD accumulates it from
+   /// the start of the series without bound.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -355,7 +355,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>The output is the raw ratio in <c>[-1, +1]</c>, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</description></item>
-   /// <item><description>Each bar's close is expected to lie within its own <c>[low, high]</c>, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [<c>AD</c>](/functions/ad) does.</description></item>
+   /// <item><description>Each bar's close is expected to lie within its own <c>[low, high]</c>, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as <see href="https://ta-lib.org/functions/ad"><c>AD</c></see> does.</description></item>
    /// <item><description>A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.</description></item>
    /// <item><description>A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.</description></item>
    /// <item><description>Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.</description></item>
@@ -433,10 +433,10 @@ public partial class Core
    /// from zero measures conviction. Because the divisor is the window's own
    /// volume, the output is comparable across instruments and across time in a
    /// way a raw accumulation total is not. Created by Marc Chaikin, who also
-   /// authored the [<c>AD</c>](/functions/ad) line this shares its per-bar
-   /// multiplier with. CMF is that same multiplier summed over a fixed window
-   /// and normalised, where AD accumulates it from the start of the series
-   /// without bound.
+   /// authored the <see href="https://ta-lib.org/functions/ad"><c>AD</c></see>
+   /// line this shares its per-bar multiplier with. CMF is that same multiplier
+   /// summed over a fixed window and normalised, where AD accumulates it from
+   /// the start of the series without bound.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -448,7 +448,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>The output is the raw ratio in <c>[-1, +1]</c>, matching every published definition. Some retail platforms display it multiplied by 100; that is a presentation choice, not a different indicator.</description></item>
-   /// <item><description>Each bar's close is expected to lie within its own <c>[low, high]</c>, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as [<c>AD</c>](/functions/ad) does.</description></item>
+   /// <item><description>Each bar's close is expected to lie within its own <c>[low, high]</c>, and its volume to be finite and non-negative. A close outside its bar makes the multiplier exceed ±1 and is passed through unclamped, exactly as <see href="https://ta-lib.org/functions/ad"><c>AD</c></see> does.</description></item>
    /// <item><description>A bar whose high equals its low has no range for the close to sit inside, so it contributes exactly zero money flow volume rather than dividing by zero. Its volume still counts toward the divisor.</description></item>
    /// <item><description>A window whose volume is entirely zero has no money flow to distribute and reports 0.0. Published references are silent here and other implementations divide by zero; TA-Lib does not return NaN from a successful call.</description></item>
    /// <item><description>Bars where the low exceeds the high are malformed rather than degenerate, and also contribute zero.</description></item>

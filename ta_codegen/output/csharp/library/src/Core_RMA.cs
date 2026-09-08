@@ -257,12 +257,14 @@ public partial class Core
    /// Read it as a slow trend line — direction and slope matter, individual
    /// crossings much less than on a faster average. RMA is also selectable as a
    /// moving-average type (<c>TA_MAType_RMA</c>) wherever an <c>optInMAType</c>
-   /// parameter is accepted ([<c>MA</c>](/functions/ma),
-   /// [<c>BBANDS</c>](/functions/bbands), [<c>STOCH</c>](/functions/stoch),
-   /// [<c>MACDEXT</c>](/functions/macdext), ...). It travels under five names
-   /// for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
-   /// Smoothing or Wilder's Average (thinkorswim), <c>wilders</c> (Tulip),
-   /// WilderMA (Wealth-Lab).
+   /// parameter is accepted
+   /// (<see href="https://ta-lib.org/functions/ma"><c>MA</c></see>,
+   /// <see href="https://ta-lib.org/functions/bbands"><c>BBANDS</c></see>,
+   /// <see href="https://ta-lib.org/functions/stoch"><c>STOCH</c></see>,
+   /// <see href="https://ta-lib.org/functions/macdext"><c>MACDEXT</c></see>,
+   /// ...). It travels under five names for one object: RMA (TradingView,
+   /// pandas-ta), SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average
+   /// (thinkorswim), <c>wilders</c> (Tulip), WilderMA (Wealth-Lab).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -341,12 +343,14 @@ public partial class Core
    /// Read it as a slow trend line — direction and slope matter, individual
    /// crossings much less than on a faster average. RMA is also selectable as a
    /// moving-average type (<c>TA_MAType_RMA</c>) wherever an <c>optInMAType</c>
-   /// parameter is accepted ([<c>MA</c>](/functions/ma),
-   /// [<c>BBANDS</c>](/functions/bbands), [<c>STOCH</c>](/functions/stoch),
-   /// [<c>MACDEXT</c>](/functions/macdext), ...). It travels under five names
-   /// for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
-   /// Smoothing or Wilder's Average (thinkorswim), <c>wilders</c> (Tulip),
-   /// WilderMA (Wealth-Lab).
+   /// parameter is accepted
+   /// (<see href="https://ta-lib.org/functions/ma"><c>MA</c></see>,
+   /// <see href="https://ta-lib.org/functions/bbands"><c>BBANDS</c></see>,
+   /// <see href="https://ta-lib.org/functions/stoch"><c>STOCH</c></see>,
+   /// <see href="https://ta-lib.org/functions/macdext"><c>MACDEXT</c></see>,
+   /// ...). It travels under five names for one object: RMA (TradingView,
+   /// pandas-ta), SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average
+   /// (thinkorswim), <c>wilders</c> (Tulip), WilderMA (Wealth-Lab).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

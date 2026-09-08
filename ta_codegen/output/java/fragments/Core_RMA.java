@@ -202,12 +202,14 @@
     * Read it as a slow trend line — direction and slope matter, individual
     * crossings much less than on a faster average. RMA is also selectable as a
     * moving-average type ({@code TA_MAType_RMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
-    * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
-    * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
-    * WilderMA (Wealth-Lab).
+    * {@code optInMAType} parameter is accepted (<a
+    * href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...). It
+    * travels under five names for one object: RMA (TradingView, pandas-ta),
+    * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
+    * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
     * <p><b>Formula</b>
     * <pre>{@code
     * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
@@ -288,12 +290,14 @@
     * Read it as a slow trend line — direction and slope matter, individual
     * crossings much less than on a faster average. RMA is also selectable as a
     * moving-average type ({@code TA_MAType_RMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...). It travels under five names
-    * for one object: RMA (TradingView, pandas-ta), SMMA (MetaTrader), Wilder's
-    * Smoothing or Wilder's Average (thinkorswim), {@code wilders} (Tulip),
-    * WilderMA (Wealth-Lab).
+    * {@code optInMAType} parameter is accepted (<a
+    * href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...). It
+    * travels under five names for one object: RMA (TradingView, pandas-ta),
+    * SMMA (MetaTrader), Wilder's Smoothing or Wilder's Average (thinkorswim),
+    * {@code wilders} (Tulip), WilderMA (Wealth-Lab).
     * <p><b>Formula</b>
     * <pre>{@code
     * alpha = 1 / N,  beta = 1 - alpha,  N = optInTimePeriod
@@ -661,8 +665,8 @@
     * <p>The history must hold at least {@code RMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

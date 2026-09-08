@@ -33,8 +33,8 @@ SuperTrend = Upper while the trend is down, until Close > Upper flips it up
 
 ## Outputs
 
-- `outReal` — The SuperTrend line: the band the trend is currently riding
-- `outInteger` — Trend direction: +1 while the trend rides the lower band, -1 while it rides the upper one
+- `outSupertrend` — The SuperTrend line: the band the trend is currently riding
+- `outTrend` — Trend direction: +1 while the trend rides the lower band, -1 while it rides the upper one
 
 ## Parameters
 

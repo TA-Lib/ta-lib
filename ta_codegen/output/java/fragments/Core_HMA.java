@@ -674,17 +674,20 @@
    }
    /**
     * Hull Moving Average, published by Alan Hull in 2005: a moving average
-    * built to track price with far less lag than an
-    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
-    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
-    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
-    * and subtracting the full-period one — extrapolating the average toward
-    * current price — then smooths that de-lagged series with a final WMA over
-    * the square root of the period. HMA is also selectable as a moving-average
-    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
-    * accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * built to track price with far less lag than an <a
+    * href="https://ta-lib.org/functions/sma">{@code SMA}</a>, <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> or <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> of the same length
+    * while staying smooth. It first removes lag by doubling a half-period <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> and subtracting
+    * the full-period one — extrapolating the average toward current price —
+    * then smooths that de-lagged series with a final WMA over the square root
+    * of the period. HMA is also selectable as a moving-average type
+    * ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
@@ -751,17 +754,20 @@
    }
    /**
     * Hull Moving Average, published by Alan Hull in 2005: a moving average
-    * built to track price with far less lag than an
-    * [{@code SMA}](/functions/sma), [{@code WMA}](/functions/wma) or
-    * [{@code EMA}](/functions/ema) of the same length while staying smooth. It
-    * first removes lag by doubling a half-period [{@code WMA}](/functions/wma)
-    * and subtracting the full-period one — extrapolating the average toward
-    * current price — then smooths that de-lagged series with a final WMA over
-    * the square root of the period. HMA is also selectable as a moving-average
-    * type ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
-    * accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * built to track price with far less lag than an <a
+    * href="https://ta-lib.org/functions/sma">{@code SMA}</a>, <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> or <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> of the same length
+    * while staying smooth. It first removes lag by doubling a half-period <a
+    * href="https://ta-lib.org/functions/wma">{@code WMA}</a> and subtracting
+    * the full-period one — extrapolating the average toward current price —
+    * then smooths that de-lagged series with a final WMA over the square root
+    * of the period. HMA is also selectable as a moving-average type
+    * ({@code TA_MAType_HMA}) wherever an {@code optInMAType} parameter is
+    * accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * HMA(n) = WMA( 2 * WMA(price, Integer(n/2)) - WMA(price, n), Integer(SquareRoot(n)) )
@@ -2025,8 +2031,8 @@
     * <p>The history must hold at least {@code HMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

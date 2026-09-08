@@ -482,7 +482,7 @@ public partial class Core
    /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
    /// </code>
    /// <list type="bullet">
-   /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into [<c>WMA</c>](/functions/wma).</description></item>
+   /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
    /// </list>
    /// <para>
@@ -557,7 +557,7 @@ public partial class Core
    /// The classic defaults are 11/14/10 on monthly data. Wikipedia's daily-scale variant (231/294-bar ROC, 210-bar WMA) is a parameter choice reachable through this API, not a competing formula.
    /// </code>
    /// <list type="bullet">
-   /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into [<c>WMA</c>](/functions/wma).</description></item>
+   /// <item><description>The single fused pass is bit-identical to running <c>ROC + ROC</c> into <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>.</description></item>
    /// <item><description>First output at <c>max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1</c>. Not start-dependent: each output depends only on its finite trailing window.</description></item>
    /// </list>
    /// <para>

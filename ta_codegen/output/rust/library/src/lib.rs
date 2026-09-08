@@ -372,7 +372,7 @@
 // widening the lint cannot break a downstream build; the nightly's
 // `cargo clippy -- -D warnings` is what makes it a gate here.
 #![warn(missing_docs)]
-#![allow(non_snake_case, non_camel_case_types, unused_variables, unused_assignments, unused_mut, unused_parens, arithmetic_overflow)]
+#![allow(non_snake_case, non_camel_case_types, unused_variables, unused_assignments, unused_mut, unused_parens)]
 // Generated code: Clippy's style/complexity lints are noise on machine output, and
 // several "fixes" would change numeric behavior — e.g. `neg_cmp_op_on_partial_ord`
 // on C's `!(a < b)` NaN idiom, or De Morgan rewrites under `nonminimal_bool`. The

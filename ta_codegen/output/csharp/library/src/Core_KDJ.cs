@@ -829,11 +829,11 @@ public partial class Core
    /// <param name="optInSlowK_Period">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSlowD_Period">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KDJ_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -874,11 +874,11 @@ public partial class Core
    /// <param name="optInSlowK_Period">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowK_MAType">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSlowD_Period">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowD_MAType">As in the batch call; see <see cref="KDJ_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outK">Raw stochastic smoothed by SlowK_Period MA. Must hold at least
    /// <c>historyLen - KDJ_Lookback(...)</c> values.</param>
    /// <param name="outD">Signal line: K smoothed by SlowD_Period MA. Must hold at least

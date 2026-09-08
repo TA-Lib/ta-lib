@@ -443,7 +443,7 @@ public partial class Core
    /// No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
    /// </code>
    /// <list type="bullet">
-   /// <item><description>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [<c>TRANGE</c>](/functions/trange) consumes it, so the first output sits at index <c>optInTimePeriod</c>, not <c>optInTimePeriod − 1</c>.</description></item>
+   /// <item><description>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <see href="https://ta-lib.org/functions/trange"><c>TRANGE</c></see> consumes it, so the first output sits at index <c>optInTimePeriod</c>, not <c>optInTimePeriod − 1</c>.</description></item>
    /// <item><description>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</description></item>
    /// </list>
    /// <para>
@@ -522,7 +522,7 @@ public partial class Core
    /// No smoothing, no recursion, no seeding — three rolling sums over per-bar terms. Every source (the original TASC article, StockCharts, Wikipedia, TradingView) states the identical formula; the only cross-source difference is the suggested period (14 vs Wikipedia's worked 21). A window whose every bar is flat sums the true range to zero; both lines then emit 0.0, the convention the external implementations share.
    /// </code>
    /// <list type="bullet">
-   /// <item><description>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [<c>TRANGE</c>](/functions/trange) consumes it, so the first output sits at index <c>optInTimePeriod</c>, not <c>optInTimePeriod − 1</c>.</description></item>
+   /// <item><description>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <see href="https://ta-lib.org/functions/trange"><c>TRANGE</c></see> consumes it, so the first output sits at index <c>optInTimePeriod</c>, not <c>optInTimePeriod − 1</c>.</description></item>
    /// <item><description>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</description></item>
    /// </list>
    /// <para>

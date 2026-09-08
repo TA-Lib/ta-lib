@@ -213,19 +213,21 @@
       return RetCode.Success ;
    }
    /**
-    * Zero-Lag Exponential Moving Average: an [{@code EMA}](/functions/ema)
-    * applied not to price but to a de-lagged series that extrapolates price
-    * forward by the EMA's own lag, cancelling that lag to first order. It
-    * tracks a trend far more closely than an EMA of the same length, at the
-    * cost of overshooting sharp reversals — the extrapolation keeps pushing in
-    * the old direction for a bar or two. Read it as an EMA that turns sooner:
-    * crossings of price and average, and changes in its slope, arrive earlier
-    * than the equivalent EMA signal, and its overshoot after a spike is a
-    * property of the filter rather than a move in the market. ZLEMA is also
-    * selectable as a moving-average type ({@code TA_MAType_ZLEMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * Zero-Lag Exponential Moving Average: an <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> applied not to
+    * price but to a de-lagged series that extrapolates price forward by the
+    * EMA's own lag, cancelling that lag to first order. It tracks a trend far
+    * more closely than an EMA of the same length, at the cost of overshooting
+    * sharp reversals — the extrapolation keeps pushing in the old direction for
+    * a bar or two. Read it as an EMA that turns sooner: crossings of price and
+    * average, and changes in its slope, arrive earlier than the equivalent EMA
+    * signal, and its overshoot after a spike is a property of the filter rather
+    * than a move in the market. ZLEMA is also selectable as a moving-average
+    * type ({@code TA_MAType_ZLEMA}) wherever an {@code optInMAType} parameter
+    * is accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * lag = Integer( (n - 1) / 2 )
@@ -297,19 +299,21 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Zero-Lag Exponential Moving Average: an [{@code EMA}](/functions/ema)
-    * applied not to price but to a de-lagged series that extrapolates price
-    * forward by the EMA's own lag, cancelling that lag to first order. It
-    * tracks a trend far more closely than an EMA of the same length, at the
-    * cost of overshooting sharp reversals — the extrapolation keeps pushing in
-    * the old direction for a bar or two. Read it as an EMA that turns sooner:
-    * crossings of price and average, and changes in its slope, arrive earlier
-    * than the equivalent EMA signal, and its overshoot after a spike is a
-    * property of the filter rather than a move in the market. ZLEMA is also
-    * selectable as a moving-average type ({@code TA_MAType_ZLEMA}) wherever an
-    * {@code optInMAType} parameter is accepted ([{@code MA}](/functions/ma),
-    * [{@code BBANDS}](/functions/bbands), [{@code STOCH}](/functions/stoch),
-    * [{@code MACDEXT}](/functions/macdext), ...).
+    * Zero-Lag Exponential Moving Average: an <a
+    * href="https://ta-lib.org/functions/ema">{@code EMA}</a> applied not to
+    * price but to a de-lagged series that extrapolates price forward by the
+    * EMA's own lag, cancelling that lag to first order. It tracks a trend far
+    * more closely than an EMA of the same length, at the cost of overshooting
+    * sharp reversals — the extrapolation keeps pushing in the old direction for
+    * a bar or two. Read it as an EMA that turns sooner: crossings of price and
+    * average, and changes in its slope, arrive earlier than the equivalent EMA
+    * signal, and its overshoot after a spike is a property of the filter rather
+    * than a move in the market. ZLEMA is also selectable as a moving-average
+    * type ({@code TA_MAType_ZLEMA}) wherever an {@code optInMAType} parameter
+    * is accepted (<a href="https://ta-lib.org/functions/ma">{@code MA}</a>, <a
+    * href="https://ta-lib.org/functions/bbands">{@code BBANDS}</a>, <a
+    * href="https://ta-lib.org/functions/stoch">{@code STOCH}</a>, <a
+    * href="https://ta-lib.org/functions/macdext">{@code MACDEXT}</a>, ...).
     * <p><b>Formula</b>
     * <pre>{@code
     * lag = Integer( (n - 1) / 2 )
@@ -732,8 +736,8 @@
     * <p>The history must hold at least {@code ZLEMA_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

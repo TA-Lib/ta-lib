@@ -1466,8 +1466,8 @@ flag_newtype!(
     /// Output is on the same scale as the input data, so it can be drawn over
     /// the price series.
     OVERLAP = 0x0100_0000,
-    /// The function also has a streaming tier — `<F>_Open` / `Update` /
-    /// `Peek` / `Close` — bit-identical to the batch function.
+    /// The function also has a streaming tier — `*_open`, then `update` /
+    /// `peek` — bit-identical to the batch function.
     STREAM = 0x0200_0000,
     /// Output is over the volume data rather than the price scale.
     VOLUME = 0x0400_0000,

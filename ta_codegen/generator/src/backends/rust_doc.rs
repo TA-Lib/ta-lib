@@ -713,26 +713,12 @@ fn integer_domain_claim(
         ("MININDEX", _) | ("MINMAXINDEX", "outMinIdx") => {
             window_extremum_claim(var, series, period, false)
         }
-        // The trend flag and the line are two views of one state, so the claim is
-        // the relation between them rather than a bound on either: the flag says
-        // which side of the line price is on. It holds on every bar but the
-        // first, where the trend is seeded rather than derived.
-        // SUPERTREND's trend is the two-state latch, and the DOMAIN is all a
-        // doctest can honestly claim about it. The tempting relation -- that the
-        // flag says which side of the line price is on -- is FALSE: the carried
-        // bands can cross (`finalLower > finalUpper`, reachable at a low
-        // multiplier), and on a flip through crossed bands the emitted band lands
-        // on the far side of the close. Asserting it here would put a claim the
-        // function does not honour into the public documentation, and a doctest
-        // that fails on legal input into the crate's test run.
-        // SUPERTREND's trend is the two-state latch, and the DOMAIN is all a
-        // doctest can honestly claim about it. The tempting relation -- that the
-        // flag says which side of the line price is on -- is FALSE: the carried
-        // bands can cross (`finalLower > finalUpper`, reachable at a low
-        // multiplier), and on a flip through crossed bands the emitted band lands
-        // on the far side of the close. Asserting it here would put a claim the
-        // function does not honour into the public documentation, and a doctest
-        // that fails on legal input into the crate's test run.
+        // The DOMAIN is all a doctest can honestly claim about SUPERTREND's
+        // latch. The tempting relation -- that the flag says which side of the
+        // line price is on -- is FALSE: the carried bands can cross
+        // (`finalLower > finalUpper`, reachable at a low multiplier), and on a
+        // flip through crossed bands the emitted band lands on the far side of
+        // the close.
         ("SUPERTREND", _) => vec![
             "// the trend is a two-state latch: +1 riding the lower band, -1 the upper".to_string(),
             format!("assert!({var}[..out_range.count].iter().all(|&v| v == 1 || v == -1));"),
@@ -1118,6 +1104,36 @@ mod tests {
             output_var_name(&out("outMinIdx", ParamType::Integer)),
             "min_idx"
         );
+
+        // The collision fallback. No shipped function carries both spellings
+        // any more, so nothing else reaches this branch.
+        let mut f = FuncDef {
+            name: "SYNTH".to_string(),
+            group: String::new(),
+            description: None,
+            hint: None,
+            flags: vec![],
+            inputs: vec![],
+            optional_inputs: vec![],
+            outputs: vec![
+                out("outReal", ParamType::Real),
+                out("outInteger", ParamType::Integer),
+            ],
+            lookback: None,
+            body: vec![],
+            private_body: vec![],
+            private_extra_params: vec![],
+            private_param_init: vec![],
+            has_explicit_private: false,
+            header_comments: vec![],
+            doc: None,
+            streaming: false,
+            alternates: vec![],
+            resolved_stream_body: None,
+        };
+        assert_eq!(super::output_var_names(&f), ["real", "integer"]);
+        f.outputs = vec![out("outMACD", ParamType::Real)];
+        assert_eq!(super::output_var_names(&f), ["macd"]);
     }
 
     #[test]

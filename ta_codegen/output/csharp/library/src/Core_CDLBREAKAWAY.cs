@@ -250,7 +250,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</description></item>
-   /// <item><description>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</description></item>
+   /// <item><description>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<see href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -319,7 +319,7 @@ public partial class Core
    /// <remarks>
    /// <list type="bullet">
    /// <item><description>Does not verify the prior trend the pattern classically assumes (a breakaway matters most against a preceding move).</description></item>
-   /// <item><description>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. ([thepatternsite.com](https://thepatternsite.com/BullBreakaway.html))</description></item>
+   /// <item><description>Bulkowski's data shows a directional asymmetry TA-Lib's symmetric output doesn't capture: bullish Breakaway reverses only 59% of the time ("near random"), while bearish Breakaway reverses 63% of the time overall. (<see href="https://thepatternsite.com/BullBreakaway.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

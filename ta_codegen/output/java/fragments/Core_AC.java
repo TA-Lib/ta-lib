@@ -361,19 +361,20 @@
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator
-    * ([{@code AO}](/functions/ao)) measures momentum, this measures the change
-    * in that momentum, by taking the oscillator's distance above or below its
-    * own moving average. Because acceleration turns before speed does, the
-    * reading changes sign ahead of the oscillator it is built from — it is
-    * meant as the early half of a pair, not as a signal on its own. Above zero
-    * acceleration is with the bulls, below zero with the bears, and it is drawn
-    * as a zero-centred histogram whose colour convention is the bar-to-bar
-    * change: rising bars accelerating, falling bars decelerating. Williams'
-    * rule of thumb is that two same-coloured bars are what confirms the turn,
-    * which is why the sign and the direction matter more than the level. The
-    * oscillator is one leg of Williams' Profitunity system, alongside the
-    * Awesome Oscillator ([{@code AO}](/functions/ao)) and the Alligator.
+    * up or slowing down. Where the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
+    * this measures the change in that momentum, by taking the oscillator's
+    * distance above or below its own moving average. Because acceleration turns
+    * before speed does, the reading changes sign ahead of the oscillator it is
+    * built from — it is meant as the early half of a pair, not as a signal on
+    * its own. Above zero acceleration is with the bulls, below zero with the
+    * bears, and it is drawn as a zero-centred histogram whose colour convention
+    * is the bar-to-bar change: rising bars accelerating, falling bars
+    * decelerating. Williams' rule of thumb is that two same-coloured bars are
+    * what confirms the turn, which is why the sign and the direction matter
+    * more than the level. The oscillator is one leg of Williams' Profitunity
+    * system, alongside the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -399,9 +400,10 @@
     * @param optInSignalPeriod Number of bars in the moving average taken over
     *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
-    * @param outReal Distance of the Awesome Oscillator
-    *        ([{@code AO}](/functions/ao)) from its own moving average, centred on
-    *        zero. Must hold at least {@code endIdx - startIdx + 1} values.
+    * @param outReal Distance of the Awesome Oscillator (<a
+    *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
+    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
+    *        values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -449,19 +451,20 @@
    /**
     * Bill Williams' Accelerator/Decelerator Oscillator (*New Trading
     * Dimensions*, 1998): the rate at which market momentum is itself speeding
-    * up or slowing down. Where the Awesome Oscillator
-    * ([{@code AO}](/functions/ao)) measures momentum, this measures the change
-    * in that momentum, by taking the oscillator's distance above or below its
-    * own moving average. Because acceleration turns before speed does, the
-    * reading changes sign ahead of the oscillator it is built from — it is
-    * meant as the early half of a pair, not as a signal on its own. Above zero
-    * acceleration is with the bulls, below zero with the bears, and it is drawn
-    * as a zero-centred histogram whose colour convention is the bar-to-bar
-    * change: rising bars accelerating, falling bars decelerating. Williams'
-    * rule of thumb is that two same-coloured bars are what confirms the turn,
-    * which is why the sign and the direction matter more than the level. The
-    * oscillator is one leg of Williams' Profitunity system, alongside the
-    * Awesome Oscillator ([{@code AO}](/functions/ao)) and the Alligator.
+    * up or slowing down. Where the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) measures momentum,
+    * this measures the change in that momentum, by taking the oscillator's
+    * distance above or below its own moving average. Because acceleration turns
+    * before speed does, the reading changes sign ahead of the oscillator it is
+    * built from — it is meant as the early half of a pair, not as a signal on
+    * its own. Above zero acceleration is with the bulls, below zero with the
+    * bears, and it is drawn as a zero-centred histogram whose colour convention
+    * is the bar-to-bar change: rising bars accelerating, falling bars
+    * decelerating. Williams' rule of thumb is that two same-coloured bars are
+    * what confirms the turn, which is why the sign and the direction matter
+    * more than the level. The oscillator is one leg of Williams' Profitunity
+    * system, alongside the Awesome Oscillator (<a
+    * href="https://ta-lib.org/functions/ao">{@code AO}</a>) and the Alligator.
     * <p><b>Formula</b>
     * <pre>{@code
     * median_t = ( high_t + low_t ) / 2
@@ -490,9 +493,10 @@
     * @param optInSignalPeriod Number of bars in the moving average taken over
     *        the oscillator (default 5; range 2..100000; {@code Integer.MIN_VALUE}
     *        selects the default).
-    * @param outReal Distance of the Awesome Oscillator
-    *        ([{@code AO}](/functions/ao)) from its own moving average, centred on
-    *        zero. Must hold at least {@code endIdx - startIdx + 1} values.
+    * @param outReal Distance of the Awesome Oscillator (<a
+    *        href="https://ta-lib.org/functions/ao">{@code AO}</a>) from its own moving
+    *        average, centred on zero. Must hold at least {@code endIdx - startIdx + 1}
+    *        values.
     * @return The range written: {@code begIdx} is the first bar with a value,
     *        {@code count} how many were written.
     * @throws IndexOutOfBoundsException if {@code startIdx} or {@code endIdx} is
@@ -1089,8 +1093,8 @@
     * <p>The history must hold at least {@code AC_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

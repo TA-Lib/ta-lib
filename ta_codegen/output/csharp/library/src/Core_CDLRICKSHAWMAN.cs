@@ -290,7 +290,7 @@ public partial class Core
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
-   /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</description></item>
+   /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<see href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -357,7 +357,7 @@ public partial class Core
    /// </summary>
    /// <remarks>
    /// <list type="bullet">
-   /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. ([thepatternsite.com](https://thepatternsite.com/RickshawMan.html))</description></item>
+   /// <item><description>Bulkowski's verdict: "The rickshaw man candle may look pretty on the chart but it has no investment implications that I have been able to find" — his testing shows it continues only 51% of the time, statistically random. (<see href="https://thepatternsite.com/RickshawMan.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

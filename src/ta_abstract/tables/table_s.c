@@ -921,6 +921,12 @@ static const TA_OptInputParameterInfo TA_DEF_UI_D_SUPERTREND_Multiplier =
    NULL
 };
 
+const TA_OutputParameterInfo TA_DEF_UI_Output_Real_SUPERTREND_outSupertrend =
+                               { TA_Output_Real, "outSupertrend", TA_OUT_LINE };
+
+const TA_OutputParameterInfo TA_DEF_UI_Output_Integer_SUPERTREND_outTrend =
+                               { TA_Output_Integer, "outTrend", TA_OUT_LINE };
+
 static const TA_InputParameterInfo    *TA_SUPERTREND_Inputs[]    =
 {
   &TA_DEF_UI_Input_Price_HLC,
@@ -929,8 +935,8 @@ static const TA_InputParameterInfo    *TA_SUPERTREND_Inputs[]    =
 
 static const TA_OutputParameterInfo   *TA_SUPERTREND_Outputs[]   =
 {
-  &TA_DEF_UI_Output_Real,
-  &TA_DEF_UI_Output_Integer,
+  &TA_DEF_UI_Output_Real_SUPERTREND_outSupertrend,
+  &TA_DEF_UI_Output_Integer_SUPERTREND_outTrend,
   NULL
 };
 

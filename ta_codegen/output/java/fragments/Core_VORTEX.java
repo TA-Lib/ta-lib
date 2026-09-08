@@ -388,7 +388,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [{@code TRANGE}](/functions/trange) consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
+    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
     * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -468,7 +468,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as [{@code TRANGE}](/functions/trange) consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
+    * <li>Bar 0 has no term (all three need a prior bar) and is consumed exactly as <a href="https://ta-lib.org/functions/trange">{@code TRANGE}</a> consumes it, so the first output sits at index {@code optInTimePeriod}, not {@code optInTimePeriod − 1}.</li>
     * <li>Not start-dependent: each output depends only on the finite trailing window. No unstable period.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -1227,8 +1227,8 @@
     * <p>The history must hold at least {@code VORTEX_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

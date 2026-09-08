@@ -97,9 +97,9 @@
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * [{@code SUM}](/functions/sum) is a *rolling window* over
-    * {@code optInTimePeriod} bars; {@code CUMSUM} has no window — every bar
-    * since the anchor contributes.
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
+    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
+    * every bar since the anchor contributes.
     * <p><b>Formula</b>
     * <pre>{@code
     * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -163,9 +163,9 @@
     * the A/D Line is {@code CUMSUM(SUB(advances, declines))}, the A/D Volume
     * Line is {@code CUMSUM(SUB(advancingVolume, decliningVolume))}, and the
     * McClellan Summation Index is {@code CUMSUM} of the McClellan Oscillator.
-    * [{@code SUM}](/functions/sum) is a *rolling window* over
-    * {@code optInTimePeriod} bars; {@code CUMSUM} has no window — every bar
-    * since the anchor contributes.
+    * <a href="https://ta-lib.org/functions/sum">{@code SUM}</a> is a *rolling
+    * window* over {@code optInTimePeriod} bars; {@code CUMSUM} has no window —
+    * every bar since the anchor contributes.
     * <p><b>Formula</b>
     * <pre>{@code
     * `out[j] = inReal[startIdx] + inReal[startIdx+1] + … + inReal[startIdx+j]`
@@ -464,9 +464,7 @@
     * to {@link Core#CUMSUM} at that bar.
     * <p>The history must hold at least {@code CUMSUM_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
-    * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * thrown. An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

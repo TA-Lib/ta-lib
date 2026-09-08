@@ -350,7 +350,8 @@ public partial class Core
    /// measure from *Smarter Trading* (1995) — the net directional movement over
    /// the period divided by the total path travelled to get there. 1.0 is a
    /// perfectly efficient (straight-line) move; values near 0 are churn. This is
-   /// exactly the efficiency ratio [<c>KAMA</c>](/functions/kama) computes
+   /// exactly the efficiency ratio
+   /// <see href="https://ta-lib.org/functions/kama"><c>KAMA</c></see> computes
    /// internally to set its adaptive smoothing constant, exposed standalone and
    /// kept bit-identical to it.
    /// </summary>
@@ -420,7 +421,8 @@ public partial class Core
    /// measure from *Smarter Trading* (1995) — the net directional movement over
    /// the period divided by the total path travelled to get there. 1.0 is a
    /// perfectly efficient (straight-line) move; values near 0 are churn. This is
-   /// exactly the efficiency ratio [<c>KAMA</c>](/functions/kama) computes
+   /// exactly the efficiency ratio
+   /// <see href="https://ta-lib.org/functions/kama"><c>KAMA</c></see> computes
    /// internally to set its adaptive smoothing constant, exposed standalone and
    /// kept bit-identical to it.
    /// </summary>

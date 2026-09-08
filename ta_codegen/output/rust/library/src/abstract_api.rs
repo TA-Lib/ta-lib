@@ -562,8 +562,8 @@ flag_newtype!(
     /// Output is on the same scale as the input data, so it can be drawn over
     /// the price series.
     OVERLAP = 0x0100_0000,
-    /// The function also has a streaming tier — `<F>_Open` / `Update` /
-    /// `Peek` / `Close` — bit-identical to the batch function.
+    /// The function also has a streaming tier — `*_open`, then `update` /
+    /// `peek` — bit-identical to the batch function.
     STREAM = 0x0200_0000,
     /// Output is over the volume data rather than the price scale.
     VOLUME = 0x0400_0000,
@@ -2751,7 +2751,7 @@ static FUNC_TABLE: [FuncInfo; 201] = [
         flags: FuncFlags(0x23000000),
         inputs: &[InputInfo { param_name: "inPriceHLC", kind: InputType::Price, flags: InputFlags(0x0000000e) }, ],
         opt_inputs: &[OptInputInfo { param_name: "optInTimePeriod", display_name: "Time Period", hint: "Time period for the Average True Range", flags: OptInputFlags(0x00000000), kind: OptInputType::IntegerRange { min: 2, max: 100000, default: 10, suggested: (4, 200, 1) } }, OptInputInfo { param_name: "optInMultiplier", display_name: "Multiplier", hint: "ATR multiplier for band width", flags: OptInputFlags(0x00000000), kind: OptInputType::RealRange { min: 0.0, max: 3e37, precision: 1, default: 3.0, suggested: (1.0, 4.0, 0.5) } }, ],
-        outputs: &[OutputInfo { param_name: "outReal", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outInteger", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
+        outputs: &[OutputInfo { param_name: "outSupertrend", kind: OutputType::Real, flags: OutputFlags(0x00000001) }, OutputInfo { param_name: "outTrend", kind: OutputType::Integer, flags: OutputFlags(0x00000001) }, ],
         unst_id: None,
     },
     FuncInfo {

@@ -729,15 +729,19 @@ public partial class Core
    /// <summary>
    /// Hull Moving Average, published by Alan Hull in 2005: a moving average
    /// built to track price with far less lag than an
-   /// [<c>SMA</c>](/functions/sma), [<c>WMA</c>](/functions/wma) or
-   /// [<c>EMA</c>](/functions/ema) of the same length while staying smooth. It
-   /// first removes lag by doubling a half-period [<c>WMA</c>](/functions/wma)
+   /// <see href="https://ta-lib.org/functions/sma"><c>SMA</c></see>,
+   /// <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see> or
+   /// <see href="https://ta-lib.org/functions/ema"><c>EMA</c></see> of the same
+   /// length while staying smooth. It first removes lag by doubling a
+   /// half-period <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>
    /// and subtracting the full-period one — extrapolating the average toward
    /// current price — then smooths that de-lagged series with a final WMA over
    /// the square root of the period. HMA is also selectable as a moving-average
    /// type (<c>TA_MAType_HMA</c>) wherever an <c>optInMAType</c> parameter is
-   /// accepted ([<c>MA</c>](/functions/ma), [<c>BBANDS</c>](/functions/bbands),
-   /// [<c>STOCH</c>](/functions/stoch), [<c>MACDEXT</c>](/functions/macdext),
+   /// accepted (<see href="https://ta-lib.org/functions/ma"><c>MA</c></see>,
+   /// <see href="https://ta-lib.org/functions/bbands"><c>BBANDS</c></see>,
+   /// <see href="https://ta-lib.org/functions/stoch"><c>STOCH</c></see>,
+   /// <see href="https://ta-lib.org/functions/macdext"><c>MACDEXT</c></see>,
    /// ...).
    /// </summary>
    /// <remarks>
@@ -805,15 +809,19 @@ public partial class Core
    /// <summary>
    /// Hull Moving Average, published by Alan Hull in 2005: a moving average
    /// built to track price with far less lag than an
-   /// [<c>SMA</c>](/functions/sma), [<c>WMA</c>](/functions/wma) or
-   /// [<c>EMA</c>](/functions/ema) of the same length while staying smooth. It
-   /// first removes lag by doubling a half-period [<c>WMA</c>](/functions/wma)
+   /// <see href="https://ta-lib.org/functions/sma"><c>SMA</c></see>,
+   /// <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see> or
+   /// <see href="https://ta-lib.org/functions/ema"><c>EMA</c></see> of the same
+   /// length while staying smooth. It first removes lag by doubling a
+   /// half-period <see href="https://ta-lib.org/functions/wma"><c>WMA</c></see>
    /// and subtracting the full-period one — extrapolating the average toward
    /// current price — then smooths that de-lagged series with a final WMA over
    /// the square root of the period. HMA is also selectable as a moving-average
    /// type (<c>TA_MAType_HMA</c>) wherever an <c>optInMAType</c> parameter is
-   /// accepted ([<c>MA</c>](/functions/ma), [<c>BBANDS</c>](/functions/bbands),
-   /// [<c>STOCH</c>](/functions/stoch), [<c>MACDEXT</c>](/functions/macdext),
+   /// accepted (<see href="https://ta-lib.org/functions/ma"><c>MA</c></see>,
+   /// <see href="https://ta-lib.org/functions/bbands"><c>BBANDS</c></see>,
+   /// <see href="https://ta-lib.org/functions/stoch"><c>STOCH</c></see>,
+   /// <see href="https://ta-lib.org/functions/macdext"><c>MACDEXT</c></see>,
    /// ...).
    /// </summary>
    /// <remarks>

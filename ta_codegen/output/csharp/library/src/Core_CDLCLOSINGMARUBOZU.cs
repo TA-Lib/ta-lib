@@ -261,7 +261,7 @@ public partial class Core
    /// One candle. Requires: (1) long real body: real body &gt; the BodyLong average; AND (2) very short shadow at the closing end: if white (close&gt;=open) upper shadow &lt; the ShadowVeryShort average [close at/near high]; if black (close&lt;open) lower shadow &lt; the ShadowVeryShort average [close at/near low].
    /// </code>
    /// <list type="bullet">
-   /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</description></item>
+   /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<see href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -331,7 +331,7 @@ public partial class Core
    /// One candle. Requires: (1) long real body: real body &gt; the BodyLong average; AND (2) very short shadow at the closing end: if white (close&gt;=open) upper shadow &lt; the ShadowVeryShort average [close at/near high]; if black (close&lt;open) lower shadow &lt; the ShadowVeryShort average [close at/near low].
    /// </code>
    /// <list type="bullet">
-   /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." ([thepatternsite.com](https://thepatternsite.com/CloseBlkMarubozu.html))</description></item>
+   /// <item><description>Bulkowski's testing found Closing Marubozu continues in its expected direction only marginally more than chance — 52% for the black variant — which he calls "near random." (<see href="https://thepatternsite.com/CloseBlkMarubozu.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

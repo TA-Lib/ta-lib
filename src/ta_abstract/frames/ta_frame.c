@@ -4057,8 +4057,8 @@ TA_RetCode TA_SUPERTREND_FramePP( const TA_ParamHolderPriv *params,
                params->optIn[1].data.optInReal, /* optInMultiplier*/
                outBegIdx, 
                outNBElement, 
-               params->out[0].data.outReal, /*  outReal */
-               params->out[1].data.outInteger /*  outInteger */
+               params->out[0].data.outReal, /*  outSupertrend */
+               params->out[1].data.outInteger /*  outTrend */
                );
 }
 unsigned int TA_SUPERTREND_FramePPLB( const TA_ParamHolderPriv *params )

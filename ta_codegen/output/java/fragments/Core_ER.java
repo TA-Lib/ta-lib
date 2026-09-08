@@ -297,7 +297,8 @@
     * measure from *Smarter Trading* (1995) — the net directional movement over
     * the period divided by the total path travelled to get there. 1.0 is a
     * perfectly efficient (straight-line) move; values near 0 are churn. This is
-    * exactly the efficiency ratio [{@code KAMA}](/functions/kama) computes
+    * exactly the efficiency ratio <a
+    * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
     * <p><b>Formula</b>
@@ -370,7 +371,8 @@
     * measure from *Smarter Trading* (1995) — the net directional movement over
     * the period divided by the total path travelled to get there. 1.0 is a
     * perfectly efficient (straight-line) move; values near 0 are churn. This is
-    * exactly the efficiency ratio [{@code KAMA}](/functions/kama) computes
+    * exactly the efficiency ratio <a
+    * href="https://ta-lib.org/functions/kama">{@code KAMA}</a> computes
     * internally to set its adaptive smoothing constant, exposed standalone and
     * kept bit-identical to it.
     * <p><b>Formula</b>
@@ -910,8 +912,8 @@
     * <p>The history must hold at least {@code ER_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

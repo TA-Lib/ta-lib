@@ -103,14 +103,14 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInNbDevUp == TA_REAL_DEFAULT ) {
+      if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return -1;
       }
-      if( optInNbDevDn == TA_REAL_DEFAULT ) {
+      if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return -1;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -171,14 +171,14 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == TA_REAL_DEFAULT ) {
+      if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == TA_REAL_DEFAULT ) {
+      if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -467,14 +467,14 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == TA_REAL_DEFAULT ) {
+      if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == TA_REAL_DEFAULT ) {
+      if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -1075,14 +1075,14 @@ public partial class Core
       } else if( optInTimePeriod < 2 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevUp == TA_REAL_DEFAULT ) {
+      if( optInNbDevUp == REAL_DEFAULT ) {
          optInNbDevUp = 2e0;
-      } else if( !(optInNbDevUp >= TA_REAL_MIN && optInNbDevUp <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevUp >= REAL_MIN && optInNbDevUp <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInNbDevDn == TA_REAL_DEFAULT ) {
+      if( optInNbDevDn == REAL_DEFAULT ) {
          optInNbDevDn = 2e0;
-      } else if( !(optInNbDevDn >= TA_REAL_MIN && optInNbDevDn <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDevDn >= REAL_MIN && optInNbDevDn <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (int)optInMAType == int.MinValue || optInMAType == MAType.DEFAULT ) {
@@ -1231,11 +1231,11 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDevUp">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInNbDevDn">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>BBANDS_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1268,11 +1268,11 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDevUp">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInNbDevDn">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="BBANDS_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outRealUpperBand">Middle band plus nbDevUp standard deviations. Must hold at least
    /// <c>historyLen - BBANDS_Lookback(...)</c> values.</param>
    /// <param name="outRealMiddleBand">The moving average. Must hold at least <c>historyLen -

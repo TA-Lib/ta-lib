@@ -23,9 +23,9 @@ optional_inputs:
     precision: 1
     suggested: [1, 4, 0.5]
 outputs:
-  - name: outReal
+  - name: outSupertrend
     type: real
     flags: [line]
-  - name: outInteger
+  - name: outTrend
     type: integer
     flags: [line]

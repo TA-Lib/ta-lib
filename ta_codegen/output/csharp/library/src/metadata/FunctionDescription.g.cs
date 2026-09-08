@@ -8220,14 +8220,14 @@ public static class FunctionDescription
 		<OutputArguments>
 			<OutputArgument>
 				<Type>Double Array</Type>
-				<Name>outReal</Name>
+				<Name>outSupertrend</Name>
 				<Flags>
 					<Flag>Line</Flag>
 				</Flags>
 			</OutputArgument>
 			<OutputArgument>
 				<Type>Integer Array</Type>
-				<Name>outInteger</Name>
+				<Name>outTrend</Name>
 				<Flags>
 					<Flag>Line</Flag>
 				</Flags>

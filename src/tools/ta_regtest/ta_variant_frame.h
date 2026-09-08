@@ -7615,8 +7615,8 @@ static TA_RetCode TA_SUPERTREND_VFrameD( int startIdx, int endIdx,
                optIn[1] /* optInMultiplier */,
                outBegIdx,
                outNBElement,
-               outReal[0] /* outReal */,
-               outInteger[1] /* outInteger */
+               outReal[0] /* outSupertrend */,
+               outInteger[1] /* outTrend */
                );
 }
 static TA_RetCode TA_SUPERTREND_VFrameS( int startIdx, int endIdx,
@@ -7634,8 +7634,8 @@ static TA_RetCode TA_SUPERTREND_VFrameS( int startIdx, int endIdx,
                optIn[1] /* optInMultiplier */,
                outBegIdx,
                outNBElement,
-               outReal[0] /* outReal */,
-               outInteger[1] /* outInteger */
+               outReal[0] /* outSupertrend */,
+               outInteger[1] /* outTrend */
                );
 }
 

@@ -5636,8 +5636,8 @@ static int sv_steq_TA_SUPERTREND( const struct TA_SUPERTREND_Stream *a, const st
    (void)k; (void)ix; (void)ia; (void)ib;
    if( a->outRangeBegIdx != b->outRangeBegIdx ) { *w = "outRangeBegIdx"; return 1; }
    if( a->outRangeCount != b->outRangeCount ) { *w = "outRangeCount"; return 1; }
-   if( sv_xtier_ne(a->cur_outReal, b->cur_outReal, z) ) { *w = "cur_outReal"; return 1; }
-   if( a->cur_outInteger != b->cur_outInteger ) { *w = "cur_outInteger"; return 1; }
+   if( sv_xtier_ne(a->cur_outSupertrend, b->cur_outSupertrend, z) ) { *w = "cur_outSupertrend"; return 1; }
+   if( a->cur_outTrend != b->cur_outTrend ) { *w = "cur_outTrend"; return 1; }
    if( a->optInTimePeriod != b->optInTimePeriod ) { *w = "optInTimePeriod"; return 1; }
    if( sv_xtier_ne(a->optInMultiplier, b->optInMultiplier, z) ) { *w = "optInMultiplier"; return 1; }
    if( a->isUptrend != b->isUptrend ) { *w = "isUptrend"; return 1; }

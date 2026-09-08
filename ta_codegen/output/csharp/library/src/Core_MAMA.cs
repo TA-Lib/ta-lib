@@ -77,12 +77,12 @@ public partial class Core
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int MAMA_Lookback( double optInFastLimit, double optInSlowLimit )
    {
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return -1;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return -1;
@@ -188,12 +188,12 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
@@ -589,12 +589,12 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
@@ -1684,12 +1684,12 @@ public partial class Core
       if( historyLen > MAX_INDEX + 1 ) {
          return RetCode.OutOfRangeEndIndex;
       }
-      if( optInFastLimit == TA_REAL_DEFAULT ) {
+      if( optInFastLimit == REAL_DEFAULT ) {
          optInFastLimit = 5e-1;
       } else if( !(optInFastLimit >= 1e-2 && optInFastLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
       }
-      if( optInSlowLimit == TA_REAL_DEFAULT ) {
+      if( optInSlowLimit == REAL_DEFAULT ) {
          optInSlowLimit = 5e-2;
       } else if( !(optInSlowLimit >= 1e-2 && optInSlowLimit <= 9.9e-1) ) {
          return RetCode.BadParam;
@@ -2105,9 +2105,9 @@ public partial class Core
    /// </remarks>
    /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInSlowLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MAMA_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -2138,9 +2138,9 @@ public partial class Core
    /// </remarks>
    /// <param name="inReal">Price series to smooth. The warm-up history, oldest bar first.</param>
    /// <param name="optInFastLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInSlowLimit">As in the batch call; see <see cref="MAMA_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outMAMA">Adaptive moving average (fast line) Must hold at least <c>historyLen -
    /// MAMA_Lookback(...)</c> values.</param>
    /// <param name="outFAMA">Following adaptive moving average, using half the alpha (slow line) Pass

@@ -37076,8 +37076,8 @@ public class TaCodegenServe {
                 catch (ArgumentException) { allOk = false; if (diag.Length == 0) diag = ",\"openRejectP\":" + p; continue; }
                 legs++;
                 Core.SupertrendValue v0 = st.Value;
-                if (SvXtierNe(v0.Real, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
-                if (v0.Integer != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
+                if (SvXtierNe(v0.Supertrend, b0[p - 1 - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":0,\"where\":\"open\""; }
+                if (v0.Trend != b1[p - 1 - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + (p - 1) + ",\"badOut\":1,\"where\":\"open\""; }
                 for (int t = p; t < svN; t++) {
                     bool pkTook = true;
                     Core.SupertrendValue pk = default;
@@ -37089,19 +37089,19 @@ public class TaCodegenServe {
                         try { rp = st.Peek(fz_h[t], fz_l[t], fz_c[t]); } catch (ArgumentException) { rpTook = false; }
                         if (rpTook) {
                             peekReps++;
-                            if (SvBne(rp.Real, pk.Real)) peekRepAll = false;
-                            if (rp.Integer != pk.Integer) peekRepAll = false;
+                            if (SvBne(rp.Supertrend, pk.Supertrend)) peekRepAll = false;
+                            if (rp.Trend != pk.Trend) peekRepAll = false;
                         } else { peekRejects++; }
                     }
                     Core.SupertrendValue up = st.Update(fz_h[t], fz_l[t], fz_c[t]);
-                    if (pkTook && (SvBne(pk.Real, up.Real))) peekAll = false;
-                    if (pkTook && (pk.Integer != up.Integer)) peekAll = false;
+                    if (pkTook && (SvBne(pk.Supertrend, up.Supertrend))) peekAll = false;
+                    if (pkTook && (pk.Trend != up.Trend)) peekAll = false;
                     try { _ = st.Peek(fz_h[t - 1], fz_l[t - 1], fz_c[t - 1]); } catch (ArgumentException) { peekRejects++; }
                     Core.SupertrendValue vc = st.Value;
-                    if (SvBne(vc.Real, up.Real)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                    if (vc.Integer != up.Integer) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
-                    if (SvXtierNe(up.Real, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Real).ToString("x16") + "\""; }
-                    if (up.Integer != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.Integer + "\""; }
+                    if (SvBne(vc.Supertrend, up.Supertrend)) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (vc.Trend != up.Trend) { allOk = false; if (diag.Length == 0) diag = ",\"valueNeUpdate\":" + t; }
+                    if (SvXtierNe(up.Supertrend, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":0,\"batchv\":\"" + BitConverter.DoubleToInt64Bits(b0[t - beg]).ToString("x16") + "\",\"streamv\":\"" + BitConverter.DoubleToInt64Bits(up.Supertrend).ToString("x16") + "\""; }
+                    if (up.Trend != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"badBar\":" + t + ",\"badOut\":1,\"batchv\":\"" + b1[t - beg] + "\",\"streamv\":\"" + up.Trend + "\""; }
                 }
                 if (allOk) {
                     rangeChecked = 1; rangeLegs++; rangeSites |= 2;
@@ -37122,8 +37122,8 @@ public class TaCodegenServe {
                         for (int t = mid; t < svN; t++) {
                             Core.SupertrendValue uA = sA.Update(fz_h[t], fz_l[t], fz_c[t]);
                             Core.SupertrendValue uB = sB.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            if (SvBne(uA.Real, uB.Real) || SvXtierNe(uA.Real, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
-                            if (uA.Integer != uB.Integer || uA.Integer != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (SvBne(uA.Supertrend, uB.Supertrend) || SvXtierNe(uA.Supertrend, b0[t - beg], ref zsign)) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
+                            if (uA.Trend != uB.Trend || uA.Trend != b1[t - beg]) { allOk = false; if (diag.Length == 0) diag = ",\"copyDiverged\":" + t; }
                         }
                         if (allOk) {
                             rangeChecked = 1; rangeLegs++; rangeSites |= 8;
@@ -37142,7 +37142,7 @@ public class TaCodegenServe {
                         long a0 = GC.GetAllocatedBytesForCurrentThread();
                         for (int t = pa; t < svN; t++) {
                             Core.SupertrendValue uq = sQ.Update(fz_h[t], fz_l[t], fz_c[t]);
-                            sink += uq.Real;
+                            sink += uq.Supertrend;
                         }
                         long ad = GC.GetAllocatedBytesForCurrentThread() - a0;
                         svUpdSink += sink;
@@ -37161,8 +37161,8 @@ public class TaCodegenServe {
                 Core.SupertrendStream sE = c2.SupertrendOpen(fz_h, fz_l, fz_c, 10, optInMultiplier);
                 Core.SupertrendValue vD = sD.Value;
                 Core.SupertrendValue vE = sE.Value;
-                if (SvBne(vD.Real, vE.Real)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
-                if (vD.Integer != vE.Integer) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+                if (SvBne(vD.Supertrend, vE.Supertrend)) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
+                if (vD.Trend != vE.Trend) { allOk = false; if (diag.Length == 0) diag = ",\"minValueDefault\":1"; }
             } catch (ArgumentException) { /* defaults need more history than svN -- skip */ }
             {
                 int Sidx = lb + (svN - lb) / 3;

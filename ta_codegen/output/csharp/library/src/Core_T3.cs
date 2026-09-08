@@ -92,7 +92,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return -1;
       }
-      if( optInVFactor == TA_REAL_DEFAULT ) {
+      if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return -1;
@@ -139,7 +139,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == TA_REAL_DEFAULT ) {
+      if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
@@ -317,7 +317,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == TA_REAL_DEFAULT ) {
+      if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
@@ -795,7 +795,7 @@ public partial class Core
       } else if( optInTimePeriod < 1 || optInTimePeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInVFactor == TA_REAL_DEFAULT ) {
+      if( optInVFactor == REAL_DEFAULT ) {
          optInVFactor = 7e-1;
       } else if( !(optInVFactor >= 0e0 && optInVFactor <= 1e0) ) {
          return RetCode.BadParam;
@@ -1009,7 +1009,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">As in the batch call; see <see cref="T3_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>T3_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1042,7 +1042,7 @@ public partial class Core
    /// <param name="optInTimePeriod">As in the batch call; see <see cref="T3_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInVFactor">As in the batch call; see <see cref="T3_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">T3 smoothed line. Must hold at least <c>historyLen - T3_Lookback(...)</c>
    /// values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

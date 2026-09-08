@@ -1057,15 +1057,15 @@ public partial class Core
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastMAType">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSlowPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowMAType">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>MACDEXT_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1098,15 +1098,15 @@ public partial class Core
    /// <param name="optInFastPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastMAType">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSlowPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSlowMAType">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="optInSignalPeriod">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInSignalMAType">As in the batch call; see <see cref="MACDEXT_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outMACD">MACD line: fast MA minus slow MA. Must hold at least <c>historyLen -
    /// MACDEXT_Lookback(...)</c> values.</param>
    /// <param name="outMACDSignal">Signal line: MA of the MACD line. Must hold at least <c>historyLen -

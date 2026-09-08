@@ -565,7 +565,7 @@ fn emit_loop_shape(
         helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true);
+    emit_open_wrappers(o, func, true, enums);
 }
 
 /// Prefix every non-empty line of `s` with `extra` spaces — cosmetic re-indent
@@ -1469,8 +1469,8 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "   void {base}StepImpl( {class} sp, {sig_bars} )\n   {{");
 }
 
-/// One model's per-bar step body at a given indent: temp decls, the extrema
-/// rebase, the candle-snapshot unpacking, and the rendered transition. Called
+/// One model's per-bar step body at a given indent: temp decls, the
+/// candle-snapshot unpacking, and the rendered transition. Called
 /// once by the loop tier (indent 6) and once per arm by the dual-mode step.
 #[allow(clippy::too_many_arguments)]
 fn emit_step_body(
@@ -2481,6 +2481,80 @@ fn declinable_note(func: &FuncDef, class: &str) -> String {
     )
 }
 
+/// The public opener's javadoc block.
+fn emit_public_open_doc(
+    o: &mut String,
+    func: &FuncDef,
+    enums: &HashMap<String, EnumDef>,
+    n: &str,
+    base: &str,
+) {
+    let params = default_sentinel_clause(func, enums);
+    let _ = writeln!(
+        o,
+        "   /**\n\
+         \x20   * Open a live {n} stream over the warm-up history; the handle's\n\
+         \x20   * {{@code value()}} starts at the last history bar's value — bit-identical\n\
+         \x20   * to {{@link Core#{base}}} at that bar.\n\
+         \x20   * <p>The history must hold at least {{@code {base}_Lookback(...) + 1}} bars\n\
+         \x20   * (unstable-period aware), or {{@link InsufficientHistoryException}} is\n\
+         \x20   * thrown.{params} An EMPTY history throws\n\
+         \x20   * {{@link IndexOutOfBoundsException}} — its implied {{@code startIdx}} of 0\n\
+         \x20   * names no bar — and a null argument {{@link IllegalArgumentException}},\n\
+         \x20   * both ahead of everything above.\n\
+         \x20   */"
+    );
+}
+
+/// The opener's sentence about out-of-range parameters, wrapped and ready to
+/// splice — empty where the function takes no optional parameter, since both
+/// halves of the sentence then describe nothing.
+fn default_sentinel_clause(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> String {
+    let sentinels = default_sentinels(func, enums);
+    let (list, verb) = match sentinels.split_last() {
+        None => return String::new(),
+        Some((last, [])) => (last.clone(), "selects"),
+        Some((last, rest)) => (format!("{} and {last}", rest.join(", ")), "select"),
+    };
+    format!(
+        " Out-of-range parameters throw {{@link IllegalArgumentException}}\n{}",
+        javadoc_wrap(&format!(
+            "({list} {verb} a parameter's documented default, as in the batch API)."
+        ))
+    )
+}
+
+/// The spellings of "use this parameter's documented default" that THIS
+/// function's parameters accept.
+fn default_sentinels(func: &FuncDef, enums: &HashMap<String, EnumDef>) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for opt in &func.optional_inputs {
+        let spelling = match &opt.param_type {
+            ParamType::Integer => "{@link Integer#MIN_VALUE}".to_string(),
+            ParamType::Real => "{@link Core#REAL_DEFAULT}".to_string(),
+            ParamType::Enum(name) => match common::enum_default_variant(enums, name) {
+                Some(v) => format!("{{@link {name}#{}}}", v.name),
+                None => continue,
+            },
+            ParamType::Price(_) => continue,
+        };
+        if !out.contains(&spelling) {
+            out.push(spelling);
+        }
+    }
+    out
+}
+
+/// Fold prose into javadoc continuation lines at the width the surrounding
+/// block already uses.
+fn javadoc_wrap(text: &str) -> String {
+    super::java_doc::wrap(text, 70)
+        .into_iter()
+        .map(|l| format!("    * {l}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// `openInternal` (the anchored plain open), the public `<base>Open`, and the
 /// public `<base>OpenAndFill`.
 ///
@@ -2496,7 +2570,12 @@ fn declinable_note(func: &FuncDef, class: &str) -> String {
 /// The two exempt tiers (`Dispatch`, `PeriodBank`) hand-roll a RetCode-returning
 /// body per entry point — theirs differ by which callee tier they call and by an
 /// anchor clamp, not by a stride — so their wrappers stay thin over those.
-fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
+fn emit_open_wrappers(
+    o: &mut String,
+    func: &FuncDef,
+    merged: bool,
+    enums: &HashMap<String, EnumDef>,
+) {
     let base = base_name(func);
     let jbase = method_base(func);
     let class = stream_class_name(func);
@@ -2519,23 +2598,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
 
     emit_open_internal_seam(o, func, merged, &in_sig, &in_fwd, &opt_sig_str, &opt_fwd_str);
 
-    // Public open.
-    let _ = writeln!(
-        o,
-        "   /**\n\
-         \x20   * Open a live {n} stream over the warm-up history; the handle's\n\
-         \x20   * {{@code value()}} starts at the last history bar's value — bit-identical\n\
-         \x20   * to {{@link Core#{base}}} at that bar.\n\
-         \x20   * <p>The history must hold at least {{@code {base}_Lookback(...) + 1}} bars\n\
-         \x20   * (unstable-period aware), or {{@link InsufficientHistoryException}} is\n\
-         \x20   * thrown. Out-of-range parameters throw {{@link IllegalArgumentException}}\n\
-         \x20   * ({{@code Integer.MIN_VALUE}} selects an integer parameter's documented\n\
-         \x20   * default, as in the batch API). An EMPTY history throws\n\
-         \x20   * {{@link IndexOutOfBoundsException}} — its implied {{@code startIdx}} of 0\n\
-         \x20   * names no bar — and a null argument {{@link IllegalArgumentException}},\n\
-         \x20   * both ahead of everything above.\n\
-         \x20   */"
-    );
+    emit_public_open_doc(o, func, enums, &n, &base);
     let _ = writeln!(
         o,
         "   public {class} {jbase}Open( {}{opt_sig_str} )\n   {{",
@@ -2842,7 +2905,7 @@ fn emit_dual_mode(
     }
     emit_open_and_fill_internal_wrapper(o, func, true);
 
-    emit_open_wrappers(o, func, true);
+    emit_open_wrappers(o, func, true, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -3177,7 +3240,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
 
-    emit_open_wrappers(o, func, false);
+    emit_open_wrappers(o, func, false, enums);
     emit_open_and_fill_internal_wrapper(o, func, false);
 }
 
@@ -3382,7 +3445,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
 
-    emit_open_wrappers(o, func, false);
+    emit_open_wrappers(o, func, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -4121,7 +4184,7 @@ fn emit_composed(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true);
+    emit_open_wrappers(o, func, true, enums);
 }
 
 /// `<base>OpenAndFillInternal`: `OpenAndFill` anchored at the caller's

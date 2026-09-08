@@ -1527,8 +1527,8 @@ fn emit_step_end(o: &mut String, fallible: bool) {
     let _ = writeln!(o, "    }}\n");
 }
 
-/// One model's per-bar step body at a given indent: temp decls, the extrema
-/// rebase, candle unpacking, and the rendered transition. Called once by the
+/// One model's per-bar step body at a given indent: temp decls, candle
+/// unpacking, and the rendered transition. Called once by the
 /// loop tier (indent 8) and once per arm by the dual-mode step (indent 12).
 #[allow(clippy::too_many_arguments)]
 fn emit_step_body(

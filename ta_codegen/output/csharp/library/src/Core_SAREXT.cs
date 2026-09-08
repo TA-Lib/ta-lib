@@ -90,44 +90,44 @@ public partial class Core
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int SAREXT_Lookback( double optInStartValue, double optInOffsetOnReverse, double optInAccelerationInitLong, double optInAccelerationLong, double optInAccelerationMaxLong, double optInAccelerationInitShort, double optInAccelerationShort, double optInAccelerationMaxShort )
    {
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return -1;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return -1;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return -1;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return -1;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return -1;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return -1;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return -1;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrifices one price bar to establish the
@@ -174,44 +174,44 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
@@ -526,44 +526,44 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
@@ -1350,44 +1350,44 @@ public partial class Core
       if( inLow.Length != inHigh.Length ) {
          return RetCode.BadParam;
       }
-      if( optInStartValue == TA_REAL_DEFAULT ) {
+      if( optInStartValue == REAL_DEFAULT ) {
          optInStartValue = 0e0;
-      } else if( !(optInStartValue >= TA_REAL_MIN && optInStartValue <= TA_REAL_MAX) ) {
+      } else if( !(optInStartValue >= REAL_MIN && optInStartValue <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInOffsetOnReverse == TA_REAL_DEFAULT ) {
+      if( optInOffsetOnReverse == REAL_DEFAULT ) {
          optInOffsetOnReverse = 0e0;
-      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= TA_REAL_MAX) ) {
+      } else if( !(optInOffsetOnReverse >= 0e0 && optInOffsetOnReverse <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitLong == REAL_DEFAULT ) {
          optInAccelerationInitLong = 2e-2;
-      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitLong >= 0e0 && optInAccelerationInitLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationLong == REAL_DEFAULT ) {
          optInAccelerationLong = 2e-2;
-      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationLong >= 0e0 && optInAccelerationLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxLong == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxLong == REAL_DEFAULT ) {
          optInAccelerationMaxLong = 2e-1;
-      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxLong >= 0e0 && optInAccelerationMaxLong <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationInitShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationInitShort == REAL_DEFAULT ) {
          optInAccelerationInitShort = 2e-2;
-      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationInitShort >= 0e0 && optInAccelerationInitShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationShort == REAL_DEFAULT ) {
          optInAccelerationShort = 2e-2;
-      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationShort >= 0e0 && optInAccelerationShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInAccelerationMaxShort == TA_REAL_DEFAULT ) {
+      if( optInAccelerationMaxShort == REAL_DEFAULT ) {
          optInAccelerationMaxShort = 2e-1;
-      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= TA_REAL_MAX) ) {
+      } else if( !(optInAccelerationMaxShort >= 0e0 && optInAccelerationMaxShort <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -1722,21 +1722,21 @@ public partial class Core
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInStartValue">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SAREXT_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1770,21 +1770,21 @@ public partial class Core
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInStartValue">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInOffsetOnReverse">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationMaxLong">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationInitShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInAccelerationMaxShort">As in the batch call; see <see cref="SAREXT_Lookback"/> for its default
-   /// and range (<c>-4e37</c> selects the default).</param>
+   /// and range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">SAR stop level; positive while long, negative while short. Must hold at
    /// least <c>historyLen - SAREXT_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

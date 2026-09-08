@@ -517,7 +517,7 @@ fn emit_loop_shape(
         counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true);
+    emit_open_wrappers(o, func, true, enums);
 }
 
 /// Prefix every non-empty line of `s` with `extra` spaces — cosmetic re-indent
@@ -692,36 +692,10 @@ fn flush_word(line: &mut String, word: &mut String, out: &mut Vec<String>, width
     word.clear();
 }
 
-/// Canonical prose → XML-doc-safe text: `&`/`<`/`>` become entities (CS1570
-/// otherwise) and backtick spans become `<c>...</c>`. The batch tier's `csdoc`
-/// is private to `csharp_doc`, and this emitter may not reach into it.
-fn csdoc(text: &str) -> String {
-    let mut out = String::new();
-    let mut in_code = false;
-    for c in text.chars() {
-        match c {
-            '`' => {
-                out.push_str(if in_code { "</c>" } else { "<c>" });
-                in_code = !in_code;
-            }
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '\n' => out.push(' '),
-            _ => out.push(c),
-        }
-    }
-    if in_code {
-        // Unbalanced backtick in the source — close it rather than emit bad XML.
-        out.push_str("</c>");
-    }
-    out
-}
-
 /// Prose for one bar/history input, mirroring the batch tier's fallbacks.
 fn input_desc(name: &str, doc: &DocDef) -> String {
     if let Some((_, desc)) = doc.inputs.iter().find(|(n, _)| n == name) {
-        return super::doc_meta::ensure_period(&csdoc(desc));
+        return super::doc_meta::ensure_period(&super::csharp_doc::csdoc(desc));
     }
     match name {
         "inOpen" => "Open price per bar.",
@@ -772,10 +746,16 @@ fn bar_param_desc(name: &str) -> String {
 /// Prose for one optional parameter on a stream opener. The batch tier's full
 /// default/range machinery is private to `csharp_doc`, so the opener points at
 /// the batch call rather than restating it — one place for the numbers.
-fn opt_param_desc(base: &str, opt: &OptInput) -> String {
-    let sentinel = match opt.param_type {
-        ParamType::Real => "<c>-4e37</c>",
-        _ => "<c>int.MinValue</c>",
+fn opt_param_desc(base: &str, opt: &OptInput, enums: &HashMap<String, EnumDef>) -> String {
+    // The sentinel a caller can TYPE at this parameter. An enum takes the member
+    // rather than the integer, which needs a cast here.
+    let sentinel = match &opt.param_type {
+        ParamType::Real => "<see cref=\"Core.REAL_DEFAULT\"/>".to_string(),
+        ParamType::Enum(name) => match super::common::enum_default_variant(enums, name) {
+            Some(v) => format!("<c>{name}.{}</c>", v.name),
+            None => format!("<c>({name})int.MinValue</c>"),
+        },
+        _ => "<c>int.MinValue</c>".to_string(),
     };
     format!(
         "As in the batch call; see <see cref=\"{base}_Lookback\"/> for its default \
@@ -1614,8 +1594,8 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
     let _ = writeln!(o, "   {{");
 }
 
-/// One model's per-bar step body at a given indent: temp decls, the extrema
-/// rebase, the candle-snapshot unpacking, and the rendered transition.
+/// One model's per-bar step body at a given indent: temp decls, the
+/// candle-snapshot unpacking, and the rendered transition.
 #[allow(clippy::too_many_arguments)]
 fn emit_step_body(
     o: &mut String,
@@ -2715,7 +2695,12 @@ fn public_open_fill_capacity(func: &FuncDef, n: &str, history: &str) -> String {
 /// anchored fill seam reachable for every function rather than only the sixteen
 /// something composes over. Mirrors `java_stream::emit_open_wrappers`.
 #[allow(clippy::too_many_lines)]
-fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
+fn emit_open_wrappers(
+    o: &mut String,
+    func: &FuncDef,
+    merged: bool,
+    enums: &HashMap<String, EnumDef>,
+) {
     // `base` stays the raw verbatim name: it feeds `_Lookback` references and
     // `opt_param_desc`, both pointing at the unchanged batch tier (issue #278
     // is streaming-only). `cbase` is the PascalCase form for this file's own
@@ -2816,7 +2801,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         );
     }
     for p in &func.optional_inputs {
-        d.param(&p.name, &opt_param_desc(&base, p));
+        d.param(&p.name, &opt_param_desc(&base, p, enums));
     }
     d.returns("The open stream handle.");
     d.exception(
@@ -2899,7 +2884,7 @@ fn emit_open_wrappers(o: &mut String, func: &FuncDef, merged: bool) {
         );
     }
     for p in &func.optional_inputs {
-        d.param(&p.name, &opt_param_desc(&base, p));
+        d.param(&p.name, &opt_param_desc(&base, p, enums));
     }
     for out in &func.outputs {
         d.param(
@@ -3201,7 +3186,7 @@ fn emit_dual_mode(
     }
     emit_open_and_fill_internal_wrapper(o, func, true);
 
-    emit_open_wrappers(o, func, true);
+    emit_open_wrappers(o, func, true, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -3547,7 +3532,7 @@ fn emit_dispatch(
         let _ = writeln!(o, "   }}");
     }
 
-    emit_open_wrappers(o, func, false);
+    emit_open_wrappers(o, func, false, enums);
     emit_open_and_fill_internal_wrapper(o, func, false);
 }
 
@@ -3756,7 +3741,7 @@ fn emit_period_bank(
     let _ = writeln!(o, "      return RetCode.Success;");
     let _ = writeln!(o, "   }}");
 
-    emit_open_wrappers(o, func, false);
+    emit_open_wrappers(o, func, false, enums);
 }
 
 // ---------------------------------------------------------------------------
@@ -4556,5 +4541,5 @@ fn emit_composed(
         o, func, cp, &step_settings, stream_fma, &outputs, enums, registry, helpers, counter,
     );
     emit_open_and_fill_internal_wrapper(o, func, true);
-    emit_open_wrappers(o, func, true);
+    emit_open_wrappers(o, func, true, enums);
 }

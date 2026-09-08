@@ -1506,9 +1506,6 @@ fn emit_composed_frame_body(
                 (pt.body, temps, peek_shadow_decls(&pt.shadows, &pt.slot_temps, 3), locals)
             }
         };
-        // Into `decls`, both of them: the extrema rebase below is a STATEMENT,
-        // and a declaration after it would be C99, which this tier's producers
-        // would be the only place in the emitted library to need.
         for (name, ty) in &temps {
             let _ = writeln!(decls, "   {};", c_decl(ty, name));
         }

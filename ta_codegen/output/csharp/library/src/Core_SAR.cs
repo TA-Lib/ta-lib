@@ -75,14 +75,14 @@ public partial class Core
    /// <returns>The lookback, or <c>-1</c> if a parameter is out of range.</returns>
    public int SAR_Lookback( double optInAcceleration, double optInMaximum )
    {
-      if( optInAcceleration == TA_REAL_DEFAULT ) {
+      if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return -1;
       }
-      if( optInMaximum == TA_REAL_DEFAULT ) {
+      if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return -1;
       }
       /* SAR always sacrify one price bar to establish the
@@ -122,14 +122,14 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInAcceleration == TA_REAL_DEFAULT ) {
+      if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == TA_REAL_DEFAULT ) {
+      if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( (outReal.Overlaps(inHigh) && outReal != inHigh) || (outReal.Overlaps(inLow) && outReal != inLow) ) {
@@ -380,14 +380,14 @@ public partial class Core
       if( (endIdx < 0) || (endIdx > MAX_INDEX) || (endIdx < startIdx)) {
          return RetCode.OutOfRangeEndIndex ;
       }
-      if( optInAcceleration == TA_REAL_DEFAULT ) {
+      if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == TA_REAL_DEFAULT ) {
+      if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inHigh)) || System.Runtime.InteropServices.MemoryMarshal.AsBytes(outReal).Overlaps(System.Runtime.InteropServices.MemoryMarshal.AsBytes(inLow)) ) {
@@ -1081,14 +1081,14 @@ public partial class Core
       if( inLow.Length != inHigh.Length ) {
          return RetCode.BadParam;
       }
-      if( optInAcceleration == TA_REAL_DEFAULT ) {
+      if( optInAcceleration == REAL_DEFAULT ) {
          optInAcceleration = 2e-2;
-      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= TA_REAL_MAX) ) {
+      } else if( !(optInAcceleration >= 0e0 && optInAcceleration <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
-      if( optInMaximum == TA_REAL_DEFAULT ) {
+      if( optInMaximum == REAL_DEFAULT ) {
          optInMaximum = 2e-1;
-      } else if( !(optInMaximum >= 0e0 && optInMaximum <= TA_REAL_MAX) ) {
+      } else if( !(optInMaximum >= 0e0 && optInMaximum <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -1359,9 +1359,9 @@ public partial class Core
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInAcceleration">As in the batch call; see <see cref="SAR_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMaximum">As in the batch call; see <see cref="SAR_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>SAR_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -1395,9 +1395,9 @@ public partial class Core
    /// <param name="inHigh">High price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="inLow">Low price of each bar. The warm-up history, oldest bar first.</param>
    /// <param name="optInAcceleration">As in the batch call; see <see cref="SAR_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="optInMaximum">As in the batch call; see <see cref="SAR_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outReal">Parabolic SAR stop/reverse level per bar. Must hold at least <c>historyLen
    /// - SAR_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

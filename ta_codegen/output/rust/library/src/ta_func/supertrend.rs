@@ -112,13 +112,13 @@ impl Core {
         optInMultiplier: f64,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
-        outReal: &mut [f64],
-        outInteger: &mut [i32],
+        outSupertrend: &mut [f64],
+        outTrend: &mut [i32],
     ) -> RetCode {
         #[cfg(target_arch = "x86_64")]
-        return ta_lib_dispatch::dispatch_fma!(self, SUPERTREND_Impl_fma, SUPERTREND_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger));
+        return ta_lib_dispatch::dispatch_fma!(self, SUPERTREND_Impl_fma, SUPERTREND_Impl_impl, (startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend));
         #[cfg(not(target_arch = "x86_64"))]
-        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger)
+        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "fma")]
@@ -133,10 +133,10 @@ impl Core {
         optInMultiplier: f64,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
-        outReal: &mut [f64],
-        outInteger: &mut [i32],
+        outSupertrend: &mut [f64],
+        outTrend: &mut [i32],
     ) -> RetCode {
-        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger)
+        self.SUPERTREND_Impl_impl(startIdx, endIdx, inHigh, inLow, inClose, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend)
     }
     #[inline(always)]
     fn SUPERTREND_Impl_impl(
@@ -150,8 +150,8 @@ impl Core {
         mut optInMultiplier: f64,
         outBegIdx: &mut usize,
         outNBElement: &mut usize,
-        outReal: &mut [f64],
-        outInteger: &mut [i32],
+        outSupertrend: &mut [f64],
+        outTrend: &mut [i32],
     ) -> RetCode {
         if startIdx > Self::MAX_INDEX {
             return RetCode::OutOfRangeStartIndex;
@@ -174,8 +174,8 @@ impl Core {
         assert!(_assertStart > endIdx || endIdx < inHigh.len());
         assert!(_assertStart > endIdx || endIdx < inLow.len());
         assert!(_assertStart > endIdx || endIdx < inClose.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outReal.len());
-        assert!(_assertStart > endIdx || endIdx - _assertStart < outInteger.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outSupertrend.len());
+        assert!(_assertStart > endIdx || endIdx - _assertStart < outTrend.len());
         let mut startIdx = startIdx;
         let mut i: usize = 0_usize;
         let mut today: usize = 0_usize;
@@ -275,8 +275,8 @@ impl Core {
         finalLower = medianPrice - band;
         isUptrend = 1;
         prevClose = inClose[startIdx];
-        outReal[0] = finalLower;
-        outInteger[0] = 1;
+        outSupertrend[0] = finalLower;
+        outTrend[0] = 1;
         outIdx = 1;
         today = startIdx + 1;
         while today <= endIdx {
@@ -326,11 +326,11 @@ impl Core {
                 isUptrend = 1;
             }
             if isUptrend != 0 {
-                outReal[outIdx] = finalLower;
-                outInteger[outIdx] = 1;
+                outSupertrend[outIdx] = finalLower;
+                outTrend[outIdx] = 1;
             } else {
-                outReal[outIdx] = finalUpper;
-                outInteger[outIdx] = (0 - 1) as i32;
+                outSupertrend[outIdx] = finalUpper;
+                outTrend[outIdx] = (0 - 1) as i32;
             }
             prevClose = closeToday;
             outIdx += 1;
@@ -359,9 +359,9 @@ impl Core {
     ///   2..=100000)
     /// * `optInMultiplier` — Multiplier applied to the Average True Range to set the band width
     ///   (default 3, minimum 0)
-    /// * `outReal` — The SuperTrend line: the band the trend is currently riding.
-    /// * `outInteger` — Trend direction: +1 while the trend rides the lower band, -1 while it
-    ///   rides the upper one.
+    /// * `outSupertrend` — The SuperTrend line: the band the trend is currently riding.
+    /// * `outTrend` — Trend direction: +1 while the trend rides the lower band, -1 while it rides
+    ///   the upper one.
     ///
     /// Integer parameters accept [`Core::INTEGER_DEFAULT`], and real parameters
     /// [`Core::REAL_DEFAULT`], to select their default value.
@@ -396,18 +396,18 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let mut real = vec![0.0; 252];
-    /// let mut integer = vec![0i32; 252];
+    /// let mut supertrend = vec![0.0; 252];
+    /// let mut trend = vec![0i32; 252];
     ///
     /// let out_range = core.SUPERTREND(
     ///     0, high.len() - 1, &high, &low, &close, 10, 3.0,
-    ///     &mut real, &mut integer,
+    ///     &mut supertrend, &mut trend,
     /// )?;
     /// assert!(out_range.count > 0);
-    /// assert!(real[..out_range.count].iter().all(|v| v.is_finite()));
+    /// assert!(supertrend[..out_range.count].iter().all(|v| v.is_finite()));
     /// assert_eq!(out_range.beg_idx + out_range.count, high.len());
     /// // the trend is a two-state latch: +1 riding the lower band, -1 the upper
-    /// assert!(integer[..out_range.count].iter().all(|&v| v == 1 || v == -1));
+    /// assert!(trend[..out_range.count].iter().all(|&v| v == 1 || v == -1));
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     ///
@@ -433,8 +433,8 @@ impl Core {
         inClose: &[f64],
         optInTimePeriod: i32,
         optInMultiplier: f64,
-        outReal: &mut [f64],
-        outInteger: &mut [i32],
+        outSupertrend: &mut [f64],
+        outTrend: &mut [i32],
     ) -> Result<OutRange, RetCode> {
         if startIdx > Self::MAX_INDEX {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -454,10 +454,10 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let _guardOutLen = if _guardStart > endIdx { 0 } else { endIdx - _guardStart + 1 };
-        if outReal.len() < _guardOutLen {
+        if outSupertrend.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
-        if outInteger.len() < _guardOutLen {
+        if outTrend.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
@@ -472,8 +472,8 @@ impl Core {
             optInMultiplier,
             &mut outBegIdx,
             &mut outNBElement,
-            outReal,
-            outInteger,
+            outSupertrend,
+            outTrend,
         );
         match retCode {
             RetCode::Success => Ok(OutRange { beg_idx: outBegIdx, count: outNBElement }),
@@ -511,8 +511,8 @@ struct SupertrendStreamState {
     finalLower: f64,
     prevClose: f64,
     lag1_inClose: f64,
-    cur_outReal: f64,
-    cur_outInteger: i32,
+    cur_outSupertrend: f64,
+    cur_outTrend: i32,
 }
 
 #[allow(unused_variables)]
@@ -521,7 +521,7 @@ struct SupertrendStreamState {
 #[allow(unused_assignments)]
 #[allow(unused_parens)]
 impl Core {
-    fn supertrend_step_impl(sp: &mut SupertrendStreamState, inHigh: f64, inLow: f64, inClose: f64, outReal: &mut f64, outInteger: &mut i32) {
+    fn supertrend_step_impl(sp: &mut SupertrendStreamState, inHigh: f64, inLow: f64, inClose: f64, outSupertrend: &mut f64, outTrend: &mut i32) {
         let mut val2: f64 = 0.0_f64;
         let mut val3: f64 = 0.0_f64;
         let mut greatest: f64 = 0.0_f64;
@@ -579,22 +579,22 @@ impl Core {
             sp.isUptrend = 1;
         }
         if sp.isUptrend != 0 {
-            (*outReal) = sp.finalLower;
-            (*outInteger) = 1;
+            (*outSupertrend) = sp.finalLower;
+            (*outTrend) = 1;
         } else {
-            (*outReal) = sp.finalUpper;
-            (*outInteger) = (0 - 1) as i32;
+            (*outSupertrend) = sp.finalUpper;
+            (*outTrend) = (0 - 1) as i32;
         }
         sp.prevClose = closeToday;
-        sp.cur_outReal = (*outReal);
-        sp.cur_outInteger = (*outInteger);
+        sp.cur_outSupertrend = (*outSupertrend);
+        sp.cur_outTrend = (*outTrend);
         sp.lag1_inClose = inClose;
     }
 
     /// The single whole-history transcription behind [`Core::supertrend_open_internal`]
     /// (stride 0, scalar sink) and [`Core::supertrend_open_and_fill`] (stride 1, caller slices).
     pub(crate) fn supertrend_open_impl(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outInteger: &mut [i32], outStride: usize,
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32], outStride: usize,
     ) -> Result<SupertrendStream, RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -723,8 +723,8 @@ impl Core {
         finalLower = medianPrice - band;
         isUptrend = 1;
         prevClose = inClose[startIdx];
-        outReal[(0 * outStride) as usize] = finalLower;
-        outInteger[(0 * outStride) as usize] = 1;
+        outSupertrend[(0 * outStride) as usize] = finalLower;
+        outTrend[(0 * outStride) as usize] = 1;
         outIdx = 1;
         today = startIdx + 1;
         while today <= endIdx {
@@ -774,11 +774,11 @@ impl Core {
                 isUptrend = 1;
             }
             if isUptrend != 0 {
-                outReal[(outIdx * outStride) as usize] = finalLower;
-                outInteger[(outIdx * outStride) as usize] = 1;
+                outSupertrend[(outIdx * outStride) as usize] = finalLower;
+                outTrend[(outIdx * outStride) as usize] = 1;
             } else {
-                outReal[(outIdx * outStride) as usize] = finalUpper;
-                outInteger[(outIdx * outStride) as usize] = (0 - 1) as i32;
+                outSupertrend[(outIdx * outStride) as usize] = finalUpper;
+                outTrend[(outIdx * outStride) as usize] = (0 - 1) as i32;
             }
             prevClose = closeToday;
             outIdx += 1;
@@ -798,8 +798,8 @@ impl Core {
             finalUpper,
             finalLower,
             prevClose,
-            cur_outReal: outReal[(*outNBElement - 1) * outStride],
-            cur_outInteger: outInteger[(*outNBElement - 1) * outStride],
+            cur_outSupertrend: outSupertrend[(*outNBElement - 1) * outStride],
+            cur_outTrend: outTrend[(*outNBElement - 1) * outStride],
             lag1_inClose: inClose[historyLen - 1],
         };
         Ok(SupertrendStream { state, out: OutRange { beg_idx: *outBegIdx, count: *outNBElement } })
@@ -811,10 +811,10 @@ impl Core {
     ) -> Result<(SupertrendStream, (f64, i32)), RetCode> {
         let mut dummyBegIdx: usize = 0;
         let mut dummyNBElement: usize = 0;
-        let mut sink_outReal = [0.0_f64; 1];
-        let mut sink_outInteger = [0_i32; 1];
-        let handle = self.supertrend_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outReal, &mut sink_outInteger, 0)?;
-        Ok((handle, (sink_outReal[0], sink_outInteger[0])))
+        let mut sink_outSupertrend = [0.0_f64; 1];
+        let mut sink_outTrend = [0_i32; 1];
+        let handle = self.supertrend_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, &mut dummyBegIdx, &mut dummyNBElement, &mut sink_outSupertrend, &mut sink_outTrend, 0)?;
+        Ok((handle, (sink_outSupertrend[0], sink_outTrend[0])))
     }
 
     /// Open a live SUPERTREND stream over the warm-up history; returns the handle and
@@ -874,24 +874,24 @@ impl Core {
     ///     .collect();
     ///
     /// let core = Core::new();
-    /// let mut batch_real = vec![0.0; 252];
-    /// let mut batch_integer = vec![0_i32; 252];
-    /// let batch = core.SUPERTREND(0, high.len() - 1, &high, &low, &close, 10, 3.0, &mut batch_real, &mut batch_integer)?;
+    /// let mut batch_supertrend = vec![0.0; 252];
+    /// let mut batch_trend = vec![0_i32; 252];
+    /// let batch = core.SUPERTREND(0, high.len() - 1, &high, &low, &close, 10, 3.0, &mut batch_supertrend, &mut batch_trend)?;
     ///
-    /// let mut real = vec![0.0; 252];
-    /// let mut integer = vec![0_i32; 252];
-    /// let (_stream, filled) = core.supertrend_open_and_fill(&high, &low, &close, 10, 3.0, &mut real, &mut integer)?;
+    /// let mut supertrend = vec![0.0; 252];
+    /// let mut trend = vec![0_i32; 252];
+    /// let (_stream, filled) = core.supertrend_open_and_fill(&high, &low, &close, 10, 3.0, &mut supertrend, &mut trend)?;
     ///
     /// assert_eq!(filled.beg_idx, batch.beg_idx);
     /// assert_eq!(filled.count, batch.count);
-    /// assert!(real[..filled.count].iter().zip(&batch_real[..batch.count])
+    /// assert!(supertrend[..filled.count].iter().zip(&batch_supertrend[..batch.count])
     ///     .all(|(a, b)| a.to_bits() == b.to_bits()));
-    /// assert_eq!(integer[..filled.count], batch_integer[..batch.count]);
+    /// assert_eq!(trend[..filled.count], batch_trend[..batch.count]);
     /// # Ok::<(), ta_lib::RetCode>(())
     /// ```
     #[doc(alias = "TA_SUPERTREND_OpenAndFill")]
     pub fn supertrend_open_and_fill(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInMultiplier: f64, outReal: &mut [f64], outInteger: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], mut optInTimePeriod: i32, mut optInMultiplier: f64, outSupertrend: &mut [f64], outTrend: &mut [i32],
     ) -> Result<(SupertrendStream, OutRange), RetCode> {
         if inHigh.is_empty() {
             return Err(RetCode::OutOfRangeStartIndex);
@@ -904,24 +904,24 @@ impl Core {
             return Err(RetCode::BadParam);
         }
         let _guardOutLen = inHigh.len().saturating_sub(_guardLb);
-        if outReal.len() < _guardOutLen {
+        if outSupertrend.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
-        if outInteger.len() < _guardOutLen {
+        if outTrend.len() < _guardOutLen {
             return Err(RetCode::BadParam);
         }
         let mut outBegIdx: usize = 0;
         let mut outNBElement: usize = 0;
-        let handle = self.supertrend_open_and_fill_internal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, &mut outBegIdx, &mut outNBElement, outReal, outInteger)?;
+        let handle = self.supertrend_open_and_fill_internal(inHigh, inLow, inClose, 0, optInTimePeriod, optInMultiplier, &mut outBegIdx, &mut outNBElement, outSupertrend, outTrend)?;
         Ok((handle, OutRange { beg_idx: outBegIdx, count: outNBElement }))
     }
 
     /// [`Core::supertrend_open_and_fill`] anchored at `startIdx` — the composed-open
     /// fusion seam (issue #192), not a public entry point.
     pub(crate) fn supertrend_open_and_fill_internal(
-        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outReal: &mut [f64], outInteger: &mut [i32],
+        &self, inHigh: &[f64], inLow: &[f64], inClose: &[f64], startIdx: usize, mut optInTimePeriod: i32, mut optInMultiplier: f64, outBegIdx: &mut usize, outNBElement: &mut usize, outSupertrend: &mut [f64], outTrend: &mut [i32],
     ) -> Result<SupertrendStream, RetCode> {
-        self.supertrend_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger, 1)
+        self.supertrend_open_impl(inHigh, inLow, inClose, startIdx, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1)
     }
 
 }
@@ -960,11 +960,11 @@ impl SupertrendStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut outReal: f64 = 0.0_f64;
-        let mut outInteger: i32 = 0_i32;
-        Core::supertrend_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outReal, &mut outInteger);
+        let mut outSupertrend: f64 = 0.0_f64;
+        let mut outTrend: i32 = 0_i32;
+        Core::supertrend_step_impl(&mut self.state, inHigh, inLow, inClose, &mut outSupertrend, &mut outTrend);
         self.out.count += 1;
-        Ok((outReal, outInteger))
+        Ok((outSupertrend, outTrend))
     }
 
     /// Evaluate a forming bar without committing — bit-identical to what the
@@ -985,12 +985,12 @@ impl SupertrendStream {
         if !inHigh.is_finite() || !inLow.is_finite() || !inClose.is_finite() {
             return Err(RetCode::BadParam);
         }
-        let mut outReal: f64 = 0.0_f64;
-        let mut outInteger: i32 = 0_i32;
+        let mut outSupertrend: f64 = 0.0_f64;
+        let mut outTrend: i32 = 0_i32;
         {
             let sp = &self.state;
-            let outReal = &mut outReal;
-            let outInteger = &mut outInteger;
+            let outSupertrend = &mut outSupertrend;
+            let outTrend = &mut outTrend;
             let mut val2: f64 = 0.0_f64;
             let mut val3: f64 = 0.0_f64;
             let mut greatest: f64 = 0.0_f64;
@@ -1052,14 +1052,14 @@ impl SupertrendStream {
                 isUptrend = 1;
             }
             if isUptrend != 0 {
-                (*outReal) = finalLower;
-                (*outInteger) = 1;
+                (*outSupertrend) = finalLower;
+                (*outTrend) = 1;
             } else {
-                (*outReal) = finalUpper;
-                (*outInteger) = (0 - 1) as i32;
+                (*outSupertrend) = finalUpper;
+                (*outTrend) = (0 - 1) as i32;
             }
         }
-        Ok((outReal, outInteger))
+        Ok((outSupertrend, outTrend))
     }
 
     /// The value(s) at the last bar the stream counted — the bar
@@ -1072,7 +1072,7 @@ impl SupertrendStream {
     #[must_use]
     #[doc(alias = "TA_SUPERTREND_Value")]
     pub fn value(&self) -> (f64, i32) {
-        (self.state.cur_outReal, self.state.cur_outInteger)
+        (self.state.cur_outSupertrend, self.state.cur_outTrend)
     }
 
     /// The bars this stream has an output for, in the input series'

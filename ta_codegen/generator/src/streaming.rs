@@ -4195,7 +4195,7 @@ type Classified = (Vec<ScalarField>, Vec<ScalarField>);
 
 /// Move `names` from the temp list back into carried state, preserving each
 /// list's order. Used where an emitter addresses a local through the handle
-/// regardless of what liveness says (the extrema rebase).
+/// regardless of what liveness says.
 fn force_state<'n>(st: &mut Classified, names: impl IntoIterator<Item = &'n str>) {
     let forced: BTreeSet<&str> = names.into_iter().collect();
     let (state, temps) = st;
@@ -4283,12 +4283,11 @@ fn classify_or_extrema(
             )?;
             let mut st = run(&BTreeSet::new())?; // index locals = plain int state
             // The automaton's absolute indices stay handle fields whatever
-            // liveness says (#252): the rebase preamble every backend emits
-            // addresses them through the handle, open sizes the ring from the
-            // window start, and Rust's `for( j = a; j <= b; j++ )` fast path
-            // binds an UNDOTTED counter as `usize` — which is the wrong index
-            // space for a ring read (`j & xMask`). The exemption is the index
-            // space itself, not a list of functions.
+            // liveness says (#252): open sizes the ring from the window start,
+            // and Rust's `for( j = a; j <= b; j++ )` fast path binds an
+            // UNDOTTED counter as `usize` — which is the wrong index space for
+            // a ring read (`j & xMask`). The exemption is the index space
+            // itself, not a list of functions.
             force_state(
                 &mut st,
                 std::iter::once(ex.trailing.as_str())

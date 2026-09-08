@@ -267,13 +267,14 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Percentage Volume Oscillator: a variation of the [Percentage Price
-   /// Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-   /// **volume** series instead of price. It is the difference between a fast
-   /// and slow moving average of volume, expressed as a percentage of the slow
-   /// MA. Positive when short-term volume is above its longer-term average
-   /// (rising participation), negative when below. The default periods (12, 26)
-   /// match MACD and PPO.
+   /// Percentage Volume Oscillator: a variation of the
+   /// <see href="https://ta-lib.org/functions/ppo">Percentage Price
+   /// Oscillator</see> (PPO, created by Gerald Appel) applied to the **volume**
+   /// series instead of price. It is the difference between a fast and slow
+   /// moving average of volume, expressed as a percentage of the slow MA.
+   /// Positive when short-term volume is above its longer-term average (rising
+   /// participation), negative when below. The default periods (12, 26) match
+   /// MACD and PPO.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -343,13 +344,14 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Percentage Volume Oscillator: a variation of the [Percentage Price
-   /// Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-   /// **volume** series instead of price. It is the difference between a fast
-   /// and slow moving average of volume, expressed as a percentage of the slow
-   /// MA. Positive when short-term volume is above its longer-term average
-   /// (rising participation), negative when below. The default periods (12, 26)
-   /// match MACD and PPO.
+   /// Percentage Volume Oscillator: a variation of the
+   /// <see href="https://ta-lib.org/functions/ppo">Percentage Price
+   /// Oscillator</see> (PPO, created by Gerald Appel) applied to the **volume**
+   /// series instead of price. It is the difference between a fast and slow
+   /// moving average of volume, expressed as a percentage of the slow MA.
+   /// Positive when short-term volume is above its longer-term average (rising
+   /// participation), negative when below. The default periods (12, 26) match
+   /// MACD and PPO.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -753,7 +755,7 @@ public partial class Core
    /// <param name="optInSlowPeriod">As in the batch call; see <see cref="PVO_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="PVO_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PVO_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -788,7 +790,7 @@ public partial class Core
    /// <param name="optInSlowPeriod">As in the batch call; see <see cref="PVO_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="PVO_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outReal">PVO value in percent. Must hold at least <c>historyLen -
    /// PVO_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

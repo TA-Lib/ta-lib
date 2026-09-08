@@ -374,8 +374,9 @@ public partial class Core
    /// negative = net downward. CMOU is the version as defined by Chande in his
    /// book *The New Technical Trader* (1994), and is the more common
    /// implementation used by TradingView (<c>ta.cmo</c>), QuantConnect and
-   /// pandas-ta's default. See [<c>CMO</c>](/functions/cmo) for a smoothed
-   /// variant of CMOU.
+   /// pandas-ta's default. See
+   /// <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see> for a
+   /// smoothed variant of CMOU.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -439,8 +440,9 @@ public partial class Core
    /// negative = net downward. CMOU is the version as defined by Chande in his
    /// book *The New Technical Trader* (1994), and is the more common
    /// implementation used by TradingView (<c>ta.cmo</c>), QuantConnect and
-   /// pandas-ta's default. See [<c>CMO</c>](/functions/cmo) for a smoothed
-   /// variant of CMOU.
+   /// pandas-ta's default. See
+   /// <see href="https://ta-lib.org/functions/cmo"><c>CMO</c></see> for a
+   /// smoothed variant of CMOU.
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>

@@ -4323,8 +4323,8 @@ public sealed class FunctionCatalog : IReadOnlyList<FunctionInfo>
         ],
         outputs:
         [
-            new OutputInfo(OutputKind.Real, "outReal", OutputFlags.Line),
-            new OutputInfo(OutputKind.Integer, "outInteger", OutputFlags.Line),
+            new OutputInfo(OutputKind.Real, "outSupertrend", OutputFlags.Line),
+            new OutputInfo(OutputKind.Integer, "outTrend", OutputFlags.Line),
         ],
         lookback: static (core, c) => core.SUPERTREND_Lookback(c.IntOpt(0), c.RealOpt(1)),
         invoke: static (core, c, startIdx, endIdx) =>

@@ -84,8 +84,8 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
                                      double optInMultiplier,
                                      int          *outBegIdx,
                                      int          *outNBElement,
-                                     double        outReal[],
-                                     int        outInteger[] )
+                                     double        outSupertrend[],
+                                     int        outTrend[] )
 {
    int i;
    int today;
@@ -132,11 +132,11 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
       return TA_BAD_PARAM;
    if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
-   if( !outReal )
+   if( !outSupertrend )
       return TA_BAD_PARAM;
-   if( !outInteger )
+   if( !outTrend )
       return TA_BAD_PARAM;
-   if( (const void *)outReal == (const void *)outInteger )
+   if( (const void *)outSupertrend == (const void *)outTrend )
       return TA_BAD_PARAM;
 
    *outBegIdx= 0;
@@ -225,8 +225,8 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
    finalLower = medianPrice - band;
    isUptrend = 1;
    prevClose = inClose[startIdx];
-   outReal[0] = finalLower;
-   outInteger[0] = 1;
+   outSupertrend[0] = finalLower;
+   outTrend[0] = 1;
    outIdx = 1;
    today = startIdx + 1;
    while( today <= endIdx )
@@ -287,12 +287,12 @@ TA_LIB_API TA_RetCode TA_SUPERTREND( int    startIdx,
       }
       if( isUptrend )
       {
-         outReal[outIdx] = finalLower;
-         outInteger[outIdx] = 1;
+         outSupertrend[outIdx] = finalLower;
+         outTrend[outIdx] = 1;
       } else 
       {
-         outReal[outIdx] = finalUpper;
-         outInteger[outIdx] = 0 - 1;
+         outSupertrend[outIdx] = finalUpper;
+         outTrend[outIdx] = 0 - 1;
       }
       prevClose = closeToday;
       outIdx += 1;
@@ -313,8 +313,8 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
                             double optInMultiplier,
                             int          *outBegIdx,
                             int          *outNBElement,
-                            double        outReal[],
-                            int        outInteger[] )
+                            double        outSupertrend[],
+                            int        outTrend[] )
 {
    int i;
    int today;
@@ -361,11 +361,11 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
       return TA_BAD_PARAM;
    if( !outBegIdx || !outNBElement )
       return TA_BAD_PARAM;
-   if( !outReal )
+   if( !outSupertrend )
       return TA_BAD_PARAM;
-   if( !outInteger )
+   if( !outTrend )
       return TA_BAD_PARAM;
-   if( (const void *)outReal == (const void *)outInteger )
+   if( (const void *)outSupertrend == (const void *)outTrend )
       return TA_BAD_PARAM;
 
    *outBegIdx= 0;
@@ -431,8 +431,8 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
    finalLower = medianPrice - band;
    isUptrend = 1;
    prevClose = (double)inClose[startIdx];
-   outReal[0] = finalLower;
-   outInteger[0] = 1;
+   outSupertrend[0] = finalLower;
+   outTrend[0] = 1;
    outIdx = 1;
    today = startIdx + 1;
    while( today <= endIdx )
@@ -477,12 +477,12 @@ TA_RetCode TA_S_SUPERTREND( int    startIdx,
       }
       if( isUptrend )
       {
-         outReal[outIdx] = finalLower;
-         outInteger[outIdx] = 1;
+         outSupertrend[outIdx] = finalLower;
+         outTrend[outIdx] = 1;
       } else 
       {
-         outReal[outIdx] = finalUpper;
-         outInteger[outIdx] = 0 - 1;
+         outSupertrend[outIdx] = finalUpper;
+         outTrend[outIdx] = 0 - 1;
       }
       prevClose = closeToday;
       outIdx += 1;
@@ -500,8 +500,8 @@ struct TA_SUPERTREND_Stream {
    int outRangeBegIdx;
    int outRangeCount;
    /* The value(s) at the last bar the stream counted (see TA_SUPERTREND_Value). */
-   double cur_outReal;
-   int cur_outInteger;
+   double cur_outSupertrend;
+   int cur_outTrend;
    int optInTimePeriod;
    double optInMultiplier;
    int isUptrend;
@@ -515,7 +515,7 @@ struct TA_SUPERTREND_Stream {
 };
 
 /* Private function, not in public API. */
-static void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stream *sp, double inHigh, double inLow, double inClose, double *outReal, int *outInteger )
+static void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stream *sp, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend )
 {
    double val2;
    double val3;
@@ -585,20 +585,20 @@ static void TA_SUPERTREND_StepImpl( struct TA_SUPERTREND_Stream *sp, double inHi
    }
    if( sp->isUptrend )
    {
-      *outReal= sp->finalLower;
-      *outInteger= 1;
+      *outSupertrend= sp->finalLower;
+      *outTrend= 1;
    } else 
    {
-      *outReal= sp->finalUpper;
-      *outInteger= 0 - 1;
+      *outSupertrend= sp->finalUpper;
+      *outTrend= 0 - 1;
    }
    sp->prevClose = closeToday;
-   sp->cur_outReal = *outReal;
-   sp->cur_outInteger = *outInteger;
+   sp->cur_outSupertrend = *outSupertrend;
+   sp->cur_outTrend = *outTrend;
    sp->lag1_inClose = inClose;
 }
 
-static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outReal[], int outInteger[], int outStride )
+static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[], int outStride )
 {
    struct TA_SUPERTREND_Stream *sp;
    int endIdx;
@@ -607,7 +607,7 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
    *stream = NULL;
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outReal || !outInteger ) return TA_BAD_PARAM;
+   if( !inHigh || !inLow || !inClose || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
    if( (int)optInTimePeriod == TA_INTEGER_DEFAULT )
       optInTimePeriod = 10;
    else if( (int)optInTimePeriod < 2 || (int)optInTimePeriod > 100000 )
@@ -735,8 +735,8 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
       finalLower = medianPrice - band;
       isUptrend = 1;
       prevClose = inClose[startIdx];
-      outReal[0 * outStride] = finalLower;
-      outInteger[0 * outStride] = 1;
+      outSupertrend[0 * outStride] = finalLower;
+      outTrend[0 * outStride] = 1;
       outIdx = 1;
       today = startIdx + 1;
       while( today <= endIdx )
@@ -797,12 +797,12 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
          }
          if( isUptrend )
          {
-            outReal[outIdx * outStride] = finalLower;
-            outInteger[outIdx * outStride] = 1;
+            outSupertrend[outIdx * outStride] = finalLower;
+            outTrend[outIdx * outStride] = 1;
          } else 
          {
-            outReal[outIdx * outStride] = finalUpper;
-            outInteger[outIdx * outStride] = 0 - 1;
+            outSupertrend[outIdx * outStride] = finalUpper;
+            outTrend[outIdx * outStride] = 0 - 1;
          }
          prevClose = closeToday;
          outIdx += 1;
@@ -827,71 +827,71 @@ static TA_RetCode TA_SUPERTREND_OpenImpl( struct TA_SUPERTREND_Stream **stream, 
       sp->lag1_inClose = inClose[historyLen - 1];
       sp->outRangeBegIdx = *outBegIdx;
       sp->outRangeCount = *outNBElement;
-      sp->cur_outReal = outReal[(*outNBElement - 1) * outStride];
-      sp->cur_outInteger = outInteger[(*outNBElement - 1) * outStride];
+      sp->cur_outSupertrend = outSupertrend[(*outNBElement - 1) * outStride];
+      sp->cur_outTrend = outTrend[(*outNBElement - 1) * outStride];
       *stream = sp;
       return TA_SUCCESS;
    }
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_SUPERTREND_OpenInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, double *outReal, int *outInteger )
+TA_RetCode TA_SUPERTREND_OpenInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, double *outSupertrend, int *outTrend )
 {
    TA_RetCode retCode;
    int dummyBegIdx = 0;
    int dummyNBElement = 0;
-   double sink_outReal = 0.0;
-   int sink_outInteger = 0;
-   retCode = TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, &dummyBegIdx, &dummyNBElement, &sink_outReal, &sink_outInteger, 0 );
+   double sink_outSupertrend = 0.0;
+   int sink_outTrend = 0;
+   retCode = TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, &dummyBegIdx, &dummyNBElement, &sink_outSupertrend, &sink_outTrend, 0 );
    if( retCode == TA_SUCCESS )
    {
-      *outReal = sink_outReal;
-      *outInteger = sink_outInteger;
+      *outSupertrend = sink_outSupertrend;
+      *outTrend = sink_outTrend;
    }
    return retCode;
 }
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_Open( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, double *outReal, int *outInteger )
+TA_LIB_API TA_RetCode TA_SUPERTREND_Open( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, double *outSupertrend, int *outTrend )
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outReal || !outInteger ) return TA_BAD_PARAM;
-   return TA_SUPERTREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outReal, outInteger );
+   if( !inHigh || !inLow || !inClose || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
+   return TA_SUPERTREND_OpenInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outSupertrend, outTrend );
 }
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outReal[], int outInteger[] )
+TA_LIB_API TA_RetCode TA_SUPERTREND_OpenAndFill( TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[] )
 {
    if( !stream ) return TA_BAD_PARAM;
    *stream = NULL;
    if( historyLen < 1 ) return TA_OUT_OF_RANGE_START_INDEX;
    if( historyLen > TA_MAX_INDEX + 1 ) return TA_OUT_OF_RANGE_END_INDEX;
-   if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outReal || !outInteger ) return TA_BAD_PARAM;
-   if( (const void *)outReal == (const void *)inHigh || (const void *)outReal == (const void *)inLow || (const void *)outReal == (const void *)inClose || (const void *)outInteger == (const void *)inHigh || (const void *)outInteger == (const void *)inLow || (const void *)outInteger == (const void *)inClose || (const void *)outReal == (const void *)outInteger ) return TA_BAD_PARAM;
-   return TA_SUPERTREND_OpenAndFillInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger );
+   if( !inHigh || !inLow || !inClose || !outBegIdx || !outNBElement || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
+   if( (const void *)outSupertrend == (const void *)inHigh || (const void *)outSupertrend == (const void *)inLow || (const void *)outSupertrend == (const void *)inClose || (const void *)outTrend == (const void *)inHigh || (const void *)outTrend == (const void *)inLow || (const void *)outTrend == (const void *)inClose || (const void *)outSupertrend == (const void *)outTrend ) return TA_BAD_PARAM;
+   return TA_SUPERTREND_OpenAndFillInternal( stream, inHigh, inLow, inClose, 0, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend );
 }
 
 /* Private function, not in public API. */
-TA_RetCode TA_SUPERTREND_OpenAndFillInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outReal[], int outInteger[] )
+TA_RetCode TA_SUPERTREND_OpenAndFillInternal( struct TA_SUPERTREND_Stream **stream, const double inHigh[], const double inLow[], const double inClose[], int startIdx, int historyLen, int optInTimePeriod, double optInMultiplier, int *outBegIdx, int *outNBElement, double outSupertrend[], int outTrend[] )
 {
-   return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outReal, outInteger, 1 );
+   return TA_SUPERTREND_OpenImpl( stream, inHigh, inLow, inClose, startIdx, historyLen, optInTimePeriod, optInMultiplier, outBegIdx, outNBElement, outSupertrend, outTrend, 1 );
 }
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outReal, int *outInteger )
+TA_LIB_API TA_RetCode TA_SUPERTREND_Update( TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend )
 {
    if( !stream ) return TA_BAD_PARAM;
    if( stream->outRangeBegIdx + stream->outRangeCount > TA_MAX_INDEX )
       return TA_OUT_OF_RANGE_END_INDEX;
-   if( !outReal || !outInteger ) return TA_BAD_PARAM;
+   if( !outSupertrend || !outTrend ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
-   TA_SUPERTREND_StepImpl( stream, inHigh, inLow, inClose, outReal, outInteger );
+   TA_SUPERTREND_StepImpl( stream, inHigh, inLow, inClose, outSupertrend, outTrend );
    stream->outRangeCount++;
    return TA_SUCCESS;
 }
 
 TA_FMA_MULTIVERSION
-TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outReal, int *outInteger )
+TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, double inHigh, double inLow, double inClose, double *outSupertrend, int *outTrend )
 {
    const struct TA_SUPERTREND_Stream *sp = stream;
    double val2;
@@ -910,7 +910,7 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
    int isUptrend;
    double prevATR;
 
-   if( !stream || !outReal || !outInteger ) return TA_BAD_PARAM;
+   if( !stream || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
    if( !TA_IS_FINITE( inHigh ) || !TA_IS_FINITE( inLow ) || !TA_IS_FINITE( inClose ) ) return TA_BAD_PARAM;
    finalLower = sp->finalLower;
    finalUpper = sp->finalUpper;
@@ -972,12 +972,12 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Peek( const TA_SUPERTREND_Stream *stream, do
    }
    if( isUptrend )
    {
-      *outReal= finalLower;
-      *outInteger= 1;
+      *outSupertrend= finalLower;
+      *outTrend= 1;
    } else 
    {
-      *outReal= finalUpper;
-      *outInteger= 0 - 1;
+      *outSupertrend= finalUpper;
+      *outTrend= 0 - 1;
    }
    return TA_SUCCESS;
 }
@@ -988,11 +988,11 @@ TA_LIB_API TA_RetCode TA_SUPERTREND_Close( TA_SUPERTREND_Stream *stream )
    return TA_SUCCESS;
 }
 
-TA_LIB_API TA_RetCode TA_SUPERTREND_Value( const TA_SUPERTREND_Stream *stream, double *outReal, int *outInteger )
+TA_LIB_API TA_RetCode TA_SUPERTREND_Value( const TA_SUPERTREND_Stream *stream, double *outSupertrend, int *outTrend )
 {
-   if( !stream || !outReal || !outInteger ) return TA_BAD_PARAM;
-   *outReal = stream->cur_outReal;
-   *outInteger = stream->cur_outInteger;
+   if( !stream || !outSupertrend || !outTrend ) return TA_BAD_PARAM;
+   *outSupertrend = stream->cur_outSupertrend;
+   *outTrend = stream->cur_outTrend;
    return TA_SUCCESS;
 }
 

@@ -267,7 +267,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>The bearish-continuation reading assumes a prior downtrend, which is not verified.</description></item>
-   /// <item><description>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</description></item>
+   /// <item><description>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<see href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -339,7 +339,7 @@ public partial class Core
    /// </code>
    /// <list type="bullet">
    /// <item><description>The bearish-continuation reading assumes a prior downtrend, which is not verified.</description></item>
-   /// <item><description>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." ([thepatternsite.com](https://thepatternsite.com/OnNeck.html))</description></item>
+   /// <item><description>Bulkowski's testing found the bearish continuation holds only 56% of the time, which he explicitly calls "near random." (<see href="https://thepatternsite.com/OnNeck.html">thepatternsite.com</see>)</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

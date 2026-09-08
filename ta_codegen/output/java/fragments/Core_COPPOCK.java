@@ -427,7 +427,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into [{@code WMA}](/functions/wma).</li>
+    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
     * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
     * </ul>
     * <p>Values are written only where the indicator is defined. The returned
@@ -498,7 +498,7 @@
     * }</pre>
     * <p><b>Notes</b>
     * <ul>
-    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into [{@code WMA}](/functions/wma).</li>
+    * <li>The single fused pass is bit-identical to running {@code ROC + ROC} into <a href="https://ta-lib.org/functions/wma">{@code WMA}</a>.</li>
     * <li>First output at {@code max(optInROC1Period, optInROC2Period) + optInWMAPeriod - 1}. Not start-dependent: each output depends only on its finite trailing window.</li>
     * </ul>
     * <p>This is the {@code float[]} overload. The arithmetic is performed in
@@ -1192,8 +1192,8 @@
     * <p>The history must hold at least {@code COPPOCK_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} selects a parameter's documented default,
+    * as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

@@ -7248,8 +7248,8 @@ static TA_RetCode TA_SUPERTREND_SFrameOpen( void **stream,
                historyLen,
                (int)optIn[0] /* optInTimePeriod */,
                optIn[1] /* optInMultiplier */,
-               outReal[0] /* outReal */,
-               outInteger[1] /* outInteger */
+               outReal[0] /* outSupertrend */,
+               outInteger[1] /* outTrend */
                );
 }
 static TA_RetCode TA_SUPERTREND_SFrameFill( void **stream,
@@ -7268,8 +7268,8 @@ static TA_RetCode TA_SUPERTREND_SFrameFill( void **stream,
                optIn[1] /* optInMultiplier */,
                outBegIdx,
                outNBElement,
-               outReal[0] /* outReal */,
-               outInteger[1] /* outInteger */
+               outReal[0] /* outSupertrend */,
+               outInteger[1] /* outTrend */
                );
 }
 static TA_RetCode TA_SUPERTREND_SFrameClose( void *stream )

@@ -755,7 +755,7 @@ public partial class Core
    /// <param name="optInSlowPeriod">As in the batch call; see <see cref="PPO_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="PPO_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>PPO_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -790,7 +790,7 @@ public partial class Core
    /// <param name="optInSlowPeriod">As in the batch call; see <see cref="PPO_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInMAType">As in the batch call; see <see cref="PPO_Lookback"/> for its default and
-   /// range (<c>int.MinValue</c> selects the default).</param>
+   /// range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outReal">PPO value in percent. Must hold at least <c>historyLen -
    /// PPO_Lookback(...)</c> values.</param>
    /// <returns>The open stream handle, with its fill range set.</returns>

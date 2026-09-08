@@ -347,7 +347,7 @@ public partial class Core
    /// <item><description>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</description></item>
    /// <item><description>Both divisors are exact powers of two, so implementations that scale by <c>0.5</c> and <c>0.25</c> produce the same doubles as those that divide by 2 and 4.</description></item>
    /// <item><description>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</description></item>
-   /// <item><description>Averaging four prices of one bar is also what [<c>AVGPRICE</c>](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.</description></item>
+   /// <item><description>Averaging four prices of one bar is also what <see href="https://ta-lib.org/functions/avgprice"><c>AVGPRICE</c></see> computes, but it sums them in a different order, so the two can differ in the last bits.</description></item>
    /// </list>
    /// <para>
    /// Values are written only where the indicator is defined. The returned
@@ -441,7 +441,7 @@ public partial class Core
    /// <item><description>The first candle has no predecessor, so its open is seeded with the midpoint of the raw open and close. Other conventions exist — ta4j emits the raw bar unchanged as its first candle — and they differ only while the seed still carries weight.</description></item>
    /// <item><description>Both divisors are exact powers of two, so implementations that scale by <c>0.5</c> and <c>0.25</c> produce the same doubles as those that divide by 2 and 4.</description></item>
    /// <item><description>The unstable period discards that many candles of warm-up before the first output, trading history for a smaller residual difference between two requests that start at different bars.</description></item>
-   /// <item><description>Averaging four prices of one bar is also what [<c>AVGPRICE</c>](/functions/avgprice) computes, but it sums them in a different order, so the two can differ in the last bits.</description></item>
+   /// <item><description>Averaging four prices of one bar is also what <see href="https://ta-lib.org/functions/avgprice"><c>AVGPRICE</c></see> computes, but it sums them in a different order, so the two can differ in the last bits.</description></item>
    /// </list>
    /// <para>
    /// This is the <c>float[]</c> overload: input elements are widened to

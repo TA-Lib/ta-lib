@@ -15485,11 +15485,11 @@ fn sub_SUPERTREND(r: &mut Report) {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
             let inClose: Vec<f64> = Vec::with_capacity(1);
-            let mut outReal: Vec<f64> = Vec::with_capacity(1);
-            let mut outInteger: Vec<i32> = Vec::with_capacity(1);
+            let mut outSupertrend: Vec<f64> = Vec::with_capacity(1);
+            let mut outTrend: Vec<i32> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.SUPERTREND_Impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            let rc = core.SUPERTREND_Impl(0, lb, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outSupertrend, &mut outTrend);
             (rc, _n)
         }));
         if lb < 1 { r.no_quiet_range("SUPERTREND", label); continue; }
@@ -15497,11 +15497,11 @@ fn sub_SUPERTREND(r: &mut Report) {
             let inHigh: Vec<f64> = Vec::with_capacity(1);
             let inLow: Vec<f64> = Vec::with_capacity(1);
             let inClose: Vec<f64> = Vec::with_capacity(1);
-            let mut outReal: Vec<f64> = Vec::with_capacity(1);
-            let mut outInteger: Vec<i32> = Vec::with_capacity(1);
+            let mut outSupertrend: Vec<f64> = Vec::with_capacity(1);
+            let mut outTrend: Vec<i32> = Vec::with_capacity(1);
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.SUPERTREND_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            let rc = core.SUPERTREND_Impl(0, lb - 1, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outSupertrend, &mut outTrend);
             (rc, _n)
         }));
     }
@@ -15517,12 +15517,12 @@ fn legs_SUPERTREND(r: &mut Report) {
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        let mut outSupertrend: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
         r.legs_control("SUPERTREND", run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outSupertrend, &mut outTrend);
             (rc, _n)
         }));
     }
@@ -15530,12 +15530,12 @@ fn legs_SUPERTREND(r: &mut Report) {
         let inHigh: Vec<f64> = Vec::with_capacity(1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        let mut outSupertrend: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
         r.leg("SUPERTREND", "inHigh", 0, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outSupertrend, &mut outTrend);
             (rc, _n)
         }));
     }
@@ -15543,12 +15543,12 @@ fn legs_SUPERTREND(r: &mut Report) {
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = Vec::with_capacity(1);
         let inClose: Vec<f64> = series("close", endIdx + 1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        let mut outSupertrend: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
         r.leg("SUPERTREND", "inLow", 1, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outSupertrend, &mut outTrend);
             (rc, _n)
         }));
     }
@@ -15556,12 +15556,12 @@ fn legs_SUPERTREND(r: &mut Report) {
         let inHigh: Vec<f64> = series("high", endIdx + 1);
         let inLow: Vec<f64> = series("low", endIdx + 1);
         let inClose: Vec<f64> = Vec::with_capacity(1);
-        let mut outReal: Vec<f64> = vec![Default::default(); 5];
-        let mut outInteger: Vec<i32> = vec![Default::default(); 5];
+        let mut outSupertrend: Vec<f64> = vec![Default::default(); 5];
+        let mut outTrend: Vec<i32> = vec![Default::default(); 5];
         r.leg("SUPERTREND", "inClose", 2, run(|| {
             let mut _b: usize = 0;
             let mut _n: usize = 0;
-            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outReal, &mut outInteger);
+            let rc = core.SUPERTREND_Impl(startIdx, endIdx, &inHigh, &inLow, &inClose, optInTimePeriod, optInMultiplier, &mut _b, &mut _n, &mut outSupertrend, &mut outTrend);
             (rc, _n)
         }));
     }

@@ -3370,8 +3370,8 @@ public final class Functions {
                0, 0, 0, 0, 0, null)
          ),
          List.of(
-            new OutputInfo(OutputType.REAL, "outReal", 0x00000001),
-            new OutputInfo(OutputType.INTEGER, "outInteger", 0x00000001)
+            new OutputInfo(OutputType.REAL, "outSupertrend", 0x00000001),
+            new OutputInfo(OutputType.INTEGER, "outTrend", 0x00000001)
          ));
    }
 

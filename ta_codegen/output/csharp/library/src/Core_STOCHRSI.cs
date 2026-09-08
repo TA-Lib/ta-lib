@@ -843,7 +843,7 @@ public partial class Core
    /// <param name="optInFastD_Period">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>STOCHRSI_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -881,7 +881,7 @@ public partial class Core
    /// <param name="optInFastD_Period">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
    /// and range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInFastD_MAType">As in the batch call; see <see cref="STOCHRSI_Lookback"/> for its default
-   /// and range (<c>int.MinValue</c> selects the default).</param>
+   /// and range (<c>MAType.DEFAULT</c> selects the default).</param>
    /// <param name="outFastK">Unsmoothed stochastic of the RSI (raw %K) Must hold at least <c>historyLen
    /// - STOCHRSI_Lookback(...)</c> values.</param>
    /// <param name="outFastD">%K smoothed over FastD_Period (signal line) Must hold at least

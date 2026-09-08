@@ -286,15 +286,32 @@ fn param_doc(opt: &OptInput, doc: &DocDef, enums: &HashMap<String, EnumDef>) -> 
 // ---------------------------------------------------------------------------
 
 /// Turn canonical Markdown-ish prose into XML-doc-safe text: `&`/`<`/`>` become
-/// entities (CS1570 otherwise) and backtick spans become `<c>...</c>`.
-fn csdoc(text: &str) -> String {
+/// entities (CS1570 otherwise), backtick spans become `<c>...</c>`, and a
+/// Markdown inline link becomes a `<see href>`.
+pub(super) fn csdoc(text: &str) -> String {
     let mut out = String::new();
     let mut in_code = false;
-    for c in text.chars() {
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
         match c {
             '`' => {
                 out.push_str(if in_code { "</c>" } else { "<c>" });
                 in_code = !in_code;
+            }
+            '[' if !in_code => {
+                if let Some((label, dest, end)) = inline_link(&chars, i) {
+                    let _ = write!(
+                        out,
+                        "<see href=\"{}\">{}</see>",
+                        attr_escape(&dest),
+                        csdoc(&label)
+                    );
+                    i = end;
+                    continue;
+                }
+                out.push('[');
             }
             '&' => out.push_str("&amp;"),
             '<' => out.push_str("&lt;"),
@@ -302,12 +319,53 @@ fn csdoc(text: &str) -> String {
             '\n' => out.push(' '),
             _ => out.push(c),
         }
+        i += 1;
     }
     if in_code {
         // Unbalanced backtick in the source — close it rather than emit bad XML.
         out.push_str("</c>");
     }
     out
+}
+
+/// A URL destination as an attribute value. `&` and `"` are the only characters
+/// that can end the attribute early; everything else in a URL is literal.
+fn attr_escape(dest: &str) -> String {
+    dest.replace('&', "&amp;").replace('"', "&quot;")
+}
+
+/// A well-formed Markdown inline link starting at `chars[start] == '['`: its
+/// label, its destination and the index one past the closing `)`. The label must
+/// not itself contain a bracket, and the destination must look like a URL or a
+/// site-absolute path — a parenthesis that merely follows a bracketed aside is
+/// not a link. A site-absolute destination is written for ta-lib.org, which an
+/// XML doc has no root for, so it is resolved against the real site.
+fn inline_link(chars: &[char], start: usize) -> Option<(String, String, usize)> {
+    let close = chars[start + 1..]
+        .iter()
+        .position(|c| *c == ']' || *c == '[')
+        .map(|p| start + 1 + p)
+        .filter(|p| chars[*p] == ']')?;
+    if chars.get(close + 1) != Some(&'(') {
+        return None;
+    }
+    let paren = chars[close + 2..]
+        .iter()
+        .position(|c| *c == ')' || *c == '(')
+        .map(|p| close + 2 + p)
+        .filter(|p| chars[*p] == ')')?;
+    let dest: String = chars[close + 2..paren].iter().collect();
+    let is_url =
+        dest.starts_with("http://") || dest.starts_with("https://") || dest.starts_with('/');
+    if !is_url || dest.contains(char::is_whitespace) {
+        return None;
+    }
+    let label: String = chars[start + 1..close].iter().collect();
+    let dest = match dest.strip_prefix('/') {
+        Some(rest) => format!("https://ta-lib.org/{rest}"),
+        None => dest,
+    };
+    Some((label, dest, paren + 1))
 }
 
 /// Escape a raw (formula) line for XML content — entities only, no backtick
@@ -444,4 +502,45 @@ fn wrap(text: &str, width: usize) -> Vec<String> {
         out.push(String::new());
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::csdoc;
+
+    /// A Markdown link renders as a `<see href>`. The C# compiler has no lint
+    /// for a stranded one, so nothing but this says the conversion still happens.
+    #[test]
+    fn inline_links_become_see_href() {
+        assert_eq!(
+            csdoc("see [TradingView](https://tv.com/x) for more"),
+            "see <see href=\"https://tv.com/x\">TradingView</see> for more"
+        );
+        // Site-absolute destinations are rebased: an XML doc has no ta-lib.org root.
+        assert_eq!(
+            csdoc("the [`SMA`](/functions/sma) page"),
+            "the <see href=\"https://ta-lib.org/functions/sma\"><c>SMA</c></see> page"
+        );
+    }
+
+    /// Bracketed prose that merely happens to be followed by parentheses is not
+    /// a link, and a bracket inside a code span is literal.
+    #[test]
+    fn bracketed_prose_is_left_alone() {
+        assert_eq!(csdoc("range [-1, 1]"), "range [-1, 1]");
+        assert_eq!(csdoc("close[i](t)"), "close[i](t)");
+        assert_eq!(csdoc("[label](not a url)"), "[label](not a url)");
+        assert_eq!(csdoc("`a[i](x)`"), "<c>a[i](x)</c>");
+        // A bare fragment resolves to the type page, where no such anchor is.
+        assert_eq!(csdoc("[Rules](#rules)"), "[Rules](#rules)");
+    }
+
+    /// A raw `&` in an attribute is malformed XML, which CS1570 makes an error.
+    #[test]
+    fn link_destinations_are_attribute_escaped() {
+        assert_eq!(
+            csdoc("[x](https://a.b/?p=1&q=2)"),
+            "<see href=\"https://a.b/?p=1&amp;q=2\">x</see>"
+        );
+    }
 }

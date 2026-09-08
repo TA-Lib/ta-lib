@@ -207,13 +207,13 @@
       return RetCode.Success ;
    }
    /**
-    * Percentage Volume Oscillator: a variation of the [Percentage Price
-    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-    * **volume** series instead of price. It is the difference between a fast
-    * and slow moving average of volume, expressed as a percentage of the slow
-    * MA. Positive when short-term volume is above its longer-term average
-    * (rising participation), negative when below. The default periods (12, 26)
-    * match MACD and PPO.
+    * Percentage Volume Oscillator: a variation of the <a
+    * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
+    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
+    * price. It is the difference between a fast and slow moving average of
+    * volume, expressed as a percentage of the slow MA. Positive when short-term
+    * volume is above its longer-term average (rising participation), negative
+    * when below. The default periods (12, 26) match MACD and PPO.
     * <p><b>Formula</b>
     * <pre>{@code
     * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
@@ -284,13 +284,13 @@
       return new OutRange(outBegIdx.value, outNBElement.value);
    }
    /**
-    * Percentage Volume Oscillator: a variation of the [Percentage Price
-    * Oscillator](/functions/ppo) (PPO, created by Gerald Appel) applied to the
-    * **volume** series instead of price. It is the difference between a fast
-    * and slow moving average of volume, expressed as a percentage of the slow
-    * MA. Positive when short-term volume is above its longer-term average
-    * (rising participation), negative when below. The default periods (12, 26)
-    * match MACD and PPO.
+    * Percentage Volume Oscillator: a variation of the <a
+    * href="https://ta-lib.org/functions/ppo">Percentage Price Oscillator</a>
+    * (PPO, created by Gerald Appel) applied to the **volume** series instead of
+    * price. It is the difference between a fast and slow moving average of
+    * volume, expressed as a percentage of the slow MA. Positive when short-term
+    * volume is above its longer-term average (rising participation), negative
+    * when below. The default periods (12, 26) match MACD and PPO.
     * <p><b>Formula</b>
     * <pre>{@code
     * PVO = ((fastMA(inVolume) - slowMA(inVolume)) / slowMA(inVolume)) * 100, both MAs of type optInMAType; output = 0 when slowMA == 0
@@ -691,8 +691,8 @@
     * <p>The history must hold at least {@code PVO_Lookback(...) + 1} bars
     * (unstable-period aware), or {@link InsufficientHistoryException} is
     * thrown. Out-of-range parameters throw {@link IllegalArgumentException}
-    * ({@code Integer.MIN_VALUE} selects an integer parameter's documented
-    * default, as in the batch API). An EMPTY history throws
+    * ({@link Integer#MIN_VALUE} and {@link MAType#DEFAULT} select a
+    * parameter's documented default, as in the batch API). An EMPTY history throws
     * {@link IndexOutOfBoundsException} — its implied {@code startIdx} of 0
     * names no bar — and a null argument {@link IllegalArgumentException},
     * both ahead of everything above.

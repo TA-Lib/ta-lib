@@ -83,9 +83,9 @@ public partial class Core
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
          return -1;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return -1;
       }
       int emaLookback = 0;
@@ -145,9 +145,9 @@ public partial class Core
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
@@ -253,9 +253,9 @@ public partial class Core
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( outRealUpperBand.Overlaps(outRealMiddleBand) || outRealUpperBand.Overlaps(outRealLowerBand) || outRealMiddleBand.Overlaps(outRealLowerBand) ) {
@@ -739,9 +739,9 @@ public partial class Core
       } else if( optInATRPeriod < 1 || optInATRPeriod > 100000 ) {
          return RetCode.BadParam;
       }
-      if( optInNbDev == TA_REAL_DEFAULT ) {
+      if( optInNbDev == REAL_DEFAULT ) {
          optInNbDev = 2e0;
-      } else if( !(optInNbDev >= TA_REAL_MIN && optInNbDev <= TA_REAL_MAX) ) {
+      } else if( !(optInNbDev >= REAL_MIN && optInNbDev <= REAL_MAX) ) {
          return RetCode.BadParam;
       }
       if( startIdx > endIdx ) {
@@ -871,7 +871,7 @@ public partial class Core
    /// <param name="optInATRPeriod">As in the batch call; see <see cref="KC_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">As in the batch call; see <see cref="KC_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <returns>The open stream handle.</returns>
    /// <exception cref="InsufficientHistoryException">The history holds fewer than <c>KC_Lookback(...) + 1</c> bars.</exception>
    /// <exception cref="System.ArgumentException">An optional parameter is outside its documented range, or the input series
@@ -912,7 +912,7 @@ public partial class Core
    /// <param name="optInATRPeriod">As in the batch call; see <see cref="KC_Lookback"/> for its default and
    /// range (<c>int.MinValue</c> selects the default).</param>
    /// <param name="optInNbDev">As in the batch call; see <see cref="KC_Lookback"/> for its default and
-   /// range (<c>-4e37</c> selects the default).</param>
+   /// range (<see cref="Core.REAL_DEFAULT"/> selects the default).</param>
    /// <param name="outRealUpperBand">Centre line plus the scaled Average True Range. Must hold at least
    /// <c>historyLen - KC_Lookback(...)</c> values.</param>
    /// <param name="outRealMiddleBand">Exponential moving average of the typical price. Must hold at least

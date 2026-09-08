@@ -267,19 +267,22 @@ public partial class Core
       return RetCode.Success ;
    }
    /// <summary>
-   /// Zero-Lag Exponential Moving Average: an [<c>EMA</c>](/functions/ema)
-   /// applied not to price but to a de-lagged series that extrapolates price
-   /// forward by the EMA's own lag, cancelling that lag to first order. It
-   /// tracks a trend far more closely than an EMA of the same length, at the
-   /// cost of overshooting sharp reversals — the extrapolation keeps pushing in
-   /// the old direction for a bar or two. Read it as an EMA that turns sooner:
-   /// crossings of price and average, and changes in its slope, arrive earlier
-   /// than the equivalent EMA signal, and its overshoot after a spike is a
-   /// property of the filter rather than a move in the market. ZLEMA is also
-   /// selectable as a moving-average type (<c>TA_MAType_ZLEMA</c>) wherever an
-   /// <c>optInMAType</c> parameter is accepted ([<c>MA</c>](/functions/ma),
-   /// [<c>BBANDS</c>](/functions/bbands), [<c>STOCH</c>](/functions/stoch),
-   /// [<c>MACDEXT</c>](/functions/macdext), ...).
+   /// Zero-Lag Exponential Moving Average: an
+   /// <see href="https://ta-lib.org/functions/ema"><c>EMA</c></see> applied not
+   /// to price but to a de-lagged series that extrapolates price forward by the
+   /// EMA's own lag, cancelling that lag to first order. It tracks a trend far
+   /// more closely than an EMA of the same length, at the cost of overshooting
+   /// sharp reversals — the extrapolation keeps pushing in the old direction for
+   /// a bar or two. Read it as an EMA that turns sooner: crossings of price and
+   /// average, and changes in its slope, arrive earlier than the equivalent EMA
+   /// signal, and its overshoot after a spike is a property of the filter rather
+   /// than a move in the market. ZLEMA is also selectable as a moving-average
+   /// type (<c>TA_MAType_ZLEMA</c>) wherever an <c>optInMAType</c> parameter is
+   /// accepted (<see href="https://ta-lib.org/functions/ma"><c>MA</c></see>,
+   /// <see href="https://ta-lib.org/functions/bbands"><c>BBANDS</c></see>,
+   /// <see href="https://ta-lib.org/functions/stoch"><c>STOCH</c></see>,
+   /// <see href="https://ta-lib.org/functions/macdext"><c>MACDEXT</c></see>,
+   /// ...).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
@@ -349,19 +352,22 @@ public partial class Core
       return new OutRange(outBegIdx, outNBElement);
    }
    /// <summary>
-   /// Zero-Lag Exponential Moving Average: an [<c>EMA</c>](/functions/ema)
-   /// applied not to price but to a de-lagged series that extrapolates price
-   /// forward by the EMA's own lag, cancelling that lag to first order. It
-   /// tracks a trend far more closely than an EMA of the same length, at the
-   /// cost of overshooting sharp reversals — the extrapolation keeps pushing in
-   /// the old direction for a bar or two. Read it as an EMA that turns sooner:
-   /// crossings of price and average, and changes in its slope, arrive earlier
-   /// than the equivalent EMA signal, and its overshoot after a spike is a
-   /// property of the filter rather than a move in the market. ZLEMA is also
-   /// selectable as a moving-average type (<c>TA_MAType_ZLEMA</c>) wherever an
-   /// <c>optInMAType</c> parameter is accepted ([<c>MA</c>](/functions/ma),
-   /// [<c>BBANDS</c>](/functions/bbands), [<c>STOCH</c>](/functions/stoch),
-   /// [<c>MACDEXT</c>](/functions/macdext), ...).
+   /// Zero-Lag Exponential Moving Average: an
+   /// <see href="https://ta-lib.org/functions/ema"><c>EMA</c></see> applied not
+   /// to price but to a de-lagged series that extrapolates price forward by the
+   /// EMA's own lag, cancelling that lag to first order. It tracks a trend far
+   /// more closely than an EMA of the same length, at the cost of overshooting
+   /// sharp reversals — the extrapolation keeps pushing in the old direction for
+   /// a bar or two. Read it as an EMA that turns sooner: crossings of price and
+   /// average, and changes in its slope, arrive earlier than the equivalent EMA
+   /// signal, and its overshoot after a spike is a property of the filter rather
+   /// than a move in the market. ZLEMA is also selectable as a moving-average
+   /// type (<c>TA_MAType_ZLEMA</c>) wherever an <c>optInMAType</c> parameter is
+   /// accepted (<see href="https://ta-lib.org/functions/ma"><c>MA</c></see>,
+   /// <see href="https://ta-lib.org/functions/bbands"><c>BBANDS</c></see>,
+   /// <see href="https://ta-lib.org/functions/stoch"><c>STOCH</c></see>,
+   /// <see href="https://ta-lib.org/functions/macdext"><c>MACDEXT</c></see>,
+   /// ...).
    /// </summary>
    /// <remarks>
    /// <b>Formula</b>
