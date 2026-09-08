@@ -313,14 +313,14 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlengulfingStream {
-      Core core;
-      double lag1_inOpen;
-      double lag1_inClose;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inOpen;
+      private double lag1_inClose;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlengulfingStream( Core core ) { this.core = core; }
+      private CdlengulfingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -356,7 +356,7 @@
          this.outRangeCount++;
       }
 
-      CdlengulfingStream( CdlengulfingStream other ) {
+      private CdlengulfingStream( CdlengulfingStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inClose = other.lag1_inClose;
@@ -460,7 +460,7 @@
          return new CdlengulfingStream(this);
       }
    }
-   void cdlengulfingStepImpl( CdlengulfingStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlengulfingStepImpl( CdlengulfingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
            ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */

@@ -535,21 +535,21 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TsiStream {
-      Core core;
-      int optInFirstPeriod;
-      int optInSecondPeriod;
-      double kFirst;
-      double kSecond;
-      double emaFirstNum;
-      double emaFirstDen;
-      double emaSecondNum;
-      double emaSecondDen;
-      double prevClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFirstPeriod;
+      private int optInSecondPeriod;
+      private double kFirst;
+      private double kSecond;
+      private double emaFirstNum;
+      private double emaFirstDen;
+      private double emaSecondNum;
+      private double emaSecondDen;
+      private double prevClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TsiStream( Core core ) { this.core = core; }
+      private TsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -585,7 +585,7 @@
          this.outRangeCount++;
       }
 
-      TsiStream( TsiStream other ) {
+      private TsiStream( TsiStream other ) {
          this.core = other.core;
          this.optInFirstPeriod = other.optInFirstPeriod;
          this.optInSecondPeriod = other.optInSecondPeriod;
@@ -696,7 +696,7 @@
          return new TsiStream(this);
       }
    }
-   void tsiStepImpl( TsiStream sp, double inReal )
+   private void tsiStepImpl( TsiStream sp, double inReal )
    {
       double mom = 0.0;
       double absMom = 0.0;

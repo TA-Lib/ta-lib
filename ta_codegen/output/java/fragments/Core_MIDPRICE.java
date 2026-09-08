@@ -523,23 +523,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MidpriceStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MidpriceStream( Core core ) { this.core = core; }
+      private MidpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -575,7 +575,7 @@
          this.outRangeCount++;
       }
 
-      MidpriceStream( MidpriceStream other ) {
+      private MidpriceStream( MidpriceStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -715,7 +715,7 @@
          return new MidpriceStream(this);
       }
    }
-   void midpriceStepImpl( MidpriceStream sp, double inHigh, double inLow )
+   private void midpriceStepImpl( MidpriceStream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;

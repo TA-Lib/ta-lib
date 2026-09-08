@@ -441,19 +441,19 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class StochrsiStream {
-      Core core;
-      int optInTimePeriod;
-      int optInFastK_Period;
-      int optInFastD_Period;
-      MAType optInFastD_MAType;
-      double cur_outFastK;
-      double cur_outFastD;
-      RsiStream sub0;
-      StochfStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInFastK_Period;
+      private int optInFastD_Period;
+      private MAType optInFastD_MAType;
+      private double cur_outFastK;
+      private double cur_outFastD;
+      private RsiStream sub0;
+      private StochfStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StochrsiStream( Core core ) { this.core = core; }
+      private StochrsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -489,7 +489,7 @@
          this.outRangeCount++;
       }
 
-      StochrsiStream( StochrsiStream other ) {
+      private StochrsiStream( StochrsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastK_Period = other.optInFastK_Period;
@@ -616,7 +616,7 @@
       /** %K smoothed over FastD_Period (signal line) */
       public double fastD;
    }
-   void stochrsiStepImpl( StochrsiStream sp, double inReal )
+   private void stochrsiStepImpl( StochrsiStream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;

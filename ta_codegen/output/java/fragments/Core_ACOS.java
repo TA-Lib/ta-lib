@@ -205,12 +205,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AcosStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AcosStream( Core core ) { this.core = core; }
+      private AcosStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -246,7 +246,7 @@
          this.outRangeCount++;
       }
 
-      AcosStream( AcosStream other ) {
+      private AcosStream( AcosStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -328,7 +328,7 @@
          return new AcosStream(this);
       }
    }
-   void acosStepImpl( AcosStream sp, double inReal )
+   private void acosStepImpl( AcosStream sp, double inReal )
    {
       sp.cur_outReal = Math.acos(inReal);
    }

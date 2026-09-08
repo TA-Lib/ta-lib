@@ -205,12 +205,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AddStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AddStream( Core core ) { this.core = core; }
+      private AddStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -246,7 +246,7 @@
          this.outRangeCount++;
       }
 
-      AddStream( AddStream other ) {
+      private AddStream( AddStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -328,7 +328,7 @@
          return new AddStream(this);
       }
    }
-   void addStepImpl( AddStream sp, double inReal0, double inReal1 )
+   private void addStepImpl( AddStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 + inReal1;
    }

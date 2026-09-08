@@ -475,26 +475,26 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TsfStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TsfStream( Core core ) { this.core = core; }
+      private TsfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -530,7 +530,7 @@
          this.outRangeCount++;
       }
 
-      TsfStream( TsfStream other ) {
+      private TsfStream( TsfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -726,7 +726,7 @@
          return new TsfStream(this);
       }
    }
-   void tsfStepImpl( TsfStream sp, double inReal )
+   private void tsfStepImpl( TsfStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;

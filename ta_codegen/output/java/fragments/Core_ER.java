@@ -460,20 +460,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ErStream {
-      Core core;
-      int optInTimePeriod;
-      int nullRun;
-      double sumROC1;
-      double trailingValue;
-      double lag1_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int nullRun;
+      private double sumROC1;
+      private double trailingValue;
+      private double lag1_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ErStream( Core core ) { this.core = core; }
+      private ErStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -509,7 +509,7 @@
          this.outRangeCount++;
       }
 
-      ErStream( ErStream other ) {
+      private ErStream( ErStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
@@ -643,7 +643,7 @@
          return new ErStream(this);
       }
    }
-   void erStepImpl( ErStream sp, double inReal )
+   private void erStepImpl( ErStream sp, double inReal )
    {
       double periodROC = 0.0;
       double tempReal = 0.0;

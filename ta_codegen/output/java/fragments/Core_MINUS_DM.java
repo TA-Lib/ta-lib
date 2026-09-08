@@ -531,16 +531,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinusDmStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevMinusDM;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevMinusDM;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinusDmStream( Core core ) { this.core = core; }
+      private MinusDmStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -576,7 +576,7 @@
          this.outRangeCount++;
       }
 
-      MinusDmStream( MinusDmStream other ) {
+      private MinusDmStream( MinusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -705,7 +705,7 @@
          return new MinusDmStream(this);
       }
    }
-   void minusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
+   private void minusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;

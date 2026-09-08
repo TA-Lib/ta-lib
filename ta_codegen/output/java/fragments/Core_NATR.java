@@ -547,17 +547,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class NatrStream {
-      Core core;
-      int optInTimePeriod;
-      double prevATR;
-      double wAlpha;
-      double wBeta;
-      double lag1_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevATR;
+      private double wAlpha;
+      private double wBeta;
+      private double lag1_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      NatrStream( Core core ) { this.core = core; }
+      private NatrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -593,7 +593,7 @@
          this.outRangeCount++;
       }
 
-      NatrStream( NatrStream other ) {
+      private NatrStream( NatrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
@@ -712,7 +712,7 @@
          return new NatrStream(this);
       }
    }
-   void natrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
+   private void natrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
    {
       double tempValue = 0.0;
       double val2 = 0.0;

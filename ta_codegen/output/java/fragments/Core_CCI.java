@@ -422,17 +422,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CciStream {
-      Core core;
-      int optInTimePeriod;
-      int circBuffer_Idx;
-      int maxIdx_circBuffer;
-      int cbSize_circBuffer;
-      double[] cb_circBuffer;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int circBuffer_Idx;
+      private int maxIdx_circBuffer;
+      private int cbSize_circBuffer;
+      private double[] cb_circBuffer;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CciStream( Core core ) { this.core = core; }
+      private CciStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -468,7 +468,7 @@
          this.outRangeCount++;
       }
 
-      CciStream( CciStream other ) {
+      private CciStream( CciStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.circBuffer_Idx = other.circBuffer_Idx;
@@ -603,7 +603,7 @@
          return new CciStream(this);
       }
    }
-   void cciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
+   private void cciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

@@ -594,23 +594,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MacdStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      int optInSignalPeriod;
-      double prevFast;
-      double prevSlow;
-      double prevSignal;
-      double slowK;
-      double fastK;
-      double signalK;
-      double cur_outMACD;
-      double cur_outMACDSignal;
-      double cur_outMACDHist;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private int optInSignalPeriod;
+      private double prevFast;
+      private double prevSlow;
+      private double prevSignal;
+      private double slowK;
+      private double fastK;
+      private double signalK;
+      private double cur_outMACD;
+      private double cur_outMACDSignal;
+      private double cur_outMACDHist;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MacdStream( Core core ) { this.core = core; }
+      private MacdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -646,7 +646,7 @@
          this.outRangeCount++;
       }
 
-      MacdStream( MacdStream other ) {
+      private MacdStream( MacdStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -790,7 +790,7 @@
       /** MACD minus signal line. */
       public double macdHist;
    }
-   void macdStepImpl( MacdStream sp, double inReal )
+   private void macdStepImpl( MacdStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

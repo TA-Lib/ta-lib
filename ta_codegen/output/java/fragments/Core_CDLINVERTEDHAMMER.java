@@ -382,35 +382,35 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlinvertedhammerStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlinvertedhammerStream( Core core ) { this.core = core; }
+      private CdlinvertedhammerStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -446,7 +446,7 @@
          this.outRangeCount++;
       }
 
-      CdlinvertedhammerStream( CdlinvertedhammerStream other ) {
+      private CdlinvertedhammerStream( CdlinvertedhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -568,7 +568,7 @@
          return new CdlinvertedhammerStream(this);
       }
    }
-   void cdlinvertedhammerStepImpl( CdlinvertedhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlinvertedhammerStepImpl( CdlinvertedhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

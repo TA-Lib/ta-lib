@@ -504,60 +504,60 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdladvanceblockStream {
-      Core core;
-      double[] ShadowShortPeriodTotal;
-      double[] ShadowLongPeriodTotal;
-      double[] NearPeriodTotal;
-      double[] FarPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_FarTrailingIdx;
-      int ringCap_FarTrailingIdx;
-      int ringLag_FarTrailingIdx;
-      double[] ring_FarTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      int ringLag_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowShortTrailingIdx;
-      int ringCap_ShadowShortTrailingIdx;
-      int ringLag_ShadowShortTrailingIdx;
-      double[] ring_ShadowShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Far_rangeType;
-      int cs_Far_avgPeriod;
-      double cs_Far_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowShort_rangeType;
-      int cs_ShadowShort_avgPeriod;
-      double cs_ShadowShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowShortPeriodTotal;
+      private double[] ShadowLongPeriodTotal;
+      private double[] NearPeriodTotal;
+      private double[] FarPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_FarTrailingIdx;
+      private int ringCap_FarTrailingIdx;
+      private int ringLag_FarTrailingIdx;
+      private double[] ring_FarTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private int ringLag_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowShortTrailingIdx;
+      private int ringCap_ShadowShortTrailingIdx;
+      private int ringLag_ShadowShortTrailingIdx;
+      private double[] ring_ShadowShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Far_rangeType;
+      private int cs_Far_avgPeriod;
+      private double cs_Far_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowShort_rangeType;
+      private int cs_ShadowShort_avgPeriod;
+      private double cs_ShadowShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdladvanceblockStream( Core core ) { this.core = core; }
+      private CdladvanceblockStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -593,7 +593,7 @@
          this.outRangeCount++;
       }
 
-      CdladvanceblockStream( CdladvanceblockStream other ) {
+      private CdladvanceblockStream( CdladvanceblockStream other ) {
          this.core = other.core;
          this.ShadowShortPeriodTotal = other.ShadowShortPeriodTotal.clone();
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal.clone();
@@ -762,7 +762,7 @@
          return new CdladvanceblockStream(this);
       }
    }
-   void cdladvanceblockStepImpl( CdladvanceblockStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdladvanceblockStepImpl( CdladvanceblockStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;

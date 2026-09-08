@@ -344,15 +344,15 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class EmaStream {
-      Core core;
-      int optInTimePeriod;
-      double optInK_1;
-      double prevMA;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInK_1;
+      private double prevMA;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      EmaStream( Core core ) { this.core = core; }
+      private EmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -388,7 +388,7 @@
          this.outRangeCount++;
       }
 
-      EmaStream( EmaStream other ) {
+      private EmaStream( EmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInK_1 = other.optInK_1;
@@ -479,7 +479,7 @@
          return new EmaStream(this);
       }
    }
-   void emaStepImpl( EmaStream sp, double inReal )
+   private void emaStepImpl( EmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

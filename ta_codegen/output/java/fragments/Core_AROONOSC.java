@@ -407,24 +407,24 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AroonoscStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      double factor;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private double factor;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AroonoscStream( Core core ) { this.core = core; }
+      private AroonoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -460,7 +460,7 @@
          this.outRangeCount++;
       }
 
-      AroonoscStream( AroonoscStream other ) {
+      private AroonoscStream( AroonoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -615,7 +615,7 @@
          return new AroonoscStream(this);
       }
    }
-   void aroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
+   private void aroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       double aroon = 0.0;

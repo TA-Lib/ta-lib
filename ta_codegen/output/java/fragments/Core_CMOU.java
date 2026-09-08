@@ -461,21 +461,21 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CmouStream {
-      Core core;
-      int optInTimePeriod;
-      int nullRun;
-      double upSum;
-      double downSum;
-      double prevValue;
-      double trailingValue;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int nullRun;
+      private double upSum;
+      private double downSum;
+      private double prevValue;
+      private double trailingValue;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CmouStream( Core core ) { this.core = core; }
+      private CmouStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -511,7 +511,7 @@
          this.outRangeCount++;
       }
 
-      CmouStream( CmouStream other ) {
+      private CmouStream( CmouStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
@@ -657,7 +657,7 @@
          return new CmouStream(this);
       }
    }
-   void cmouStepImpl( CmouStream sp, double inReal )
+   private void cmouStepImpl( CmouStream sp, double inReal )
    {
       double sum = 0.0;
       double diff = 0.0;

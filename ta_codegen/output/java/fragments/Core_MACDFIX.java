@@ -506,21 +506,21 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MacdfixStream {
-      Core core;
-      int optInSignalPeriod;
-      double prevFast;
-      double prevSlow;
-      double prevSignal;
-      double slowK;
-      double fastK;
-      double signalK;
-      double cur_outMACD;
-      double cur_outMACDSignal;
-      double cur_outMACDHist;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInSignalPeriod;
+      private double prevFast;
+      private double prevSlow;
+      private double prevSignal;
+      private double slowK;
+      private double fastK;
+      private double signalK;
+      private double cur_outMACD;
+      private double cur_outMACDSignal;
+      private double cur_outMACDHist;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MacdfixStream( Core core ) { this.core = core; }
+      private MacdfixStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -556,7 +556,7 @@
          this.outRangeCount++;
       }
 
-      MacdfixStream( MacdfixStream other ) {
+      private MacdfixStream( MacdfixStream other ) {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
          this.prevFast = other.prevFast;
@@ -698,7 +698,7 @@
       /** MACD minus signal. */
       public double macdHist;
    }
-   void macdfixStepImpl( MacdfixStream sp, double inReal )
+   private void macdfixStepImpl( MacdfixStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;

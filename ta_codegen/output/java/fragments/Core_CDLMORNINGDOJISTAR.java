@@ -427,42 +427,42 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlmorningdojistarStream {
-      Core core;
-      double optInPenetration;
-      double BodyDojiPeriodTotal;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyDojiPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlmorningdojistarStream( Core core ) { this.core = core; }
+      private CdlmorningdojistarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -498,7 +498,7 @@
          this.outRangeCount++;
       }
 
-      CdlmorningdojistarStream( CdlmorningdojistarStream other ) {
+      private CdlmorningdojistarStream( CdlmorningdojistarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -630,7 +630,7 @@
          return new CdlmorningdojistarStream(this);
       }
    }
-   void cdlmorningdojistarStepImpl( CdlmorningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlmorningdojistarStepImpl( CdlmorningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

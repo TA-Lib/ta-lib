@@ -197,12 +197,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CoshStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CoshStream( Core core ) { this.core = core; }
+      private CoshStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -238,7 +238,7 @@
          this.outRangeCount++;
       }
 
-      CoshStream( CoshStream other ) {
+      private CoshStream( CoshStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -320,7 +320,7 @@
          return new CoshStream(this);
       }
    }
-   void coshStepImpl( CoshStream sp, double inReal )
+   private void coshStepImpl( CoshStream sp, double inReal )
    {
       sp.cur_outReal = Math.cosh(inReal);
    }

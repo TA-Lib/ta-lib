@@ -852,49 +852,49 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class HmaStream {
-      Core core;
-      int optInTimePeriod;
-      double dividerFull;
-      double periodSubFull;
-      double periodSumFull;
-      double trailingFull;
-      int lookbackFull;
-      int barsSinceReseedFull;
-      int halfPeriod;
-      int sqrtPeriod;
-      int ringSize;
-      double dividerHalf;
-      double dividerSqrt;
-      double periodSubHalf;
-      double periodSumHalf;
-      double trailingHalf;
-      double periodSubSqrt;
-      double periodSumSqrt;
-      double trailingSqrt;
-      int lookbackHalf;
-      int barsSinceReseedHalf;
-      int barsSinceReseedSqrt;
-      int dRing_Idx;
-      int maxIdx_dRing;
-      int ringPos_trailingIdxFull;
-      int ringCap_trailingIdxFull;
-      double[] ring_trailingIdxFull_inReal;
-      int winPos_jFull;
-      int winCap_jFull;
-      double[] win_jFull_inReal;
-      double cur_outReal;
-      int ringPos_trailingIdxHalf;
-      int ringCap_trailingIdxHalf;
-      double[] ring_trailingIdxHalf_inReal;
-      int winPos_jHalf;
-      int winCap_jHalf;
-      double[] win_jHalf_inReal;
-      int cbSize_dRing;
-      double[] cb_dRing;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double dividerFull;
+      private double periodSubFull;
+      private double periodSumFull;
+      private double trailingFull;
+      private int lookbackFull;
+      private int barsSinceReseedFull;
+      private int halfPeriod;
+      private int sqrtPeriod;
+      private int ringSize;
+      private double dividerHalf;
+      private double dividerSqrt;
+      private double periodSubHalf;
+      private double periodSumHalf;
+      private double trailingHalf;
+      private double periodSubSqrt;
+      private double periodSumSqrt;
+      private double trailingSqrt;
+      private int lookbackHalf;
+      private int barsSinceReseedHalf;
+      private int barsSinceReseedSqrt;
+      private int dRing_Idx;
+      private int maxIdx_dRing;
+      private int ringPos_trailingIdxFull;
+      private int ringCap_trailingIdxFull;
+      private double[] ring_trailingIdxFull_inReal;
+      private int winPos_jFull;
+      private int winCap_jFull;
+      private double[] win_jFull_inReal;
+      private double cur_outReal;
+      private int ringPos_trailingIdxHalf;
+      private int ringCap_trailingIdxHalf;
+      private double[] ring_trailingIdxHalf_inReal;
+      private int winPos_jHalf;
+      private int winCap_jHalf;
+      private double[] win_jHalf_inReal;
+      private int cbSize_dRing;
+      private double[] cb_dRing;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HmaStream( Core core ) { this.core = core; }
+      private HmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -930,7 +930,7 @@
          this.outRangeCount++;
       }
 
-      HmaStream( HmaStream other ) {
+      private HmaStream( HmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.dividerFull = other.dividerFull;
@@ -1213,7 +1213,7 @@
          return new HmaStream(this);
       }
    }
-   void hmaStepImpl( HmaStream sp, double inReal )
+   private void hmaStepImpl( HmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

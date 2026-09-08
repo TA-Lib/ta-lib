@@ -363,26 +363,26 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlgravestonedojiStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlgravestonedojiStream( Core core ) { this.core = core; }
+      private CdlgravestonedojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -418,7 +418,7 @@
          this.outRangeCount++;
       }
 
-      CdlgravestonedojiStream( CdlgravestonedojiStream other ) {
+      private CdlgravestonedojiStream( CdlgravestonedojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -524,7 +524,7 @@
          return new CdlgravestonedojiStream(this);
       }
    }
-   void cdlgravestonedojiStepImpl( CdlgravestonedojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlgravestonedojiStepImpl( CdlgravestonedojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

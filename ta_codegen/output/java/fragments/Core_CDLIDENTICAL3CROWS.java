@@ -386,36 +386,36 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlidentical3crowsStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double[] EqualPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double[] EqualPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlidentical3crowsStream( Core core ) { this.core = core; }
+      private Cdlidentical3crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -451,7 +451,7 @@
          this.outRangeCount++;
       }
 
-      Cdlidentical3crowsStream( Cdlidentical3crowsStream other ) {
+      private Cdlidentical3crowsStream( Cdlidentical3crowsStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.EqualPeriodTotal = other.EqualPeriodTotal.clone();
@@ -579,7 +579,7 @@
          return new Cdlidentical3crowsStream(this);
       }
    }
-   void cdlidentical3crowsStepImpl( Cdlidentical3crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlidentical3crowsStepImpl( Cdlidentical3crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Equal_rangeType = sp.cs_Equal_rangeType;

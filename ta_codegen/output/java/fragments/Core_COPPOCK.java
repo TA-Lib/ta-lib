@@ -574,31 +574,31 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CoppockStream {
-      Core core;
-      int optInWMAPeriod;
-      int optInROC1Period;
-      int optInROC2Period;
-      int ringSize;
-      int barsSinceReseed;
-      double periodSum;
-      double periodSub;
-      double trailingValue;
-      double divider;
-      int sRing_Idx;
-      int maxIdx_sRing;
-      int ringPos_roc1Idx;
-      int ringCap_roc1Idx;
-      double[] ring_roc1Idx_inReal;
-      int ringPos_roc2Idx;
-      int ringCap_roc2Idx;
-      double[] ring_roc2Idx_inReal;
-      int cbSize_sRing;
-      double[] cb_sRing;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInWMAPeriod;
+      private int optInROC1Period;
+      private int optInROC2Period;
+      private int ringSize;
+      private int barsSinceReseed;
+      private double periodSum;
+      private double periodSub;
+      private double trailingValue;
+      private double divider;
+      private int sRing_Idx;
+      private int maxIdx_sRing;
+      private int ringPos_roc1Idx;
+      private int ringCap_roc1Idx;
+      private double[] ring_roc1Idx_inReal;
+      private int ringPos_roc2Idx;
+      private int ringCap_roc2Idx;
+      private double[] ring_roc2Idx_inReal;
+      private int cbSize_sRing;
+      private double[] cb_sRing;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CoppockStream( Core core ) { this.core = core; }
+      private CoppockStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -634,7 +634,7 @@
          this.outRangeCount++;
       }
 
-      CoppockStream( CoppockStream other ) {
+      private CoppockStream( CoppockStream other ) {
          this.core = other.core;
          this.optInWMAPeriod = other.optInWMAPeriod;
          this.optInROC1Period = other.optInROC1Period;
@@ -814,7 +814,7 @@
          return new CoppockStream(this);
       }
    }
-   void coppockStepImpl( CoppockStream sp, double inReal )
+   private void coppockStepImpl( CoppockStream sp, double inReal )
    {
       int q = 0;
       int rw = 0;

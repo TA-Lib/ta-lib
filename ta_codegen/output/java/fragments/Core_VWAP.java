@@ -388,15 +388,15 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class VwapStream {
-      Core core;
-      double sumPV;
-      double sumV;
-      double vwap;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double sumPV;
+      private double sumV;
+      private double vwap;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VwapStream( Core core ) { this.core = core; }
+      private VwapStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -432,7 +432,7 @@
          this.outRangeCount++;
       }
 
-      VwapStream( VwapStream other ) {
+      private VwapStream( VwapStream other ) {
          this.core = other.core;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
@@ -607,7 +607,7 @@
          return new VwapStream(this);
       }
    }
-   void vwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void vwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;

@@ -195,12 +195,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SinhStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SinhStream( Core core ) { this.core = core; }
+      private SinhStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -236,7 +236,7 @@
          this.outRangeCount++;
       }
 
-      SinhStream( SinhStream other ) {
+      private SinhStream( SinhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -318,7 +318,7 @@
          return new SinhStream(this);
       }
    }
-   void sinhStepImpl( SinhStream sp, double inReal )
+   private void sinhStepImpl( SinhStream sp, double inReal )
    {
       sp.cur_outReal = Math.sinh(inReal);
    }

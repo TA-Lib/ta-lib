@@ -352,32 +352,32 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3linestrikeStream {
-      Core core;
-      double[] NearPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] NearPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3linestrikeStream( Core core ) { this.core = core; }
+      private Cdl3linestrikeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -413,7 +413,7 @@
          this.outRangeCount++;
       }
 
-      Cdl3linestrikeStream( Cdl3linestrikeStream other ) {
+      private Cdl3linestrikeStream( Cdl3linestrikeStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -539,7 +539,7 @@
          return new Cdl3linestrikeStream(this);
       }
    }
-   void cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Near_rangeType = sp.cs_Near_rangeType;

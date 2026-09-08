@@ -746,31 +746,31 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class RviStream {
-      Core core;
-      int optInTimePeriod;
-      int optInStdDevPeriod;
-      double shift;
-      double periodTotal1;
-      double periodTotal2;
-      double invPeriod;
-      double prevUp;
-      double prevDn;
-      double wAlpha;
-      double wBeta;
-      int trailingIdx;
-      int barsSinceReseed;
-      int nbInitialElementNeeded;
-      int j;
-      int windowStart;
-      int today;
-      double lag1_inReal;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInStdDevPeriod;
+      private double shift;
+      private double periodTotal1;
+      private double periodTotal2;
+      private double invPeriod;
+      private double prevUp;
+      private double prevDn;
+      private double wAlpha;
+      private double wBeta;
+      private int trailingIdx;
+      private int barsSinceReseed;
+      private int nbInitialElementNeeded;
+      private int j;
+      private int windowStart;
+      private int today;
+      private double lag1_inReal;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RviStream( Core core ) { this.core = core; }
+      private RviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -806,7 +806,7 @@
          this.outRangeCount++;
       }
 
-      RviStream( RviStream other ) {
+      private RviStream( RviStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInStdDevPeriod = other.optInStdDevPeriod;
@@ -978,7 +978,7 @@
          return new RviStream(this);
       }
    }
-   void rviStepImpl( RviStream sp, double inReal )
+   private void rviStepImpl( RviStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;

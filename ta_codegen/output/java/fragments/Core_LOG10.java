@@ -203,12 +203,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class Log10Stream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Log10Stream( Core core ) { this.core = core; }
+      private Log10Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -244,7 +244,7 @@
          this.outRangeCount++;
       }
 
-      Log10Stream( Log10Stream other ) {
+      private Log10Stream( Log10Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -326,7 +326,7 @@
          return new Log10Stream(this);
       }
    }
-   void log10StepImpl( Log10Stream sp, double inReal )
+   private void log10StepImpl( Log10Stream sp, double inReal )
    {
       sp.cur_outReal = Math.log10(inReal);
    }

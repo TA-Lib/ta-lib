@@ -525,26 +525,26 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class T3Stream {
-      Core core;
-      int optInTimePeriod;
-      double optInVFactor;
-      double k;
-      double one_minus_k;
-      double e1;
-      double e2;
-      double e3;
-      double e4;
-      double e5;
-      double e6;
-      double c1;
-      double c2;
-      double c3;
-      double c4;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInVFactor;
+      private double k;
+      private double one_minus_k;
+      private double e1;
+      private double e2;
+      private double e3;
+      private double e4;
+      private double e5;
+      private double e6;
+      private double c1;
+      private double c2;
+      private double c3;
+      private double c4;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      T3Stream( Core core ) { this.core = core; }
+      private T3Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -580,7 +580,7 @@
          this.outRangeCount++;
       }
 
-      T3Stream( T3Stream other ) {
+      private T3Stream( T3Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInVFactor = other.optInVFactor;
@@ -692,7 +692,7 @@
          return new T3Stream(this);
       }
    }
-   void t3StepImpl( T3Stream sp, double inReal )
+   private void t3StepImpl( T3Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

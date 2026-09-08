@@ -593,23 +593,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MacdextStream {
-      Core core;
-      int optInFastPeriod;
-      MAType optInFastMAType;
-      int optInSlowPeriod;
-      MAType optInSlowMAType;
-      int optInSignalPeriod;
-      MAType optInSignalMAType;
-      double cur_outMACD;
-      double cur_outMACDSignal;
-      double cur_outMACDHist;
-      MaStream sub0;
-      MaStream sub1;
-      MaStream sub2;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private MAType optInFastMAType;
+      private int optInSlowPeriod;
+      private MAType optInSlowMAType;
+      private int optInSignalPeriod;
+      private MAType optInSignalMAType;
+      private double cur_outMACD;
+      private double cur_outMACDSignal;
+      private double cur_outMACDHist;
+      private MaStream sub0;
+      private MaStream sub1;
+      private MaStream sub2;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MacdextStream( Core core ) { this.core = core; }
+      private MacdextStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -645,7 +645,7 @@
          this.outRangeCount++;
       }
 
-      MacdextStream( MacdextStream other ) {
+      private MacdextStream( MacdextStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInFastMAType = other.optInFastMAType;
@@ -783,7 +783,7 @@
       /** Histogram: MACD minus signal. */
       public double macdHist;
    }
-   void macdextStepImpl( MacdextStream sp, double inReal )
+   private void macdextStepImpl( MacdextStream sp, double inReal )
    {
       double cur_slowMABuffer = 0.0;
       double cur_fastMABuffer = 0.0;

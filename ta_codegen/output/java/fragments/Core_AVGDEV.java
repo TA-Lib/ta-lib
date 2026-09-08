@@ -280,16 +280,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AvgdevStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AvgdevStream( Core core ) { this.core = core; }
+      private AvgdevStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -325,7 +325,7 @@
          this.outRangeCount++;
       }
 
-      AvgdevStream( AvgdevStream other ) {
+      private AvgdevStream( AvgdevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -426,7 +426,7 @@
          return new AvgdevStream(this);
       }
    }
-   void avgdevStepImpl( AvgdevStream sp, double inReal )
+   private void avgdevStepImpl( AvgdevStream sp, double inReal )
    {
       double todaySum = 0.0;
       double todayDev = 0.0;

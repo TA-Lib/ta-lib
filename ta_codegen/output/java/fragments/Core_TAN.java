@@ -199,12 +199,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TanStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TanStream( Core core ) { this.core = core; }
+      private TanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -240,7 +240,7 @@
          this.outRangeCount++;
       }
 
-      TanStream( TanStream other ) {
+      private TanStream( TanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -322,7 +322,7 @@
          return new TanStream(this);
       }
    }
-   void tanStepImpl( TanStream sp, double inReal )
+   private void tanStepImpl( TanStream sp, double inReal )
    {
       sp.cur_outReal = Math.tan(inReal);
    }

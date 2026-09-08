@@ -553,27 +553,27 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class VortexStream {
-      Core core;
-      int optInTimePeriod;
-      int nullRun;
-      double sTR;
-      double sVMP;
-      double sVMM;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      int ringLag_trailingIdx;
-      double[] ring_trailingIdx_inHigh;
-      double[] ring_trailingIdx_inLow;
-      double[] ring_trailingIdx_inClose;
-      double cur_outPlusVI;
-      double cur_outMinusVI;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int nullRun;
+      private double sTR;
+      private double sVMP;
+      private double sVMM;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private int ringLag_trailingIdx;
+      private double[] ring_trailingIdx_inHigh;
+      private double[] ring_trailingIdx_inLow;
+      private double[] ring_trailingIdx_inClose;
+      private double cur_outPlusVI;
+      private double cur_outMinusVI;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VortexStream( Core core ) { this.core = core; }
+      private VortexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -609,7 +609,7 @@
          this.outRangeCount++;
       }
 
-      VortexStream( VortexStream other ) {
+      private VortexStream( VortexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
@@ -843,7 +843,7 @@
       /** Negative vortex line (−VI) */
       public double minusVI;
    }
-   void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
+   private void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
       double curTR = 0.0;
       double curVMP = 0.0;

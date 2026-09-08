@@ -335,30 +335,30 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlladderbottomStream {
-      Core core;
-      double ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag4_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      double lag4_inClose;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag4_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private double lag4_inClose;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlladderbottomStream( Core core ) { this.core = core; }
+      private CdlladderbottomStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -394,7 +394,7 @@
          this.outRangeCount++;
       }
 
-      CdlladderbottomStream( CdlladderbottomStream other ) {
+      private CdlladderbottomStream( CdlladderbottomStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -513,7 +513,7 @@
          return new CdlladderbottomStream(this);
       }
    }
-   void cdlladderbottomStepImpl( CdlladderbottomStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlladderbottomStepImpl( CdlladderbottomStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;

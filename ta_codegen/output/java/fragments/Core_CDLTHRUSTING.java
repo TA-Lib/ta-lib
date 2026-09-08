@@ -362,32 +362,32 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlthrustingStream {
-      Core core;
-      double EqualPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlthrustingStream( Core core ) { this.core = core; }
+      private CdlthrustingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -423,7 +423,7 @@
          this.outRangeCount++;
       }
 
-      CdlthrustingStream( CdlthrustingStream other ) {
+      private CdlthrustingStream( CdlthrustingStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -541,7 +541,7 @@
          return new CdlthrustingStream(this);
       }
    }
-   void cdlthrustingStepImpl( CdlthrustingStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlthrustingStepImpl( CdlthrustingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

@@ -391,23 +391,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinmaxindexStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      double lowest;
-      int trailingIdx;
-      int highestIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      int cur_outMinIdx;
-      int cur_outMaxIdx;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private double lowest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private int cur_outMinIdx;
+      private int cur_outMaxIdx;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinmaxindexStream( Core core ) { this.core = core; }
+      private MinmaxindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -443,7 +443,7 @@
          this.outRangeCount++;
       }
 
-      MinmaxindexStream( MinmaxindexStream other ) {
+      private MinmaxindexStream( MinmaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -609,7 +609,7 @@
       /** Absolute index (into inReal) of the window maximum. */
       public int maxIdx;
    }
-   void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
+   private void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;

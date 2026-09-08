@@ -430,19 +430,19 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class FractalStream {
-      Core core;
-      int optInLeftBars;
-      int optInRightBars;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inHigh;
-      double[] win_i_inLow;
-      int cur_outSwingHigh;
-      int cur_outSwingLow;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInLeftBars;
+      private int optInRightBars;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inHigh;
+      private double[] win_i_inLow;
+      private int cur_outSwingHigh;
+      private int cur_outSwingLow;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      FractalStream( Core core ) { this.core = core; }
+      private FractalStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -478,7 +478,7 @@
          this.outRangeCount++;
       }
 
-      FractalStream( FractalStream other ) {
+      private FractalStream( FractalStream other ) {
          this.core = other.core;
          this.optInLeftBars = other.optInLeftBars;
          this.optInRightBars = other.optInRightBars;
@@ -645,7 +645,7 @@
       /** 100 when the bar {@code optInRightBars} back is a strict swing low, 0 otherwise. */
       public int swingLow;
    }
-   void fractalStepImpl( FractalStream sp, double inHigh, double inLow )
+   private void fractalStepImpl( FractalStream sp, double inHigh, double inLow )
    {
       int i = 0;
       double pivotHigh = 0.0;

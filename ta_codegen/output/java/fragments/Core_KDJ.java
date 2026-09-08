@@ -448,20 +448,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class KdjStream {
-      Core core;
-      int optInFastK_Period;
-      int optInSlowK_Period;
-      MAType optInSlowK_MAType;
-      int optInSlowD_Period;
-      MAType optInSlowD_MAType;
-      double cur_outK;
-      double cur_outD;
-      double cur_outJ;
-      StochStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastK_Period;
+      private int optInSlowK_Period;
+      private MAType optInSlowK_MAType;
+      private int optInSlowD_Period;
+      private MAType optInSlowD_MAType;
+      private double cur_outK;
+      private double cur_outD;
+      private double cur_outJ;
+      private StochStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      KdjStream( Core core ) { this.core = core; }
+      private KdjStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -497,7 +497,7 @@
          this.outRangeCount++;
       }
 
-      KdjStream( KdjStream other ) {
+      private KdjStream( KdjStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInSlowK_Period = other.optInSlowK_Period;
@@ -631,7 +631,7 @@
       /** Divergence line, three parts K less two parts D. */
       public double j;
    }
-   void kdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
+   private void kdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_outK = 0.0;
       double cur_outD = 0.0;

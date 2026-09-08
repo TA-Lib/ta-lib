@@ -28,7 +28,7 @@ BUDGET = 325
 
 FRAMES = [
     ("Core$MaStream", re.compile(r"^\s+public double peek\(double\);")),
-    ("Core", re.compile(r"^\s+void maStepImpl\(io\.github\.talib\.Core\$MaStream, double\);")),
+    ("Core", re.compile(r"^\s+private void maStepImpl\(io\.github\.talib\.Core\$MaStream, double\);")),
 ]
 
 # A method's last instruction is always a 1-byte return or throw, so the final

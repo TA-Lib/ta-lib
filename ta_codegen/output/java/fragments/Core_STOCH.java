@@ -686,31 +686,31 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class StochStream {
-      Core core;
-      int optInFastK_Period;
-      int optInSlowK_Period;
-      MAType optInSlowK_MAType;
-      int optInSlowD_Period;
-      MAType optInSlowD_MAType;
-      double lowest;
-      double highest;
-      int lowestIdx;
-      int highestIdx;
-      int trailingIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outSlowK;
-      double cur_outSlowD;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastK_Period;
+      private int optInSlowK_Period;
+      private MAType optInSlowK_MAType;
+      private int optInSlowD_Period;
+      private MAType optInSlowD_MAType;
+      private double lowest;
+      private double highest;
+      private int lowestIdx;
+      private int highestIdx;
+      private int trailingIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outSlowK;
+      private double cur_outSlowD;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StochStream( Core core ) { this.core = core; }
+      private StochStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -746,7 +746,7 @@
          this.outRangeCount++;
       }
 
-      StochStream( StochStream other ) {
+      private StochStream( StochStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInSlowK_Period = other.optInSlowK_Period;
@@ -947,7 +947,7 @@
       /** Signal line: SlowK smoothed by SlowD_Period MA. */
       public double slowD;
    }
-   void stochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
+   private void stochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;

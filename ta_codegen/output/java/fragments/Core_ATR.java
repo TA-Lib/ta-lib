@@ -478,17 +478,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AtrStream {
-      Core core;
-      int optInTimePeriod;
-      double prevATR;
-      double wAlpha;
-      double wBeta;
-      double lag1_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevATR;
+      private double wAlpha;
+      private double wBeta;
+      private double lag1_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AtrStream( Core core ) { this.core = core; }
+      private AtrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -524,7 +524,7 @@
          this.outRangeCount++;
       }
 
-      AtrStream( AtrStream other ) {
+      private AtrStream( AtrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
@@ -633,7 +633,7 @@
          return new AtrStream(this);
       }
    }
-   void atrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
+   private void atrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;

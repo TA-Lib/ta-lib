@@ -213,12 +213,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class DivStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DivStream( Core core ) { this.core = core; }
+      private DivStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -254,7 +254,7 @@
          this.outRangeCount++;
       }
 
-      DivStream( DivStream other ) {
+      private DivStream( DivStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -336,7 +336,7 @@
          return new DivStream(this);
       }
    }
-   void divStepImpl( DivStream sp, double inReal0, double inReal1 )
+   private void divStepImpl( DivStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }

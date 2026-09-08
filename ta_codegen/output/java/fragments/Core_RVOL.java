@@ -320,17 +320,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class RvolStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RvolStream( Core core ) { this.core = core; }
+      private RvolStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -366,7 +366,7 @@
          this.outRangeCount++;
       }
 
-      RvolStream( RvolStream other ) {
+      private RvolStream( RvolStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -471,7 +471,7 @@
          return new RvolStream(this);
       }
    }
-   void rvolStepImpl( RvolStream sp, double inVolume )
+   private void rvolStepImpl( RvolStream sp, double inVolume )
    {
       double baseline = 0.0;
       double todayVolume = 0.0;

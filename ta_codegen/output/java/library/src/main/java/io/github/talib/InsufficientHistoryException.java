@@ -52,7 +52,7 @@ package io.github.talib;
  * {@code catch} keeps working, and it reports
  * {@link RetCode#InsufficientHistory} through {@link TaLibFailure#retCode()}.
  */
-public class InsufficientHistoryException extends TaLibArgumentException {
+public final class InsufficientHistoryException extends TaLibArgumentException {
     private static final long serialVersionUID = 1L;
 
     public InsufficientHistoryException(String message) {

@@ -558,28 +558,28 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AcStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      int optInSignalPeriod;
-      double sumFast;
-      double sumSlow;
-      double sumSignal;
-      int oscBuffer_Idx;
-      int maxIdx_oscBuffer;
-      int ringPos_trailingFastIdx;
-      int ringCap_trailingFastIdx;
-      double[] ring_trailingFastIdx_derived;
-      int ringPos_trailingSlowIdx;
-      int ringCap_trailingSlowIdx;
-      double[] ring_trailingSlowIdx_derived;
-      int cbSize_oscBuffer;
-      double[] cb_oscBuffer;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private int optInSignalPeriod;
+      private double sumFast;
+      private double sumSlow;
+      private double sumSignal;
+      private int oscBuffer_Idx;
+      private int maxIdx_oscBuffer;
+      private int ringPos_trailingFastIdx;
+      private int ringCap_trailingFastIdx;
+      private double[] ring_trailingFastIdx_derived;
+      private int ringPos_trailingSlowIdx;
+      private int ringCap_trailingSlowIdx;
+      private double[] ring_trailingSlowIdx_derived;
+      private int cbSize_oscBuffer;
+      private double[] cb_oscBuffer;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AcStream( Core core ) { this.core = core; }
+      private AcStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -615,7 +615,7 @@
          this.outRangeCount++;
       }
 
-      AcStream( AcStream other ) {
+      private AcStream( AcStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -765,7 +765,7 @@
          return new AcStream(this);
       }
    }
-   void acStepImpl( AcStream sp, double inHigh, double inLow )
+   private void acStepImpl( AcStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double osc = 0.0;

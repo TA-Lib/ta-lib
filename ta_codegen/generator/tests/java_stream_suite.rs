@@ -67,11 +67,10 @@ fn java_stream_section(name: &str) -> String {
 #[test]
 fn test_java_sma_ring_stream_section() {
     let s = java_stream_section("sma");
-    // Nested handle class shape: package-private fields, no public ctor.
     assert!(s.contains("public static final class SmaStream {"));
-    assert!(s.contains("Core core;"));
-    assert!(s.contains("double[] ring_trailingIdx_inReal;"));
-    assert!(s.contains("int ringPos_trailingIdx;"));
+    assert!(s.contains("private Core core;"));
+    assert!(s.contains("private double[] ring_trailingIdx_inReal;"));
+    assert!(s.contains("private int ringPos_trailingIdx;"));
     assert!(!s.contains("public SmaStream("), "handle ctors stay non-public");
     // Deep-copy constructor clones the ring array.
     assert!(s.contains("this.ring_trailingIdx_inReal = other.ring_trailingIdx_inReal.clone();"));
@@ -98,8 +97,7 @@ fn test_java_sma_ring_stream_section() {
     // type or visibility drifts.
     assert!(s.contains("@Override\n      public SmaStream clone()"), "clone() is an @Override");
     assert!(!s.contains("implements Cloneable"), "no Cloneable: the body is a copy constructor");
-    // Step is a package-private Core method writing the cur_ field.
-    assert!(s.contains("void smaStepImpl( SmaStream sp, double inReal )"));
+    assert!(s.contains("private void smaStepImpl( SmaStream sp, double inReal )"));
     assert!(s.contains("sp.cur_outReal ="));
     // Open body: the early-success no-data guard maps to InsufficientHistory,
     // which the wrapper types. It used to BORROW OutOfRangeEndIndex in band,
@@ -274,7 +272,7 @@ fn test_java_midprice_stream_uses_the_declared_alternate() {
 fn test_java_ma_dispatch() {
     let s = java_stream_section("ma");
     // Tagged handle: Object sub, null on the identity path.
-    assert!(s.contains("Object sub;"));
+    assert!(s.contains("private Object sub;"));
     // The copy constructor and the step switch derive from the SAME arm table
     // (design-review obligation): every MAType naming a function appears in both.
     for label in [
@@ -313,7 +311,7 @@ fn test_java_ma_dispatch() {
 #[test]
 fn test_java_mavp_period_bank() {
     let s = java_stream_section("mavp");
-    assert!(s.contains("MaStream[] bank;"));
+    assert!(s.contains("private MaStream[] bank;"));
     // T1 deep-copy trap (design review): the bank must copy ELEMENT-WISE —
     // Object-array clone() would alias sub-streams and corrupt peek.
     assert!(s.contains("this.bank[bankIdx] = new MaStream(other.bank[bankIdx]);"));
@@ -695,6 +693,7 @@ fn accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
             continue;
         }
         let Some(d) = line.trim().strip_suffix(';') else { continue };
+        let Some(d) = d.strip_prefix("private ") else { continue };
         let Some((ty, name)) = d.split_once(' ') else { continue };
         if !ty.ends_with("[]") || !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
             continue;
@@ -716,12 +715,13 @@ fn accumulator_fields(section: &str, batch: &str) -> BTreeSet<String> {
 /// flat-in-period cost the frame is for.
 #[test]
 fn no_java_peek_copies_the_handle() {
-    /// The handle's own fields: a two-token declaration at the class's own
-    /// indent (`      double[] ring_x;`).
+    /// The handle's own fields: a declaration at the class's own indent
+    /// (`      private double[] ring_x;`).
     fn handle_fields(s: &str) -> BTreeSet<String> {
         s.lines()
             .filter(|l| l.starts_with("      ") && !l.starts_with("       "))
             .filter_map(|l| l.trim().strip_suffix(';'))
+            .filter_map(|d| d.strip_prefix("private "))
             .filter_map(|d| d.split_once(' '))
             .filter(|(_, n)| {
                 !n.is_empty() && n.chars().all(|c| c.is_alphanumeric() || c == '_')

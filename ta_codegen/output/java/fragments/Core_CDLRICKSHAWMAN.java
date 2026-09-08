@@ -382,33 +382,33 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlrickshawmanStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double NearPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double NearPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlrickshawmanStream( Core core ) { this.core = core; }
+      private CdlrickshawmanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -444,7 +444,7 @@
          this.outRangeCount++;
       }
 
-      CdlrickshawmanStream( CdlrickshawmanStream other ) {
+      private CdlrickshawmanStream( CdlrickshawmanStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -565,7 +565,7 @@
          return new CdlrickshawmanStream(this);
       }
    }
-   void cdlrickshawmanStepImpl( CdlrickshawmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlrickshawmanStepImpl( CdlrickshawmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

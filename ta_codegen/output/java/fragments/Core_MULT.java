@@ -213,12 +213,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MultStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MultStream( Core core ) { this.core = core; }
+      private MultStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -254,7 +254,7 @@
          this.outRangeCount++;
       }
 
-      MultStream( MultStream other ) {
+      private MultStream( MultStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -336,7 +336,7 @@
          return new MultStream(this);
       }
    }
-   void multStepImpl( MultStream sp, double inReal0, double inReal1 )
+   private void multStepImpl( MultStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }

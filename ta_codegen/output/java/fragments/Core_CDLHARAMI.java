@@ -380,30 +380,30 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlharamiStream {
-      Core core;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlharamiStream( Core core ) { this.core = core; }
+      private CdlharamiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -439,7 +439,7 @@
          this.outRangeCount++;
       }
 
-      CdlharamiStream( CdlharamiStream other ) {
+      private CdlharamiStream( CdlharamiStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -566,7 +566,7 @@
          return new CdlharamiStream(this);
       }
    }
-   void cdlharamiStepImpl( CdlharamiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlharamiStepImpl( CdlharamiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

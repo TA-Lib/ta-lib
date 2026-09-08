@@ -463,24 +463,24 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class PercentileStream {
-      Core core;
-      int optInTimePeriod;
-      double optInPercentile;
-      int lookbackTotal;
-      int rank;
-      int ring_Idx;
-      int maxIdx_ring;
-      int sorted_Idx;
-      int maxIdx_sorted;
-      int cbSize_ring;
-      double[] cb_ring;
-      int cbSize_sorted;
-      double[] cb_sorted;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInPercentile;
+      private int lookbackTotal;
+      private int rank;
+      private int ring_Idx;
+      private int maxIdx_ring;
+      private int sorted_Idx;
+      private int maxIdx_sorted;
+      private int cbSize_ring;
+      private double[] cb_ring;
+      private int cbSize_sorted;
+      private double[] cb_sorted;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PercentileStream( Core core ) { this.core = core; }
+      private PercentileStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -516,7 +516,7 @@
          this.outRangeCount++;
       }
 
-      PercentileStream( PercentileStream other ) {
+      private PercentileStream( PercentileStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInPercentile = other.optInPercentile;
@@ -625,7 +625,7 @@
          return new PercentileStream(this);
       }
    }
-   void percentileStepImpl( PercentileStream sp, double inReal )
+   private void percentileStepImpl( PercentileStream sp, double inReal )
    {
       double newValue = 0.0;
       double oldValue = 0.0;

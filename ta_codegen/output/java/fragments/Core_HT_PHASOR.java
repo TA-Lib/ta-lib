@@ -822,57 +822,57 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtPhasorStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      double cur_outInPhase;
-      double cur_outQuadrature;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private double cur_outInPhase;
+      private double cur_outQuadrature;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtPhasorStream( Core core ) { this.core = core; }
+      private HtPhasorStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -908,7 +908,7 @@
          this.outRangeCount++;
       }
 
-      HtPhasorStream( HtPhasorStream other ) {
+      private HtPhasorStream( HtPhasorStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1179,7 +1179,7 @@
       /** Quadrature component (Q1 of the Hilbert Transform) */
       public double quadrature;
    }
-   void htPhasorStepImpl( HtPhasorStream sp, double inReal )
+   private void htPhasorStepImpl( HtPhasorStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

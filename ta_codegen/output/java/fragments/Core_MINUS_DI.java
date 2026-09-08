@@ -740,18 +740,18 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinusDiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevMinusDM;
-      double prevTR;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevMinusDM;
+      private double prevTR;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinusDiStream( Core core ) { this.core = core; }
+      private MinusDiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -787,7 +787,7 @@
          this.outRangeCount++;
       }
 
-      MinusDiStream( MinusDiStream other ) {
+      private MinusDiStream( MinusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -957,7 +957,7 @@
          return new MinusDiStream(this);
       }
    }
-   void minusDiStepImpl( MinusDiStream sp, double inHigh, double inLow, double inClose )
+   private void minusDiStepImpl( MinusDiStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;

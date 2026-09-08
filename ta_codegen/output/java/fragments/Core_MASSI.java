@@ -540,22 +540,22 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MassiStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      double optInK_1;
-      double ema1;
-      double ema2;
-      double total;
-      int ratioRing_Idx;
-      int maxIdx_ratioRing;
-      int cbSize_ratioRing;
-      double[] cb_ratioRing;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private double optInK_1;
+      private double ema1;
+      private double ema2;
+      private double total;
+      private int ratioRing_Idx;
+      private int maxIdx_ratioRing;
+      private int cbSize_ratioRing;
+      private double[] cb_ratioRing;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MassiStream( Core core ) { this.core = core; }
+      private MassiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -591,7 +591,7 @@
          this.outRangeCount++;
       }
 
-      MassiStream( MassiStream other ) {
+      private MassiStream( MassiStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -709,7 +709,7 @@
          return new MassiStream(this);
       }
    }
-   void massiStepImpl( MassiStream sp, double inHigh, double inLow )
+   private void massiStepImpl( MassiStream sp, double inHigh, double inLow )
    {
       double hl = 0.0;
       double ratio = 0.0;

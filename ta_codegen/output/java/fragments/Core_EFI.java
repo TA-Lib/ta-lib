@@ -421,16 +421,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class EfiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevClose;
-      double optInK_1;
-      double prevMA;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevClose;
+      private double optInK_1;
+      private double prevMA;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      EfiStream( Core core ) { this.core = core; }
+      private EfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -466,7 +466,7 @@
          this.outRangeCount++;
       }
 
-      EfiStream( EfiStream other ) {
+      private EfiStream( EfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevClose = other.prevClose;
@@ -566,7 +566,7 @@
          return new EfiStream(this);
       }
    }
-   void efiStepImpl( EfiStream sp, double inClose, double inVolume )
+   private void efiStepImpl( EfiStream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;

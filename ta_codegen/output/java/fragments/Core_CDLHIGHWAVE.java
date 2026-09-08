@@ -359,26 +359,26 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhighwaveStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowTrailingIdx;
-      int ringCap_ShadowTrailingIdx;
-      double[] ring_ShadowTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowVeryLong_rangeType;
-      int cs_ShadowVeryLong_avgPeriod;
-      double cs_ShadowVeryLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowTrailingIdx;
+      private int ringCap_ShadowTrailingIdx;
+      private double[] ring_ShadowTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowVeryLong_rangeType;
+      private int cs_ShadowVeryLong_avgPeriod;
+      private double cs_ShadowVeryLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhighwaveStream( Core core ) { this.core = core; }
+      private CdlhighwaveStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -414,7 +414,7 @@
          this.outRangeCount++;
       }
 
-      CdlhighwaveStream( CdlhighwaveStream other ) {
+      private CdlhighwaveStream( CdlhighwaveStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -520,7 +520,7 @@
          return new CdlhighwaveStream(this);
       }
    }
-   void cdlhighwaveStepImpl( CdlhighwaveStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhighwaveStepImpl( CdlhighwaveStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

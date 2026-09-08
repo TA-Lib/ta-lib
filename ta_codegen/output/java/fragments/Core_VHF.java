@@ -345,16 +345,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class VhfStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VhfStream( Core core ) { this.core = core; }
+      private VhfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -390,7 +390,7 @@
          this.outRangeCount++;
       }
 
-      VhfStream( VhfStream other ) {
+      private VhfStream( VhfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -517,7 +517,7 @@
          return new VhfStream(this);
       }
    }
-   void vhfStepImpl( VhfStream sp, double inReal )
+   private void vhfStepImpl( VhfStream sp, double inReal )
    {
       int i = 0;
       double highest = 0.0;

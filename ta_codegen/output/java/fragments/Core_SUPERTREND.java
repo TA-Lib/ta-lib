@@ -602,23 +602,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SupertrendStream {
-      Core core;
-      int optInTimePeriod;
-      double optInMultiplier;
-      int isUptrend;
-      double prevATR;
-      double wAlpha;
-      double wBeta;
-      double finalUpper;
-      double finalLower;
-      double prevClose;
-      double lag1_inClose;
-      double cur_outSupertrend;
-      int cur_outTrend;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInMultiplier;
+      private int isUptrend;
+      private double prevATR;
+      private double wAlpha;
+      private double wBeta;
+      private double finalUpper;
+      private double finalLower;
+      private double prevClose;
+      private double lag1_inClose;
+      private double cur_outSupertrend;
+      private int cur_outTrend;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SupertrendStream( Core core ) { this.core = core; }
+      private SupertrendStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -654,7 +654,7 @@
          this.outRangeCount++;
       }
 
-      SupertrendStream( SupertrendStream other ) {
+      private SupertrendStream( SupertrendStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMultiplier = other.optInMultiplier;
@@ -844,7 +844,7 @@
       /** Trend direction: +1 while the trend rides the lower band, -1 while it rides the upper one. */
       public int trend;
    }
-   void supertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
+   private void supertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;

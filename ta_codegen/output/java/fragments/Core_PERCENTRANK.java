@@ -320,16 +320,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class PercentrankStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PercentrankStream( Core core ) { this.core = core; }
+      private PercentrankStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -365,7 +365,7 @@
          this.outRangeCount++;
       }
 
-      PercentrankStream( PercentrankStream other ) {
+      private PercentrankStream( PercentrankStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -468,7 +468,7 @@
          return new PercentrankStream(this);
       }
    }
-   void percentrankStepImpl( PercentrankStream sp, double inReal )
+   private void percentrankStepImpl( PercentrankStream sp, double inReal )
    {
       int i = 0;
       int count = 0;

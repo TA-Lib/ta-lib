@@ -416,16 +416,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class DemaStream {
-      Core core;
-      int optInTimePeriod;
-      double prevEMA1;
-      double prevEMA2;
-      double optInK_1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevEMA1;
+      private double prevEMA2;
+      private double optInK_1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DemaStream( Core core ) { this.core = core; }
+      private DemaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -461,7 +461,7 @@
          this.outRangeCount++;
       }
 
-      DemaStream( DemaStream other ) {
+      private DemaStream( DemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -555,7 +555,7 @@
          return new DemaStream(this);
       }
    }
-   void demaStepImpl( DemaStream sp, double inReal )
+   private void demaStepImpl( DemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

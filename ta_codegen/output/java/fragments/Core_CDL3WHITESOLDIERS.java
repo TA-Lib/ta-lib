@@ -461,51 +461,51 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3whitesoldiersStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double[] NearPeriodTotal;
-      double[] FarPeriodTotal;
-      double BodyShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int ringPos_FarTrailingIdx;
-      int ringCap_FarTrailingIdx;
-      int ringLag_FarTrailingIdx;
-      double[] ring_FarTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_Far_rangeType;
-      int cs_Far_avgPeriod;
-      double cs_Far_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double[] NearPeriodTotal;
+      private double[] FarPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int ringPos_FarTrailingIdx;
+      private int ringCap_FarTrailingIdx;
+      private int ringLag_FarTrailingIdx;
+      private double[] ring_FarTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_Far_rangeType;
+      private int cs_Far_avgPeriod;
+      private double cs_Far_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3whitesoldiersStream( Core core ) { this.core = core; }
+      private Cdl3whitesoldiersStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -541,7 +541,7 @@
          this.outRangeCount++;
       }
 
-      Cdl3whitesoldiersStream( Cdl3whitesoldiersStream other ) {
+      private Cdl3whitesoldiersStream( Cdl3whitesoldiersStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
@@ -693,7 +693,7 @@
          return new Cdl3whitesoldiersStream(this);
       }
    }
-   void cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;

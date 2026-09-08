@@ -483,20 +483,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CmfStream {
-      Core core;
-      int optInTimePeriod;
-      double sumMFV;
-      double sumVol;
-      int mfv_Idx;
-      int maxIdx_mfv;
-      int cbSize_mfv;
-      double[] cb_mfv_flow;
-      double[] cb_mfv_volume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double sumMFV;
+      private double sumVol;
+      private int mfv_Idx;
+      private int maxIdx_mfv;
+      private int cbSize_mfv;
+      private double[] cb_mfv_flow;
+      private double[] cb_mfv_volume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CmfStream( Core core ) { this.core = core; }
+      private CmfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -532,7 +532,7 @@
          this.outRangeCount++;
       }
 
-      CmfStream( CmfStream other ) {
+      private CmfStream( CmfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
@@ -646,7 +646,7 @@
          return new CmfStream(this);
       }
    }
-   void cmfStepImpl( CmfStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void cmfStepImpl( CmfStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

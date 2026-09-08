@@ -330,20 +330,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinindexStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      int trailingIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinindexStream( Core core ) { this.core = core; }
+      private MinindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -379,7 +379,7 @@
          this.outRangeCount++;
       }
 
-      MinindexStream( MinindexStream other ) {
+      private MinindexStream( MinindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -493,7 +493,7 @@
          return new MinindexStream(this);
       }
    }
-   void minindexStepImpl( MinindexStream sp, double inReal )
+   private void minindexStepImpl( MinindexStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;

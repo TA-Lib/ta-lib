@@ -523,23 +523,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinmaxStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      double lowest;
-      int trailingIdx;
-      int highestIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outMin;
-      double cur_outMax;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private double lowest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outMin;
+      private double cur_outMax;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinmaxStream( Core core ) { this.core = core; }
+      private MinmaxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -575,7 +575,7 @@
          this.outRangeCount++;
       }
 
-      MinmaxStream( MinmaxStream other ) {
+      private MinmaxStream( MinmaxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -741,7 +741,7 @@
       /** Highest value in each rolling window. */
       public double max;
    }
-   void minmaxStepImpl( MinmaxStream sp, double inReal )
+   private void minmaxStepImpl( MinmaxStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;

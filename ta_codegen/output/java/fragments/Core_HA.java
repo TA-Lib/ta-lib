@@ -482,17 +482,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class HaStream {
-      Core core;
-      double haOpen;
-      double haClose;
-      double cur_outHAOpen;
-      double cur_outHAHigh;
-      double cur_outHALow;
-      double cur_outHAClose;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double haOpen;
+      private double haClose;
+      private double cur_outHAOpen;
+      private double cur_outHAHigh;
+      private double cur_outHALow;
+      private double cur_outHAClose;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HaStream( Core core ) { this.core = core; }
+      private HaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -528,7 +528,7 @@
          this.outRangeCount++;
       }
 
-      HaStream( HaStream other ) {
+      private HaStream( HaStream other ) {
          this.core = other.core;
          this.haOpen = other.haOpen;
          this.haClose = other.haClose;
@@ -691,7 +691,7 @@
       /** Heikin-Ashi close. */
       public double haClose;
    }
-   void haStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void haStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double haHigh = 0.0;
       double haLow = 0.0;

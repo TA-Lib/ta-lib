@@ -329,17 +329,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdxrStream {
-      Core core;
-      int optInTimePeriod;
-      double cur_outReal;
-      int lagRingPos_adx;
-      int lagRingCap_adx;
-      double[] lagRing_adx;
-      AdxStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double cur_outReal;
+      private int lagRingPos_adx;
+      private int lagRingCap_adx;
+      private double[] lagRing_adx;
+      private AdxStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdxrStream( Core core ) { this.core = core; }
+      private AdxrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -375,7 +375,7 @@
          this.outRangeCount++;
       }
 
-      AdxrStream( AdxrStream other ) {
+      private AdxrStream( AdxrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
@@ -466,7 +466,7 @@
          return new AdxrStream(this);
       }
    }
-   void adxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
+   private void adxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;

@@ -617,20 +617,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SarStream {
-      Core core;
-      double optInAcceleration;
-      double optInMaximum;
-      int isLong;
-      double newHigh;
-      double newLow;
-      double af;
-      double ep;
-      double sar;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInAcceleration;
+      private double optInMaximum;
+      private int isLong;
+      private double newHigh;
+      private double newLow;
+      private double af;
+      private double ep;
+      private double sar;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SarStream( Core core ) { this.core = core; }
+      private SarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -666,7 +666,7 @@
          this.outRangeCount++;
       }
 
-      SarStream( SarStream other ) {
+      private SarStream( SarStream other ) {
          this.core = other.core;
          this.optInAcceleration = other.optInAcceleration;
          this.optInMaximum = other.optInMaximum;
@@ -876,7 +876,7 @@
          return new SarStream(this);
       }
    }
-   void sarStepImpl( SarStream sp, double inHigh, double inLow )
+   private void sarStepImpl( SarStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

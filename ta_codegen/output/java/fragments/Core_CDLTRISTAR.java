@@ -339,27 +339,27 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdltristarStream {
-      Core core;
-      double BodyPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdltristarStream( Core core ) { this.core = core; }
+      private CdltristarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -395,7 +395,7 @@
          this.outRangeCount++;
       }
 
-      CdltristarStream( CdltristarStream other ) {
+      private CdltristarStream( CdltristarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -512,7 +512,7 @@
          return new CdltristarStream(this);
       }
    }
-   void cdltristarStepImpl( CdltristarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdltristarStepImpl( CdltristarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

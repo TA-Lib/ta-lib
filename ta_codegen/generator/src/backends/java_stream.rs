@@ -689,18 +689,18 @@ fn emit_handle_class_with_members(
          \x20   */"
     );
     let _ = writeln!(o, "   public static final class {class} {{");
-    let _ = writeln!(o, "      Core core;");
+    let _ = writeln!(o, "      private Core core;");
     for (name, jty, _) in fields {
-        let _ = writeln!(o, "      {jty} {name};");
+        let _ = writeln!(o, "      private {jty} {name};");
     }
     o.push_str(extra_members);
     // The bars this handle has an output for (issue #241). Two ints
     // rather than an `OutRange`: `update` runs on every bar and the emitted
     // javadoc promises it never allocates handle state, so the record is built
     // in the accessor instead of replaced per bar.
-    let _ = writeln!(o, "      int outRangeBegIdx;");
-    let _ = writeln!(o, "      int outRangeCount;");
-    let _ = writeln!(o, "\n      {class}( Core core ) {{ this.core = core; }}");
+    let _ = writeln!(o, "      private int outRangeBegIdx;");
+    let _ = writeln!(o, "      private int outRangeCount;");
+    let _ = writeln!(o, "\n      private {class}( Core core ) {{ this.core = core; }}");
     let _ = writeln!(
         o,
         "\n      /**\n\
@@ -746,7 +746,7 @@ fn emit_handle_class_with_members(
     // Deep-copy constructor: scalars assign, arrays clone (element-wise for
     // sub-handle arrays via copy_extra), sub-handles copy recursively; the
     // Core reference is shared (settings identity is the contract).
-    let _ = writeln!(o, "\n      {class}( {class} other ) {{");
+    let _ = writeln!(o, "\n      private {class}( {class} other ) {{");
     let _ = writeln!(o, "         this.core = other.core;");
     for (name, jty, _) in fields {
         if jty.ends_with("[]") {
@@ -1508,7 +1508,7 @@ fn emit_step_sig(o: &mut String, func: &FuncDef) {
     let base = method_base(func);
     let class = stream_class_name(func);
     let (sig_bars, _) = bar_params(func);
-    let _ = writeln!(o, "   void {base}StepImpl( {class} sp, {sig_bars} )\n   {{");
+    let _ = writeln!(o, "   private void {base}StepImpl( {class} sp, {sig_bars} )\n   {{");
 }
 
 /// One model's per-bar step body at a given indent: temp decls, the
@@ -3019,7 +3019,7 @@ fn emit_dispatch(
     // --- handle class -------------------------------------------------------
     let fields = base_fields(func);
     let extra_members = format!(
-        "      // Sub-stream, tagged by {}; null on the identity path.\n      Object sub;\n",
+        "      // Sub-stream, tagged by {}; null on the identity path.\n      private Object sub;\n",
         dp.param
     );
     // Deep copy of the tagged sub: switch on the stored enum param, invoke the
@@ -3336,7 +3336,7 @@ fn emit_period_bank(
     // --- handle class -------------------------------------------------------
     let fields = base_fields(func);
     let extra_members = format!(
-        "      // One sub-{} stream per period in [{min}, {max}], advanced in lockstep.\n      {subty}[] bank;\n",
+        "      // One sub-{} stream per period in [{min}, {max}], advanced in lockstep.\n      private {subty}[] bank;\n",
         callee.to_uppercase()
     );
     // Object-array clone is SHALLOW: the bank must copy element-wise or a peek
@@ -4210,7 +4210,7 @@ fn emit_composed(
     for (si, sub) in cp.subs.iter().enumerate() {
         let callee_key = sub.callee.to_lowercase();
         let cls = callee_stream_class(registry, &callee_key);
-        let _ = writeln!(extra_members, "      {cls} sub{si};");
+        let _ = writeln!(extra_members, "      private {cls} sub{si};");
         let _ = writeln!(copy_extra, "         this.sub{si} = new {cls}(other.sub{si});");
     }
     let subs = SubMembers { copy: copy_extra };

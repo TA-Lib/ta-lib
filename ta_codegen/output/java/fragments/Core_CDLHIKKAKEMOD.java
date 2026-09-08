@@ -430,34 +430,34 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhikkakemodStream {
-      Core core;
-      double NearPeriodTotal;
-      int patternResult;
-      int patternCount;
-      double patternHigh;
-      double patternLow;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double NearPeriodTotal;
+      private int patternResult;
+      private int patternCount;
+      private double patternHigh;
+      private double patternLow;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhikkakemodStream( Core core ) { this.core = core; }
+      private CdlhikkakemodStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -493,7 +493,7 @@
          this.outRangeCount++;
       }
 
-      CdlhikkakemodStream( CdlhikkakemodStream other ) {
+      private CdlhikkakemodStream( CdlhikkakemodStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.patternResult = other.patternResult;
@@ -630,7 +630,7 @@
          return new CdlhikkakemodStream(this);
       }
    }
-   void cdlhikkakemodStepImpl( CdlhikkakemodStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhikkakemodStepImpl( CdlhikkakemodStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;

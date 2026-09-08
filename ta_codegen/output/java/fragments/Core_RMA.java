@@ -386,16 +386,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class RmaStream {
-      Core core;
-      int optInTimePeriod;
-      double prevRMA;
-      double wAlpha;
-      double wBeta;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevRMA;
+      private double wAlpha;
+      private double wBeta;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RmaStream( Core core ) { this.core = core; }
+      private RmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -431,7 +431,7 @@
          this.outRangeCount++;
       }
 
-      RmaStream( RmaStream other ) {
+      private RmaStream( RmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevRMA = other.prevRMA;
@@ -519,7 +519,7 @@
          return new RmaStream(this);
       }
    }
-   void rmaStepImpl( RmaStream sp, double inReal )
+   private void rmaStepImpl( RmaStream sp, double inReal )
    {
       sp.prevRMA = Math.fma(sp.wBeta, sp.prevRMA, sp.wAlpha * inReal);
       sp.cur_outReal = sp.prevRMA;

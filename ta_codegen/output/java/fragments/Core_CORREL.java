@@ -597,31 +597,31 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CorrelStream {
-      Core core;
-      int optInTimePeriod;
-      double sumXY;
-      double sumX;
-      double sumY;
-      double sumX2;
-      double sumY2;
-      double shiftX;
-      double shiftY;
-      double leavingX;
-      double leavingY;
-      double invPeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      int barsSinceReseed;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal0;
-      double[] x_inReal1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double sumXY;
+      private double sumX;
+      private double sumY;
+      private double sumX2;
+      private double sumY2;
+      private double shiftX;
+      private double shiftY;
+      private double leavingX;
+      private double leavingY;
+      private double invPeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private int barsSinceReseed;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal0;
+      private double[] x_inReal1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CorrelStream( Core core ) { this.core = core; }
+      private CorrelStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -657,7 +657,7 @@
          this.outRangeCount++;
       }
 
-      CorrelStream( CorrelStream other ) {
+      private CorrelStream( CorrelStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumXY = other.sumXY;
@@ -913,7 +913,7 @@
          return new CorrelStream(this);
       }
    }
-   void correlStepImpl( CorrelStream sp, double inReal0, double inReal1 )
+   private void correlStepImpl( CorrelStream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       double y = 0.0;

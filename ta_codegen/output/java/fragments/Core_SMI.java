@@ -821,36 +821,36 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SmiStream {
-      Core core;
-      int optInTimePeriod;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      int optInSignalPeriod;
-      double kSlow;
-      double kFast;
-      double kSignal;
-      double highest;
-      double lowest;
-      double emaSlowNum;
-      double emaSlowDen;
-      double emaFastNum;
-      double emaFastDen;
-      double prevSignal;
-      int trailingIdx;
-      int highestIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outSMI;
-      double cur_outSMISignal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private int optInSignalPeriod;
+      private double kSlow;
+      private double kFast;
+      private double kSignal;
+      private double highest;
+      private double lowest;
+      private double emaSlowNum;
+      private double emaSlowDen;
+      private double emaFastNum;
+      private double emaFastDen;
+      private double prevSignal;
+      private int trailingIdx;
+      private int highestIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outSMI;
+      private double cur_outSMISignal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SmiStream( Core core ) { this.core = core; }
+      private SmiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -886,7 +886,7 @@
          this.outRangeCount++;
       }
 
-      SmiStream( SmiStream other ) {
+      private SmiStream( SmiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -1107,7 +1107,7 @@
       /** Exponential average of the SMI line. */
       public double smiSignal;
    }
-   void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
+   private void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double num = 0.0;

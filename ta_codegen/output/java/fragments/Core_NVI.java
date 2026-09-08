@@ -288,15 +288,15 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class NviStream {
-      Core core;
-      double prevNVI;
-      double prevClose;
-      double prevVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevNVI;
+      private double prevClose;
+      private double prevVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      NviStream( Core core ) { this.core = core; }
+      private NviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -332,7 +332,7 @@
          this.outRangeCount++;
       }
 
-      NviStream( NviStream other ) {
+      private NviStream( NviStream other ) {
          this.core = other.core;
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
@@ -445,7 +445,7 @@
          return new NviStream(this);
       }
    }
-   void nviStepImpl( NviStream sp, double inClose, double inVolume )
+   private void nviStepImpl( NviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

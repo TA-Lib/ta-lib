@@ -464,21 +464,21 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdoscStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      double slowEMA;
-      double slowk;
-      double one_minus_slowk;
-      double fastEMA;
-      double fastk;
-      double one_minus_fastk;
-      double ad;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private double slowEMA;
+      private double slowk;
+      private double one_minus_slowk;
+      private double fastEMA;
+      private double fastk;
+      private double one_minus_fastk;
+      private double ad;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdoscStream( Core core ) { this.core = core; }
+      private AdoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -514,7 +514,7 @@
          this.outRangeCount++;
       }
 
-      AdoscStream( AdoscStream other ) {
+      private AdoscStream( AdoscStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -621,7 +621,7 @@
          return new AdoscStream(this);
       }
    }
-   void adoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void adoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

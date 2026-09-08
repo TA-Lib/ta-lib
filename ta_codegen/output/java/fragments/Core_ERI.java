@@ -416,16 +416,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class EriStream {
-      Core core;
-      int optInTimePeriod;
-      double prevMA;
-      double k;
-      double cur_outBullPower;
-      double cur_outBearPower;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevMA;
+      private double k;
+      private double cur_outBullPower;
+      private double cur_outBearPower;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      EriStream( Core core ) { this.core = core; }
+      private EriStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -461,7 +461,7 @@
          this.outRangeCount++;
       }
 
-      EriStream( EriStream other ) {
+      private EriStream( EriStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevMA = other.prevMA;
@@ -594,7 +594,7 @@
       /** Low minus the EMA of close. */
       public double bearPower;
    }
-   void eriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
+   private void eriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod == 1 ) {
          double tempReal = 0.0;

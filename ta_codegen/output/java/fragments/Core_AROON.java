@@ -405,25 +405,25 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AroonStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      double factor;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outAroonDown;
-      double cur_outAroonUp;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private double factor;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outAroonDown;
+      private double cur_outAroonUp;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AroonStream( Core core ) { this.core = core; }
+      private AroonStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -459,7 +459,7 @@
          this.outRangeCount++;
       }
 
-      AroonStream( AroonStream other ) {
+      private AroonStream( AroonStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -635,7 +635,7 @@
       /** Recency of the highest high (100 = it is the current bar, decaying as it ages) */
       public double aroonUp;
    }
-   void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
+   private void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       sp.x_inHigh[sp.today & sp.xMask] = inHigh;

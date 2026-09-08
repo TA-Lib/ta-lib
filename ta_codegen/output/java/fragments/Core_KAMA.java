@@ -615,23 +615,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class KamaStream {
-      Core core;
-      int optInTimePeriod;
-      double constMax;
-      double constDiff;
-      double sumROC1;
-      double prevKAMA;
-      int nullRun;
-      double trailingValue;
-      double lag1_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double constMax;
+      private double constDiff;
+      private double sumROC1;
+      private double prevKAMA;
+      private int nullRun;
+      private double trailingValue;
+      private double lag1_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      KamaStream( Core core ) { this.core = core; }
+      private KamaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -667,7 +667,7 @@
          this.outRangeCount++;
       }
 
-      KamaStream( KamaStream other ) {
+      private KamaStream( KamaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.constMax = other.constMax;
@@ -821,7 +821,7 @@
          return new KamaStream(this);
       }
    }
-   void kamaStepImpl( KamaStream sp, double inReal )
+   private void kamaStepImpl( KamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

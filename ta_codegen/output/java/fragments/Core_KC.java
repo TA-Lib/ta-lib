@@ -459,20 +459,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class KcStream {
-      Core core;
-      int optInTimePeriod;
-      int optInATRPeriod;
-      double optInNbDev;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      TyppriceStream sub0;
-      AtrStream sub1;
-      EmaStream sub2;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInATRPeriod;
+      private double optInNbDev;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private TyppriceStream sub0;
+      private AtrStream sub1;
+      private EmaStream sub2;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      KcStream( Core core ) { this.core = core; }
+      private KcStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -508,7 +508,7 @@
          this.outRangeCount++;
       }
 
-      KcStream( KcStream other ) {
+      private KcStream( KcStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInATRPeriod = other.optInATRPeriod;
@@ -645,7 +645,7 @@
       /** Centre line minus the scaled Average True Range. */
       public double realLowerBand;
    }
-   void kcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
+   private void kcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
    {
       double middle = 0.0;
       double tempReal = 0.0;

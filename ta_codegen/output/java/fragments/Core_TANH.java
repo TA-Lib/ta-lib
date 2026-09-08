@@ -197,12 +197,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TanhStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TanhStream( Core core ) { this.core = core; }
+      private TanhStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -238,7 +238,7 @@
          this.outRangeCount++;
       }
 
-      TanhStream( TanhStream other ) {
+      private TanhStream( TanhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -320,7 +320,7 @@
          return new TanhStream(this);
       }
    }
-   void tanhStepImpl( TanhStream sp, double inReal )
+   private void tanhStepImpl( TanhStream sp, double inReal )
    {
       sp.cur_outReal = Math.tanh(inReal);
    }

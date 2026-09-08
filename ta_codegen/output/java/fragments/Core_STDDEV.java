@@ -314,15 +314,15 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class StddevStream {
-      Core core;
-      int optInTimePeriod;
-      double optInNbDev;
-      double cur_outReal;
-      VarStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInNbDev;
+      private double cur_outReal;
+      private VarStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StddevStream( Core core ) { this.core = core; }
+      private StddevStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -358,7 +358,7 @@
          this.outRangeCount++;
       }
 
-      StddevStream( StddevStream other ) {
+      private StddevStream( StddevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -450,7 +450,7 @@
          return new StddevStream(this);
       }
    }
-   void stddevStepImpl( StddevStream sp, double inReal )
+   private void stddevStepImpl( StddevStream sp, double inReal )
    {
       double cur_outReal = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */

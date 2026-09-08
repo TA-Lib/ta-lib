@@ -1047,28 +1047,28 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AcStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      int optInSignalPeriod;
-      double sumFast;
-      double sumSlow;
-      double sumSignal;
-      int oscBuffer_Idx;
-      int maxIdx_oscBuffer;
-      int ringPos_trailingFastIdx;
-      int ringCap_trailingFastIdx;
-      double[] ring_trailingFastIdx_derived;
-      int ringPos_trailingSlowIdx;
-      int ringCap_trailingSlowIdx;
-      double[] ring_trailingSlowIdx_derived;
-      int cbSize_oscBuffer;
-      double[] cb_oscBuffer;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private int optInSignalPeriod;
+      private double sumFast;
+      private double sumSlow;
+      private double sumSignal;
+      private int oscBuffer_Idx;
+      private int maxIdx_oscBuffer;
+      private int ringPos_trailingFastIdx;
+      private int ringCap_trailingFastIdx;
+      private double[] ring_trailingFastIdx_derived;
+      private int ringPos_trailingSlowIdx;
+      private int ringCap_trailingSlowIdx;
+      private double[] ring_trailingSlowIdx_derived;
+      private int cbSize_oscBuffer;
+      private double[] cb_oscBuffer;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AcStream( Core core ) { this.core = core; }
+      private AcStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -1104,7 +1104,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AcStream( AcStream other ) {
+      private AcStream( AcStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -1254,7 +1254,7 @@ public final class Core {
          return new AcStream(this);
       }
    }
-   void acStepImpl( AcStream sp, double inHigh, double inLow )
+   private void acStepImpl( AcStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double osc = 0.0;
@@ -2076,23 +2076,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AccbandsStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotalUpper;
-      double periodTotalMiddle;
-      double periodTotalLower;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inHigh;
-      double[] ring_trailingIdx_inLow;
-      double[] ring_trailingIdx_inClose;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotalUpper;
+      private double periodTotalMiddle;
+      private double periodTotalLower;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inHigh;
+      private double[] ring_trailingIdx_inLow;
+      private double[] ring_trailingIdx_inClose;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AccbandsStream( Core core ) { this.core = core; }
+      private AccbandsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -2128,7 +2128,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AccbandsStream( AccbandsStream other ) {
+      private AccbandsStream( AccbandsStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotalUpper = other.periodTotalUpper;
@@ -2306,7 +2306,7 @@ public final class Core {
       /** SMA of the range-scaled low band. */
       public double realLowerBand;
    }
-   void accbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
+   private void accbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
    {
       double tempUpper = 0.0;
       double tempMiddle = 0.0;
@@ -2816,12 +2816,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AcosStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AcosStream( Core core ) { this.core = core; }
+      private AcosStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -2857,7 +2857,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AcosStream( AcosStream other ) {
+      private AcosStream( AcosStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -2939,7 +2939,7 @@ public final class Core {
          return new AcosStream(this);
       }
    }
-   void acosStepImpl( AcosStream sp, double inReal )
+   private void acosStepImpl( AcosStream sp, double inReal )
    {
       sp.cur_outReal = Math.acos(inReal);
    }
@@ -3333,13 +3333,13 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdStream {
-      Core core;
-      double ad;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double ad;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdStream( Core core ) { this.core = core; }
+      private AdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -3375,7 +3375,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AdStream( AdStream other ) {
+      private AdStream( AdStream other ) {
          this.core = other.core;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
@@ -3470,7 +3470,7 @@ public final class Core {
          return new AdStream(this);
       }
    }
-   void adStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void adStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -3848,12 +3848,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AddStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AddStream( Core core ) { this.core = core; }
+      private AddStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -3889,7 +3889,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AddStream( AddStream other ) {
+      private AddStream( AddStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -3971,7 +3971,7 @@ public final class Core {
          return new AddStream(this);
       }
    }
-   void addStepImpl( AddStream sp, double inReal0, double inReal1 )
+   private void addStepImpl( AddStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 + inReal1;
    }
@@ -4554,21 +4554,21 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdoscStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      double slowEMA;
-      double slowk;
-      double one_minus_slowk;
-      double fastEMA;
-      double fastk;
-      double one_minus_fastk;
-      double ad;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private double slowEMA;
+      private double slowk;
+      private double one_minus_slowk;
+      private double fastEMA;
+      private double fastk;
+      private double one_minus_fastk;
+      private double ad;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdoscStream( Core core ) { this.core = core; }
+      private AdoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -4604,7 +4604,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AdoscStream( AdoscStream other ) {
+      private AdoscStream( AdoscStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -4711,7 +4711,7 @@ public final class Core {
          return new AdoscStream(this);
       }
    }
-   void adoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void adoscStepImpl( AdoscStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -5348,17 +5348,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdrStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_derived;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_derived;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdrStream( Core core ) { this.core = core; }
+      private AdrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -5394,7 +5394,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AdrStream( AdrStream other ) {
+      private AdrStream( AdrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -5492,7 +5492,7 @@ public final class Core {
          return new AdrStream(this);
       }
    }
-   void adrStepImpl( AdrStream sp, double inHigh, double inLow )
+   private void adrStepImpl( AdrStream sp, double inHigh, double inLow )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -6510,20 +6510,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdxStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevMinusDM;
-      double prevPlusDM;
-      double prevTR;
-      double prevADX;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevMinusDM;
+      private double prevPlusDM;
+      private double prevTR;
+      private double prevADX;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdxStream( Core core ) { this.core = core; }
+      private AdxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -6559,7 +6559,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AdxStream( AdxStream other ) {
+      private AdxStream( AdxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -6706,7 +6706,7 @@ public final class Core {
          return new AdxStream(this);
       }
    }
-   void adxStepImpl( AdxStream sp, double inHigh, double inLow, double inClose )
+   private void adxStepImpl( AdxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;
@@ -7569,17 +7569,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdxrStream {
-      Core core;
-      int optInTimePeriod;
-      double cur_outReal;
-      int lagRingPos_adx;
-      int lagRingCap_adx;
-      double[] lagRing_adx;
-      AdxStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double cur_outReal;
+      private int lagRingPos_adx;
+      private int lagRingCap_adx;
+      private double[] lagRing_adx;
+      private AdxStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdxrStream( Core core ) { this.core = core; }
+      private AdxrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -7615,7 +7615,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AdxrStream( AdxrStream other ) {
+      private AdxrStream( AdxrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.cur_outReal = other.cur_outReal;
@@ -7706,7 +7706,7 @@ public final class Core {
          return new AdxrStream(this);
       }
    }
-   void adxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
+   private void adxrStepImpl( AdxrStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_adx = 0.0;
       double cur_outReal = 0.0;
@@ -8335,22 +8335,22 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      double sumFast;
-      double sumSlow;
-      int ringPos_trailingFastIdx;
-      int ringCap_trailingFastIdx;
-      double[] ring_trailingFastIdx_derived;
-      int ringPos_trailingSlowIdx;
-      int ringCap_trailingSlowIdx;
-      double[] ring_trailingSlowIdx_derived;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private double sumFast;
+      private double sumSlow;
+      private int ringPos_trailingFastIdx;
+      private int ringCap_trailingFastIdx;
+      private double[] ring_trailingFastIdx_derived;
+      private int ringPos_trailingSlowIdx;
+      private int ringCap_trailingSlowIdx;
+      private double[] ring_trailingSlowIdx_derived;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AoStream( Core core ) { this.core = core; }
+      private AoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -8386,7 +8386,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AoStream( AoStream other ) {
+      private AoStream( AoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -8509,7 +8509,7 @@ public final class Core {
          return new AoStream(this);
       }
    }
-   void aoStepImpl( AoStream sp, double inHigh, double inLow )
+   private void aoStepImpl( AoStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double tempReal = 0.0;
@@ -9172,17 +9172,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class ApoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      MAType optInMAType;
-      double cur_outReal;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ApoStream( Core core ) { this.core = core; }
+      private ApoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -9218,7 +9218,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      ApoStream( ApoStream other ) {
+      private ApoStream( ApoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -9310,7 +9310,7 @@ public final class Core {
          return new ApoStream(this);
       }
    }
-   void apoStepImpl( ApoStream sp, double inReal )
+   private void apoStepImpl( ApoStream sp, double inReal )
    {
       double cur_tempBuffer = 0.0;
       double cur_outReal = 0.0;
@@ -9910,25 +9910,25 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AroonStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      double factor;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outAroonDown;
-      double cur_outAroonUp;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private double factor;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outAroonDown;
+      private double cur_outAroonUp;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AroonStream( Core core ) { this.core = core; }
+      private AroonStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -9964,7 +9964,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AroonStream( AroonStream other ) {
+      private AroonStream( AroonStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -10140,7 +10140,7 @@ public final class Core {
       /** Recency of the highest high (100 = it is the current bar, decaying as it ages) */
       public double aroonUp;
    }
-   void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
+   private void aroonStepImpl( AroonStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       sp.x_inHigh[sp.today & sp.xMask] = inHigh;
@@ -10827,24 +10827,24 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AroonoscStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      double factor;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private double factor;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AroonoscStream( Core core ) { this.core = core; }
+      private AroonoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -10880,7 +10880,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AroonoscStream( AroonoscStream other ) {
+      private AroonoscStream( AroonoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -11035,7 +11035,7 @@ public final class Core {
          return new AroonoscStream(this);
       }
    }
-   void aroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
+   private void aroonoscStepImpl( AroonoscStream sp, double inHigh, double inLow )
    {
       double tmp = 0.0;
       double aroon = 0.0;
@@ -11543,12 +11543,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AsinStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AsinStream( Core core ) { this.core = core; }
+      private AsinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -11584,7 +11584,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AsinStream( AsinStream other ) {
+      private AsinStream( AsinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -11666,7 +11666,7 @@ public final class Core {
          return new AsinStream(this);
       }
    }
-   void asinStepImpl( AsinStream sp, double inReal )
+   private void asinStepImpl( AsinStream sp, double inReal )
    {
       sp.cur_outReal = Math.asin(inReal);
    }
@@ -11976,12 +11976,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AtanStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AtanStream( Core core ) { this.core = core; }
+      private AtanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -12017,7 +12017,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AtanStream( AtanStream other ) {
+      private AtanStream( AtanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -12099,7 +12099,7 @@ public final class Core {
          return new AtanStream(this);
       }
    }
-   void atanStepImpl( AtanStream sp, double inReal )
+   private void atanStepImpl( AtanStream sp, double inReal )
    {
       sp.cur_outReal = Math.atan(inReal);
    }
@@ -12690,17 +12690,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AtrStream {
-      Core core;
-      int optInTimePeriod;
-      double prevATR;
-      double wAlpha;
-      double wBeta;
-      double lag1_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevATR;
+      private double wAlpha;
+      private double wBeta;
+      private double lag1_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AtrStream( Core core ) { this.core = core; }
+      private AtrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -12736,7 +12736,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AtrStream( AtrStream other ) {
+      private AtrStream( AtrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
@@ -12845,7 +12845,7 @@ public final class Core {
          return new AtrStream(this);
       }
    }
-   void atrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
+   private void atrStepImpl( AtrStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;
@@ -13417,16 +13417,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AvgdevStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AvgdevStream( Core core ) { this.core = core; }
+      private AvgdevStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -13462,7 +13462,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AvgdevStream( AvgdevStream other ) {
+      private AvgdevStream( AvgdevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -13563,7 +13563,7 @@ public final class Core {
          return new AvgdevStream(this);
       }
    }
-   void avgdevStepImpl( AvgdevStream sp, double inReal )
+   private void avgdevStepImpl( AvgdevStream sp, double inReal )
    {
       double todaySum = 0.0;
       double todayDev = 0.0;
@@ -13967,12 +13967,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class AvgpriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AvgpriceStream( Core core ) { this.core = core; }
+      private AvgpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -14008,7 +14008,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      AvgpriceStream( AvgpriceStream other ) {
+      private AvgpriceStream( AvgpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -14090,7 +14090,7 @@ public final class Core {
          return new AvgpriceStream(this);
       }
    }
-   void avgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void avgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }
@@ -15022,20 +15022,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class BbandsStream {
-      Core core;
-      int optInTimePeriod;
-      double optInNbDevUp;
-      double optInNbDevDn;
-      MAType optInMAType;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      MaStream sub0;
-      StddevStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInNbDevUp;
+      private double optInNbDevDn;
+      private MAType optInMAType;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private MaStream sub0;
+      private StddevStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      BbandsStream( Core core ) { this.core = core; }
+      private BbandsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -15071,7 +15071,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      BbandsStream( BbandsStream other ) {
+      private BbandsStream( BbandsStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDevUp = other.optInNbDevUp;
@@ -15214,7 +15214,7 @@ public final class Core {
       /** Middle band minus nbDevDn standard deviations. */
       public double realLowerBand;
    }
-   void bbandsStepImpl( BbandsStream sp, double inReal )
+   private void bbandsStepImpl( BbandsStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -16233,34 +16233,34 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class BetaStream {
-      Core core;
-      int optInTimePeriod;
-      double S_xx;
-      double S_xy;
-      double S_x;
-      double S_y;
-      double last_price_x;
-      double last_price_y;
-      double trailing_last_price_x;
-      double trailing_last_price_y;
-      double shift_x;
-      double shift_y;
-      double leaving_xx;
-      double leaving_yy;
-      double S_yy;
-      int barsSinceReseed;
-      double n;
-      int trailingIdx;
-      int j;
-      int i;
-      int xMask;
-      double[] x_inReal0;
-      double[] x_inReal1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double S_xx;
+      private double S_xy;
+      private double S_x;
+      private double S_y;
+      private double last_price_x;
+      private double last_price_y;
+      private double trailing_last_price_x;
+      private double trailing_last_price_y;
+      private double shift_x;
+      private double shift_y;
+      private double leaving_xx;
+      private double leaving_yy;
+      private double S_yy;
+      private int barsSinceReseed;
+      private double n;
+      private int trailingIdx;
+      private int j;
+      private int i;
+      private int xMask;
+      private double[] x_inReal0;
+      private double[] x_inReal1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      BetaStream( Core core ) { this.core = core; }
+      private BetaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -16296,7 +16296,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      BetaStream( BetaStream other ) {
+      private BetaStream( BetaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.S_xx = other.S_xx;
@@ -16596,7 +16596,7 @@ public final class Core {
          return new BetaStream(this);
       }
    }
-   void betaStepImpl( BetaStream sp, double inReal0, double inReal1 )
+   private void betaStepImpl( BetaStream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
       double denom = 0.0;
@@ -17506,12 +17506,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class BopStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      BopStream( Core core ) { this.core = core; }
+      private BopStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -17547,7 +17547,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      BopStream( BopStream other ) {
+      private BopStream( BopStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -17641,7 +17641,7 @@ public final class Core {
          return new BopStream(this);
       }
    }
-   void bopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void bopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       /* BOP is a fraction of the bar's own range, so it is scale-free and the
@@ -18216,17 +18216,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CciStream {
-      Core core;
-      int optInTimePeriod;
-      int circBuffer_Idx;
-      int maxIdx_circBuffer;
-      int cbSize_circBuffer;
-      double[] cb_circBuffer;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int circBuffer_Idx;
+      private int maxIdx_circBuffer;
+      private int cbSize_circBuffer;
+      private double[] cb_circBuffer;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CciStream( Core core ) { this.core = core; }
+      private CciStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -18262,7 +18262,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CciStream( CciStream other ) {
+      private CciStream( CciStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.circBuffer_Idx = other.circBuffer_Idx;
@@ -18397,7 +18397,7 @@ public final class Core {
          return new CciStream(this);
       }
    }
-   void cciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
+   private void cciStepImpl( CciStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -19015,27 +19015,27 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl2crowsStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl2crowsStream( Core core ) { this.core = core; }
+      private Cdl2crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -19071,7 +19071,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl2crowsStream( Cdl2crowsStream other ) {
+      private Cdl2crowsStream( Cdl2crowsStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -19184,7 +19184,7 @@ public final class Core {
          return new Cdl2crowsStream(this);
       }
    }
-   void cdl2crowsStepImpl( Cdl2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl2crowsStepImpl( Cdl2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -19780,31 +19780,31 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3blackcrowsStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3blackcrowsStream( Core core ) { this.core = core; }
+      private Cdl3blackcrowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -19840,7 +19840,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl3blackcrowsStream( Cdl3blackcrowsStream other ) {
+      private Cdl3blackcrowsStream( Cdl3blackcrowsStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -19962,7 +19962,7 @@ public final class Core {
          return new Cdl3blackcrowsStream(this);
       }
    }
-   void cdl3blackcrowsStepImpl( Cdl3blackcrowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3blackcrowsStepImpl( Cdl3blackcrowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
@@ -20603,34 +20603,34 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3insideStream {
-      Core core;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3insideStream( Core core ) { this.core = core; }
+      private Cdl3insideStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -20666,7 +20666,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl3insideStream( Cdl3insideStream other ) {
+      private Cdl3insideStream( Cdl3insideStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -20790,7 +20790,7 @@ public final class Core {
          return new Cdl3insideStream(this);
       }
    }
-   void cdl3insideStepImpl( Cdl3insideStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3insideStepImpl( Cdl3insideStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -21436,32 +21436,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3linestrikeStream {
-      Core core;
-      double[] NearPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] NearPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3linestrikeStream( Core core ) { this.core = core; }
+      private Cdl3linestrikeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -21497,7 +21497,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl3linestrikeStream( Cdl3linestrikeStream other ) {
+      private Cdl3linestrikeStream( Cdl3linestrikeStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -21623,7 +21623,7 @@ public final class Core {
          return new Cdl3linestrikeStream(this);
       }
    }
-   void cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3linestrikeStepImpl( Cdl3linestrikeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Near_rangeType = sp.cs_Near_rangeType;
@@ -22202,16 +22202,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3outsideStream {
-      Core core;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inClose;
-      double lag2_inClose;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3outsideStream( Core core ) { this.core = core; }
+      private Cdl3outsideStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -22247,7 +22247,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl3outsideStream( Cdl3outsideStream other ) {
+      private Cdl3outsideStream( Cdl3outsideStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
@@ -22347,7 +22347,7 @@ public final class Core {
          return new Cdl3outsideStream(this);
       }
    }
-   void cdl3outsideStepImpl( Cdl3outsideStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3outsideStepImpl( Cdl3outsideStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
            ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
@@ -22986,51 +22986,51 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3starsinsouthStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double[] ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      int ringLag_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private int ringLag_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3starsinsouthStream( Core core ) { this.core = core; }
+      private Cdl3starsinsouthStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -23066,7 +23066,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl3starsinsouthStream( Cdl3starsinsouthStream other ) {
+      private Cdl3starsinsouthStream( Cdl3starsinsouthStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -23219,7 +23219,7 @@ public final class Core {
          return new Cdl3starsinsouthStream(this);
       }
    }
-   void cdl3starsinsouthStepImpl( Cdl3starsinsouthStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3starsinsouthStepImpl( Cdl3starsinsouthStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -24076,51 +24076,51 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3whitesoldiersStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double[] NearPeriodTotal;
-      double[] FarPeriodTotal;
-      double BodyShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int ringPos_FarTrailingIdx;
-      int ringCap_FarTrailingIdx;
-      int ringLag_FarTrailingIdx;
-      double[] ring_FarTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_Far_rangeType;
-      int cs_Far_avgPeriod;
-      double cs_Far_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double[] NearPeriodTotal;
+      private double[] FarPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int ringPos_FarTrailingIdx;
+      private int ringCap_FarTrailingIdx;
+      private int ringLag_FarTrailingIdx;
+      private double[] ring_FarTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_Far_rangeType;
+      private int cs_Far_avgPeriod;
+      private double cs_Far_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3whitesoldiersStream( Core core ) { this.core = core; }
+      private Cdl3whitesoldiersStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -24156,7 +24156,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdl3whitesoldiersStream( Cdl3whitesoldiersStream other ) {
+      private Cdl3whitesoldiersStream( Cdl3whitesoldiersStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
@@ -24308,7 +24308,7 @@ public final class Core {
          return new Cdl3whitesoldiersStream(this);
       }
    }
-   void cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3whitesoldiersStepImpl( Cdl3whitesoldiersStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
@@ -25146,42 +25146,42 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlabandonedbabyStream {
-      Core core;
-      double optInPenetration;
-      double BodyDojiPeriodTotal;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyDojiPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlabandonedbabyStream( Core core ) { this.core = core; }
+      private CdlabandonedbabyStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -25217,7 +25217,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlabandonedbabyStream( CdlabandonedbabyStream other ) {
+      private CdlabandonedbabyStream( CdlabandonedbabyStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -25355,7 +25355,7 @@ public final class Core {
          return new CdlabandonedbabyStream(this);
       }
    }
-   void cdlabandonedbabyStepImpl( CdlabandonedbabyStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlabandonedbabyStepImpl( CdlabandonedbabyStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -26214,60 +26214,60 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdladvanceblockStream {
-      Core core;
-      double[] ShadowShortPeriodTotal;
-      double[] ShadowLongPeriodTotal;
-      double[] NearPeriodTotal;
-      double[] FarPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_FarTrailingIdx;
-      int ringCap_FarTrailingIdx;
-      int ringLag_FarTrailingIdx;
-      double[] ring_FarTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      int ringLag_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowShortTrailingIdx;
-      int ringCap_ShadowShortTrailingIdx;
-      int ringLag_ShadowShortTrailingIdx;
-      double[] ring_ShadowShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Far_rangeType;
-      int cs_Far_avgPeriod;
-      double cs_Far_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowShort_rangeType;
-      int cs_ShadowShort_avgPeriod;
-      double cs_ShadowShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowShortPeriodTotal;
+      private double[] ShadowLongPeriodTotal;
+      private double[] NearPeriodTotal;
+      private double[] FarPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_FarTrailingIdx;
+      private int ringCap_FarTrailingIdx;
+      private int ringLag_FarTrailingIdx;
+      private double[] ring_FarTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private int ringLag_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowShortTrailingIdx;
+      private int ringCap_ShadowShortTrailingIdx;
+      private int ringLag_ShadowShortTrailingIdx;
+      private double[] ring_ShadowShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Far_rangeType;
+      private int cs_Far_avgPeriod;
+      private double cs_Far_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowShort_rangeType;
+      private int cs_ShadowShort_avgPeriod;
+      private double cs_ShadowShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdladvanceblockStream( Core core ) { this.core = core; }
+      private CdladvanceblockStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -26303,7 +26303,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdladvanceblockStream( CdladvanceblockStream other ) {
+      private CdladvanceblockStream( CdladvanceblockStream other ) {
          this.core = other.core;
          this.ShadowShortPeriodTotal = other.ShadowShortPeriodTotal.clone();
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal.clone();
@@ -26472,7 +26472,7 @@ public final class Core {
          return new CdladvanceblockStream(this);
       }
    }
-   void cdladvanceblockStepImpl( CdladvanceblockStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdladvanceblockStepImpl( CdladvanceblockStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -27296,26 +27296,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlbeltholdStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlbeltholdStream( Core core ) { this.core = core; }
+      private CdlbeltholdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -27351,7 +27351,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlbeltholdStream( CdlbeltholdStream other ) {
+      private CdlbeltholdStream( CdlbeltholdStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -27462,7 +27462,7 @@ public final class Core {
          return new CdlbeltholdStream(this);
       }
    }
-   void cdlbeltholdStepImpl( CdlbeltholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlbeltholdStepImpl( CdlbeltholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -28070,36 +28070,36 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlbreakawayStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag4_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag4_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag4_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      double lag4_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag4_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag4_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag4_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private double lag4_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlbreakawayStream( Core core ) { this.core = core; }
+      private CdlbreakawayStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -28135,7 +28135,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlbreakawayStream( CdlbreakawayStream other ) {
+      private CdlbreakawayStream( CdlbreakawayStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -28268,7 +28268,7 @@ public final class Core {
          return new CdlbreakawayStream(this);
       }
    }
-   void cdlbreakawayStepImpl( CdlbreakawayStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlbreakawayStepImpl( CdlbreakawayStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -28914,26 +28914,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlclosingmarubozuStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlclosingmarubozuStream( Core core ) { this.core = core; }
+      private CdlclosingmarubozuStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -28969,7 +28969,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlclosingmarubozuStream( CdlclosingmarubozuStream other ) {
+      private CdlclosingmarubozuStream( CdlclosingmarubozuStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -29080,7 +29080,7 @@ public final class Core {
          return new CdlclosingmarubozuStream(this);
       }
    }
-   void cdlclosingmarubozuStepImpl( CdlclosingmarubozuStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlclosingmarubozuStepImpl( CdlclosingmarubozuStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -29688,32 +29688,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlconcealbabyswallStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlconcealbabyswallStream( Core core ) { this.core = core; }
+      private CdlconcealbabyswallStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -29749,7 +29749,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlconcealbabyswallStream( CdlconcealbabyswallStream other ) {
+      private CdlconcealbabyswallStream( CdlconcealbabyswallStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -29871,7 +29871,7 @@ public final class Core {
          return new CdlconcealbabyswallStream(this);
       }
    }
-   void cdlconcealbabyswallStepImpl( CdlconcealbabyswallStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlconcealbabyswallStepImpl( CdlconcealbabyswallStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
@@ -30511,32 +30511,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlcounterattackStream {
-      Core core;
-      double EqualPeriodTotal;
-      double[] BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double[] BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlcounterattackStream( Core core ) { this.core = core; }
+      private CdlcounterattackStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -30572,7 +30572,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlcounterattackStream( CdlcounterattackStream other ) {
+      private CdlcounterattackStream( CdlcounterattackStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
@@ -30689,7 +30689,7 @@ public final class Core {
          return new CdlcounterattackStream(this);
       }
    }
-   void cdlcounterattackStepImpl( CdlcounterattackStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlcounterattackStepImpl( CdlcounterattackStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -31322,25 +31322,25 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdldarkcloudcoverStream {
-      Core core;
-      double optInPenetration;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdldarkcloudcoverStream( Core core ) { this.core = core; }
+      private CdldarkcloudcoverStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -31376,7 +31376,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdldarkcloudcoverStream( CdldarkcloudcoverStream other ) {
+      private CdldarkcloudcoverStream( CdldarkcloudcoverStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -31484,7 +31484,7 @@ public final class Core {
          return new CdldarkcloudcoverStream(this);
       }
    }
-   void cdldarkcloudcoverStepImpl( CdldarkcloudcoverStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdldarkcloudcoverStepImpl( CdldarkcloudcoverStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -32040,19 +32040,19 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdldojiStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdldojiStream( Core core ) { this.core = core; }
+      private CdldojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -32088,7 +32088,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdldojiStream( CdldojiStream other ) {
+      private CdldojiStream( CdldojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ringPos_BodyDojiTrailingIdx = other.ringPos_BodyDojiTrailingIdx;
@@ -32184,7 +32184,7 @@ public final class Core {
          return new CdldojiStream(this);
       }
    }
-   void cdldojiStepImpl( CdldojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdldojiStepImpl( CdldojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -32771,30 +32771,30 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdldojistarStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdldojistarStream( Core core ) { this.core = core; }
+      private CdldojistarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -32830,7 +32830,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdldojistarStream( CdldojistarStream other ) {
+      private CdldojistarStream( CdldojistarStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -32946,7 +32946,7 @@ public final class Core {
          return new CdldojistarStream(this);
       }
    }
-   void cdldojistarStepImpl( CdldojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdldojistarStepImpl( CdldojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -33587,26 +33587,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdldragonflydojiStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdldragonflydojiStream( Core core ) { this.core = core; }
+      private CdldragonflydojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -33642,7 +33642,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdldragonflydojiStream( CdldragonflydojiStream other ) {
+      private CdldragonflydojiStream( CdldragonflydojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -33748,7 +33748,7 @@ public final class Core {
          return new CdldragonflydojiStream(this);
       }
    }
-   void cdldragonflydojiStepImpl( CdldragonflydojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdldragonflydojiStepImpl( CdldragonflydojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -34318,14 +34318,14 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlengulfingStream {
-      Core core;
-      double lag1_inOpen;
-      double lag1_inClose;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inOpen;
+      private double lag1_inClose;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlengulfingStream( Core core ) { this.core = core; }
+      private CdlengulfingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -34361,7 +34361,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlengulfingStream( CdlengulfingStream other ) {
+      private CdlengulfingStream( CdlengulfingStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag1_inClose = other.lag1_inClose;
@@ -34465,7 +34465,7 @@ public final class Core {
          return new CdlengulfingStream(this);
       }
    }
-   void cdlengulfingStepImpl( CdlengulfingStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlengulfingStepImpl( CdlengulfingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((inClose >= inOpen) ? 1 : 0 - 1) == 1 &&
            ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */
@@ -35090,42 +35090,42 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdleveningdojistarStream {
-      Core core;
-      double optInPenetration;
-      double BodyDojiPeriodTotal;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyDojiPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdleveningdojistarStream( Core core ) { this.core = core; }
+      private CdleveningdojistarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -35161,7 +35161,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdleveningdojistarStream( CdleveningdojistarStream other ) {
+      private CdleveningdojistarStream( CdleveningdojistarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -35293,7 +35293,7 @@ public final class Core {
          return new CdleveningdojistarStream(this);
       }
    }
-   void cdleveningdojistarStepImpl( CdleveningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdleveningdojistarStepImpl( CdleveningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -36029,37 +36029,37 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdleveningstarStream {
-      Core core;
-      double optInPenetration;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal2;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      int ringLag_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal2;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private int ringLag_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdleveningstarStream( Core core ) { this.core = core; }
+      private CdleveningstarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -36095,7 +36095,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdleveningstarStream( CdleveningstarStream other ) {
+      private CdleveningstarStream( CdleveningstarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -36219,7 +36219,7 @@ public final class Core {
          return new CdleveningstarStream(this);
       }
    }
-   void cdleveningstarStepImpl( CdleveningstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdleveningstarStepImpl( CdleveningstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -36888,34 +36888,34 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlgapsidesidewhiteStream {
-      Core core;
-      double NearPeriodTotal;
-      double EqualPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double NearPeriodTotal;
+      private double EqualPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlgapsidesidewhiteStream( Core core ) { this.core = core; }
+      private CdlgapsidesidewhiteStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -36951,7 +36951,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlgapsidesidewhiteStream( CdlgapsidesidewhiteStream other ) {
+      private CdlgapsidesidewhiteStream( CdlgapsidesidewhiteStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
@@ -37075,7 +37075,7 @@ public final class Core {
          return new CdlgapsidesidewhiteStream(this);
       }
    }
-   void cdlgapsidesidewhiteStepImpl( CdlgapsidesidewhiteStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlgapsidesidewhiteStepImpl( CdlgapsidesidewhiteStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -37728,26 +37728,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlgravestonedojiStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlgravestonedojiStream( Core core ) { this.core = core; }
+      private CdlgravestonedojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -37783,7 +37783,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlgravestonedojiStream( CdlgravestonedojiStream other ) {
+      private CdlgravestonedojiStream( CdlgravestonedojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -37889,7 +37889,7 @@ public final class Core {
          return new CdlgravestonedojiStream(this);
       }
    }
-   void cdlgravestonedojiStepImpl( CdlgravestonedojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlgravestonedojiStepImpl( CdlgravestonedojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -38561,44 +38561,44 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhammerStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double NearPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double NearPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhammerStream( Core core ) { this.core = core; }
+      private CdlhammerStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -38634,7 +38634,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlhammerStream( CdlhammerStream other ) {
+      private CdlhammerStream( CdlhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -38768,7 +38768,7 @@ public final class Core {
          return new CdlhammerStream(this);
       }
    }
-   void cdlhammerStepImpl( CdlhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhammerStepImpl( CdlhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -39543,44 +39543,44 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhangingmanStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double NearPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double NearPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhangingmanStream( Core core ) { this.core = core; }
+      private CdlhangingmanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -39616,7 +39616,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlhangingmanStream( CdlhangingmanStream other ) {
+      private CdlhangingmanStream( CdlhangingmanStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -39750,7 +39750,7 @@ public final class Core {
          return new CdlhangingmanStream(this);
       }
    }
-   void cdlhangingmanStepImpl( CdlhangingmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhangingmanStepImpl( CdlhangingmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -40488,30 +40488,30 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlharamiStream {
-      Core core;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlharamiStream( Core core ) { this.core = core; }
+      private CdlharamiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -40547,7 +40547,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlharamiStream( CdlharamiStream other ) {
+      private CdlharamiStream( CdlharamiStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -40674,7 +40674,7 @@ public final class Core {
          return new CdlharamiStream(this);
       }
    }
-   void cdlharamiStepImpl( CdlharamiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlharamiStepImpl( CdlharamiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -41354,30 +41354,30 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlharamicrossStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlharamicrossStream( Core core ) { this.core = core; }
+      private CdlharamicrossStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -41413,7 +41413,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlharamicrossStream( CdlharamicrossStream other ) {
+      private CdlharamicrossStream( CdlharamicrossStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -41539,7 +41539,7 @@ public final class Core {
          return new CdlharamicrossStream(this);
       }
    }
-   void cdlharamicrossStepImpl( CdlharamicrossStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlharamicrossStepImpl( CdlharamicrossStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -42195,26 +42195,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhighwaveStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowTrailingIdx;
-      int ringCap_ShadowTrailingIdx;
-      double[] ring_ShadowTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowVeryLong_rangeType;
-      int cs_ShadowVeryLong_avgPeriod;
-      double cs_ShadowVeryLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowTrailingIdx;
+      private int ringCap_ShadowTrailingIdx;
+      private double[] ring_ShadowTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowVeryLong_rangeType;
+      private int cs_ShadowVeryLong_avgPeriod;
+      private double cs_ShadowVeryLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhighwaveStream( Core core ) { this.core = core; }
+      private CdlhighwaveStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -42250,7 +42250,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlhighwaveStream( CdlhighwaveStream other ) {
+      private CdlhighwaveStream( CdlhighwaveStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -42356,7 +42356,7 @@ public final class Core {
          return new CdlhighwaveStream(this);
       }
    }
-   void cdlhighwaveStepImpl( CdlhighwaveStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhighwaveStepImpl( CdlhighwaveStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -42994,20 +42994,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhikkakeStream {
-      Core core;
-      int patternResult;
-      int cd;
-      double savedHigh;
-      double savedLow;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int patternResult;
+      private int cd;
+      private double savedHigh;
+      private double savedLow;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhikkakeStream( Core core ) { this.core = core; }
+      private CdlhikkakeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -43043,7 +43043,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlhikkakeStream( CdlhikkakeStream other ) {
+      private CdlhikkakeStream( CdlhikkakeStream other ) {
          this.core = other.core;
          this.patternResult = other.patternResult;
          this.cd = other.cd;
@@ -43159,7 +43159,7 @@ public final class Core {
          return new CdlhikkakeStream(this);
       }
    }
-   void cdlhikkakeStepImpl( CdlhikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhikkakeStepImpl( CdlhikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */
@@ -43850,34 +43850,34 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhikkakemodStream {
-      Core core;
-      double NearPeriodTotal;
-      int patternResult;
-      int patternCount;
-      double patternHigh;
-      double patternLow;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double NearPeriodTotal;
+      private int patternResult;
+      private int patternCount;
+      private double patternHigh;
+      private double patternLow;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhikkakemodStream( Core core ) { this.core = core; }
+      private CdlhikkakemodStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -43913,7 +43913,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlhikkakemodStream( CdlhikkakemodStream other ) {
+      private CdlhikkakemodStream( CdlhikkakemodStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.patternResult = other.patternResult;
@@ -44050,7 +44050,7 @@ public final class Core {
          return new CdlhikkakemodStream(this);
       }
    }
-   void cdlhikkakemodStepImpl( CdlhikkakemodStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhikkakemodStepImpl( CdlhikkakemodStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -44744,31 +44744,31 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhomingpigeonStream {
-      Core core;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhomingpigeonStream( Core core ) { this.core = core; }
+      private CdlhomingpigeonStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -44804,7 +44804,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlhomingpigeonStream( CdlhomingpigeonStream other ) {
+      private CdlhomingpigeonStream( CdlhomingpigeonStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -44921,7 +44921,7 @@ public final class Core {
          return new CdlhomingpigeonStream(this);
       }
    }
-   void cdlhomingpigeonStepImpl( CdlhomingpigeonStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhomingpigeonStepImpl( CdlhomingpigeonStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -45583,36 +45583,36 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlidentical3crowsStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double[] EqualPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double[] EqualPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlidentical3crowsStream( Core core ) { this.core = core; }
+      private Cdlidentical3crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -45648,7 +45648,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdlidentical3crowsStream( Cdlidentical3crowsStream other ) {
+      private Cdlidentical3crowsStream( Cdlidentical3crowsStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.EqualPeriodTotal = other.EqualPeriodTotal.clone();
@@ -45776,7 +45776,7 @@ public final class Core {
          return new Cdlidentical3crowsStream(this);
       }
    }
-   void cdlidentical3crowsStepImpl( Cdlidentical3crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlidentical3crowsStepImpl( Cdlidentical3crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int Equal_rangeType = sp.cs_Equal_rangeType;
@@ -46454,32 +46454,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlinneckStream {
-      Core core;
-      double EqualPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlinneckStream( Core core ) { this.core = core; }
+      private CdlinneckStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -46515,7 +46515,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlinneckStream( CdlinneckStream other ) {
+      private CdlinneckStream( CdlinneckStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -46633,7 +46633,7 @@ public final class Core {
          return new CdlinneckStream(this);
       }
    }
-   void cdlinneckStepImpl( CdlinneckStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlinneckStepImpl( CdlinneckStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -47290,35 +47290,35 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlinvertedhammerStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlinvertedhammerStream( Core core ) { this.core = core; }
+      private CdlinvertedhammerStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -47354,7 +47354,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlinvertedhammerStream( CdlinvertedhammerStream other ) {
+      private CdlinvertedhammerStream( CdlinvertedhammerStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -47476,7 +47476,7 @@ public final class Core {
          return new CdlinvertedhammerStream(this);
       }
    }
-   void cdlinvertedhammerStepImpl( CdlinvertedhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlinvertedhammerStepImpl( CdlinvertedhammerStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -48157,32 +48157,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlkickingStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double[] BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double[] BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlkickingStream( Core core ) { this.core = core; }
+      private CdlkickingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -48218,7 +48218,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlkickingStream( CdlkickingStream other ) {
+      private CdlkickingStream( CdlkickingStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
@@ -48341,7 +48341,7 @@ public final class Core {
          return new CdlkickingStream(this);
       }
    }
-   void cdlkickingStepImpl( CdlkickingStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlkickingStepImpl( CdlkickingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -49000,32 +49000,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlkickingbylengthStream {
-      Core core;
-      double[] ShadowVeryShortPeriodTotal;
-      double[] BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] ShadowVeryShortPeriodTotal;
+      private double[] BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlkickingbylengthStream( Core core ) { this.core = core; }
+      private CdlkickingbylengthStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -49061,7 +49061,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlkickingbylengthStream( CdlkickingbylengthStream other ) {
+      private CdlkickingbylengthStream( CdlkickingbylengthStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal.clone();
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
@@ -49184,7 +49184,7 @@ public final class Core {
          return new CdlkickingbylengthStream(this);
       }
    }
-   void cdlkickingbylengthStepImpl( CdlkickingbylengthStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlkickingbylengthStepImpl( CdlkickingbylengthStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -49814,30 +49814,30 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlladderbottomStream {
-      Core core;
-      double ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag4_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      double lag4_inClose;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag4_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private double lag4_inClose;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlladderbottomStream( Core core ) { this.core = core; }
+      private CdlladderbottomStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -49873,7 +49873,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlladderbottomStream( CdlladderbottomStream other ) {
+      private CdlladderbottomStream( CdlladderbottomStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -49992,7 +49992,7 @@ public final class Core {
          return new CdlladderbottomStream(this);
       }
    }
-   void cdlladderbottomStepImpl( CdlladderbottomStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlladderbottomStepImpl( CdlladderbottomStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int ShadowVeryShort_rangeType = sp.cs_ShadowVeryShort_rangeType;
       int ShadowVeryShort_avgPeriod = sp.cs_ShadowVeryShort_avgPeriod;
@@ -50606,26 +50606,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdllongleggeddojiStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowLongPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdllongleggeddojiStream( Core core ) { this.core = core; }
+      private CdllongleggeddojiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -50661,7 +50661,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdllongleggeddojiStream( CdllongleggeddojiStream other ) {
+      private CdllongleggeddojiStream( CdllongleggeddojiStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -50767,7 +50767,7 @@ public final class Core {
          return new CdllongleggeddojiStream(this);
       }
    }
-   void cdllongleggeddojiStepImpl( CdllongleggeddojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdllongleggeddojiStepImpl( CdllongleggeddojiStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -51360,26 +51360,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdllonglineStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowTrailingIdx;
-      int ringCap_ShadowTrailingIdx;
-      double[] ring_ShadowTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_ShadowShort_rangeType;
-      int cs_ShadowShort_avgPeriod;
-      double cs_ShadowShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowTrailingIdx;
+      private int ringCap_ShadowTrailingIdx;
+      private double[] ring_ShadowTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_ShadowShort_rangeType;
+      private int cs_ShadowShort_avgPeriod;
+      private double cs_ShadowShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdllonglineStream( Core core ) { this.core = core; }
+      private CdllonglineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -51415,7 +51415,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdllonglineStream( CdllonglineStream other ) {
+      private CdllonglineStream( CdllonglineStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -51521,7 +51521,7 @@ public final class Core {
          return new CdllonglineStream(this);
       }
    }
-   void cdllonglineStepImpl( CdllonglineStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdllonglineStepImpl( CdllonglineStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -52125,26 +52125,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlmarubozuStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlmarubozuStream( Core core ) { this.core = core; }
+      private CdlmarubozuStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -52180,7 +52180,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlmarubozuStream( CdlmarubozuStream other ) {
+      private CdlmarubozuStream( CdlmarubozuStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -52286,7 +52286,7 @@ public final class Core {
          return new CdlmarubozuStream(this);
       }
    }
-   void cdlmarubozuStepImpl( CdlmarubozuStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlmarubozuStepImpl( CdlmarubozuStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -52865,24 +52865,24 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlmatchinglowStream {
-      Core core;
-      double EqualPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlmatchinglowStream( Core core ) { this.core = core; }
+      private CdlmatchinglowStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -52918,7 +52918,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlmatchinglowStream( CdlmatchinglowStream other ) {
+      private CdlmatchinglowStream( CdlmatchinglowStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -53023,7 +53023,7 @@ public final class Core {
          return new CdlmatchinglowStream(this);
       }
    }
-   void cdlmatchinglowStepImpl( CdlmatchinglowStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlmatchinglowStepImpl( CdlmatchinglowStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -53665,44 +53665,44 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlmatholdStream {
-      Core core;
-      double optInPenetration;
-      double[] BodyPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag4_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag4_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag4_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      double lag4_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      int ringLag_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double[] BodyPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag4_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag4_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag4_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private double lag4_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private int ringLag_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlmatholdStream( Core core ) { this.core = core; }
+      private CdlmatholdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -53738,7 +53738,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlmatholdStream( CdlmatholdStream other ) {
+      private CdlmatholdStream( CdlmatholdStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
@@ -53878,7 +53878,7 @@ public final class Core {
          return new CdlmatholdStream(this);
       }
    }
-   void cdlmatholdStepImpl( CdlmatholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlmatholdStepImpl( CdlmatholdStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -54647,42 +54647,42 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlmorningdojistarStream {
-      Core core;
-      double optInPenetration;
-      double BodyDojiPeriodTotal;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyDojiPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlmorningdojistarStream( Core core ) { this.core = core; }
+      private CdlmorningdojistarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -54718,7 +54718,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlmorningdojistarStream( CdlmorningdojistarStream other ) {
+      private CdlmorningdojistarStream( CdlmorningdojistarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
@@ -54850,7 +54850,7 @@ public final class Core {
          return new CdlmorningdojistarStream(this);
       }
    }
-   void cdlmorningdojistarStepImpl( CdlmorningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlmorningdojistarStepImpl( CdlmorningdojistarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -55594,37 +55594,37 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlmorningstarStream {
-      Core core;
-      double optInPenetration;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double BodyShortPeriodTotal2;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      int ringLag_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInPenetration;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double BodyShortPeriodTotal2;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private int ringLag_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlmorningstarStream( Core core ) { this.core = core; }
+      private CdlmorningstarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -55660,7 +55660,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlmorningstarStream( CdlmorningstarStream other ) {
+      private CdlmorningstarStream( CdlmorningstarStream other ) {
          this.core = other.core;
          this.optInPenetration = other.optInPenetration;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
@@ -55784,7 +55784,7 @@ public final class Core {
          return new CdlmorningstarStream(this);
       }
    }
-   void cdlmorningstarStepImpl( CdlmorningstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlmorningstarStepImpl( CdlmorningstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -56450,32 +56450,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlonneckStream {
-      Core core;
-      double EqualPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlonneckStream( Core core ) { this.core = core; }
+      private CdlonneckStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -56511,7 +56511,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlonneckStream( CdlonneckStream other ) {
+      private CdlonneckStream( CdlonneckStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -56629,7 +56629,7 @@ public final class Core {
          return new CdlonneckStream(this);
       }
    }
-   void cdlonneckStepImpl( CdlonneckStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlonneckStepImpl( CdlonneckStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -57239,24 +57239,24 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlpiercingStream {
-      Core core;
-      double[] BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlpiercingStream( Core core ) { this.core = core; }
+      private CdlpiercingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -57292,7 +57292,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlpiercingStream( CdlpiercingStream other ) {
+      private CdlpiercingStream( CdlpiercingStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -57400,7 +57400,7 @@ public final class Core {
          return new CdlpiercingStream(this);
       }
    }
-   void cdlpiercingStepImpl( CdlpiercingStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlpiercingStepImpl( CdlpiercingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -58027,33 +58027,33 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlrickshawmanStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double NearPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double NearPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlrickshawmanStream( Core core ) { this.core = core; }
+      private CdlrickshawmanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -58089,7 +58089,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlrickshawmanStream( CdlrickshawmanStream other ) {
+      private CdlrickshawmanStream( CdlrickshawmanStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -58210,7 +58210,7 @@ public final class Core {
          return new CdlrickshawmanStream(this);
       }
    }
-   void cdlrickshawmanStepImpl( CdlrickshawmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlrickshawmanStepImpl( CdlrickshawmanStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -58913,43 +58913,43 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlrisefall3methodsStream {
-      Core core;
-      double[] BodyPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag4_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag4_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag4_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      double lag4_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      int ringLag_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] BodyPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag4_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag4_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag4_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private double lag4_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private int ringLag_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlrisefall3methodsStream( Core core ) { this.core = core; }
+      private Cdlrisefall3methodsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -58985,7 +58985,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdlrisefall3methodsStream( Cdlrisefall3methodsStream other ) {
+      private Cdlrisefall3methodsStream( Cdlrisefall3methodsStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal.clone();
          this.lag1_inOpen = other.lag1_inOpen;
@@ -59127,7 +59127,7 @@ public final class Core {
          return new Cdlrisefall3methodsStream(this);
       }
    }
-   void cdlrisefall3methodsStepImpl( Cdlrisefall3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlrisefall3methodsStepImpl( Cdlrisefall3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -59857,38 +59857,38 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlseparatinglinesStream {
-      Core core;
-      double ShadowVeryShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double EqualPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double ShadowVeryShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double EqualPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlseparatinglinesStream( Core core ) { this.core = core; }
+      private CdlseparatinglinesStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -59924,7 +59924,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlseparatinglinesStream( CdlseparatinglinesStream other ) {
+      private CdlseparatinglinesStream( CdlseparatinglinesStream other ) {
          this.core = other.core;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -60053,7 +60053,7 @@ public final class Core {
          return new CdlseparatinglinesStream(this);
       }
    }
-   void cdlseparatinglinesStepImpl( CdlseparatinglinesStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlseparatinglinesStepImpl( CdlseparatinglinesStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -60761,35 +60761,35 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlshootingstarStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowLongPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowLongTrailingIdx;
-      int ringCap_ShadowLongTrailingIdx;
-      double[] ring_ShadowLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowLong_rangeType;
-      int cs_ShadowLong_avgPeriod;
-      double cs_ShadowLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowLongPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowLongTrailingIdx;
+      private int ringCap_ShadowLongTrailingIdx;
+      private double[] ring_ShadowLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowLong_rangeType;
+      private int cs_ShadowLong_avgPeriod;
+      private double cs_ShadowLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlshootingstarStream( Core core ) { this.core = core; }
+      private CdlshootingstarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -60825,7 +60825,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlshootingstarStream( CdlshootingstarStream other ) {
+      private CdlshootingstarStream( CdlshootingstarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowLongPeriodTotal = other.ShadowLongPeriodTotal;
@@ -60947,7 +60947,7 @@ public final class Core {
          return new CdlshootingstarStream(this);
       }
    }
-   void cdlshootingstarStepImpl( CdlshootingstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlshootingstarStepImpl( CdlshootingstarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -61611,26 +61611,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlshortlineStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowTrailingIdx;
-      int ringCap_ShadowTrailingIdx;
-      double[] ring_ShadowTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowShort_rangeType;
-      int cs_ShadowShort_avgPeriod;
-      double cs_ShadowShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowTrailingIdx;
+      private int ringCap_ShadowTrailingIdx;
+      private double[] ring_ShadowTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowShort_rangeType;
+      private int cs_ShadowShort_avgPeriod;
+      private double cs_ShadowShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlshortlineStream( Core core ) { this.core = core; }
+      private CdlshortlineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -61666,7 +61666,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlshortlineStream( CdlshortlineStream other ) {
+      private CdlshortlineStream( CdlshortlineStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -61772,7 +61772,7 @@ public final class Core {
          return new CdlshortlineStream(this);
       }
    }
-   void cdlshortlineStepImpl( CdlshortlineStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlshortlineStepImpl( CdlshortlineStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -62339,19 +62339,19 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlspinningtopStream {
-      Core core;
-      double BodyPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlspinningtopStream( Core core ) { this.core = core; }
+      private CdlspinningtopStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -62387,7 +62387,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlspinningtopStream( CdlspinningtopStream other ) {
+      private CdlspinningtopStream( CdlspinningtopStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
@@ -62483,7 +62483,7 @@ public final class Core {
          return new CdlspinningtopStream(this);
       }
    }
-   void cdlspinningtopStepImpl( CdlspinningtopStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlspinningtopStepImpl( CdlspinningtopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;
@@ -63142,51 +63142,51 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlstalledpatternStream {
-      Core core;
-      double[] BodyLongPeriodTotal;
-      double[] NearPeriodTotal;
-      double BodyShortPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      int ringLag_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double[] BodyLongPeriodTotal;
+      private double[] NearPeriodTotal;
+      private double BodyShortPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private int ringLag_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlstalledpatternStream( Core core ) { this.core = core; }
+      private CdlstalledpatternStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -63222,7 +63222,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlstalledpatternStream( CdlstalledpatternStream other ) {
+      private CdlstalledpatternStream( CdlstalledpatternStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal.clone();
          this.NearPeriodTotal = other.NearPeriodTotal.clone();
@@ -63371,7 +63371,7 @@ public final class Core {
          return new CdlstalledpatternStream(this);
       }
    }
-   void cdlstalledpatternStepImpl( CdlstalledpatternStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlstalledpatternStepImpl( CdlstalledpatternStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int totIdx = 0;
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
@@ -64089,28 +64089,28 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlsticksandwichStream {
-      Core core;
-      double EqualPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlsticksandwichStream( Core core ) { this.core = core; }
+      private CdlsticksandwichStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -64146,7 +64146,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlsticksandwichStream( CdlsticksandwichStream other ) {
+      private CdlsticksandwichStream( CdlsticksandwichStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -64257,7 +64257,7 @@ public final class Core {
          return new CdlsticksandwichStream(this);
       }
    }
-   void cdlsticksandwichStepImpl( CdlsticksandwichStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlsticksandwichStepImpl( CdlsticksandwichStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Equal_rangeType = sp.cs_Equal_rangeType;
       int Equal_avgPeriod = sp.cs_Equal_avgPeriod;
@@ -64882,33 +64882,33 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdltakuriStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double ShadowVeryLongPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_ShadowVeryLongTrailingIdx;
-      int ringCap_ShadowVeryLongTrailingIdx;
-      double[] ring_ShadowVeryLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_ShadowVeryLong_rangeType;
-      int cs_ShadowVeryLong_avgPeriod;
-      double cs_ShadowVeryLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double ShadowVeryLongPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_ShadowVeryLongTrailingIdx;
+      private int ringCap_ShadowVeryLongTrailingIdx;
+      private double[] ring_ShadowVeryLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_ShadowVeryLong_rangeType;
+      private int cs_ShadowVeryLong_avgPeriod;
+      private double cs_ShadowVeryLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdltakuriStream( Core core ) { this.core = core; }
+      private CdltakuriStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -64944,7 +64944,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdltakuriStream( CdltakuriStream other ) {
+      private CdltakuriStream( CdltakuriStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -65060,7 +65060,7 @@ public final class Core {
          return new CdltakuriStream(this);
       }
    }
-   void cdltakuriStepImpl( CdltakuriStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdltakuriStepImpl( CdltakuriStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -65697,26 +65697,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdltasukigapStream {
-      Core core;
-      double NearPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_NearTrailingIdx;
-      int ringCap_NearTrailingIdx;
-      int ringLag_NearTrailingIdx;
-      double[] ring_NearTrailingIdx_derived;
-      int cs_Near_rangeType;
-      int cs_Near_avgPeriod;
-      double cs_Near_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double NearPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_NearTrailingIdx;
+      private int ringCap_NearTrailingIdx;
+      private int ringLag_NearTrailingIdx;
+      private double[] ring_NearTrailingIdx_derived;
+      private int cs_Near_rangeType;
+      private int cs_Near_avgPeriod;
+      private double cs_Near_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdltasukigapStream( Core core ) { this.core = core; }
+      private CdltasukigapStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -65752,7 +65752,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdltasukigapStream( CdltasukigapStream other ) {
+      private CdltasukigapStream( CdltasukigapStream other ) {
          this.core = other.core;
          this.NearPeriodTotal = other.NearPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -65871,7 +65871,7 @@ public final class Core {
          return new CdltasukigapStream(this);
       }
    }
-   void cdltasukigapStepImpl( CdltasukigapStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdltasukigapStepImpl( CdltasukigapStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int Near_rangeType = sp.cs_Near_rangeType;
       int Near_avgPeriod = sp.cs_Near_avgPeriod;
@@ -66494,32 +66494,32 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlthrustingStream {
-      Core core;
-      double EqualPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_EqualTrailingIdx;
-      int ringCap_EqualTrailingIdx;
-      int ringLag_EqualTrailingIdx;
-      double[] ring_EqualTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_Equal_rangeType;
-      int cs_Equal_avgPeriod;
-      double cs_Equal_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double EqualPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_EqualTrailingIdx;
+      private int ringCap_EqualTrailingIdx;
+      private int ringLag_EqualTrailingIdx;
+      private double[] ring_EqualTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_Equal_rangeType;
+      private int cs_Equal_avgPeriod;
+      private double cs_Equal_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlthrustingStream( Core core ) { this.core = core; }
+      private CdlthrustingStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -66555,7 +66555,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdlthrustingStream( CdlthrustingStream other ) {
+      private CdlthrustingStream( CdlthrustingStream other ) {
          this.core = other.core;
          this.EqualPeriodTotal = other.EqualPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -66673,7 +66673,7 @@ public final class Core {
          return new CdlthrustingStream(this);
       }
    }
-   void cdlthrustingStepImpl( CdlthrustingStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlthrustingStepImpl( CdlthrustingStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -67289,27 +67289,27 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdltristarStream {
-      Core core;
-      double BodyPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdltristarStream( Core core ) { this.core = core; }
+      private CdltristarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -67345,7 +67345,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CdltristarStream( CdltristarStream other ) {
+      private CdltristarStream( CdltristarStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -67462,7 +67462,7 @@ public final class Core {
          return new CdltristarStream(this);
       }
    }
-   void cdltristarStepImpl( CdltristarStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdltristarStepImpl( CdltristarStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;
@@ -68078,34 +68078,34 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlunique3riverStream {
-      Core core;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlunique3riverStream( Core core ) { this.core = core; }
+      private Cdlunique3riverStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -68141,7 +68141,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdlunique3riverStream( Cdlunique3riverStream other ) {
+      private Cdlunique3riverStream( Cdlunique3riverStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -68264,7 +68264,7 @@ public final class Core {
          return new Cdlunique3riverStream(this);
       }
    }
-   void cdlunique3riverStepImpl( Cdlunique3riverStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlunique3riverStepImpl( Cdlunique3riverStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -68918,34 +68918,34 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlupsidegap2crowsStream {
-      Core core;
-      double BodyShortPeriodTotal;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int ringPos_BodyShortTrailingIdx;
-      int ringCap_BodyShortTrailingIdx;
-      double[] ring_BodyShortTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyShortPeriodTotal;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int ringPos_BodyShortTrailingIdx;
+      private int ringCap_BodyShortTrailingIdx;
+      private double[] ring_BodyShortTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlupsidegap2crowsStream( Core core ) { this.core = core; }
+      private Cdlupsidegap2crowsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -68981,7 +68981,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdlupsidegap2crowsStream( Cdlupsidegap2crowsStream other ) {
+      private Cdlupsidegap2crowsStream( Cdlupsidegap2crowsStream other ) {
          this.core = other.core;
          this.BodyShortPeriodTotal = other.BodyShortPeriodTotal;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
@@ -69104,7 +69104,7 @@ public final class Core {
          return new Cdlupsidegap2crowsStream(this);
       }
    }
-   void cdlupsidegap2crowsStepImpl( Cdlupsidegap2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlupsidegap2crowsStepImpl( Cdlupsidegap2crowsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;
@@ -69699,16 +69699,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlxsidegap3methodsStream {
-      Core core;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inClose;
-      double lag2_inClose;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
+      private Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -69744,7 +69744,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other ) {
+      private Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
@@ -69844,7 +69844,7 @@ public final class Core {
          return new Cdlxsidegap3methodsStream(this);
       }
    }
-   void cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */
@@ -70241,12 +70241,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CeilStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CeilStream( Core core ) { this.core = core; }
+      private CeilStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -70282,7 +70282,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CeilStream( CeilStream other ) {
+      private CeilStream( CeilStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -70364,7 +70364,7 @@ public final class Core {
          return new CeilStream(this);
       }
    }
-   void ceilStepImpl( CeilStream sp, double inReal )
+   private void ceilStepImpl( CeilStream sp, double inReal )
    {
       sp.cur_outReal = Math.ceil(inReal);
    }
@@ -70959,20 +70959,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CmfStream {
-      Core core;
-      int optInTimePeriod;
-      double sumMFV;
-      double sumVol;
-      int mfv_Idx;
-      int maxIdx_mfv;
-      int cbSize_mfv;
-      double[] cb_mfv_flow;
-      double[] cb_mfv_volume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double sumMFV;
+      private double sumVol;
+      private int mfv_Idx;
+      private int maxIdx_mfv;
+      private int cbSize_mfv;
+      private double[] cb_mfv_flow;
+      private double[] cb_mfv_volume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CmfStream( Core core ) { this.core = core; }
+      private CmfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -71008,7 +71008,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CmfStream( CmfStream other ) {
+      private CmfStream( CmfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumMFV = other.sumMFV;
@@ -71122,7 +71122,7 @@ public final class Core {
          return new CmfStream(this);
       }
    }
-   void cmfStepImpl( CmfStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void cmfStepImpl( CmfStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;
@@ -71861,16 +71861,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CmoStream {
-      Core core;
-      int optInTimePeriod;
-      double prevGain;
-      double prevLoss;
-      double prevValue;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevGain;
+      private double prevLoss;
+      private double prevValue;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CmoStream( Core core ) { this.core = core; }
+      private CmoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -71906,7 +71906,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CmoStream( CmoStream other ) {
+      private CmoStream( CmoStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -72018,7 +72018,7 @@ public final class Core {
          return new CmoStream(this);
       }
    }
-   void cmoStepImpl( CmoStream sp, double inReal )
+   private void cmoStepImpl( CmoStream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -72764,21 +72764,21 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CmouStream {
-      Core core;
-      int optInTimePeriod;
-      int nullRun;
-      double upSum;
-      double downSum;
-      double prevValue;
-      double trailingValue;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int nullRun;
+      private double upSum;
+      private double downSum;
+      private double prevValue;
+      private double trailingValue;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CmouStream( Core core ) { this.core = core; }
+      private CmouStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -72814,7 +72814,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CmouStream( CmouStream other ) {
+      private CmouStream( CmouStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
@@ -72960,7 +72960,7 @@ public final class Core {
          return new CmouStream(this);
       }
    }
-   void cmouStepImpl( CmouStream sp, double inReal )
+   private void cmouStepImpl( CmouStream sp, double inReal )
    {
       double sum = 0.0;
       double diff = 0.0;
@@ -73851,31 +73851,31 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CoppockStream {
-      Core core;
-      int optInWMAPeriod;
-      int optInROC1Period;
-      int optInROC2Period;
-      int ringSize;
-      int barsSinceReseed;
-      double periodSum;
-      double periodSub;
-      double trailingValue;
-      double divider;
-      int sRing_Idx;
-      int maxIdx_sRing;
-      int ringPos_roc1Idx;
-      int ringCap_roc1Idx;
-      double[] ring_roc1Idx_inReal;
-      int ringPos_roc2Idx;
-      int ringCap_roc2Idx;
-      double[] ring_roc2Idx_inReal;
-      int cbSize_sRing;
-      double[] cb_sRing;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInWMAPeriod;
+      private int optInROC1Period;
+      private int optInROC2Period;
+      private int ringSize;
+      private int barsSinceReseed;
+      private double periodSum;
+      private double periodSub;
+      private double trailingValue;
+      private double divider;
+      private int sRing_Idx;
+      private int maxIdx_sRing;
+      private int ringPos_roc1Idx;
+      private int ringCap_roc1Idx;
+      private double[] ring_roc1Idx_inReal;
+      private int ringPos_roc2Idx;
+      private int ringCap_roc2Idx;
+      private double[] ring_roc2Idx_inReal;
+      private int cbSize_sRing;
+      private double[] cb_sRing;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CoppockStream( Core core ) { this.core = core; }
+      private CoppockStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -73911,7 +73911,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CoppockStream( CoppockStream other ) {
+      private CoppockStream( CoppockStream other ) {
          this.core = other.core;
          this.optInWMAPeriod = other.optInWMAPeriod;
          this.optInROC1Period = other.optInROC1Period;
@@ -74091,7 +74091,7 @@ public final class Core {
          return new CoppockStream(this);
       }
    }
-   void coppockStepImpl( CoppockStream sp, double inReal )
+   private void coppockStepImpl( CoppockStream sp, double inReal )
    {
       int q = 0;
       int rw = 0;
@@ -75104,31 +75104,31 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CorrelStream {
-      Core core;
-      int optInTimePeriod;
-      double sumXY;
-      double sumX;
-      double sumY;
-      double sumX2;
-      double sumY2;
-      double shiftX;
-      double shiftY;
-      double leavingX;
-      double leavingY;
-      double invPeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      int barsSinceReseed;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal0;
-      double[] x_inReal1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double sumXY;
+      private double sumX;
+      private double sumY;
+      private double sumX2;
+      private double sumY2;
+      private double shiftX;
+      private double shiftY;
+      private double leavingX;
+      private double leavingY;
+      private double invPeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private int barsSinceReseed;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal0;
+      private double[] x_inReal1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CorrelStream( Core core ) { this.core = core; }
+      private CorrelStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -75164,7 +75164,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CorrelStream( CorrelStream other ) {
+      private CorrelStream( CorrelStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumXY = other.sumXY;
@@ -75420,7 +75420,7 @@ public final class Core {
          return new CorrelStream(this);
       }
    }
-   void correlStepImpl( CorrelStream sp, double inReal0, double inReal1 )
+   private void correlStepImpl( CorrelStream sp, double inReal0, double inReal1 )
    {
       double x = 0.0;
       double y = 0.0;
@@ -76153,12 +76153,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CosStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CosStream( Core core ) { this.core = core; }
+      private CosStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -76194,7 +76194,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CosStream( CosStream other ) {
+      private CosStream( CosStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -76276,7 +76276,7 @@ public final class Core {
          return new CosStream(this);
       }
    }
-   void cosStepImpl( CosStream sp, double inReal )
+   private void cosStepImpl( CosStream sp, double inReal )
    {
       sp.cur_outReal = Math.cos(inReal);
    }
@@ -76585,12 +76585,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CoshStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CoshStream( Core core ) { this.core = core; }
+      private CoshStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -76626,7 +76626,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CoshStream( CoshStream other ) {
+      private CoshStream( CoshStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -76708,7 +76708,7 @@ public final class Core {
          return new CoshStream(this);
       }
    }
-   void coshStepImpl( CoshStream sp, double inReal )
+   private void coshStepImpl( CoshStream sp, double inReal )
    {
       sp.cur_outReal = Math.cosh(inReal);
    }
@@ -77062,13 +77062,13 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CumsumStream {
-      Core core;
-      double total;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double total;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CumsumStream( Core core ) { this.core = core; }
+      private CumsumStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -77104,7 +77104,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CumsumStream( CumsumStream other ) {
+      private CumsumStream( CumsumStream other ) {
          this.core = other.core;
          this.total = other.total;
          this.cur_outReal = other.cur_outReal;
@@ -77189,7 +77189,7 @@ public final class Core {
          return new CumsumStream(this);
       }
    }
-   void cumsumStepImpl( CumsumStream sp, double inReal )
+   private void cumsumStepImpl( CumsumStream sp, double inReal )
    {
       sp.total += inReal;
       sp.cur_outReal = sp.total;
@@ -77756,20 +77756,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class CviStream {
-      Core core;
-      int optInTimePeriod;
-      int optInROCPeriod;
-      double prevEMA;
-      double optInK_1;
-      int emaRing_Idx;
-      int maxIdx_emaRing;
-      int cbSize_emaRing;
-      double[] cb_emaRing;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInROCPeriod;
+      private double prevEMA;
+      private double optInK_1;
+      private int emaRing_Idx;
+      private int maxIdx_emaRing;
+      private int cbSize_emaRing;
+      private double[] cb_emaRing;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CviStream( Core core ) { this.core = core; }
+      private CviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -77805,7 +77805,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      CviStream( CviStream other ) {
+      private CviStream( CviStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInROCPeriod = other.optInROCPeriod;
@@ -77910,7 +77910,7 @@ public final class Core {
          return new CviStream(this);
       }
    }
-   void cviStepImpl( CviStream sp, double inHigh, double inLow )
+   private void cviStepImpl( CviStream sp, double inHigh, double inLow )
    {
       double laggedEMA = 0.0;
       double tempReal = 0.0;
@@ -78558,16 +78558,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class DemaStream {
-      Core core;
-      int optInTimePeriod;
-      double prevEMA1;
-      double prevEMA2;
-      double optInK_1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevEMA1;
+      private double prevEMA2;
+      private double optInK_1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DemaStream( Core core ) { this.core = core; }
+      private DemaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -78603,7 +78603,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      DemaStream( DemaStream other ) {
+      private DemaStream( DemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -78697,7 +78697,7 @@ public final class Core {
          return new DemaStream(this);
       }
    }
-   void demaStepImpl( DemaStream sp, double inReal )
+   private void demaStepImpl( DemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -79163,12 +79163,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class DivStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DivStream( Core core ) { this.core = core; }
+      private DivStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -79204,7 +79204,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      DivStream( DivStream other ) {
+      private DivStream( DivStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -79286,7 +79286,7 @@ public final class Core {
          return new DivStream(this);
       }
    }
-   void divStepImpl( DivStream sp, double inReal0, double inReal1 )
+   private void divStepImpl( DivStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 / inReal1;
    }
@@ -79844,25 +79844,25 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class DonchianStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DonchianStream( Core core ) { this.core = core; }
+      private DonchianStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -79898,7 +79898,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      DonchianStream( DonchianStream other ) {
+      private DonchianStream( DonchianStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -80077,7 +80077,7 @@ public final class Core {
       /** Lowest low of the window. */
       public double realLowerBand;
    }
-   void donchianStepImpl( DonchianStream sp, double inHigh, double inLow )
+   private void donchianStepImpl( DonchianStream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;
@@ -80702,20 +80702,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class DpoStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_dispIdx;
-      int ringCap_dispIdx;
-      double[] ring_dispIdx_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_dispIdx;
+      private int ringCap_dispIdx;
+      private double[] ring_dispIdx_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DpoStream( Core core ) { this.core = core; }
+      private DpoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -80751,7 +80751,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      DpoStream( DpoStream other ) {
+      private DpoStream( DpoStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -80866,7 +80866,7 @@ public final class Core {
          return new DpoStream(this);
       }
    }
-   void dpoStepImpl( DpoStream sp, double inReal )
+   private void dpoStepImpl( DpoStream sp, double inReal )
    {
       double tempReal = 0.0;
       double dispVal = 0.0;
@@ -81792,20 +81792,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class DxStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevMinusDM;
-      double prevPlusDM;
-      double prevTR;
-      double lastOut_outReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevMinusDM;
+      private double prevPlusDM;
+      private double prevTR;
+      private double lastOut_outReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DxStream( Core core ) { this.core = core; }
+      private DxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -81841,7 +81841,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      DxStream( DxStream other ) {
+      private DxStream( DxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -81988,7 +81988,7 @@ public final class Core {
          return new DxStream(this);
       }
    }
-   void dxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
+   private void dxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;
@@ -82884,16 +82884,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class EfiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevClose;
-      double optInK_1;
-      double prevMA;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevClose;
+      private double optInK_1;
+      private double prevMA;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      EfiStream( Core core ) { this.core = core; }
+      private EfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -82929,7 +82929,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      EfiStream( EfiStream other ) {
+      private EfiStream( EfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevClose = other.prevClose;
@@ -83029,7 +83029,7 @@ public final class Core {
          return new EfiStream(this);
       }
    }
-   void efiStepImpl( EfiStream sp, double inClose, double inVolume )
+   private void efiStepImpl( EfiStream sp, double inClose, double inVolume )
    {
       if( sp.optInTimePeriod == 1 ) {
          double force = 0.0;
@@ -83675,15 +83675,15 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class EmaStream {
-      Core core;
-      int optInTimePeriod;
-      double optInK_1;
-      double prevMA;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInK_1;
+      private double prevMA;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      EmaStream( Core core ) { this.core = core; }
+      private EmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -83719,7 +83719,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      EmaStream( EmaStream other ) {
+      private EmaStream( EmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInK_1 = other.optInK_1;
@@ -83810,7 +83810,7 @@ public final class Core {
          return new EmaStream(this);
       }
    }
-   void emaStepImpl( EmaStream sp, double inReal )
+   private void emaStepImpl( EmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -84454,20 +84454,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class ErStream {
-      Core core;
-      int optInTimePeriod;
-      int nullRun;
-      double sumROC1;
-      double trailingValue;
-      double lag1_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int nullRun;
+      private double sumROC1;
+      private double trailingValue;
+      private double lag1_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ErStream( Core core ) { this.core = core; }
+      private ErStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -84503,7 +84503,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      ErStream( ErStream other ) {
+      private ErStream( ErStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
@@ -84637,7 +84637,7 @@ public final class Core {
          return new ErStream(this);
       }
    }
-   void erStepImpl( ErStream sp, double inReal )
+   private void erStepImpl( ErStream sp, double inReal )
    {
       double periodROC = 0.0;
       double tempReal = 0.0;
@@ -85360,16 +85360,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class EriStream {
-      Core core;
-      int optInTimePeriod;
-      double prevMA;
-      double k;
-      double cur_outBullPower;
-      double cur_outBearPower;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevMA;
+      private double k;
+      private double cur_outBullPower;
+      private double cur_outBearPower;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      EriStream( Core core ) { this.core = core; }
+      private EriStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -85405,7 +85405,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      EriStream( EriStream other ) {
+      private EriStream( EriStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevMA = other.prevMA;
@@ -85538,7 +85538,7 @@ public final class Core {
       /** Low minus the EMA of close. */
       public double bearPower;
    }
-   void eriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
+   private void eriStepImpl( EriStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod == 1 ) {
          double tempReal = 0.0;
@@ -86015,12 +86015,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class ExpStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ExpStream( Core core ) { this.core = core; }
+      private ExpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -86056,7 +86056,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      ExpStream( ExpStream other ) {
+      private ExpStream( ExpStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -86138,7 +86138,7 @@ public final class Core {
          return new ExpStream(this);
       }
    }
-   void expStepImpl( ExpStream sp, double inReal )
+   private void expStepImpl( ExpStream sp, double inReal )
    {
       sp.cur_outReal = Math.exp(inReal);
    }
@@ -86445,12 +86445,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class FloorStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      FloorStream( Core core ) { this.core = core; }
+      private FloorStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -86486,7 +86486,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      FloorStream( FloorStream other ) {
+      private FloorStream( FloorStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -86568,7 +86568,7 @@ public final class Core {
          return new FloorStream(this);
       }
    }
-   void floorStepImpl( FloorStream sp, double inReal )
+   private void floorStepImpl( FloorStream sp, double inReal )
    {
       sp.cur_outReal = Math.floor(inReal);
    }
@@ -87109,27 +87109,27 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class FoscStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      double lag1_inReal;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private double lag1_inReal;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      FoscStream( Core core ) { this.core = core; }
+      private FoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -87165,7 +87165,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      FoscStream( FoscStream other ) {
+      private FoscStream( FoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -87309,7 +87309,7 @@ public final class Core {
          return new FoscStream(this);
       }
    }
-   void foscStepImpl( FoscStream sp, double inReal )
+   private void foscStepImpl( FoscStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -88025,19 +88025,19 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class FractalStream {
-      Core core;
-      int optInLeftBars;
-      int optInRightBars;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inHigh;
-      double[] win_i_inLow;
-      int cur_outSwingHigh;
-      int cur_outSwingLow;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInLeftBars;
+      private int optInRightBars;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inHigh;
+      private double[] win_i_inLow;
+      private int cur_outSwingHigh;
+      private int cur_outSwingLow;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      FractalStream( Core core ) { this.core = core; }
+      private FractalStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -88073,7 +88073,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      FractalStream( FractalStream other ) {
+      private FractalStream( FractalStream other ) {
          this.core = other.core;
          this.optInLeftBars = other.optInLeftBars;
          this.optInRightBars = other.optInRightBars;
@@ -88240,7 +88240,7 @@ public final class Core {
       /** 100 when the bar {@code optInRightBars} back is a strict swing low, 0 otherwise. */
       public int swingLow;
    }
-   void fractalStepImpl( FractalStream sp, double inHigh, double inLow )
+   private void fractalStepImpl( FractalStream sp, double inHigh, double inLow )
    {
       int i = 0;
       double pivotHigh = 0.0;
@@ -88973,17 +88973,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HaStream {
-      Core core;
-      double haOpen;
-      double haClose;
-      double cur_outHAOpen;
-      double cur_outHAHigh;
-      double cur_outHALow;
-      double cur_outHAClose;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double haOpen;
+      private double haClose;
+      private double cur_outHAOpen;
+      private double cur_outHAHigh;
+      private double cur_outHALow;
+      private double cur_outHAClose;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HaStream( Core core ) { this.core = core; }
+      private HaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -89019,7 +89019,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HaStream( HaStream other ) {
+      private HaStream( HaStream other ) {
          this.core = other.core;
          this.haOpen = other.haOpen;
          this.haClose = other.haClose;
@@ -89182,7 +89182,7 @@ public final class Core {
       /** Heikin-Ashi close. */
       public double haClose;
    }
-   void haStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void haStepImpl( HaStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double haHigh = 0.0;
       double haLow = 0.0;
@@ -90302,49 +90302,49 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HmaStream {
-      Core core;
-      int optInTimePeriod;
-      double dividerFull;
-      double periodSubFull;
-      double periodSumFull;
-      double trailingFull;
-      int lookbackFull;
-      int barsSinceReseedFull;
-      int halfPeriod;
-      int sqrtPeriod;
-      int ringSize;
-      double dividerHalf;
-      double dividerSqrt;
-      double periodSubHalf;
-      double periodSumHalf;
-      double trailingHalf;
-      double periodSubSqrt;
-      double periodSumSqrt;
-      double trailingSqrt;
-      int lookbackHalf;
-      int barsSinceReseedHalf;
-      int barsSinceReseedSqrt;
-      int dRing_Idx;
-      int maxIdx_dRing;
-      int ringPos_trailingIdxFull;
-      int ringCap_trailingIdxFull;
-      double[] ring_trailingIdxFull_inReal;
-      int winPos_jFull;
-      int winCap_jFull;
-      double[] win_jFull_inReal;
-      double cur_outReal;
-      int ringPos_trailingIdxHalf;
-      int ringCap_trailingIdxHalf;
-      double[] ring_trailingIdxHalf_inReal;
-      int winPos_jHalf;
-      int winCap_jHalf;
-      double[] win_jHalf_inReal;
-      int cbSize_dRing;
-      double[] cb_dRing;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double dividerFull;
+      private double periodSubFull;
+      private double periodSumFull;
+      private double trailingFull;
+      private int lookbackFull;
+      private int barsSinceReseedFull;
+      private int halfPeriod;
+      private int sqrtPeriod;
+      private int ringSize;
+      private double dividerHalf;
+      private double dividerSqrt;
+      private double periodSubHalf;
+      private double periodSumHalf;
+      private double trailingHalf;
+      private double periodSubSqrt;
+      private double periodSumSqrt;
+      private double trailingSqrt;
+      private int lookbackHalf;
+      private int barsSinceReseedHalf;
+      private int barsSinceReseedSqrt;
+      private int dRing_Idx;
+      private int maxIdx_dRing;
+      private int ringPos_trailingIdxFull;
+      private int ringCap_trailingIdxFull;
+      private double[] ring_trailingIdxFull_inReal;
+      private int winPos_jFull;
+      private int winCap_jFull;
+      private double[] win_jFull_inReal;
+      private double cur_outReal;
+      private int ringPos_trailingIdxHalf;
+      private int ringCap_trailingIdxHalf;
+      private double[] ring_trailingIdxHalf_inReal;
+      private int winPos_jHalf;
+      private int winCap_jHalf;
+      private double[] win_jHalf_inReal;
+      private int cbSize_dRing;
+      private double[] cb_dRing;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HmaStream( Core core ) { this.core = core; }
+      private HmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -90380,7 +90380,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HmaStream( HmaStream other ) {
+      private HmaStream( HmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.dividerFull = other.dividerFull;
@@ -90663,7 +90663,7 @@ public final class Core {
          return new HmaStream(this);
       }
    }
-   void hmaStepImpl( HmaStream sp, double inReal )
+   private void hmaStepImpl( HmaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -92308,57 +92308,57 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtDcperiodStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double smoothPeriod;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double smoothPeriod;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtDcperiodStream( Core core ) { this.core = core; }
+      private HtDcperiodStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -92394,7 +92394,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HtDcperiodStream( HtDcperiodStream other ) {
+      private HtDcperiodStream( HtDcperiodStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -92693,7 +92693,7 @@ public final class Core {
          return new HtDcperiodStream(this);
       }
    }
-   void htDcperiodStepImpl( HtDcperiodStream sp, double inReal )
+   private void htDcperiodStepImpl( HtDcperiodStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -94251,63 +94251,63 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtDcphaseStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double constDeg2RadBy360;
-      double smoothPeriod;
-      double DCPhase;
-      int smoothPrice_Idx;
-      int maxIdx_smoothPrice;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      int cbSize_smoothPrice;
-      double[] cb_smoothPrice;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double constDeg2RadBy360;
+      private double smoothPeriod;
+      private double DCPhase;
+      private int smoothPrice_Idx;
+      private int maxIdx_smoothPrice;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private int cbSize_smoothPrice;
+      private double[] cb_smoothPrice;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtDcphaseStream( Core core ) { this.core = core; }
+      private HtDcphaseStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -94343,7 +94343,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HtDcphaseStream( HtDcphaseStream other ) {
+      private HtDcphaseStream( HtDcphaseStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -94701,7 +94701,7 @@ public final class Core {
          return new HtDcphaseStream(this);
       }
    }
-   void htDcphaseStepImpl( HtDcphaseStream sp, double inReal )
+   private void htDcphaseStepImpl( HtDcphaseStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -96290,57 +96290,57 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtPhasorStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      double cur_outInPhase;
-      double cur_outQuadrature;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private double cur_outInPhase;
+      private double cur_outQuadrature;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtPhasorStream( Core core ) { this.core = core; }
+      private HtPhasorStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -96376,7 +96376,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HtPhasorStream( HtPhasorStream other ) {
+      private HtPhasorStream( HtPhasorStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -96647,7 +96647,7 @@ public final class Core {
       /** Quadrature component (Q1 of the Hilbert Transform) */
       public double quadrature;
    }
-   void htPhasorStepImpl( HtPhasorStream sp, double inReal )
+   private void htPhasorStepImpl( HtPhasorStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -98230,65 +98230,65 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtSineStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double deg2Rad;
-      double constDeg2RadBy360;
-      double smoothPeriod;
-      double DCPhase;
-      int smoothPrice_Idx;
-      int maxIdx_smoothPrice;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      int cbSize_smoothPrice;
-      double[] cb_smoothPrice;
-      double cur_outSine;
-      double cur_outLeadSine;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double deg2Rad;
+      private double constDeg2RadBy360;
+      private double smoothPeriod;
+      private double DCPhase;
+      private int smoothPrice_Idx;
+      private int maxIdx_smoothPrice;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private int cbSize_smoothPrice;
+      private double[] cb_smoothPrice;
+      private double cur_outSine;
+      private double cur_outLeadSine;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtSineStream( Core core ) { this.core = core; }
+      private HtSineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -98324,7 +98324,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HtSineStream( HtSineStream other ) {
+      private HtSineStream( HtSineStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -98714,7 +98714,7 @@ public final class Core {
       /** Sine of the phase advanced 45 degrees (lead) */
       public double leadSine;
    }
-   void htSineStepImpl( HtSineStream sp, double inReal )
+   private void htSineStepImpl( HtSineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -100356,63 +100356,63 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtTrendlineStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double iTrend1;
-      double iTrend2;
-      double iTrend3;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double smoothPeriod;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double iTrend1;
+      private double iTrend2;
+      private double iTrend3;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double smoothPeriod;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtTrendlineStream( Core core ) { this.core = core; }
+      private HtTrendlineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -100448,7 +100448,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HtTrendlineStream( HtTrendlineStream other ) {
+      private HtTrendlineStream( HtTrendlineStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -100791,7 +100791,7 @@ public final class Core {
          return new HtTrendlineStream(this);
       }
    }
-   void htTrendlineStepImpl( HtTrendlineStream sp, double inReal )
+   private void htTrendlineStepImpl( HtTrendlineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;
@@ -102581,73 +102581,73 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtTrendmodeStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double iTrend1;
-      double iTrend2;
-      double iTrend3;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double deg2Rad;
-      double constDeg2RadBy360;
-      double smoothPeriod;
-      double DCPhase;
-      int daysInTrend;
-      double sine;
-      double leadSine;
-      int smoothPrice_Idx;
-      int maxIdx_smoothPrice;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      int winPos_j;
-      int winCap_j;
-      double[] win_j_inReal;
-      int cbSize_smoothPrice;
-      double[] cb_smoothPrice;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double iTrend1;
+      private double iTrend2;
+      private double iTrend3;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double deg2Rad;
+      private double constDeg2RadBy360;
+      private double smoothPeriod;
+      private double DCPhase;
+      private int daysInTrend;
+      private double sine;
+      private double leadSine;
+      private int smoothPrice_Idx;
+      private int maxIdx_smoothPrice;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private int winPos_j;
+      private int winCap_j;
+      private double[] win_j_inReal;
+      private int cbSize_smoothPrice;
+      private double[] cb_smoothPrice;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtTrendmodeStream( Core core ) { this.core = core; }
+      private HtTrendmodeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -102683,7 +102683,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      HtTrendmodeStream( HtTrendmodeStream other ) {
+      private HtTrendmodeStream( HtTrendmodeStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -103120,7 +103120,7 @@ public final class Core {
          return new HtTrendmodeStream(this);
       }
    }
-   void htTrendmodeStepImpl( HtTrendmodeStream sp, double inReal )
+   private void htTrendmodeStepImpl( HtTrendmodeStream sp, double inReal )
    {
       int i = 0;
       int j = 0;
@@ -104342,17 +104342,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class ImiStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inOpen;
-      double[] win_i_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inOpen;
+      private double[] win_i_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ImiStream( Core core ) { this.core = core; }
+      private ImiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -104388,7 +104388,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      ImiStream( ImiStream other ) {
+      private ImiStream( ImiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -104503,7 +104503,7 @@ public final class Core {
          return new ImiStream(this);
       }
    }
-   void imiStepImpl( ImiStream sp, double inOpen, double inClose )
+   private void imiStepImpl( ImiStream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;
@@ -105312,23 +105312,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class KamaStream {
-      Core core;
-      int optInTimePeriod;
-      double constMax;
-      double constDiff;
-      double sumROC1;
-      double prevKAMA;
-      int nullRun;
-      double trailingValue;
-      double lag1_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double constMax;
+      private double constDiff;
+      private double sumROC1;
+      private double prevKAMA;
+      private int nullRun;
+      private double trailingValue;
+      private double lag1_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      KamaStream( Core core ) { this.core = core; }
+      private KamaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -105364,7 +105364,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      KamaStream( KamaStream other ) {
+      private KamaStream( KamaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.constMax = other.constMax;
@@ -105518,7 +105518,7 @@ public final class Core {
          return new KamaStream(this);
       }
    }
-   void kamaStepImpl( KamaStream sp, double inReal )
+   private void kamaStepImpl( KamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -106401,20 +106401,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class KcStream {
-      Core core;
-      int optInTimePeriod;
-      int optInATRPeriod;
-      double optInNbDev;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      TyppriceStream sub0;
-      AtrStream sub1;
-      EmaStream sub2;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInATRPeriod;
+      private double optInNbDev;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private TyppriceStream sub0;
+      private AtrStream sub1;
+      private EmaStream sub2;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      KcStream( Core core ) { this.core = core; }
+      private KcStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -106450,7 +106450,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      KcStream( KcStream other ) {
+      private KcStream( KcStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInATRPeriod = other.optInATRPeriod;
@@ -106587,7 +106587,7 @@ public final class Core {
       /** Centre line minus the scaled Average True Range. */
       public double realLowerBand;
    }
-   void kcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
+   private void kcStepImpl( KcStream sp, double inHigh, double inLow, double inClose )
    {
       double middle = 0.0;
       double tempReal = 0.0;
@@ -107270,20 +107270,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class KdjStream {
-      Core core;
-      int optInFastK_Period;
-      int optInSlowK_Period;
-      MAType optInSlowK_MAType;
-      int optInSlowD_Period;
-      MAType optInSlowD_MAType;
-      double cur_outK;
-      double cur_outD;
-      double cur_outJ;
-      StochStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastK_Period;
+      private int optInSlowK_Period;
+      private MAType optInSlowK_MAType;
+      private int optInSlowD_Period;
+      private MAType optInSlowD_MAType;
+      private double cur_outK;
+      private double cur_outD;
+      private double cur_outJ;
+      private StochStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      KdjStream( Core core ) { this.core = core; }
+      private KdjStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -107319,7 +107319,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      KdjStream( KdjStream other ) {
+      private KdjStream( KdjStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInSlowK_Period = other.optInSlowK_Period;
@@ -107453,7 +107453,7 @@ public final class Core {
       /** Divergence line, three parts K less two parts D. */
       public double j;
    }
-   void kdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
+   private void kdjStepImpl( KdjStream sp, double inHigh, double inLow, double inClose )
    {
       double cur_outK = 0.0;
       double cur_outD = 0.0;
@@ -108126,26 +108126,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class LinearregStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      LinearregStream( Core core ) { this.core = core; }
+      private LinearregStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -108181,7 +108181,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      LinearregStream( LinearregStream other ) {
+      private LinearregStream( LinearregStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -108377,7 +108377,7 @@ public final class Core {
          return new LinearregStream(this);
       }
    }
-   void linearregStepImpl( LinearregStream sp, double inReal )
+   private void linearregStepImpl( LinearregStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -109253,26 +109253,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class LinearregAngleStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      LinearregAngleStream( Core core ) { this.core = core; }
+      private LinearregAngleStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -109308,7 +109308,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      LinearregAngleStream( LinearregAngleStream other ) {
+      private LinearregAngleStream( LinearregAngleStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -109502,7 +109502,7 @@ public final class Core {
          return new LinearregAngleStream(this);
       }
    }
-   void linearregAngleStepImpl( LinearregAngleStream sp, double inReal )
+   private void linearregAngleStepImpl( LinearregAngleStream sp, double inReal )
    {
       double m = 0.0;
       int windowStart = 0;
@@ -110372,26 +110372,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class LinearregInterceptStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      LinearregInterceptStream( Core core ) { this.core = core; }
+      private LinearregInterceptStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -110427,7 +110427,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      LinearregInterceptStream( LinearregInterceptStream other ) {
+      private LinearregInterceptStream( LinearregInterceptStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -110621,7 +110621,7 @@ public final class Core {
          return new LinearregInterceptStream(this);
       }
    }
-   void linearregInterceptStepImpl( LinearregInterceptStream sp, double inReal )
+   private void linearregInterceptStepImpl( LinearregInterceptStream sp, double inReal )
    {
       double m = 0.0;
       int windowStart = 0;
@@ -111487,26 +111487,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class LinearregSlopeStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      LinearregSlopeStream( Core core ) { this.core = core; }
+      private LinearregSlopeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -111542,7 +111542,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      LinearregSlopeStream( LinearregSlopeStream other ) {
+      private LinearregSlopeStream( LinearregSlopeStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -111734,7 +111734,7 @@ public final class Core {
          return new LinearregSlopeStream(this);
       }
    }
-   void linearregSlopeStepImpl( LinearregSlopeStream sp, double inReal )
+   private void linearregSlopeStepImpl( LinearregSlopeStream sp, double inReal )
    {
       int windowStart = 0;
       double tempValue1 = 0.0;
@@ -112331,12 +112331,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class LnStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      LnStream( Core core ) { this.core = core; }
+      private LnStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -112372,7 +112372,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      LnStream( LnStream other ) {
+      private LnStream( LnStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -112454,7 +112454,7 @@ public final class Core {
          return new LnStream(this);
       }
    }
-   void lnStepImpl( LnStream sp, double inReal )
+   private void lnStepImpl( LnStream sp, double inReal )
    {
       sp.cur_outReal = Math.log(inReal);
    }
@@ -112769,12 +112769,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Log10Stream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Log10Stream( Core core ) { this.core = core; }
+      private Log10Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -112810,7 +112810,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Log10Stream( Log10Stream other ) {
+      private Log10Stream( Log10Stream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -112892,7 +112892,7 @@ public final class Core {
          return new Log10Stream(this);
       }
    }
-   void log10StepImpl( Log10Stream sp, double inReal )
+   private void log10StepImpl( Log10Stream sp, double inReal )
    {
       sp.cur_outReal = Math.log10(inReal);
    }
@@ -113553,16 +113553,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MaStream {
-      Core core;
-      int optInTimePeriod;
-      MAType optInMAType;
-      double cur_outReal;
+      private Core core;
+      private int optInTimePeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
       // Sub-stream, tagged by optInMAType; null on the identity path.
-      Object sub;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Object sub;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MaStream( Core core ) { this.core = core; }
+      private MaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -113598,7 +113598,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MaStream( MaStream other ) {
+      private MaStream( MaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMAType = other.optInMAType;
@@ -113771,7 +113771,7 @@ public final class Core {
          return new MaStream(this);
       }
    }
-   void maStepImpl( MaStream sp, double inReal )
+   private void maStepImpl( MaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;
@@ -114925,23 +114925,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MacdStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      int optInSignalPeriod;
-      double prevFast;
-      double prevSlow;
-      double prevSignal;
-      double slowK;
-      double fastK;
-      double signalK;
-      double cur_outMACD;
-      double cur_outMACDSignal;
-      double cur_outMACDHist;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private int optInSignalPeriod;
+      private double prevFast;
+      private double prevSlow;
+      private double prevSignal;
+      private double slowK;
+      private double fastK;
+      private double signalK;
+      private double cur_outMACD;
+      private double cur_outMACDSignal;
+      private double cur_outMACDHist;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MacdStream( Core core ) { this.core = core; }
+      private MacdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -114977,7 +114977,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MacdStream( MacdStream other ) {
+      private MacdStream( MacdStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -115121,7 +115121,7 @@ public final class Core {
       /** MACD minus signal line. */
       public double macdHist;
    }
-   void macdStepImpl( MacdStream sp, double inReal )
+   private void macdStepImpl( MacdStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;
@@ -116027,23 +116027,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MacdextStream {
-      Core core;
-      int optInFastPeriod;
-      MAType optInFastMAType;
-      int optInSlowPeriod;
-      MAType optInSlowMAType;
-      int optInSignalPeriod;
-      MAType optInSignalMAType;
-      double cur_outMACD;
-      double cur_outMACDSignal;
-      double cur_outMACDHist;
-      MaStream sub0;
-      MaStream sub1;
-      MaStream sub2;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private MAType optInFastMAType;
+      private int optInSlowPeriod;
+      private MAType optInSlowMAType;
+      private int optInSignalPeriod;
+      private MAType optInSignalMAType;
+      private double cur_outMACD;
+      private double cur_outMACDSignal;
+      private double cur_outMACDHist;
+      private MaStream sub0;
+      private MaStream sub1;
+      private MaStream sub2;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MacdextStream( Core core ) { this.core = core; }
+      private MacdextStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -116079,7 +116079,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MacdextStream( MacdextStream other ) {
+      private MacdextStream( MacdextStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInFastMAType = other.optInFastMAType;
@@ -116217,7 +116217,7 @@ public final class Core {
       /** Histogram: MACD minus signal. */
       public double macdHist;
    }
-   void macdextStepImpl( MacdextStream sp, double inReal )
+   private void macdextStepImpl( MacdextStream sp, double inReal )
    {
       double cur_slowMABuffer = 0.0;
       double cur_fastMABuffer = 0.0;
@@ -116993,21 +116993,21 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MacdfixStream {
-      Core core;
-      int optInSignalPeriod;
-      double prevFast;
-      double prevSlow;
-      double prevSignal;
-      double slowK;
-      double fastK;
-      double signalK;
-      double cur_outMACD;
-      double cur_outMACDSignal;
-      double cur_outMACDHist;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInSignalPeriod;
+      private double prevFast;
+      private double prevSlow;
+      private double prevSignal;
+      private double slowK;
+      private double fastK;
+      private double signalK;
+      private double cur_outMACD;
+      private double cur_outMACDSignal;
+      private double cur_outMACDHist;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MacdfixStream( Core core ) { this.core = core; }
+      private MacdfixStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -117043,7 +117043,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MacdfixStream( MacdfixStream other ) {
+      private MacdfixStream( MacdfixStream other ) {
          this.core = other.core;
          this.optInSignalPeriod = other.optInSignalPeriod;
          this.prevFast = other.prevFast;
@@ -117185,7 +117185,7 @@ public final class Core {
       /** MACD minus signal. */
       public double macdHist;
    }
-   void macdfixStepImpl( MacdfixStream sp, double inReal )
+   private void macdfixStepImpl( MacdfixStream sp, double inReal )
    {
       double macdValue = 0.0;
       double tempReal = 0.0;
@@ -118433,62 +118433,62 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MamaStream {
-      Core core;
-      double optInFastLimit;
-      double optInSlowLimit;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double mama;
-      double fama;
-      double prevPhase;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      double cur_outMAMA;
-      double cur_outFAMA;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInFastLimit;
+      private double optInSlowLimit;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double mama;
+      private double fama;
+      private double prevPhase;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private double cur_outMAMA;
+      private double cur_outFAMA;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MamaStream( Core core ) { this.core = core; }
+      private MamaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -118524,7 +118524,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MamaStream( MamaStream other ) {
+      private MamaStream( MamaStream other ) {
          this.core = other.core;
          this.optInFastLimit = other.optInFastLimit;
          this.optInSlowLimit = other.optInSlowLimit;
@@ -118837,7 +118837,7 @@ public final class Core {
       /** Following adaptive moving average, using half the alpha (slow line) */
       public double fama;
    }
-   void mamaStepImpl( MamaStream sp, double inReal )
+   private void mamaStepImpl( MamaStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;
@@ -119846,12 +119846,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MarketfiStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MarketfiStream( Core core ) { this.core = core; }
+      private MarketfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -119887,7 +119887,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MarketfiStream( MarketfiStream other ) {
+      private MarketfiStream( MarketfiStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -119983,7 +119983,7 @@ public final class Core {
          return new MarketfiStream(this);
       }
    }
-   void marketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
+   private void marketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but
@@ -120689,22 +120689,22 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MassiStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      double optInK_1;
-      double ema1;
-      double ema2;
-      double total;
-      int ratioRing_Idx;
-      int maxIdx_ratioRing;
-      int cbSize_ratioRing;
-      double[] cb_ratioRing;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private double optInK_1;
+      private double ema1;
+      private double ema2;
+      private double total;
+      private int ratioRing_Idx;
+      private int maxIdx_ratioRing;
+      private int cbSize_ratioRing;
+      private double[] cb_ratioRing;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MassiStream( Core core ) { this.core = core; }
+      private MassiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -120740,7 +120740,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MassiStream( MassiStream other ) {
+      private MassiStream( MassiStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -120858,7 +120858,7 @@ public final class Core {
          return new MassiStream(this);
       }
    }
-   void massiStepImpl( MassiStream sp, double inHigh, double inLow )
+   private void massiStepImpl( MassiStream sp, double inHigh, double inLow )
    {
       double hl = 0.0;
       double ratio = 0.0;
@@ -121832,17 +121832,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MavpStream {
-      Core core;
-      int optInMinPeriod;
-      int optInMaxPeriod;
-      MAType optInMAType;
-      double cur_outReal;
+      private Core core;
+      private int optInMinPeriod;
+      private int optInMaxPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-      MaStream[] bank;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private MaStream[] bank;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MavpStream( Core core ) { this.core = core; }
+      private MavpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -121878,7 +121878,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MavpStream( MavpStream other ) {
+      private MavpStream( MavpStream other ) {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
          this.optInMaxPeriod = other.optInMaxPeriod;
@@ -121973,7 +121973,7 @@ public final class Core {
          return new MavpStream(this);
       }
    }
-   void mavpStepImpl( MavpStream sp, double inReal, double inPeriods )
+   private void mavpStepImpl( MavpStream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {
@@ -122633,20 +122633,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MaxStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      int trailingIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MaxStream( Core core ) { this.core = core; }
+      private MaxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -122682,7 +122682,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MaxStream( MaxStream other ) {
+      private MaxStream( MaxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -122796,7 +122796,7 @@ public final class Core {
          return new MaxStream(this);
       }
    }
-   void maxStepImpl( MaxStream sp, double inReal )
+   private void maxStepImpl( MaxStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;
@@ -123348,20 +123348,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MaxindexStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      int trailingIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MaxindexStream( Core core ) { this.core = core; }
+      private MaxindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -123397,7 +123397,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MaxindexStream( MaxindexStream other ) {
+      private MaxindexStream( MaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -123511,7 +123511,7 @@ public final class Core {
          return new MaxindexStream(this);
       }
    }
-   void maxindexStepImpl( MaxindexStream sp, double inReal )
+   private void maxindexStepImpl( MaxindexStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;
@@ -123944,12 +123944,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MedpriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MedpriceStream( Core core ) { this.core = core; }
+      private MedpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -123985,7 +123985,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MedpriceStream( MedpriceStream other ) {
+      private MedpriceStream( MedpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -124067,7 +124067,7 @@ public final class Core {
          return new MedpriceStream(this);
       }
    }
-   void medpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
+   private void medpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }
@@ -124718,22 +124718,22 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MfiStream {
-      Core core;
-      int optInTimePeriod;
-      double posSumMF;
-      double negSumMF;
-      double prevValue;
-      int nullRun;
-      int mflow_Idx;
-      int maxIdx_mflow;
-      int cbSize_mflow;
-      double[] cb_mflow_positive;
-      double[] cb_mflow_negative;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double posSumMF;
+      private double negSumMF;
+      private double prevValue;
+      private int nullRun;
+      private int mflow_Idx;
+      private int maxIdx_mflow;
+      private int cbSize_mflow;
+      private double[] cb_mflow_positive;
+      private double[] cb_mflow_negative;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MfiStream( Core core ) { this.core = core; }
+      private MfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -124769,7 +124769,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MfiStream( MfiStream other ) {
+      private MfiStream( MfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.posSumMF = other.posSumMF;
@@ -124899,7 +124899,7 @@ public final class Core {
          return new MfiStream(this);
       }
    }
-   void mfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void mfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -125746,22 +125746,22 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MidpointStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MidpointStream( Core core ) { this.core = core; }
+      private MidpointStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -125797,7 +125797,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MidpointStream( MidpointStream other ) {
+      private MidpointStream( MidpointStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -125932,7 +125932,7 @@ public final class Core {
          return new MidpointStream(this);
       }
    }
-   void midpointStepImpl( MidpointStream sp, double inReal )
+   private void midpointStepImpl( MidpointStream sp, double inReal )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;
@@ -126731,23 +126731,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MidpriceStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MidpriceStream( Core core ) { this.core = core; }
+      private MidpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -126783,7 +126783,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MidpriceStream( MidpriceStream other ) {
+      private MidpriceStream( MidpriceStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -126923,7 +126923,7 @@ public final class Core {
          return new MidpriceStream(this);
       }
    }
-   void midpriceStepImpl( MidpriceStream sp, double inHigh, double inLow )
+   private void midpriceStepImpl( MidpriceStream sp, double inHigh, double inLow )
    {
       double tmpLow = 0.0;
       double tmpHigh = 0.0;
@@ -127635,20 +127635,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      int trailingIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinStream( Core core ) { this.core = core; }
+      private MinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -127684,7 +127684,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MinStream( MinStream other ) {
+      private MinStream( MinStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -127798,7 +127798,7 @@ public final class Core {
          return new MinStream(this);
       }
    }
-   void minStepImpl( MinStream sp, double inReal )
+   private void minStepImpl( MinStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;
@@ -128348,20 +128348,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinindexStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      int trailingIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinindexStream( Core core ) { this.core = core; }
+      private MinindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -128397,7 +128397,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MinindexStream( MinindexStream other ) {
+      private MinindexStream( MinindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -128511,7 +128511,7 @@ public final class Core {
          return new MinindexStream(this);
       }
    }
-   void minindexStepImpl( MinindexStream sp, double inReal )
+   private void minindexStepImpl( MinindexStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;
@@ -129246,23 +129246,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinmaxStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      double lowest;
-      int trailingIdx;
-      int highestIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outMin;
-      double cur_outMax;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private double lowest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outMin;
+      private double cur_outMax;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinmaxStream( Core core ) { this.core = core; }
+      private MinmaxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -129298,7 +129298,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MinmaxStream( MinmaxStream other ) {
+      private MinmaxStream( MinmaxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -129464,7 +129464,7 @@ public final class Core {
       /** Highest value in each rolling window. */
       public double max;
    }
-   void minmaxStepImpl( MinmaxStream sp, double inReal )
+   private void minmaxStepImpl( MinmaxStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;
@@ -130130,23 +130130,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinmaxindexStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      double lowest;
-      int trailingIdx;
-      int highestIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      int cur_outMinIdx;
-      int cur_outMaxIdx;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private double lowest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private int cur_outMinIdx;
+      private int cur_outMaxIdx;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinmaxindexStream( Core core ) { this.core = core; }
+      private MinmaxindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -130182,7 +130182,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MinmaxindexStream( MinmaxindexStream other ) {
+      private MinmaxindexStream( MinmaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -130348,7 +130348,7 @@ public final class Core {
       /** Absolute index (into inReal) of the window maximum. */
       public int maxIdx;
    }
-   void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
+   private void minmaxindexStepImpl( MinmaxindexStream sp, double inReal )
    {
       double tmpHigh = 0.0;
       double tmpLow = 0.0;
@@ -131346,18 +131346,18 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinusDiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevMinusDM;
-      double prevTR;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevMinusDM;
+      private double prevTR;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinusDiStream( Core core ) { this.core = core; }
+      private MinusDiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -131393,7 +131393,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MinusDiStream( MinusDiStream other ) {
+      private MinusDiStream( MinusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -131563,7 +131563,7 @@ public final class Core {
          return new MinusDiStream(this);
       }
    }
-   void minusDiStepImpl( MinusDiStream sp, double inHigh, double inLow, double inClose )
+   private void minusDiStepImpl( MinusDiStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -132735,16 +132735,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MinusDmStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevMinusDM;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevMinusDM;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MinusDmStream( Core core ) { this.core = core; }
+      private MinusDmStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -132780,7 +132780,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MinusDmStream( MinusDmStream other ) {
+      private MinusDmStream( MinusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -132909,7 +132909,7 @@ public final class Core {
          return new MinusDmStream(this);
       }
    }
-   void minusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
+   private void minusDmStepImpl( MinusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -133652,16 +133652,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MomStream {
-      Core core;
-      int optInTimePeriod;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MomStream( Core core ) { this.core = core; }
+      private MomStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -133697,7 +133697,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MomStream( MomStream other ) {
+      private MomStream( MomStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -133789,7 +133789,7 @@ public final class Core {
          return new MomStream(this);
       }
    }
-   void momStepImpl( MomStream sp, double inReal )
+   private void momStepImpl( MomStream sp, double inReal )
    {
       if( sp.ringCap_trailingIdx == 0 ) {
          sp.ring_trailingIdx_inReal[0] = inReal;
@@ -134192,12 +134192,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class MultStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MultStream( Core core ) { this.core = core; }
+      private MultStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -134233,7 +134233,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      MultStream( MultStream other ) {
+      private MultStream( MultStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -134315,7 +134315,7 @@ public final class Core {
          return new MultStream(this);
       }
    }
-   void multStepImpl( MultStream sp, double inReal0, double inReal1 )
+   private void multStepImpl( MultStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 * inReal1;
    }
@@ -134985,17 +134985,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class NatrStream {
-      Core core;
-      int optInTimePeriod;
-      double prevATR;
-      double wAlpha;
-      double wBeta;
-      double lag1_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevATR;
+      private double wAlpha;
+      private double wBeta;
+      private double lag1_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      NatrStream( Core core ) { this.core = core; }
+      private NatrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -135031,7 +135031,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      NatrStream( NatrStream other ) {
+      private NatrStream( NatrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevATR = other.prevATR;
@@ -135150,7 +135150,7 @@ public final class Core {
          return new NatrStream(this);
       }
    }
-   void natrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
+   private void natrStepImpl( NatrStream sp, double inHigh, double inLow, double inClose )
    {
       double tempValue = 0.0;
       double val2 = 0.0;
@@ -135784,15 +135784,15 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class NviStream {
-      Core core;
-      double prevNVI;
-      double prevClose;
-      double prevVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevNVI;
+      private double prevClose;
+      private double prevVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      NviStream( Core core ) { this.core = core; }
+      private NviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -135828,7 +135828,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      NviStream( NviStream other ) {
+      private NviStream( NviStream other ) {
          this.core = other.core;
          this.prevNVI = other.prevNVI;
          this.prevClose = other.prevClose;
@@ -135941,7 +135941,7 @@ public final class Core {
          return new NviStream(this);
       }
    }
-   void nviStepImpl( NviStream sp, double inClose, double inVolume )
+   private void nviStepImpl( NviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -136363,14 +136363,14 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class ObvStream {
-      Core core;
-      double prevReal;
-      double prevOBV;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevReal;
+      private double prevOBV;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ObvStream( Core core ) { this.core = core; }
+      private ObvStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -136406,7 +136406,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      ObvStream( ObvStream other ) {
+      private ObvStream( ObvStream other ) {
          this.core = other.core;
          this.prevReal = other.prevReal;
          this.prevOBV = other.prevOBV;
@@ -136498,7 +136498,7 @@ public final class Core {
          return new ObvStream(this);
       }
    }
-   void obvStepImpl( ObvStream sp, double inReal, double inVolume )
+   private void obvStepImpl( ObvStream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;
@@ -137103,24 +137103,24 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PercentileStream {
-      Core core;
-      int optInTimePeriod;
-      double optInPercentile;
-      int lookbackTotal;
-      int rank;
-      int ring_Idx;
-      int maxIdx_ring;
-      int sorted_Idx;
-      int maxIdx_sorted;
-      int cbSize_ring;
-      double[] cb_ring;
-      int cbSize_sorted;
-      double[] cb_sorted;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInPercentile;
+      private int lookbackTotal;
+      private int rank;
+      private int ring_Idx;
+      private int maxIdx_ring;
+      private int sorted_Idx;
+      private int maxIdx_sorted;
+      private int cbSize_ring;
+      private double[] cb_ring;
+      private int cbSize_sorted;
+      private double[] cb_sorted;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PercentileStream( Core core ) { this.core = core; }
+      private PercentileStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -137156,7 +137156,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PercentileStream( PercentileStream other ) {
+      private PercentileStream( PercentileStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInPercentile = other.optInPercentile;
@@ -137265,7 +137265,7 @@ public final class Core {
          return new PercentileStream(this);
       }
    }
-   void percentileStepImpl( PercentileStream sp, double inReal )
+   private void percentileStepImpl( PercentileStream sp, double inReal )
    {
       double newValue = 0.0;
       double oldValue = 0.0;
@@ -137874,16 +137874,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PercentrankStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PercentrankStream( Core core ) { this.core = core; }
+      private PercentrankStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -137919,7 +137919,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PercentrankStream( PercentrankStream other ) {
+      private PercentrankStream( PercentrankStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -138022,7 +138022,7 @@ public final class Core {
          return new PercentrankStream(this);
       }
    }
-   void percentrankStepImpl( PercentrankStream sp, double inReal )
+   private void percentrankStepImpl( PercentrankStream sp, double inReal )
    {
       int i = 0;
       int count = 0;
@@ -138945,18 +138945,18 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PlusDiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevPlusDM;
-      double prevTR;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevPlusDM;
+      private double prevTR;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PlusDiStream( Core core ) { this.core = core; }
+      private PlusDiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -138992,7 +138992,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PlusDiStream( PlusDiStream other ) {
+      private PlusDiStream( PlusDiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -139162,7 +139162,7 @@ public final class Core {
          return new PlusDiStream(this);
       }
    }
-   void plusDiStepImpl( PlusDiStream sp, double inHigh, double inLow, double inClose )
+   private void plusDiStepImpl( PlusDiStream sp, double inHigh, double inLow, double inClose )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -140333,16 +140333,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PlusDmStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevPlusDM;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevPlusDM;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PlusDmStream( Core core ) { this.core = core; }
+      private PlusDmStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -140378,7 +140378,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PlusDmStream( PlusDmStream other ) {
+      private PlusDmStream( PlusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -140507,7 +140507,7 @@ public final class Core {
          return new PlusDmStream(this);
       }
    }
-   void plusDmStepImpl( PlusDmStream sp, double inHigh, double inLow )
+   private void plusDmStepImpl( PlusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;
@@ -141338,17 +141338,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PpoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      MAType optInMAType;
-      double cur_outReal;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PpoStream( Core core ) { this.core = core; }
+      private PpoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -141384,7 +141384,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PpoStream( PpoStream other ) {
+      private PpoStream( PpoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -141482,7 +141482,7 @@ public final class Core {
          return new PpoStream(this);
       }
    }
-   void ppoStepImpl( PpoStream sp, double inReal )
+   private void ppoStepImpl( PpoStream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;
@@ -141977,15 +141977,15 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PviStream {
-      Core core;
-      double prevPVI;
-      double prevClose;
-      double prevVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevPVI;
+      private double prevClose;
+      private double prevVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PviStream( Core core ) { this.core = core; }
+      private PviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -142021,7 +142021,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PviStream( PviStream other ) {
+      private PviStream( PviStream other ) {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
@@ -142134,7 +142134,7 @@ public final class Core {
          return new PviStream(this);
       }
    }
-   void pviStepImpl( PviStream sp, double inClose, double inVolume )
+   private void pviStepImpl( PviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;
@@ -142704,17 +142704,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PvoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      MAType optInMAType;
-      double cur_outReal;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PvoStream( Core core ) { this.core = core; }
+      private PvoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -142750,7 +142750,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PvoStream( PvoStream other ) {
+      private PvoStream( PvoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -142848,7 +142848,7 @@ public final class Core {
          return new PvoStream(this);
       }
    }
-   void pvoStepImpl( PvoStream sp, double inVolume )
+   private void pvoStepImpl( PvoStream sp, double inVolume )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;
@@ -143322,14 +143322,14 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class PvtStream {
-      Core core;
-      double prevPVT;
-      double prevClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevPVT;
+      private double prevClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PvtStream( Core core ) { this.core = core; }
+      private PvtStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -143365,7 +143365,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      PvtStream( PvtStream other ) {
+      private PvtStream( PvtStream other ) {
          this.core = other.core;
          this.prevPVT = other.prevPVT;
          this.prevClose = other.prevClose;
@@ -143459,7 +143459,7 @@ public final class Core {
          return new PvtStream(this);
       }
    }
-   void pvtStepImpl( PvtStream sp, double inClose, double inVolume )
+   private void pvtStepImpl( PvtStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       tempClose = inClose;
@@ -143943,17 +143943,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class QstickStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_derived;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_derived;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      QstickStream( Core core ) { this.core = core; }
+      private QstickStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -143989,7 +143989,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      QstickStream( QstickStream other ) {
+      private QstickStream( QstickStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -144087,7 +144087,7 @@ public final class Core {
          return new QstickStream(this);
       }
    }
-   void qstickStepImpl( QstickStream sp, double inOpen, double inClose )
+   private void qstickStepImpl( QstickStream sp, double inOpen, double inClose )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -144686,16 +144686,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RmaStream {
-      Core core;
-      int optInTimePeriod;
-      double prevRMA;
-      double wAlpha;
-      double wBeta;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevRMA;
+      private double wAlpha;
+      private double wBeta;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RmaStream( Core core ) { this.core = core; }
+      private RmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -144731,7 +144731,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RmaStream( RmaStream other ) {
+      private RmaStream( RmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevRMA = other.prevRMA;
@@ -144819,7 +144819,7 @@ public final class Core {
          return new RmaStream(this);
       }
    }
-   void rmaStepImpl( RmaStream sp, double inReal )
+   private void rmaStepImpl( RmaStream sp, double inReal )
    {
       sp.prevRMA = Math.fma(sp.wBeta, sp.prevRMA, sp.wAlpha * inReal);
       sp.cur_outReal = sp.prevRMA;
@@ -145310,16 +145310,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RocStream {
-      Core core;
-      int optInTimePeriod;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RocStream( Core core ) { this.core = core; }
+      private RocStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -145355,7 +145355,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RocStream( RocStream other ) {
+      private RocStream( RocStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -145453,7 +145453,7 @@ public final class Core {
          return new RocStream(this);
       }
    }
-   void rocStepImpl( RocStream sp, double inReal )
+   private void rocStepImpl( RocStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -145958,16 +145958,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RocpStream {
-      Core core;
-      int optInTimePeriod;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RocpStream( Core core ) { this.core = core; }
+      private RocpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -146003,7 +146003,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RocpStream( RocpStream other ) {
+      private RocpStream( RocpStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -146101,7 +146101,7 @@ public final class Core {
          return new RocpStream(this);
       }
    }
-   void rocpStepImpl( RocpStream sp, double inReal )
+   private void rocpStepImpl( RocpStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -146609,16 +146609,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RocrStream {
-      Core core;
-      int optInTimePeriod;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RocrStream( Core core ) { this.core = core; }
+      private RocrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -146654,7 +146654,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RocrStream( RocrStream other ) {
+      private RocrStream( RocrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -146752,7 +146752,7 @@ public final class Core {
          return new RocrStream(this);
       }
    }
-   void rocrStepImpl( RocrStream sp, double inReal )
+   private void rocrStepImpl( RocrStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -147262,16 +147262,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class Rocr100Stream {
-      Core core;
-      int optInTimePeriod;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Rocr100Stream( Core core ) { this.core = core; }
+      private Rocr100Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -147307,7 +147307,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      Rocr100Stream( Rocr100Stream other ) {
+      private Rocr100Stream( Rocr100Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -147405,7 +147405,7 @@ public final class Core {
          return new Rocr100Stream(this);
       }
    }
-   void rocr100StepImpl( Rocr100Stream sp, double inReal )
+   private void rocr100StepImpl( Rocr100Stream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -148102,16 +148102,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RsiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevGain;
-      double prevLoss;
-      double prevValue;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevGain;
+      private double prevLoss;
+      private double prevValue;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RsiStream( Core core ) { this.core = core; }
+      private RsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -148147,7 +148147,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RsiStream( RsiStream other ) {
+      private RsiStream( RsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -148259,7 +148259,7 @@ public final class Core {
          return new RsiStream(this);
       }
    }
-   void rsiStepImpl( RsiStream sp, double inReal )
+   private void rsiStepImpl( RsiStream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;
@@ -149294,31 +149294,31 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RviStream {
-      Core core;
-      int optInTimePeriod;
-      int optInStdDevPeriod;
-      double shift;
-      double periodTotal1;
-      double periodTotal2;
-      double invPeriod;
-      double prevUp;
-      double prevDn;
-      double wAlpha;
-      double wBeta;
-      int trailingIdx;
-      int barsSinceReseed;
-      int nbInitialElementNeeded;
-      int j;
-      int windowStart;
-      int today;
-      double lag1_inReal;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInStdDevPeriod;
+      private double shift;
+      private double periodTotal1;
+      private double periodTotal2;
+      private double invPeriod;
+      private double prevUp;
+      private double prevDn;
+      private double wAlpha;
+      private double wBeta;
+      private int trailingIdx;
+      private int barsSinceReseed;
+      private int nbInitialElementNeeded;
+      private int j;
+      private int windowStart;
+      private int today;
+      private double lag1_inReal;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RviStream( Core core ) { this.core = core; }
+      private RviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -149354,7 +149354,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RviStream( RviStream other ) {
+      private RviStream( RviStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInStdDevPeriod = other.optInStdDevPeriod;
@@ -149526,7 +149526,7 @@ public final class Core {
          return new RviStream(this);
       }
    }
-   void rviStepImpl( RviStream sp, double inReal )
+   private void rviStepImpl( RviStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;
@@ -150295,17 +150295,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class RvolStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RvolStream( Core core ) { this.core = core; }
+      private RvolStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -150341,7 +150341,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      RvolStream( RvolStream other ) {
+      private RvolStream( RvolStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -150446,7 +150446,7 @@ public final class Core {
          return new RvolStream(this);
       }
    }
-   void rvolStepImpl( RvolStream sp, double inVolume )
+   private void rvolStepImpl( RvolStream sp, double inVolume )
    {
       double baseline = 0.0;
       double todayVolume = 0.0;
@@ -151250,20 +151250,20 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SarStream {
-      Core core;
-      double optInAcceleration;
-      double optInMaximum;
-      int isLong;
-      double newHigh;
-      double newLow;
-      double af;
-      double ep;
-      double sar;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInAcceleration;
+      private double optInMaximum;
+      private int isLong;
+      private double newHigh;
+      private double newLow;
+      private double af;
+      private double ep;
+      private double sar;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SarStream( Core core ) { this.core = core; }
+      private SarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -151299,7 +151299,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SarStream( SarStream other ) {
+      private SarStream( SarStream other ) {
          this.core = other.core;
          this.optInAcceleration = other.optInAcceleration;
          this.optInMaximum = other.optInMaximum;
@@ -151509,7 +151509,7 @@ public final class Core {
          return new SarStream(this);
       }
    }
-   void sarStepImpl( SarStream sp, double inHigh, double inLow )
+   private void sarStepImpl( SarStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;
@@ -152836,27 +152836,27 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SarextStream {
-      Core core;
-      double optInStartValue;
-      double optInOffsetOnReverse;
-      double optInAccelerationInitLong;
-      double optInAccelerationLong;
-      double optInAccelerationMaxLong;
-      double optInAccelerationInitShort;
-      double optInAccelerationShort;
-      double optInAccelerationMaxShort;
-      int isLong;
-      double newHigh;
-      double newLow;
-      double afLong;
-      double afShort;
-      double ep;
-      double sar;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInStartValue;
+      private double optInOffsetOnReverse;
+      private double optInAccelerationInitLong;
+      private double optInAccelerationLong;
+      private double optInAccelerationMaxLong;
+      private double optInAccelerationInitShort;
+      private double optInAccelerationShort;
+      private double optInAccelerationMaxShort;
+      private int isLong;
+      private double newHigh;
+      private double newLow;
+      private double afLong;
+      private double afShort;
+      private double ep;
+      private double sar;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SarextStream( Core core ) { this.core = core; }
+      private SarextStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -152892,7 +152892,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SarextStream( SarextStream other ) {
+      private SarextStream( SarextStream other ) {
          this.core = other.core;
          this.optInStartValue = other.optInStartValue;
          this.optInOffsetOnReverse = other.optInOffsetOnReverse;
@@ -153116,7 +153116,7 @@ public final class Core {
          return new SarextStream(this);
       }
    }
-   void sarextStepImpl( SarextStream sp, double inHigh, double inLow )
+   private void sarextStepImpl( SarextStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;
@@ -153885,12 +153885,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SinStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SinStream( Core core ) { this.core = core; }
+      private SinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -153926,7 +153926,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SinStream( SinStream other ) {
+      private SinStream( SinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -154008,7 +154008,7 @@ public final class Core {
          return new SinStream(this);
       }
    }
-   void sinStepImpl( SinStream sp, double inReal )
+   private void sinStepImpl( SinStream sp, double inReal )
    {
       sp.cur_outReal = Math.sin(inReal);
    }
@@ -154315,12 +154315,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SinhStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SinhStream( Core core ) { this.core = core; }
+      private SinhStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -154356,7 +154356,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SinhStream( SinhStream other ) {
+      private SinhStream( SinhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -154438,7 +154438,7 @@ public final class Core {
          return new SinhStream(this);
       }
    }
-   void sinhStepImpl( SinhStream sp, double inReal )
+   private void sinhStepImpl( SinhStream sp, double inReal )
    {
       sp.cur_outReal = Math.sinh(inReal);
    }
@@ -154860,17 +154860,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SmaStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SmaStream( Core core ) { this.core = core; }
+      private SmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -154906,7 +154906,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SmaStream( SmaStream other ) {
+      private SmaStream( SmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -155004,7 +155004,7 @@ public final class Core {
          return new SmaStream(this);
       }
    }
-   void smaStepImpl( SmaStream sp, double inReal )
+   private void smaStepImpl( SmaStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -156011,36 +156011,36 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SmiStream {
-      Core core;
-      int optInTimePeriod;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      int optInSignalPeriod;
-      double kSlow;
-      double kFast;
-      double kSignal;
-      double highest;
-      double lowest;
-      double emaSlowNum;
-      double emaSlowDen;
-      double emaFastNum;
-      double emaFastDen;
-      double prevSignal;
-      int trailingIdx;
-      int highestIdx;
-      int lowestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outSMI;
-      double cur_outSMISignal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private int optInSignalPeriod;
+      private double kSlow;
+      private double kFast;
+      private double kSignal;
+      private double highest;
+      private double lowest;
+      private double emaSlowNum;
+      private double emaSlowDen;
+      private double emaFastNum;
+      private double emaFastDen;
+      private double prevSignal;
+      private int trailingIdx;
+      private int highestIdx;
+      private int lowestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outSMI;
+      private double cur_outSMISignal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SmiStream( Core core ) { this.core = core; }
+      private SmiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -156076,7 +156076,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SmiStream( SmiStream other ) {
+      private SmiStream( SmiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastPeriod = other.optInFastPeriod;
@@ -156297,7 +156297,7 @@ public final class Core {
       /** Exponential average of the SMI line. */
       public double smiSignal;
    }
-   void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
+   private void smiStepImpl( SmiStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double num = 0.0;
@@ -156993,12 +156993,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SqrtStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SqrtStream( Core core ) { this.core = core; }
+      private SqrtStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -157034,7 +157034,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SqrtStream( SqrtStream other ) {
+      private SqrtStream( SqrtStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -157116,7 +157116,7 @@ public final class Core {
          return new SqrtStream(this);
       }
    }
-   void sqrtStepImpl( SqrtStream sp, double inReal )
+   private void sqrtStepImpl( SqrtStream sp, double inReal )
    {
       sp.cur_outReal = Math.sqrt(inReal);
    }
@@ -157542,15 +157542,15 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class StddevStream {
-      Core core;
-      int optInTimePeriod;
-      double optInNbDev;
-      double cur_outReal;
-      VarStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInNbDev;
+      private double cur_outReal;
+      private VarStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StddevStream( Core core ) { this.core = core; }
+      private StddevStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -157586,7 +157586,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      StddevStream( StddevStream other ) {
+      private StddevStream( StddevStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -157678,7 +157678,7 @@ public final class Core {
          return new StddevStream(this);
       }
    }
-   void stddevStepImpl( StddevStream sp, double inReal )
+   private void stddevStepImpl( StddevStream sp, double inReal )
    {
       double cur_outReal = 0.0;
       /* Pipeline the new bar through the sub-streams (batch tail order). */
@@ -158545,31 +158545,31 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class StochStream {
-      Core core;
-      int optInFastK_Period;
-      int optInSlowK_Period;
-      MAType optInSlowK_MAType;
-      int optInSlowD_Period;
-      MAType optInSlowD_MAType;
-      double lowest;
-      double highest;
-      int lowestIdx;
-      int highestIdx;
-      int trailingIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outSlowK;
-      double cur_outSlowD;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastK_Period;
+      private int optInSlowK_Period;
+      private MAType optInSlowK_MAType;
+      private int optInSlowD_Period;
+      private MAType optInSlowD_MAType;
+      private double lowest;
+      private double highest;
+      private int lowestIdx;
+      private int highestIdx;
+      private int trailingIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outSlowK;
+      private double cur_outSlowD;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StochStream( Core core ) { this.core = core; }
+      private StochStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -158605,7 +158605,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      StochStream( StochStream other ) {
+      private StochStream( StochStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInSlowK_Period = other.optInSlowK_Period;
@@ -158806,7 +158806,7 @@ public final class Core {
       /** Signal line: SlowK smoothed by SlowD_Period MA. */
       public double slowD;
    }
-   void stochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
+   private void stochStepImpl( StochStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;
@@ -159862,28 +159862,28 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class StochfStream {
-      Core core;
-      int optInFastK_Period;
-      int optInFastD_Period;
-      MAType optInFastD_MAType;
-      double lowest;
-      double highest;
-      int lowestIdx;
-      int highestIdx;
-      int trailingIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outFastK;
-      double cur_outFastD;
-      MaStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastK_Period;
+      private int optInFastD_Period;
+      private MAType optInFastD_MAType;
+      private double lowest;
+      private double highest;
+      private int lowestIdx;
+      private int highestIdx;
+      private int trailingIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outFastK;
+      private double cur_outFastD;
+      private MaStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StochfStream( Core core ) { this.core = core; }
+      private StochfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -159919,7 +159919,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      StochfStream( StochfStream other ) {
+      private StochfStream( StochfStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInFastD_Period = other.optInFastD_Period;
@@ -160116,7 +160116,7 @@ public final class Core {
       /** MA-smoothed %K (signal line) */
       public double fastD;
    }
-   void stochfStepImpl( StochfStream sp, double inHigh, double inLow, double inClose )
+   private void stochfStepImpl( StochfStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;
@@ -160976,19 +160976,19 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class StochrsiStream {
-      Core core;
-      int optInTimePeriod;
-      int optInFastK_Period;
-      int optInFastD_Period;
-      MAType optInFastD_MAType;
-      double cur_outFastK;
-      double cur_outFastD;
-      RsiStream sub0;
-      StochfStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInFastK_Period;
+      private int optInFastD_Period;
+      private MAType optInFastD_MAType;
+      private double cur_outFastK;
+      private double cur_outFastD;
+      private RsiStream sub0;
+      private StochfStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StochrsiStream( Core core ) { this.core = core; }
+      private StochrsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -161024,7 +161024,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      StochrsiStream( StochrsiStream other ) {
+      private StochrsiStream( StochrsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInFastK_Period = other.optInFastK_Period;
@@ -161151,7 +161151,7 @@ public final class Core {
       /** %K smoothed over FastD_Period (signal line) */
       public double fastD;
    }
-   void stochrsiStepImpl( StochrsiStream sp, double inReal )
+   private void stochrsiStepImpl( StochrsiStream sp, double inReal )
    {
       double cur_tempRSIBuffer = 0.0;
       double cur_outFastK = 0.0;
@@ -161580,12 +161580,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SubStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SubStream( Core core ) { this.core = core; }
+      private SubStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -161621,7 +161621,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SubStream( SubStream other ) {
+      private SubStream( SubStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -161703,7 +161703,7 @@ public final class Core {
          return new SubStream(this);
       }
    }
-   void subStepImpl( SubStream sp, double inReal0, double inReal1 )
+   private void subStepImpl( SubStream sp, double inReal0, double inReal1 )
    {
       sp.cur_outReal = inReal0 - inReal1;
    }
@@ -162108,17 +162108,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SumStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SumStream( Core core ) { this.core = core; }
+      private SumStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -162154,7 +162154,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SumStream( SumStream other ) {
+      private SumStream( SumStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -162252,7 +162252,7 @@ public final class Core {
          return new SumStream(this);
       }
    }
-   void sumStepImpl( SumStream sp, double inReal )
+   private void sumStepImpl( SumStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {
@@ -163036,23 +163036,23 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class SupertrendStream {
-      Core core;
-      int optInTimePeriod;
-      double optInMultiplier;
-      int isUptrend;
-      double prevATR;
-      double wAlpha;
-      double wBeta;
-      double finalUpper;
-      double finalLower;
-      double prevClose;
-      double lag1_inClose;
-      double cur_outSupertrend;
-      int cur_outTrend;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInMultiplier;
+      private int isUptrend;
+      private double prevATR;
+      private double wAlpha;
+      private double wBeta;
+      private double finalUpper;
+      private double finalLower;
+      private double prevClose;
+      private double lag1_inClose;
+      private double cur_outSupertrend;
+      private int cur_outTrend;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SupertrendStream( Core core ) { this.core = core; }
+      private SupertrendStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -163088,7 +163088,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      SupertrendStream( SupertrendStream other ) {
+      private SupertrendStream( SupertrendStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMultiplier = other.optInMultiplier;
@@ -163278,7 +163278,7 @@ public final class Core {
       /** Trend direction: +1 while the trend rides the lower band, -1 while it rides the upper one. */
       public int trend;
    }
-   void supertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
+   private void supertrendStepImpl( SupertrendStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;
@@ -164176,26 +164176,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class T3Stream {
-      Core core;
-      int optInTimePeriod;
-      double optInVFactor;
-      double k;
-      double one_minus_k;
-      double e1;
-      double e2;
-      double e3;
-      double e4;
-      double e5;
-      double e6;
-      double c1;
-      double c2;
-      double c3;
-      double c4;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInVFactor;
+      private double k;
+      private double one_minus_k;
+      private double e1;
+      private double e2;
+      private double e3;
+      private double e4;
+      private double e5;
+      private double e6;
+      private double c1;
+      private double c2;
+      private double c3;
+      private double c4;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      T3Stream( Core core ) { this.core = core; }
+      private T3Stream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -164231,7 +164231,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      T3Stream( T3Stream other ) {
+      private T3Stream( T3Stream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInVFactor = other.optInVFactor;
@@ -164343,7 +164343,7 @@ public final class Core {
          return new T3Stream(this);
       }
    }
-   void t3StepImpl( T3Stream sp, double inReal )
+   private void t3StepImpl( T3Stream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -164846,12 +164846,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TanStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TanStream( Core core ) { this.core = core; }
+      private TanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -164887,7 +164887,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TanStream( TanStream other ) {
+      private TanStream( TanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -164969,7 +164969,7 @@ public final class Core {
          return new TanStream(this);
       }
    }
-   void tanStepImpl( TanStream sp, double inReal )
+   private void tanStepImpl( TanStream sp, double inReal )
    {
       sp.cur_outReal = Math.tan(inReal);
    }
@@ -165278,12 +165278,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TanhStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TanhStream( Core core ) { this.core = core; }
+      private TanhStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -165319,7 +165319,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TanhStream( TanhStream other ) {
+      private TanhStream( TanhStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -165401,7 +165401,7 @@ public final class Core {
          return new TanhStream(this);
       }
    }
-   void tanhStepImpl( TanhStream sp, double inReal )
+   private void tanhStepImpl( TanhStream sp, double inReal )
    {
       sp.cur_outReal = Math.tanh(inReal);
    }
@@ -165968,17 +165968,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TemaStream {
-      Core core;
-      int optInTimePeriod;
-      double prevEMA1;
-      double prevEMA2;
-      double prevEMA3;
-      double optInK_1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevEMA1;
+      private double prevEMA2;
+      private double prevEMA3;
+      private double optInK_1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TemaStream( Core core ) { this.core = core; }
+      private TemaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -166014,7 +166014,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TemaStream( TemaStream other ) {
+      private TemaStream( TemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -166111,7 +166111,7 @@ public final class Core {
          return new TemaStream(this);
       }
    }
-   void temaStepImpl( TemaStream sp, double inReal )
+   private void temaStepImpl( TemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;
@@ -166695,13 +166695,13 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TrangeStream {
-      Core core;
-      double lag1_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TrangeStream( Core core ) { this.core = core; }
+      private TrangeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -166737,7 +166737,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TrangeStream( TrangeStream other ) {
+      private TrangeStream( TrangeStream other ) {
          this.core = other.core;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
@@ -166840,7 +166840,7 @@ public final class Core {
          return new TrangeStream(this);
       }
    }
-   void trangeStepImpl( TrangeStream sp, double inHigh, double inLow, double inClose )
+   private void trangeStepImpl( TrangeStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;
@@ -167626,24 +167626,24 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TrimaStream {
-      Core core;
-      int optInTimePeriod;
-      double numerator;
-      double numeratorSub;
-      double numeratorAdd;
-      double factor;
-      double tempReal;
-      int ringPos_middleIdx;
-      int ringCap_middleIdx;
-      double[] ring_middleIdx_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double numerator;
+      private double numeratorSub;
+      private double numeratorAdd;
+      private double factor;
+      private double tempReal;
+      private int ringPos_middleIdx;
+      private int ringCap_middleIdx;
+      private double[] ring_middleIdx_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TrimaStream( Core core ) { this.core = core; }
+      private TrimaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -167679,7 +167679,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TrimaStream( TrimaStream other ) {
+      private TrimaStream( TrimaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.numerator = other.numerator;
@@ -167837,7 +167837,7 @@ public final class Core {
          return new TrimaStream(this);
       }
    }
-   void trimaStepImpl( TrimaStream sp, double inReal )
+   private void trimaStepImpl( TrimaStream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {
@@ -168852,17 +168852,17 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TrixStream {
-      Core core;
-      int optInTimePeriod;
-      double prevEMA1;
-      double prevEMA2;
-      double prevEMA3;
-      double optInK_1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevEMA1;
+      private double prevEMA2;
+      private double prevEMA3;
+      private double optInK_1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TrixStream( Core core ) { this.core = core; }
+      private TrixStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -168898,7 +168898,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TrixStream( TrixStream other ) {
+      private TrixStream( TrixStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevEMA1 = other.prevEMA1;
@@ -168997,7 +168997,7 @@ public final class Core {
          return new TrixStream(this);
       }
    }
-   void trixStepImpl( TrixStream sp, double inReal )
+   private void trixStepImpl( TrixStream sp, double inReal )
    {
       double tempReal = 0.0;
       tempReal = sp.prevEMA3;
@@ -169705,26 +169705,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TsfStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackTotal;
-      int trailingIdx;
-      double SumX;
-      double SumXY;
-      double SumY;
-      double Divisor;
-      int barsSinceReseed;
-      double trailingValue;
-      double sumAbs;
-      int j;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackTotal;
+      private int trailingIdx;
+      private double SumX;
+      private double SumXY;
+      private double SumY;
+      private double Divisor;
+      private int barsSinceReseed;
+      private double trailingValue;
+      private double sumAbs;
+      private int j;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TsfStream( Core core ) { this.core = core; }
+      private TsfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -169760,7 +169760,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TsfStream( TsfStream other ) {
+      private TsfStream( TsfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackTotal = other.lookbackTotal;
@@ -169956,7 +169956,7 @@ public final class Core {
          return new TsfStream(this);
       }
    }
-   void tsfStepImpl( TsfStream sp, double inReal )
+   private void tsfStepImpl( TsfStream sp, double inReal )
    {
       double m = 0.0;
       double b = 0.0;
@@ -170893,21 +170893,21 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TsiStream {
-      Core core;
-      int optInFirstPeriod;
-      int optInSecondPeriod;
-      double kFirst;
-      double kSecond;
-      double emaFirstNum;
-      double emaFirstDen;
-      double emaSecondNum;
-      double emaSecondDen;
-      double prevClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFirstPeriod;
+      private int optInSecondPeriod;
+      private double kFirst;
+      private double kSecond;
+      private double emaFirstNum;
+      private double emaFirstDen;
+      private double emaSecondNum;
+      private double emaSecondDen;
+      private double prevClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TsiStream( Core core ) { this.core = core; }
+      private TsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -170943,7 +170943,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TsiStream( TsiStream other ) {
+      private TsiStream( TsiStream other ) {
          this.core = other.core;
          this.optInFirstPeriod = other.optInFirstPeriod;
          this.optInSecondPeriod = other.optInSecondPeriod;
@@ -171054,7 +171054,7 @@ public final class Core {
          return new TsiStream(this);
       }
    }
-   void tsiStepImpl( TsiStream sp, double inReal )
+   private void tsiStepImpl( TsiStream sp, double inReal )
    {
       double mom = 0.0;
       double absMom = 0.0;
@@ -171562,12 +171562,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class TyppriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TyppriceStream( Core core ) { this.core = core; }
+      private TyppriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -171603,7 +171603,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      TyppriceStream( TyppriceStream other ) {
+      private TyppriceStream( TyppriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -171685,7 +171685,7 @@ public final class Core {
          return new TyppriceStream(this);
       }
    }
-   void typpriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
+   private void typpriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }
@@ -172563,30 +172563,30 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class UltoscStream {
-      Core core;
-      int optInTimePeriod1;
-      int optInTimePeriod2;
-      int optInTimePeriod3;
-      double a1Total;
-      double a2Total;
-      double a3Total;
-      double b1Total;
-      double b2Total;
-      double b3Total;
-      int trailingPos1;
-      int trailingPos2;
-      int nullRun;
-      int term_Idx;
-      int maxIdx_term;
-      double lag1_inClose;
-      int cbSize_term;
-      double[] cb_term_closeMinusTrueLow;
-      double[] cb_term_trueRange;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod1;
+      private int optInTimePeriod2;
+      private int optInTimePeriod3;
+      private double a1Total;
+      private double a2Total;
+      private double a3Total;
+      private double b1Total;
+      private double b2Total;
+      private double b3Total;
+      private int trailingPos1;
+      private int trailingPos2;
+      private int nullRun;
+      private int term_Idx;
+      private int maxIdx_term;
+      private double lag1_inClose;
+      private int cbSize_term;
+      private double[] cb_term_closeMinusTrueLow;
+      private double[] cb_term_trueRange;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      UltoscStream( Core core ) { this.core = core; }
+      private UltoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -172622,7 +172622,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      UltoscStream( UltoscStream other ) {
+      private UltoscStream( UltoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod1 = other.optInTimePeriod1;
          this.optInTimePeriod2 = other.optInTimePeriod2;
@@ -172834,7 +172834,7 @@ public final class Core {
          return new UltoscStream(this);
       }
    }
-   void ultoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
+   private void ultoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;
@@ -173832,26 +173832,26 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class VarStream {
-      Core core;
-      int optInTimePeriod;
-      double optInNbDev;
-      double shift;
-      double periodTotal1;
-      double periodTotal2;
-      double invPeriod;
-      int trailingIdx;
-      int nbInitialElementNeeded;
-      int barsSinceReseed;
-      int j;
-      int windowStart;
-      int i;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInNbDev;
+      private double shift;
+      private double periodTotal1;
+      private double periodTotal2;
+      private double invPeriod;
+      private int trailingIdx;
+      private int nbInitialElementNeeded;
+      private int barsSinceReseed;
+      private int j;
+      private int windowStart;
+      private int i;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VarStream( Core core ) { this.core = core; }
+      private VarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -173887,7 +173887,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      VarStream( VarStream other ) {
+      private VarStream( VarStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -174102,7 +174102,7 @@ public final class Core {
          return new VarStream(this);
       }
    }
-   void varStepImpl( VarStream sp, double inReal )
+   private void varStepImpl( VarStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;
@@ -174863,16 +174863,16 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class VhfStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VhfStream( Core core ) { this.core = core; }
+      private VhfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -174908,7 +174908,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      VhfStream( VhfStream other ) {
+      private VhfStream( VhfStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -175035,7 +175035,7 @@ public final class Core {
          return new VhfStream(this);
       }
    }
-   void vhfStepImpl( VhfStream sp, double inReal )
+   private void vhfStepImpl( VhfStream sp, double inReal )
    {
       int i = 0;
       double highest = 0.0;
@@ -175811,27 +175811,27 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class VortexStream {
-      Core core;
-      int optInTimePeriod;
-      int nullRun;
-      double sTR;
-      double sVMP;
-      double sVMM;
-      double lag1_inHigh;
-      double lag1_inLow;
-      double lag1_inClose;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      int ringLag_trailingIdx;
-      double[] ring_trailingIdx_inHigh;
-      double[] ring_trailingIdx_inLow;
-      double[] ring_trailingIdx_inClose;
-      double cur_outPlusVI;
-      double cur_outMinusVI;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int nullRun;
+      private double sTR;
+      private double sVMP;
+      private double sVMM;
+      private double lag1_inHigh;
+      private double lag1_inLow;
+      private double lag1_inClose;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private int ringLag_trailingIdx;
+      private double[] ring_trailingIdx_inHigh;
+      private double[] ring_trailingIdx_inLow;
+      private double[] ring_trailingIdx_inClose;
+      private double cur_outPlusVI;
+      private double cur_outMinusVI;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VortexStream( Core core ) { this.core = core; }
+      private VortexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -175867,7 +175867,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      VortexStream( VortexStream other ) {
+      private VortexStream( VortexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.nullRun = other.nullRun;
@@ -176101,7 +176101,7 @@ public final class Core {
       /** Negative vortex line (−VI) */
       public double minusVI;
    }
-   void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
+   private void vortexStepImpl( VortexStream sp, double inHigh, double inLow, double inClose )
    {
       double curTR = 0.0;
       double curVMP = 0.0;
@@ -176920,15 +176920,15 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class VwapStream {
-      Core core;
-      double sumPV;
-      double sumV;
-      double vwap;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double sumPV;
+      private double sumV;
+      private double vwap;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VwapStream( Core core ) { this.core = core; }
+      private VwapStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -176964,7 +176964,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      VwapStream( VwapStream other ) {
+      private VwapStream( VwapStream other ) {
          this.core = other.core;
          this.sumPV = other.sumPV;
          this.sumV = other.sumV;
@@ -177139,7 +177139,7 @@ public final class Core {
          return new VwapStream(this);
       }
    }
-   void vwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void vwapStepImpl( VwapStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double typPrice = 0.0;
       double volume = 0.0;
@@ -177858,19 +177858,19 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class VwmaStream {
-      Core core;
-      int optInTimePeriod;
-      double sumPV;
-      double sumV;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double[] ring_trailingIdx_inVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double sumPV;
+      private double sumV;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double[] ring_trailingIdx_inVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VwmaStream( Core core ) { this.core = core; }
+      private VwmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -177906,7 +177906,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      VwmaStream( VwmaStream other ) {
+      private VwmaStream( VwmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
@@ -178029,7 +178029,7 @@ public final class Core {
          return new VwmaStream(this);
       }
    }
-   void vwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
+   private void vwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
    {
       double tempPV = 0.0;
       double tempV = 0.0;
@@ -178643,14 +178643,14 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class WadStream {
-      Core core;
-      double sum;
-      double prevClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double sum;
+      private double prevClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WadStream( Core core ) { this.core = core; }
+      private WadStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -178686,7 +178686,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      WadStream( WadStream other ) {
+      private WadStream( WadStream other ) {
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
@@ -178787,7 +178787,7 @@ public final class Core {
          return new WadStream(this);
       }
    }
-   void wadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
+   private void wadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
       double trueExtreme = 0.0;
@@ -179212,12 +179212,12 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class WclpriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WclpriceStream( Core core ) { this.core = core; }
+      private WclpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -179253,7 +179253,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      WclpriceStream( WclpriceStream other ) {
+      private WclpriceStream( WclpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -179335,7 +179335,7 @@ public final class Core {
          return new WclpriceStream(this);
       }
    }
-   void wclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
+   private void wclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    }
@@ -180045,24 +180045,24 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class WillrStream {
-      Core core;
-      int optInTimePeriod;
-      double lowest;
-      double highest;
-      int trailingIdx;
-      int lowestIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double lowest;
+      private double highest;
+      private int trailingIdx;
+      private int lowestIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WillrStream( Core core ) { this.core = core; }
+      private WillrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -180098,7 +180098,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      WillrStream( WillrStream other ) {
+      private WillrStream( WillrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lowest = other.lowest;
@@ -180256,7 +180256,7 @@ public final class Core {
          return new WillrStream(this);
       }
    }
-   void willrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
+   private void willrStepImpl( WillrStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double tempReal = 0.0;
@@ -181047,25 +181047,25 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class WmaStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackWin;
-      int barsSinceReseed;
-      double periodSum;
-      double periodSub;
-      double trailingValue;
-      double divider;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      int winPos_j;
-      int winCap_j;
-      double[] win_j_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackWin;
+      private int barsSinceReseed;
+      private double periodSum;
+      private double periodSub;
+      private double trailingValue;
+      private double divider;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private int winPos_j;
+      private int winCap_j;
+      private double[] win_j_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WmaStream( Core core ) { this.core = core; }
+      private WmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -181101,7 +181101,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      WmaStream( WmaStream other ) {
+      private WmaStream( WmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackWin = other.lookbackWin;
@@ -181287,7 +181287,7 @@ public final class Core {
          return new WmaStream(this);
       }
    }
-   void wmaStepImpl( WmaStream sp, double inReal )
+   private void wmaStepImpl( WmaStream sp, double inReal )
    {
       int j = 0;
       int rw = 0;
@@ -182108,18 +182108,18 @@ public final class Core {
     * re-open — the result is bit-identical by contract.
     */
    public static final class ZlemaStream {
-      Core core;
-      int optInTimePeriod;
-      double optInK_1;
-      double prevMA;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInK_1;
+      private double prevMA;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ZlemaStream( Core core ) { this.core = core; }
+      private ZlemaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -182155,7 +182155,7 @@ public final class Core {
          this.outRangeCount++;
       }
 
-      ZlemaStream( ZlemaStream other ) {
+      private ZlemaStream( ZlemaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInK_1 = other.optInK_1;
@@ -182255,7 +182255,7 @@ public final class Core {
          return new ZlemaStream(this);
       }
    }
-   void zlemaStepImpl( ZlemaStream sp, double inReal )
+   private void zlemaStepImpl( ZlemaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 ) {
          sp.cur_outReal = inReal;

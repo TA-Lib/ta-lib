@@ -222,12 +222,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TyppriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TyppriceStream( Core core ) { this.core = core; }
+      private TyppriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -263,7 +263,7 @@
          this.outRangeCount++;
       }
 
-      TyppriceStream( TyppriceStream other ) {
+      private TyppriceStream( TyppriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -345,7 +345,7 @@
          return new TyppriceStream(this);
       }
    }
-   void typpriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
+   private void typpriceStepImpl( TyppriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose) / 3.0;
    }

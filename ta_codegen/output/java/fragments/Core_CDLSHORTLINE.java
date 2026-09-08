@@ -353,26 +353,26 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlshortlineStream {
-      Core core;
-      double BodyPeriodTotal;
-      double ShadowPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int ringPos_ShadowTrailingIdx;
-      int ringCap_ShadowTrailingIdx;
-      double[] ring_ShadowTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cs_ShadowShort_rangeType;
-      int cs_ShadowShort_avgPeriod;
-      double cs_ShadowShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private double ShadowPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int ringPos_ShadowTrailingIdx;
+      private int ringCap_ShadowTrailingIdx;
+      private double[] ring_ShadowTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cs_ShadowShort_rangeType;
+      private int cs_ShadowShort_avgPeriod;
+      private double cs_ShadowShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlshortlineStream( Core core ) { this.core = core; }
+      private CdlshortlineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -408,7 +408,7 @@
          this.outRangeCount++;
       }
 
-      CdlshortlineStream( CdlshortlineStream other ) {
+      private CdlshortlineStream( CdlshortlineStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ShadowPeriodTotal = other.ShadowPeriodTotal;
@@ -514,7 +514,7 @@
          return new CdlshortlineStream(this);
       }
    }
-   void cdlshortlineStepImpl( CdlshortlineStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlshortlineStepImpl( CdlshortlineStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

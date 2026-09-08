@@ -330,20 +330,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MaxindexStream {
-      Core core;
-      int optInTimePeriod;
-      double highest;
-      int trailingIdx;
-      int highestIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inReal;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double highest;
+      private int trailingIdx;
+      private int highestIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inReal;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MaxindexStream( Core core ) { this.core = core; }
+      private MaxindexStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -379,7 +379,7 @@
          this.outRangeCount++;
       }
 
-      MaxindexStream( MaxindexStream other ) {
+      private MaxindexStream( MaxindexStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.highest = other.highest;
@@ -493,7 +493,7 @@
          return new MaxindexStream(this);
       }
    }
-   void maxindexStepImpl( MaxindexStream sp, double inReal )
+   private void maxindexStepImpl( MaxindexStream sp, double inReal )
    {
       double tmp = 0.0;
       sp.x_inReal[sp.today & sp.xMask] = inReal;

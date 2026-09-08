@@ -244,12 +244,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class BopStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      BopStream( Core core ) { this.core = core; }
+      private BopStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -285,7 +285,7 @@
          this.outRangeCount++;
       }
 
-      BopStream( BopStream other ) {
+      private BopStream( BopStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -379,7 +379,7 @@
          return new BopStream(this);
       }
    }
-   void bopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void bopStepImpl( BopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       /* BOP is a fraction of the bar's own range, so it is scale-free and the

@@ -609,28 +609,28 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class StochfStream {
-      Core core;
-      int optInFastK_Period;
-      int optInFastD_Period;
-      MAType optInFastD_MAType;
-      double lowest;
-      double highest;
-      int lowestIdx;
-      int highestIdx;
-      int trailingIdx;
-      int i;
-      int today;
-      int xMask;
-      double[] x_inHigh;
-      double[] x_inLow;
-      double[] x_inClose;
-      double cur_outFastK;
-      double cur_outFastD;
-      MaStream sub0;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastK_Period;
+      private int optInFastD_Period;
+      private MAType optInFastD_MAType;
+      private double lowest;
+      private double highest;
+      private int lowestIdx;
+      private int highestIdx;
+      private int trailingIdx;
+      private int i;
+      private int today;
+      private int xMask;
+      private double[] x_inHigh;
+      private double[] x_inLow;
+      private double[] x_inClose;
+      private double cur_outFastK;
+      private double cur_outFastD;
+      private MaStream sub0;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      StochfStream( Core core ) { this.core = core; }
+      private StochfStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -666,7 +666,7 @@
          this.outRangeCount++;
       }
 
-      StochfStream( StochfStream other ) {
+      private StochfStream( StochfStream other ) {
          this.core = other.core;
          this.optInFastK_Period = other.optInFastK_Period;
          this.optInFastD_Period = other.optInFastD_Period;
@@ -863,7 +863,7 @@
       /** MA-smoothed %K (signal line) */
       public double fastD;
    }
-   void stochfStepImpl( StochfStream sp, double inHigh, double inLow, double inClose )
+   private void stochfStepImpl( StochfStream sp, double inHigh, double inLow, double inClose )
    {
       double tmp = 0.0;
       double cur_tempBuffer = 0.0;

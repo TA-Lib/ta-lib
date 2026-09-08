@@ -463,16 +463,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CmoStream {
-      Core core;
-      int optInTimePeriod;
-      double prevGain;
-      double prevLoss;
-      double prevValue;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevGain;
+      private double prevLoss;
+      private double prevValue;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CmoStream( Core core ) { this.core = core; }
+      private CmoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -508,7 +508,7 @@
          this.outRangeCount++;
       }
 
-      CmoStream( CmoStream other ) {
+      private CmoStream( CmoStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -620,7 +620,7 @@
          return new CmoStream(this);
       }
    }
-   void cmoStepImpl( CmoStream sp, double inReal )
+   private void cmoStepImpl( CmoStream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

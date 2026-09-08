@@ -288,15 +288,15 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class PviStream {
-      Core core;
-      double prevPVI;
-      double prevClose;
-      double prevVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevPVI;
+      private double prevClose;
+      private double prevVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PviStream( Core core ) { this.core = core; }
+      private PviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -332,7 +332,7 @@
          this.outRangeCount++;
       }
 
-      PviStream( PviStream other ) {
+      private PviStream( PviStream other ) {
          this.core = other.core;
          this.prevPVI = other.prevPVI;
          this.prevClose = other.prevClose;
@@ -445,7 +445,7 @@
          return new PviStream(this);
       }
    }
-   void pviStepImpl( PviStream sp, double inClose, double inVolume )
+   private void pviStepImpl( PviStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       double tempVolume = 0.0;

@@ -382,33 +382,33 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdltakuriStream {
-      Core core;
-      double BodyDojiPeriodTotal;
-      double ShadowVeryShortPeriodTotal;
-      double ShadowVeryLongPeriodTotal;
-      int ringPos_BodyDojiTrailingIdx;
-      int ringCap_BodyDojiTrailingIdx;
-      double[] ring_BodyDojiTrailingIdx_derived;
-      int ringPos_ShadowVeryLongTrailingIdx;
-      int ringCap_ShadowVeryLongTrailingIdx;
-      double[] ring_ShadowVeryLongTrailingIdx_derived;
-      int ringPos_ShadowVeryShortTrailingIdx;
-      int ringCap_ShadowVeryShortTrailingIdx;
-      double[] ring_ShadowVeryShortTrailingIdx_derived;
-      int cs_BodyDoji_rangeType;
-      int cs_BodyDoji_avgPeriod;
-      double cs_BodyDoji_factor;
-      int cs_ShadowVeryLong_rangeType;
-      int cs_ShadowVeryLong_avgPeriod;
-      double cs_ShadowVeryLong_factor;
-      int cs_ShadowVeryShort_rangeType;
-      int cs_ShadowVeryShort_avgPeriod;
-      double cs_ShadowVeryShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyDojiPeriodTotal;
+      private double ShadowVeryShortPeriodTotal;
+      private double ShadowVeryLongPeriodTotal;
+      private int ringPos_BodyDojiTrailingIdx;
+      private int ringCap_BodyDojiTrailingIdx;
+      private double[] ring_BodyDojiTrailingIdx_derived;
+      private int ringPos_ShadowVeryLongTrailingIdx;
+      private int ringCap_ShadowVeryLongTrailingIdx;
+      private double[] ring_ShadowVeryLongTrailingIdx_derived;
+      private int ringPos_ShadowVeryShortTrailingIdx;
+      private int ringCap_ShadowVeryShortTrailingIdx;
+      private double[] ring_ShadowVeryShortTrailingIdx_derived;
+      private int cs_BodyDoji_rangeType;
+      private int cs_BodyDoji_avgPeriod;
+      private double cs_BodyDoji_factor;
+      private int cs_ShadowVeryLong_rangeType;
+      private int cs_ShadowVeryLong_avgPeriod;
+      private double cs_ShadowVeryLong_factor;
+      private int cs_ShadowVeryShort_rangeType;
+      private int cs_ShadowVeryShort_avgPeriod;
+      private double cs_ShadowVeryShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdltakuriStream( Core core ) { this.core = core; }
+      private CdltakuriStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -444,7 +444,7 @@
          this.outRangeCount++;
       }
 
-      CdltakuriStream( CdltakuriStream other ) {
+      private CdltakuriStream( CdltakuriStream other ) {
          this.core = other.core;
          this.BodyDojiPeriodTotal = other.BodyDojiPeriodTotal;
          this.ShadowVeryShortPeriodTotal = other.ShadowVeryShortPeriodTotal;
@@ -560,7 +560,7 @@
          return new CdltakuriStream(this);
       }
    }
-   void cdltakuriStepImpl( CdltakuriStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdltakuriStepImpl( CdltakuriStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyDoji_rangeType = sp.cs_BodyDoji_rangeType;
       int BodyDoji_avgPeriod = sp.cs_BodyDoji_avgPeriod;

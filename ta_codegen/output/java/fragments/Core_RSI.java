@@ -497,16 +497,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class RsiStream {
-      Core core;
-      int optInTimePeriod;
-      double prevGain;
-      double prevLoss;
-      double prevValue;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevGain;
+      private double prevLoss;
+      private double prevValue;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RsiStream( Core core ) { this.core = core; }
+      private RsiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -542,7 +542,7 @@
          this.outRangeCount++;
       }
 
-      RsiStream( RsiStream other ) {
+      private RsiStream( RsiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevGain = other.prevGain;
@@ -654,7 +654,7 @@
          return new RsiStream(this);
       }
    }
-   void rsiStepImpl( RsiStream sp, double inReal )
+   private void rsiStepImpl( RsiStream sp, double inReal )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

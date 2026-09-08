@@ -267,14 +267,14 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class PvtStream {
-      Core core;
-      double prevPVT;
-      double prevClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevPVT;
+      private double prevClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PvtStream( Core core ) { this.core = core; }
+      private PvtStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -310,7 +310,7 @@
          this.outRangeCount++;
       }
 
-      PvtStream( PvtStream other ) {
+      private PvtStream( PvtStream other ) {
          this.core = other.core;
          this.prevPVT = other.prevPVT;
          this.prevClose = other.prevClose;
@@ -404,7 +404,7 @@
          return new PvtStream(this);
       }
    }
-   void pvtStepImpl( PvtStream sp, double inClose, double inVolume )
+   private void pvtStepImpl( PvtStream sp, double inClose, double inVolume )
    {
       double tempClose = 0.0;
       tempClose = inClose;

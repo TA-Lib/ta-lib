@@ -312,19 +312,19 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlspinningtopStream {
-      Core core;
-      double BodyPeriodTotal;
-      int ringPos_BodyTrailingIdx;
-      int ringCap_BodyTrailingIdx;
-      double[] ring_BodyTrailingIdx_derived;
-      int cs_BodyShort_rangeType;
-      int cs_BodyShort_avgPeriod;
-      double cs_BodyShort_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyPeriodTotal;
+      private int ringPos_BodyTrailingIdx;
+      private int ringCap_BodyTrailingIdx;
+      private double[] ring_BodyTrailingIdx_derived;
+      private int cs_BodyShort_rangeType;
+      private int cs_BodyShort_avgPeriod;
+      private double cs_BodyShort_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlspinningtopStream( Core core ) { this.core = core; }
+      private CdlspinningtopStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -360,7 +360,7 @@
          this.outRangeCount++;
       }
 
-      CdlspinningtopStream( CdlspinningtopStream other ) {
+      private CdlspinningtopStream( CdlspinningtopStream other ) {
          this.core = other.core;
          this.BodyPeriodTotal = other.BodyPeriodTotal;
          this.ringPos_BodyTrailingIdx = other.ringPos_BodyTrailingIdx;
@@ -456,7 +456,7 @@
          return new CdlspinningtopStream(this);
       }
    }
-   void cdlspinningtopStepImpl( CdlspinningtopStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlspinningtopStepImpl( CdlspinningtopStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyShort_rangeType = sp.cs_BodyShort_rangeType;
       int BodyShort_avgPeriod = sp.cs_BodyShort_avgPeriod;

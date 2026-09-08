@@ -207,12 +207,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AsinStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AsinStream( Core core ) { this.core = core; }
+      private AsinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -248,7 +248,7 @@
          this.outRangeCount++;
       }
 
-      AsinStream( AsinStream other ) {
+      private AsinStream( AsinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -330,7 +330,7 @@
          return new AsinStream(this);
       }
    }
-   void asinStepImpl( AsinStream sp, double inReal )
+   private void asinStepImpl( AsinStream sp, double inReal )
    {
       sp.cur_outReal = Math.asin(inReal);
    }

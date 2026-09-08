@@ -711,20 +711,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class DxStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevMinusDM;
-      double prevPlusDM;
-      double prevTR;
-      double lastOut_outReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevMinusDM;
+      private double prevPlusDM;
+      private double prevTR;
+      private double lastOut_outReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      DxStream( Core core ) { this.core = core; }
+      private DxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -760,7 +760,7 @@
          this.outRangeCount++;
       }
 
-      DxStream( DxStream other ) {
+      private DxStream( DxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -907,7 +907,7 @@
          return new DxStream(this);
       }
    }
-   void dxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
+   private void dxStepImpl( DxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;

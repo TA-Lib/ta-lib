@@ -856,27 +856,27 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SarextStream {
-      Core core;
-      double optInStartValue;
-      double optInOffsetOnReverse;
-      double optInAccelerationInitLong;
-      double optInAccelerationLong;
-      double optInAccelerationMaxLong;
-      double optInAccelerationInitShort;
-      double optInAccelerationShort;
-      double optInAccelerationMaxShort;
-      int isLong;
-      double newHigh;
-      double newLow;
-      double afLong;
-      double afShort;
-      double ep;
-      double sar;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double optInStartValue;
+      private double optInOffsetOnReverse;
+      private double optInAccelerationInitLong;
+      private double optInAccelerationLong;
+      private double optInAccelerationMaxLong;
+      private double optInAccelerationInitShort;
+      private double optInAccelerationShort;
+      private double optInAccelerationMaxShort;
+      private int isLong;
+      private double newHigh;
+      private double newLow;
+      private double afLong;
+      private double afShort;
+      private double ep;
+      private double sar;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SarextStream( Core core ) { this.core = core; }
+      private SarextStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -912,7 +912,7 @@
          this.outRangeCount++;
       }
 
-      SarextStream( SarextStream other ) {
+      private SarextStream( SarextStream other ) {
          this.core = other.core;
          this.optInStartValue = other.optInStartValue;
          this.optInOffsetOnReverse = other.optInOffsetOnReverse;
@@ -1136,7 +1136,7 @@
          return new SarextStream(this);
       }
    }
-   void sarextStepImpl( SarextStream sp, double inHigh, double inLow )
+   private void sarextStepImpl( SarextStream sp, double inHigh, double inLow )
    {
       double prevHigh = 0.0;
       double prevLow = 0.0;

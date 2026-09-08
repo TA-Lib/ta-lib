@@ -452,23 +452,23 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AccbandsStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotalUpper;
-      double periodTotalMiddle;
-      double periodTotalLower;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inHigh;
-      double[] ring_trailingIdx_inLow;
-      double[] ring_trailingIdx_inClose;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotalUpper;
+      private double periodTotalMiddle;
+      private double periodTotalLower;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inHigh;
+      private double[] ring_trailingIdx_inLow;
+      private double[] ring_trailingIdx_inClose;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AccbandsStream( Core core ) { this.core = core; }
+      private AccbandsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -504,7 +504,7 @@
          this.outRangeCount++;
       }
 
-      AccbandsStream( AccbandsStream other ) {
+      private AccbandsStream( AccbandsStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotalUpper = other.periodTotalUpper;
@@ -682,7 +682,7 @@
       /** SMA of the range-scaled low band. */
       public double realLowerBand;
    }
-   void accbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
+   private void accbandsStepImpl( AccbandsStream sp, double inHigh, double inLow, double inClose )
    {
       double tempUpper = 0.0;
       double tempMiddle = 0.0;

@@ -593,24 +593,24 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TrimaStream {
-      Core core;
-      int optInTimePeriod;
-      double numerator;
-      double numeratorSub;
-      double numeratorAdd;
-      double factor;
-      double tempReal;
-      int ringPos_middleIdx;
-      int ringCap_middleIdx;
-      double[] ring_middleIdx_inReal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double numerator;
+      private double numeratorSub;
+      private double numeratorAdd;
+      private double factor;
+      private double tempReal;
+      private int ringPos_middleIdx;
+      private int ringCap_middleIdx;
+      private double[] ring_middleIdx_inReal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TrimaStream( Core core ) { this.core = core; }
+      private TrimaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -646,7 +646,7 @@
          this.outRangeCount++;
       }
 
-      TrimaStream( TrimaStream other ) {
+      private TrimaStream( TrimaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.numerator = other.numerator;
@@ -804,7 +804,7 @@
          return new TrimaStream(this);
       }
    }
-   void trimaStepImpl( TrimaStream sp, double inReal )
+   private void trimaStepImpl( TrimaStream sp, double inReal )
    {
       if( sp.optInTimePeriod % 2 == 1 ) {
          if( sp.ringCap_middleIdx == 0 ) {

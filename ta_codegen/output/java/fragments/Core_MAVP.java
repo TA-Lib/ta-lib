@@ -679,17 +679,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MavpStream {
-      Core core;
-      int optInMinPeriod;
-      int optInMaxPeriod;
-      MAType optInMAType;
-      double cur_outReal;
+      private Core core;
+      private int optInMinPeriod;
+      private int optInMaxPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
       // One sub-MA stream per period in [optInMinPeriod, optInMaxPeriod], advanced in lockstep.
-      MaStream[] bank;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private MaStream[] bank;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MavpStream( Core core ) { this.core = core; }
+      private MavpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -725,7 +725,7 @@
          this.outRangeCount++;
       }
 
-      MavpStream( MavpStream other ) {
+      private MavpStream( MavpStream other ) {
          this.core = other.core;
          this.optInMinPeriod = other.optInMinPeriod;
          this.optInMaxPeriod = other.optInMaxPeriod;
@@ -820,7 +820,7 @@
          return new MavpStream(this);
       }
    }
-   void mavpStepImpl( MavpStream sp, double inReal, double inPeriods )
+   private void mavpStepImpl( MavpStream sp, double inReal, double inPeriods )
    {
       int cp = (int)inPeriods;
       if( cp < sp.optInMinPeriod ) {

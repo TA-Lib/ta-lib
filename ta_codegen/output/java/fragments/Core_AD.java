@@ -282,13 +282,13 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdStream {
-      Core core;
-      double ad;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double ad;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdStream( Core core ) { this.core = core; }
+      private AdStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -324,7 +324,7 @@
          this.outRangeCount++;
       }
 
-      AdStream( AdStream other ) {
+      private AdStream( AdStream other ) {
          this.core = other.core;
          this.ad = other.ad;
          this.cur_outReal = other.cur_outReal;
@@ -419,7 +419,7 @@
          return new AdStream(this);
       }
    }
-   void adStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void adStepImpl( AdStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double high = 0.0;
       double low = 0.0;

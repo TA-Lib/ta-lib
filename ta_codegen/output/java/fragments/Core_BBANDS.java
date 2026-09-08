@@ -803,20 +803,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class BbandsStream {
-      Core core;
-      int optInTimePeriod;
-      double optInNbDevUp;
-      double optInNbDevDn;
-      MAType optInMAType;
-      double cur_outRealUpperBand;
-      double cur_outRealMiddleBand;
-      double cur_outRealLowerBand;
-      MaStream sub0;
-      StddevStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInNbDevUp;
+      private double optInNbDevDn;
+      private MAType optInMAType;
+      private double cur_outRealUpperBand;
+      private double cur_outRealMiddleBand;
+      private double cur_outRealLowerBand;
+      private MaStream sub0;
+      private StddevStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      BbandsStream( Core core ) { this.core = core; }
+      private BbandsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -852,7 +852,7 @@
          this.outRangeCount++;
       }
 
-      BbandsStream( BbandsStream other ) {
+      private BbandsStream( BbandsStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDevUp = other.optInNbDevUp;
@@ -995,7 +995,7 @@
       /** Middle band minus nbDevDn standard deviations. */
       public double realLowerBand;
    }
-   void bbandsStepImpl( BbandsStream sp, double inReal )
+   private void bbandsStepImpl( BbandsStream sp, double inReal )
    {
       double tempReal = 0.0;
       double tempReal2 = 0.0;

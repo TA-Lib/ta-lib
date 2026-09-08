@@ -396,19 +396,19 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class VwmaStream {
-      Core core;
-      int optInTimePeriod;
-      double sumPV;
-      double sumV;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double[] ring_trailingIdx_inVolume;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double sumPV;
+      private double sumV;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double[] ring_trailingIdx_inVolume;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VwmaStream( Core core ) { this.core = core; }
+      private VwmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -444,7 +444,7 @@
          this.outRangeCount++;
       }
 
-      VwmaStream( VwmaStream other ) {
+      private VwmaStream( VwmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.sumPV = other.sumPV;
@@ -567,7 +567,7 @@
          return new VwmaStream(this);
       }
    }
-   void vwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
+   private void vwmaStepImpl( VwmaStream sp, double inReal, double inVolume )
    {
       double tempPV = 0.0;
       double tempV = 0.0;

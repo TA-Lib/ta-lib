@@ -530,16 +530,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class PlusDmStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevPlusDM;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevPlusDM;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PlusDmStream( Core core ) { this.core = core; }
+      private PlusDmStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -575,7 +575,7 @@
          this.outRangeCount++;
       }
 
-      PlusDmStream( PlusDmStream other ) {
+      private PlusDmStream( PlusDmStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -704,7 +704,7 @@
          return new PlusDmStream(this);
       }
    }
-   void plusDmStepImpl( PlusDmStream sp, double inHigh, double inLow )
+   private void plusDmStepImpl( PlusDmStream sp, double inHigh, double inLow )
    {
       if( sp.optInTimePeriod <= 1 ) {
          double tempReal = 0.0;

@@ -199,12 +199,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CosStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CosStream( Core core ) { this.core = core; }
+      private CosStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -240,7 +240,7 @@
          this.outRangeCount++;
       }
 
-      CosStream( CosStream other ) {
+      private CosStream( CosStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -322,7 +322,7 @@
          return new CosStream(this);
       }
    }
-   void cosStepImpl( CosStream sp, double inReal )
+   private void cosStepImpl( CosStream sp, double inReal )
    {
       sp.cur_outReal = Math.cos(inReal);
    }

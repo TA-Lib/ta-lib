@@ -297,16 +297,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdl3outsideStream {
-      Core core;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inClose;
-      double lag2_inClose;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdl3outsideStream( Core core ) { this.core = core; }
+      private Cdl3outsideStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -342,7 +342,7 @@
          this.outRangeCount++;
       }
 
-      Cdl3outsideStream( Cdl3outsideStream other ) {
+      private Cdl3outsideStream( Cdl3outsideStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
@@ -442,7 +442,7 @@
          return new Cdl3outsideStream(this);
       }
    }
-   void cdl3outsideStepImpl( Cdl3outsideStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdl3outsideStepImpl( Cdl3outsideStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 1 &&
            ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == 0 - 1 && /* white engulfs black */

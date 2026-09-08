@@ -867,63 +867,63 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class HtTrendlineStream {
-      Core core;
-      double period;
-      double periodWMASum;
-      double periodWMASub;
-      double trailingWMAValue;
-      double iTrend1;
-      double iTrend2;
-      double iTrend3;
-      double a;
-      double b;
-      int hilbertIdx;
-      double[] detrender_Odd;
-      double[] detrender_Even;
-      double prev_detrender_Odd;
-      double prev_detrender_Even;
-      double prev_detrender_input_Odd;
-      double prev_detrender_input_Even;
-      double[] Q1_Odd;
-      double[] Q1_Even;
-      double prev_Q1_Odd;
-      double prev_Q1_Even;
-      double prev_Q1_input_Odd;
-      double prev_Q1_input_Even;
-      double[] jI_Odd;
-      double[] jI_Even;
-      double prev_jI_Odd;
-      double prev_jI_Even;
-      double prev_jI_input_Odd;
-      double prev_jI_input_Even;
-      double[] jQ_Odd;
-      double[] jQ_Even;
-      double prev_jQ_Odd;
-      double prev_jQ_Even;
-      double prev_jQ_input_Odd;
-      double prev_jQ_input_Even;
-      double prevQ2;
-      double prevI2;
-      double Re;
-      double Im;
-      double I1ForOddPrev2;
-      double I1ForOddPrev3;
-      double I1ForEvenPrev2;
-      double I1ForEvenPrev3;
-      double rad2Deg;
-      double smoothPeriod;
-      int streamParity;
-      int ringPos_trailingWMAIdx;
-      int ringCap_trailingWMAIdx;
-      double[] ring_trailingWMAIdx_inReal;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double period;
+      private double periodWMASum;
+      private double periodWMASub;
+      private double trailingWMAValue;
+      private double iTrend1;
+      private double iTrend2;
+      private double iTrend3;
+      private double a;
+      private double b;
+      private int hilbertIdx;
+      private double[] detrender_Odd;
+      private double[] detrender_Even;
+      private double prev_detrender_Odd;
+      private double prev_detrender_Even;
+      private double prev_detrender_input_Odd;
+      private double prev_detrender_input_Even;
+      private double[] Q1_Odd;
+      private double[] Q1_Even;
+      private double prev_Q1_Odd;
+      private double prev_Q1_Even;
+      private double prev_Q1_input_Odd;
+      private double prev_Q1_input_Even;
+      private double[] jI_Odd;
+      private double[] jI_Even;
+      private double prev_jI_Odd;
+      private double prev_jI_Even;
+      private double prev_jI_input_Odd;
+      private double prev_jI_input_Even;
+      private double[] jQ_Odd;
+      private double[] jQ_Even;
+      private double prev_jQ_Odd;
+      private double prev_jQ_Even;
+      private double prev_jQ_input_Odd;
+      private double prev_jQ_input_Even;
+      private double prevQ2;
+      private double prevI2;
+      private double Re;
+      private double Im;
+      private double I1ForOddPrev2;
+      private double I1ForOddPrev3;
+      private double I1ForEvenPrev2;
+      private double I1ForEvenPrev3;
+      private double rad2Deg;
+      private double smoothPeriod;
+      private int streamParity;
+      private int ringPos_trailingWMAIdx;
+      private int ringCap_trailingWMAIdx;
+      private double[] ring_trailingWMAIdx_inReal;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      HtTrendlineStream( Core core ) { this.core = core; }
+      private HtTrendlineStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -959,7 +959,7 @@
          this.outRangeCount++;
       }
 
-      HtTrendlineStream( HtTrendlineStream other ) {
+      private HtTrendlineStream( HtTrendlineStream other ) {
          this.core = other.core;
          this.period = other.period;
          this.periodWMASum = other.periodWMASum;
@@ -1302,7 +1302,7 @@
          return new HtTrendlineStream(this);
       }
    }
-   void htTrendlineStepImpl( HtTrendlineStream sp, double inReal )
+   private void htTrendlineStepImpl( HtTrendlineStream sp, double inReal )
    {
       int i = 0;
       double tempReal = 0.0;

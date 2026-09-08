@@ -369,17 +369,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdrStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_derived;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_derived;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdrStream( Core core ) { this.core = core; }
+      private AdrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -415,7 +415,7 @@
          this.outRangeCount++;
       }
 
-      AdrStream( AdrStream other ) {
+      private AdrStream( AdrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -513,7 +513,7 @@
          return new AdrStream(this);
       }
    }
-   void adrStepImpl( AdrStream sp, double inHigh, double inLow )
+   private void adrStepImpl( AdrStream sp, double inHigh, double inLow )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

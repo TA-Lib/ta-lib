@@ -383,20 +383,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlhikkakeStream {
-      Core core;
-      int patternResult;
-      int cd;
-      double savedHigh;
-      double savedLow;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int patternResult;
+      private int cd;
+      private double savedHigh;
+      private double savedLow;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlhikkakeStream( Core core ) { this.core = core; }
+      private CdlhikkakeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -432,7 +432,7 @@
          this.outRangeCount++;
       }
 
-      CdlhikkakeStream( CdlhikkakeStream other ) {
+      private CdlhikkakeStream( CdlhikkakeStream other ) {
          this.core = other.core;
          this.patternResult = other.patternResult;
          this.cd = other.cd;
@@ -548,7 +548,7 @@
          return new CdlhikkakeStream(this);
       }
    }
-   void cdlhikkakeStepImpl( CdlhikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlhikkakeStepImpl( CdlhikkakeStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( sp.lag1_inHigh < sp.lag2_inHigh &&
           sp.lag1_inLow > sp.lag2_inLow &&   /* 1st + 2nd: lower high and higher low */

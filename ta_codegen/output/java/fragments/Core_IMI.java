@@ -296,17 +296,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ImiStream {
-      Core core;
-      int optInTimePeriod;
-      int winPos_i;
-      int winCap_i;
-      double[] win_i_inOpen;
-      double[] win_i_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int winPos_i;
+      private int winCap_i;
+      private double[] win_i_inOpen;
+      private double[] win_i_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ImiStream( Core core ) { this.core = core; }
+      private ImiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -342,7 +342,7 @@
          this.outRangeCount++;
       }
 
-      ImiStream( ImiStream other ) {
+      private ImiStream( ImiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.winPos_i = other.winPos_i;
@@ -457,7 +457,7 @@
          return new ImiStream(this);
       }
    }
-   void imiStepImpl( ImiStream sp, double inOpen, double inClose )
+   private void imiStepImpl( ImiStream sp, double inOpen, double inClose )
    {
       double upsum = 0.0;
       double downsum = 0.0;

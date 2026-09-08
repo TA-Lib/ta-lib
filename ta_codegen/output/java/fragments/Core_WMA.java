@@ -477,25 +477,25 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class WmaStream {
-      Core core;
-      int optInTimePeriod;
-      int lookbackWin;
-      int barsSinceReseed;
-      double periodSum;
-      double periodSub;
-      double trailingValue;
-      double divider;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      int winPos_j;
-      int winCap_j;
-      double[] win_j_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int lookbackWin;
+      private int barsSinceReseed;
+      private double periodSum;
+      private double periodSub;
+      private double trailingValue;
+      private double divider;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private int winPos_j;
+      private int winCap_j;
+      private double[] win_j_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WmaStream( Core core ) { this.core = core; }
+      private WmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -531,7 +531,7 @@
          this.outRangeCount++;
       }
 
-      WmaStream( WmaStream other ) {
+      private WmaStream( WmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.lookbackWin = other.lookbackWin;
@@ -717,7 +717,7 @@
          return new WmaStream(this);
       }
    }
-   void wmaStepImpl( WmaStream sp, double inReal )
+   private void wmaStepImpl( WmaStream sp, double inReal )
    {
       int j = 0;
       int rw = 0;

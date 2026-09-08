@@ -50,7 +50,7 @@ package io.github.talib;
  * expected in normal use — an allocation failure terminates the JVM long before
  * it reaches here.
  */
-public class TaLibStateException extends IllegalStateException implements TaLibFailure {
+public final class TaLibStateException extends IllegalStateException implements TaLibFailure {
    private static final long serialVersionUID = 1L;
 
    private final RetCode retCode;

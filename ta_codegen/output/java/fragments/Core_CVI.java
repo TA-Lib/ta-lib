@@ -435,20 +435,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CviStream {
-      Core core;
-      int optInTimePeriod;
-      int optInROCPeriod;
-      double prevEMA;
-      double optInK_1;
-      int emaRing_Idx;
-      int maxIdx_emaRing;
-      int cbSize_emaRing;
-      double[] cb_emaRing;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int optInROCPeriod;
+      private double prevEMA;
+      private double optInK_1;
+      private int emaRing_Idx;
+      private int maxIdx_emaRing;
+      private int cbSize_emaRing;
+      private double[] cb_emaRing;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CviStream( Core core ) { this.core = core; }
+      private CviStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -484,7 +484,7 @@
          this.outRangeCount++;
       }
 
-      CviStream( CviStream other ) {
+      private CviStream( CviStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInROCPeriod = other.optInROCPeriod;
@@ -589,7 +589,7 @@
          return new CviStream(this);
       }
    }
-   void cviStepImpl( CviStream sp, double inHigh, double inLow )
+   private void cviStepImpl( CviStream sp, double inHigh, double inLow )
    {
       double laggedEMA = 0.0;
       double tempReal = 0.0;

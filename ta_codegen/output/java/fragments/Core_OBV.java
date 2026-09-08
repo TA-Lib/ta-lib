@@ -232,14 +232,14 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ObvStream {
-      Core core;
-      double prevReal;
-      double prevOBV;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double prevReal;
+      private double prevOBV;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ObvStream( Core core ) { this.core = core; }
+      private ObvStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -275,7 +275,7 @@
          this.outRangeCount++;
       }
 
-      ObvStream( ObvStream other ) {
+      private ObvStream( ObvStream other ) {
          this.core = other.core;
          this.prevReal = other.prevReal;
          this.prevOBV = other.prevOBV;
@@ -367,7 +367,7 @@
          return new ObvStream(this);
       }
    }
-   void obvStepImpl( ObvStream sp, double inReal, double inVolume )
+   private void obvStepImpl( ObvStream sp, double inReal, double inVolume )
    {
       double tempReal = 0.0;
       tempReal = inReal;

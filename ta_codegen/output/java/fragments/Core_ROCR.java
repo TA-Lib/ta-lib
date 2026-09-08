@@ -308,16 +308,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class RocrStream {
-      Core core;
-      int optInTimePeriod;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      RocrStream( Core core ) { this.core = core; }
+      private RocrStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -353,7 +353,7 @@
          this.outRangeCount++;
       }
 
-      RocrStream( RocrStream other ) {
+      private RocrStream( RocrStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.ringPos_trailingIdx = other.ringPos_trailingIdx;
@@ -451,7 +451,7 @@
          return new RocrStream(this);
       }
    }
-   void rocrStepImpl( RocrStream sp, double inReal )
+   private void rocrStepImpl( RocrStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

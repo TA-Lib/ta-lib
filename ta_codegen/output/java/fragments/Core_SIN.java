@@ -197,12 +197,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SinStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SinStream( Core core ) { this.core = core; }
+      private SinStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -238,7 +238,7 @@
          this.outRangeCount++;
       }
 
-      SinStream( SinStream other ) {
+      private SinStream( SinStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -320,7 +320,7 @@
          return new SinStream(this);
       }
    }
-   void sinStepImpl( SinStream sp, double inReal )
+   private void sinStepImpl( SinStream sp, double inReal )
    {
       sp.cur_outReal = Math.sin(inReal);
    }

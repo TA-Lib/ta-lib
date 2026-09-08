@@ -525,22 +525,22 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MfiStream {
-      Core core;
-      int optInTimePeriod;
-      double posSumMF;
-      double negSumMF;
-      double prevValue;
-      int nullRun;
-      int mflow_Idx;
-      int maxIdx_mflow;
-      int cbSize_mflow;
-      double[] cb_mflow_positive;
-      double[] cb_mflow_negative;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double posSumMF;
+      private double negSumMF;
+      private double prevValue;
+      private int nullRun;
+      private int mflow_Idx;
+      private int maxIdx_mflow;
+      private int cbSize_mflow;
+      private double[] cb_mflow_positive;
+      private double[] cb_mflow_negative;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MfiStream( Core core ) { this.core = core; }
+      private MfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -576,7 +576,7 @@
          this.outRangeCount++;
       }
 
-      MfiStream( MfiStream other ) {
+      private MfiStream( MfiStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.posSumMF = other.posSumMF;
@@ -706,7 +706,7 @@
          return new MfiStream(this);
       }
    }
-   void mfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
+   private void mfiStepImpl( MfiStream sp, double inHigh, double inLow, double inClose, double inVolume )
    {
       double tempValue1 = 0.0;
       double tempValue2 = 0.0;

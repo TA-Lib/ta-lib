@@ -222,12 +222,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class WclpriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WclpriceStream( Core core ) { this.core = core; }
+      private WclpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -263,7 +263,7 @@
          this.outRangeCount++;
       }
 
-      WclpriceStream( WclpriceStream other ) {
+      private WclpriceStream( WclpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -345,7 +345,7 @@
          return new WclpriceStream(this);
       }
    }
-   void wclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
+   private void wclpriceStepImpl( WclpriceStream sp, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (Math.fma(inClose, 2.0, inHigh + inLow)) / 4.0;
    }

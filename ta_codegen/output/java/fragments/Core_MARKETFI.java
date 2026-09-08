@@ -276,12 +276,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MarketfiStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MarketfiStream( Core core ) { this.core = core; }
+      private MarketfiStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -317,7 +317,7 @@
          this.outRangeCount++;
       }
 
-      MarketfiStream( MarketfiStream other ) {
+      private MarketfiStream( MarketfiStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -413,7 +413,7 @@
          return new MarketfiStream(this);
       }
    }
-   void marketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
+   private void marketfiStepImpl( MarketfiStream sp, double inHigh, double inLow, double inVolume )
    {
       /* A zero-volume bar would divide by zero. Neither reference guards
        * it -- they emit +/-Inf, or NaN when the range is zero too -- but

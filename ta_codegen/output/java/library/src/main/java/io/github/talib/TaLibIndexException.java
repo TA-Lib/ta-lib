@@ -49,7 +49,7 @@ package io.github.talib;
  * {@link RetCode#OutOfRangeStartIndex} from {@link RetCode#OutOfRangeEndIndex},
  * which the type alone cannot.
  */
-public class TaLibIndexException extends IndexOutOfBoundsException implements TaLibFailure {
+public final class TaLibIndexException extends IndexOutOfBoundsException implements TaLibFailure {
    private static final long serialVersionUID = 1L;
 
    private final RetCode retCode;

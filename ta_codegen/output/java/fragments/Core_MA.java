@@ -549,16 +549,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MaStream {
-      Core core;
-      int optInTimePeriod;
-      MAType optInMAType;
-      double cur_outReal;
+      private Core core;
+      private int optInTimePeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
       // Sub-stream, tagged by optInMAType; null on the identity path.
-      Object sub;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Object sub;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MaStream( Core core ) { this.core = core; }
+      private MaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -594,7 +594,7 @@
          this.outRangeCount++;
       }
 
-      MaStream( MaStream other ) {
+      private MaStream( MaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInMAType = other.optInMAType;
@@ -767,7 +767,7 @@
          return new MaStream(this);
       }
    }
-   void maStepImpl( MaStream sp, double inReal )
+   private void maStepImpl( MaStream sp, double inReal )
    {
       if( sp.optInTimePeriod == 1 || sp.optInMAType == MAType.DISABLED ) {
          sp.cur_outReal = inReal;

@@ -373,17 +373,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ApoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      MAType optInMAType;
-      double cur_outReal;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ApoStream( Core core ) { this.core = core; }
+      private ApoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -419,7 +419,7 @@
          this.outRangeCount++;
       }
 
-      ApoStream( ApoStream other ) {
+      private ApoStream( ApoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -511,7 +511,7 @@
          return new ApoStream(this);
       }
    }
-   void apoStepImpl( ApoStream sp, double inReal )
+   private void apoStepImpl( ApoStream sp, double inReal )
    {
       double cur_tempBuffer = 0.0;
       double cur_outReal = 0.0;

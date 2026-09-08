@@ -753,30 +753,30 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class UltoscStream {
-      Core core;
-      int optInTimePeriod1;
-      int optInTimePeriod2;
-      int optInTimePeriod3;
-      double a1Total;
-      double a2Total;
-      double a3Total;
-      double b1Total;
-      double b2Total;
-      double b3Total;
-      int trailingPos1;
-      int trailingPos2;
-      int nullRun;
-      int term_Idx;
-      int maxIdx_term;
-      double lag1_inClose;
-      int cbSize_term;
-      double[] cb_term_closeMinusTrueLow;
-      double[] cb_term_trueRange;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod1;
+      private int optInTimePeriod2;
+      private int optInTimePeriod3;
+      private double a1Total;
+      private double a2Total;
+      private double a3Total;
+      private double b1Total;
+      private double b2Total;
+      private double b3Total;
+      private int trailingPos1;
+      private int trailingPos2;
+      private int nullRun;
+      private int term_Idx;
+      private int maxIdx_term;
+      private double lag1_inClose;
+      private int cbSize_term;
+      private double[] cb_term_closeMinusTrueLow;
+      private double[] cb_term_trueRange;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      UltoscStream( Core core ) { this.core = core; }
+      private UltoscStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -812,7 +812,7 @@
          this.outRangeCount++;
       }
 
-      UltoscStream( UltoscStream other ) {
+      private UltoscStream( UltoscStream other ) {
          this.core = other.core;
          this.optInTimePeriod1 = other.optInTimePeriod1;
          this.optInTimePeriod2 = other.optInTimePeriod2;
@@ -1024,7 +1024,7 @@
          return new UltoscStream(this);
       }
    }
-   void ultoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
+   private void ultoscStepImpl( UltoscStream sp, double inHigh, double inLow, double inClose )
    {
       double trueLow = 0.0;
       double trueRange = 0.0;

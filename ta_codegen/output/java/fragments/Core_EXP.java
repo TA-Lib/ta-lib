@@ -195,12 +195,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class ExpStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      ExpStream( Core core ) { this.core = core; }
+      private ExpStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -236,7 +236,7 @@
          this.outRangeCount++;
       }
 
-      ExpStream( ExpStream other ) {
+      private ExpStream( ExpStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -318,7 +318,7 @@
          return new ExpStream(this);
       }
    }
-   void expStepImpl( ExpStream sp, double inReal )
+   private void expStepImpl( ExpStream sp, double inReal )
    {
       sp.cur_outReal = Math.exp(inReal);
    }

@@ -382,17 +382,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class PpoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      MAType optInMAType;
-      double cur_outReal;
-      MaStream sub0;
-      MaStream sub1;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private MAType optInMAType;
+      private double cur_outReal;
+      private MaStream sub0;
+      private MaStream sub1;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      PpoStream( Core core ) { this.core = core; }
+      private PpoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -428,7 +428,7 @@
          this.outRangeCount++;
       }
 
-      PpoStream( PpoStream other ) {
+      private PpoStream( PpoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -526,7 +526,7 @@
          return new PpoStream(this);
       }
    }
-   void ppoStepImpl( PpoStream sp, double inReal )
+   private void ppoStepImpl( PpoStream sp, double inReal )
    {
       double tempReal = 0.0;
       double cur_tempBuffer = 0.0;

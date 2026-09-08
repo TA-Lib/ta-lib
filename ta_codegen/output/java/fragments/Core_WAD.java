@@ -349,14 +349,14 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class WadStream {
-      Core core;
-      double sum;
-      double prevClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double sum;
+      private double prevClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      WadStream( Core core ) { this.core = core; }
+      private WadStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -392,7 +392,7 @@
          this.outRangeCount++;
       }
 
-      WadStream( WadStream other ) {
+      private WadStream( WadStream other ) {
          this.core = other.core;
          this.sum = other.sum;
          this.prevClose = other.prevClose;
@@ -493,7 +493,7 @@
          return new WadStream(this);
       }
    }
-   void wadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
+   private void wadStepImpl( WadStream sp, double inHigh, double inLow, double inClose )
    {
       double close = 0.0;
       double trueExtreme = 0.0;

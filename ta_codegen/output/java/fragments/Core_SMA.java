@@ -310,17 +310,17 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class SmaStream {
-      Core core;
-      int optInTimePeriod;
-      double periodTotal;
-      int ringPos_trailingIdx;
-      int ringCap_trailingIdx;
-      double[] ring_trailingIdx_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double periodTotal;
+      private int ringPos_trailingIdx;
+      private int ringCap_trailingIdx;
+      private double[] ring_trailingIdx_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      SmaStream( Core core ) { this.core = core; }
+      private SmaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -356,7 +356,7 @@
          this.outRangeCount++;
       }
 
-      SmaStream( SmaStream other ) {
+      private SmaStream( SmaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.periodTotal = other.periodTotal;
@@ -454,7 +454,7 @@
          return new SmaStream(this);
       }
    }
-   void smaStepImpl( SmaStream sp, double inReal )
+   private void smaStepImpl( SmaStream sp, double inReal )
    {
       double tempReal = 0.0;
       if( sp.ringCap_trailingIdx == 0 ) {

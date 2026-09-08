@@ -767,34 +767,34 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class BetaStream {
-      Core core;
-      int optInTimePeriod;
-      double S_xx;
-      double S_xy;
-      double S_x;
-      double S_y;
-      double last_price_x;
-      double last_price_y;
-      double trailing_last_price_x;
-      double trailing_last_price_y;
-      double shift_x;
-      double shift_y;
-      double leaving_xx;
-      double leaving_yy;
-      double S_yy;
-      int barsSinceReseed;
-      double n;
-      int trailingIdx;
-      int j;
-      int i;
-      int xMask;
-      double[] x_inReal0;
-      double[] x_inReal1;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double S_xx;
+      private double S_xy;
+      private double S_x;
+      private double S_y;
+      private double last_price_x;
+      private double last_price_y;
+      private double trailing_last_price_x;
+      private double trailing_last_price_y;
+      private double shift_x;
+      private double shift_y;
+      private double leaving_xx;
+      private double leaving_yy;
+      private double S_yy;
+      private int barsSinceReseed;
+      private double n;
+      private int trailingIdx;
+      private int j;
+      private int i;
+      private int xMask;
+      private double[] x_inReal0;
+      private double[] x_inReal1;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      BetaStream( Core core ) { this.core = core; }
+      private BetaStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -830,7 +830,7 @@
          this.outRangeCount++;
       }
 
-      BetaStream( BetaStream other ) {
+      private BetaStream( BetaStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.S_xx = other.S_xx;
@@ -1130,7 +1130,7 @@
          return new BetaStream(this);
       }
    }
-   void betaStepImpl( BetaStream sp, double inReal0, double inReal1 )
+   private void betaStepImpl( BetaStream sp, double inReal0, double inReal1 )
    {
       double tmp_real = 0.0;
       double denom = 0.0;

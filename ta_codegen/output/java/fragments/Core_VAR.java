@@ -493,26 +493,26 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class VarStream {
-      Core core;
-      int optInTimePeriod;
-      double optInNbDev;
-      double shift;
-      double periodTotal1;
-      double periodTotal2;
-      double invPeriod;
-      int trailingIdx;
-      int nbInitialElementNeeded;
-      int barsSinceReseed;
-      int j;
-      int windowStart;
-      int i;
-      int xMask;
-      double[] x_inReal;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double optInNbDev;
+      private double shift;
+      private double periodTotal1;
+      private double periodTotal2;
+      private double invPeriod;
+      private int trailingIdx;
+      private int nbInitialElementNeeded;
+      private int barsSinceReseed;
+      private int j;
+      private int windowStart;
+      private int i;
+      private int xMask;
+      private double[] x_inReal;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      VarStream( Core core ) { this.core = core; }
+      private VarStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -548,7 +548,7 @@
          this.outRangeCount++;
       }
 
-      VarStream( VarStream other ) {
+      private VarStream( VarStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.optInNbDev = other.optInNbDev;
@@ -763,7 +763,7 @@
          return new VarStream(this);
       }
    }
-   void varStepImpl( VarStream sp, double inReal )
+   private void varStepImpl( VarStream sp, double inReal )
    {
       double tempReal = 0.0;
       double meanValue1 = 0.0;

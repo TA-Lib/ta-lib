@@ -807,20 +807,20 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AdxStream {
-      Core core;
-      int optInTimePeriod;
-      double prevHigh;
-      double prevLow;
-      double prevClose;
-      double prevMinusDM;
-      double prevPlusDM;
-      double prevTR;
-      double prevADX;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInTimePeriod;
+      private double prevHigh;
+      private double prevLow;
+      private double prevClose;
+      private double prevMinusDM;
+      private double prevPlusDM;
+      private double prevTR;
+      private double prevADX;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AdxStream( Core core ) { this.core = core; }
+      private AdxStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -856,7 +856,7 @@
          this.outRangeCount++;
       }
 
-      AdxStream( AdxStream other ) {
+      private AdxStream( AdxStream other ) {
          this.core = other.core;
          this.optInTimePeriod = other.optInTimePeriod;
          this.prevHigh = other.prevHigh;
@@ -1003,7 +1003,7 @@
          return new AdxStream(this);
       }
    }
-   void adxStepImpl( AdxStream sp, double inHigh, double inLow, double inClose )
+   private void adxStepImpl( AdxStream sp, double inHigh, double inLow, double inClose )
    {
       double tempReal = 0.0;
       double diffP = 0.0;

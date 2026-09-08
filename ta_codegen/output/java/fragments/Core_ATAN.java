@@ -198,12 +198,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AtanStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AtanStream( Core core ) { this.core = core; }
+      private AtanStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -239,7 +239,7 @@
          this.outRangeCount++;
       }
 
-      AtanStream( AtanStream other ) {
+      private AtanStream( AtanStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -321,7 +321,7 @@
          return new AtanStream(this);
       }
    }
-   void atanStepImpl( AtanStream sp, double inReal )
+   private void atanStepImpl( AtanStream sp, double inReal )
    {
       sp.cur_outReal = Math.atan(inReal);
    }

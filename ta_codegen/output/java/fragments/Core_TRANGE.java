@@ -304,13 +304,13 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class TrangeStream {
-      Core core;
-      double lag1_inClose;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inClose;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      TrangeStream( Core core ) { this.core = core; }
+      private TrangeStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -346,7 +346,7 @@
          this.outRangeCount++;
       }
 
-      TrangeStream( TrangeStream other ) {
+      private TrangeStream( TrangeStream other ) {
          this.core = other.core;
          this.lag1_inClose = other.lag1_inClose;
          this.cur_outReal = other.cur_outReal;
@@ -449,7 +449,7 @@
          return new TrangeStream(this);
       }
    }
-   void trangeStepImpl( TrangeStream sp, double inHigh, double inLow, double inClose )
+   private void trangeStepImpl( TrangeStream sp, double inHigh, double inLow, double inClose )
    {
       double val2 = 0.0;
       double val3 = 0.0;

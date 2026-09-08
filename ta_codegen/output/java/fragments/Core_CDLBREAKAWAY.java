@@ -344,36 +344,36 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CdlbreakawayStream {
-      Core core;
-      double BodyLongPeriodTotal;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag3_inOpen;
-      double lag4_inOpen;
-      double lag1_inHigh;
-      double lag2_inHigh;
-      double lag3_inHigh;
-      double lag4_inHigh;
-      double lag1_inLow;
-      double lag2_inLow;
-      double lag3_inLow;
-      double lag4_inLow;
-      double lag1_inClose;
-      double lag2_inClose;
-      double lag3_inClose;
-      double lag4_inClose;
-      int ringPos_BodyLongTrailingIdx;
-      int ringCap_BodyLongTrailingIdx;
-      int ringLag_BodyLongTrailingIdx;
-      double[] ring_BodyLongTrailingIdx_derived;
-      int cs_BodyLong_rangeType;
-      int cs_BodyLong_avgPeriod;
-      double cs_BodyLong_factor;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double BodyLongPeriodTotal;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag3_inOpen;
+      private double lag4_inOpen;
+      private double lag1_inHigh;
+      private double lag2_inHigh;
+      private double lag3_inHigh;
+      private double lag4_inHigh;
+      private double lag1_inLow;
+      private double lag2_inLow;
+      private double lag3_inLow;
+      private double lag4_inLow;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private double lag3_inClose;
+      private double lag4_inClose;
+      private int ringPos_BodyLongTrailingIdx;
+      private int ringCap_BodyLongTrailingIdx;
+      private int ringLag_BodyLongTrailingIdx;
+      private double[] ring_BodyLongTrailingIdx_derived;
+      private int cs_BodyLong_rangeType;
+      private int cs_BodyLong_avgPeriod;
+      private double cs_BodyLong_factor;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CdlbreakawayStream( Core core ) { this.core = core; }
+      private CdlbreakawayStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -409,7 +409,7 @@
          this.outRangeCount++;
       }
 
-      CdlbreakawayStream( CdlbreakawayStream other ) {
+      private CdlbreakawayStream( CdlbreakawayStream other ) {
          this.core = other.core;
          this.BodyLongPeriodTotal = other.BodyLongPeriodTotal;
          this.lag1_inOpen = other.lag1_inOpen;
@@ -542,7 +542,7 @@
          return new CdlbreakawayStream(this);
       }
    }
-   void cdlbreakawayStepImpl( CdlbreakawayStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlbreakawayStepImpl( CdlbreakawayStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       int BodyLong_rangeType = sp.cs_BodyLong_rangeType;
       int BodyLong_avgPeriod = sp.cs_BodyLong_avgPeriod;

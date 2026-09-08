@@ -242,13 +242,13 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class CumsumStream {
-      Core core;
-      double total;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double total;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      CumsumStream( Core core ) { this.core = core; }
+      private CumsumStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -284,7 +284,7 @@
          this.outRangeCount++;
       }
 
-      CumsumStream( CumsumStream other ) {
+      private CumsumStream( CumsumStream other ) {
          this.core = other.core;
          this.total = other.total;
          this.cur_outReal = other.cur_outReal;
@@ -369,7 +369,7 @@
          return new CumsumStream(this);
       }
    }
-   void cumsumStepImpl( CumsumStream sp, double inReal )
+   private void cumsumStepImpl( CumsumStream sp, double inReal )
    {
       sp.total += inReal;
       sp.cur_outReal = sp.total;

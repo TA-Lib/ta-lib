@@ -221,12 +221,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class MedpriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      MedpriceStream( Core core ) { this.core = core; }
+      private MedpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -262,7 +262,7 @@
          this.outRangeCount++;
       }
 
-      MedpriceStream( MedpriceStream other ) {
+      private MedpriceStream( MedpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -344,7 +344,7 @@
          return new MedpriceStream(this);
       }
    }
-   void medpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
+   private void medpriceStepImpl( MedpriceStream sp, double inHigh, double inLow )
    {
       sp.cur_outReal = (inHigh + inLow) / 2.0;
    }

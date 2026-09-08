@@ -301,16 +301,16 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class Cdlxsidegap3methodsStream {
-      Core core;
-      double lag1_inOpen;
-      double lag2_inOpen;
-      double lag1_inClose;
-      double lag2_inClose;
-      int cur_outInteger;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double lag1_inOpen;
+      private double lag2_inOpen;
+      private double lag1_inClose;
+      private double lag2_inClose;
+      private int cur_outInteger;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
+      private Cdlxsidegap3methodsStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -346,7 +346,7 @@
          this.outRangeCount++;
       }
 
-      Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other ) {
+      private Cdlxsidegap3methodsStream( Cdlxsidegap3methodsStream other ) {
          this.core = other.core;
          this.lag1_inOpen = other.lag1_inOpen;
          this.lag2_inOpen = other.lag2_inOpen;
@@ -446,7 +446,7 @@
          return new Cdlxsidegap3methodsStream(this);
       }
    }
-   void cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void cdlxsidegap3methodsStepImpl( Cdlxsidegap3methodsStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       if( ((sp.lag2_inClose >= sp.lag2_inOpen) ? 1 : 0 - 1) == ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) && /* 1st and 2nd of same color */
           ((sp.lag1_inClose >= sp.lag1_inOpen) ? 1 : 0 - 1) == 0 - ((inClose >= inOpen) ? 1 : 0 - 1) && /* 3rd opposite color */

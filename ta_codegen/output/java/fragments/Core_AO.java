@@ -432,22 +432,22 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AoStream {
-      Core core;
-      int optInFastPeriod;
-      int optInSlowPeriod;
-      double sumFast;
-      double sumSlow;
-      int ringPos_trailingFastIdx;
-      int ringCap_trailingFastIdx;
-      double[] ring_trailingFastIdx_derived;
-      int ringPos_trailingSlowIdx;
-      int ringCap_trailingSlowIdx;
-      double[] ring_trailingSlowIdx_derived;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private int optInFastPeriod;
+      private int optInSlowPeriod;
+      private double sumFast;
+      private double sumSlow;
+      private int ringPos_trailingFastIdx;
+      private int ringCap_trailingFastIdx;
+      private double[] ring_trailingFastIdx_derived;
+      private int ringPos_trailingSlowIdx;
+      private int ringCap_trailingSlowIdx;
+      private double[] ring_trailingSlowIdx_derived;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AoStream( Core core ) { this.core = core; }
+      private AoStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -483,7 +483,7 @@
          this.outRangeCount++;
       }
 
-      AoStream( AoStream other ) {
+      private AoStream( AoStream other ) {
          this.core = other.core;
          this.optInFastPeriod = other.optInFastPeriod;
          this.optInSlowPeriod = other.optInSlowPeriod;
@@ -606,7 +606,7 @@
          return new AoStream(this);
       }
    }
-   void aoStepImpl( AoStream sp, double inHigh, double inLow )
+   private void aoStepImpl( AoStream sp, double inHigh, double inLow )
    {
       double medianPrice = 0.0;
       double tempReal = 0.0;

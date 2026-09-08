@@ -232,12 +232,12 @@
     * re-open — the result is bit-identical by contract.
     */
    public static final class AvgpriceStream {
-      Core core;
-      double cur_outReal;
-      int outRangeBegIdx;
-      int outRangeCount;
+      private Core core;
+      private double cur_outReal;
+      private int outRangeBegIdx;
+      private int outRangeCount;
 
-      AvgpriceStream( Core core ) { this.core = core; }
+      private AvgpriceStream( Core core ) { this.core = core; }
 
       /**
        * The bars this stream has an output for, in the input series'
@@ -273,7 +273,7 @@
          this.outRangeCount++;
       }
 
-      AvgpriceStream( AvgpriceStream other ) {
+      private AvgpriceStream( AvgpriceStream other ) {
          this.core = other.core;
          this.cur_outReal = other.cur_outReal;
          this.outRangeBegIdx = other.outRangeBegIdx;
@@ -355,7 +355,7 @@
          return new AvgpriceStream(this);
       }
    }
-   void avgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
+   private void avgpriceStepImpl( AvgpriceStream sp, double inOpen, double inHigh, double inLow, double inClose )
    {
       sp.cur_outReal = (inHigh + inLow + inClose + inOpen) / 4;
    }
