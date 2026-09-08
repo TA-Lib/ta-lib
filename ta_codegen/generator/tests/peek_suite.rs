@@ -121,51 +121,83 @@ fn handle_buffers(src: &str, upper: &str) -> BTreeSet<String> {
     out
 }
 
-/// Every `sp-><buffer>[...]` store in `body`, as `(buffer, whole line)`.
-fn buffer_stores(body: &str, buffers: &BTreeSet<String>) -> Vec<(String, String)> {
+/// Every store into a handle buffer in `body`, as `(buffer, whole line)`, plus
+/// the number of buffer subscripts the scan inspected to find them.
+///
+/// BOTH spellings, at an identifier boundary, the same rule [`mask_buffer_reads`]
+/// carries: a peek binds each buffer's base to a local of the same name (#316),
+/// so its subscripts are bare, and the qualified `sp->` a line does contain is
+/// routinely INSIDE the index. Anchoring on that `sp->` left the peek half of
+/// the sweep with nothing to look at while the update half kept the floor green.
+fn buffer_stores(body: &str, buffers: &BTreeSet<String>) -> (Vec<(String, String)>, usize) {
     let mut out = Vec::new();
+    let mut sites = 0usize;
     for line in body.lines() {
-        // `sp->` in a frame, `stream->` in the two tiers that hand-roll Peek —
-        // keying on one of them made the sweep of those two vacuous.
-        let Some((pos, skip)) = line
-            .find("sp->")
-            .map(|i| (i, 4))
-            .or_else(|| line.find("stream->").map(|i| (i, 8)))
-        else {
-            continue;
-        };
-        let rest = &line[pos + skip..];
-        let Some(br) = rest.find('[') else { continue };
-        let name = &rest[..br];
-        if !buffers.contains(name) {
-            continue;
-        }
-        // Balance the index so `] =` is found on the real closing bracket.
-        let mut depth = 0usize;
-        let mut end = None;
-        for (k, c) in rest[br..].char_indices() {
-            match c {
-                '[' => depth += 1,
-                ']' => {
-                    depth -= 1;
-                    if depth == 0 {
-                        end = Some(br + k);
-                        break;
-                    }
-                }
-                _ => {}
+        let b: Vec<char> = line.chars().collect();
+        let mut i = 0usize;
+        while i < b.len() {
+            if !(b[i].is_ascii_alphabetic() || b[i] == '_') {
+                i += 1;
+                continue;
             }
-        }
-        let Some(end) = end else { continue };
-        let after = rest[end + 1..].trim_start();
-        let is_store = after.starts_with('=') && !after.starts_with("==")
-            || after.starts_with("+=")
-            || after.starts_with("-=");
-        if is_store {
-            out.push((name.to_string(), line.trim().to_string()));
+            // `sp->ring[` and `stream->ring[` in a frame, bare `ring[` in a peek.
+            // Anything else dereferencing or continuing into the name is not it:
+            // `foo_ring[` must not read as `ring`.
+            let qualified = b[..i].ends_with(&['s', 'p', '-', '>'])
+                || b[..i].ends_with(&['s', 't', 'r', 'e', 'a', 'm', '-', '>']);
+            let bare = i == 0
+                || !(b[i - 1].is_ascii_alphanumeric()
+                    || b[i - 1] == '_'
+                    || b[i - 1] == '>'
+                    || b[i - 1] == '.');
+            let mut n = i;
+            while n < b.len() && (b[n].is_ascii_alphanumeric() || b[n] == '_') {
+                n += 1;
+            }
+            if !(qualified || bare) || n >= b.len() || b[n] != '[' {
+                i = n.max(i + 1);
+                continue;
+            }
+            let name: String = b[i..n].iter().collect();
+            if !buffers.contains(&name) {
+                i = n;
+                continue;
+            }
+            // Balance the index so `] =` is found on the real closing bracket.
+            let mut depth = 0usize;
+            let mut end = None;
+            let mut k = n;
+            while k < b.len() {
+                match b[k] {
+                    '[' => depth += 1,
+                    ']' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            end = Some(k);
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+                k += 1;
+            }
+            let Some(end) = end else {
+                i = n;
+                continue;
+            };
+            sites += 1;
+            let after: String = b[end + 1..].iter().collect();
+            let after = after.trim_start();
+            let is_store = after.starts_with('=') && !after.starts_with("==")
+                || after.starts_with("+=")
+                || after.starts_with("-=");
+            if is_store {
+                out.push((name, line.trim().to_string()));
+            }
+            i = end + 1;
         }
     }
-    out
+    (out, sites)
 }
 
 /// The whole point: a peek frame stores into no handle buffer, in any tier.
@@ -175,6 +207,7 @@ fn buffer_stores(body: &str, buffers: &BTreeSet<String>) -> Vec<(String, String)
 #[test]
 fn a_peek_frame_stores_into_no_handle_buffer() {
     let mut peek_frames = 0usize;
+    let mut peek_sites = 0usize;
     let mut update_stores = 0usize;
     let mut buffers_seen = 0usize;
     let mut offenders: Vec<String> = Vec::new();
@@ -198,12 +231,14 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
         );
         peek_frames += 1;
         for body in &bodies {
-            for (buf, line) in buffer_stores(body, &buffers) {
+            let (stores, sites) = buffer_stores(body, &buffers);
+            peek_sites += sites;
+            for (buf, line) in stores {
                 offenders.push(format!("{upper}: {buf} <- {line}"));
             }
         }
         if let Some(step) = body_of(&src, &format!("TA_{upper}_StepImpl(")) {
-            update_stores += buffer_stores(&step, &buffers).len();
+            update_stores += buffer_stores(&step, &buffers).0.len();
         }
     }
 
@@ -217,6 +252,13 @@ fn a_peek_frame_stores_into_no_handle_buffer() {
         update_stores > 200,
         "the update frames carry only {update_stores} buffer stores, so the peek sweep \
          proves nothing"
+    );
+    // The floors above measure the update side and the handle. This one is the
+    // only thing that says the PEEK scan looked at a subscript at all.
+    assert!(
+        peek_sites > 150,
+        "the peek frames offered only {peek_sites} buffer subscript(s) to inspect, so \
+         the store scan is reading past them"
     );
     assert!(
         offenders.is_empty(),
@@ -1095,6 +1137,7 @@ fn handle_accumulators(src: &str, upper: &str) -> BTreeSet<String> {
 fn a_peek_frame_deletes_every_accumulator_store() {
     let mut with_accumulators = 0usize;
     let mut step_stores = 0usize;
+    let mut peek_sites = 0usize;
     let mut unhandled: Vec<String> = Vec::new();
     let mut kept: Vec<String> = Vec::new();
 
@@ -1115,13 +1158,14 @@ fn a_peek_frame_deletes_every_accumulator_store() {
             unhandled.push(format!("{upper}: holds an accumulator but emits no StepImpl"));
             continue;
         };
-        let stored = buffer_stores(&step, &accs).len();
+        let stored = buffer_stores(&step, &accs).0.len();
         if stored == 0 {
             continue; // nothing for the frame to delete
         }
         with_accumulators += 1;
         step_stores += stored;
-        let left = buffer_stores(&peek, &accs);
+        let (left, sites) = buffer_stores(&peek, &accs);
+        peek_sites += sites;
         if !left.is_empty() {
             kept.push(format!("{upper}: {} accumulator store(s)", left.len()));
         }
@@ -1137,6 +1181,12 @@ fn a_peek_frame_deletes_every_accumulator_store() {
         step_stores >= 60,
         "the update frames carry only {step_stores} accumulator store(s), so the peek \
          sweep proves nothing"
+    );
+    // As above: the floors either side of this one measure the update frame, not
+    // whether the peek scan reached an accumulator subscript.
+    assert!(
+        peek_sites >= 90,
+        "the peek frames offered only {peek_sites} accumulator subscript(s) to inspect"
     );
     assert!(
         kept.is_empty(),

@@ -744,10 +744,18 @@ fn no_java_peek_copies_the_handle() {
     fn write_targets(line: &str) -> Vec<(&str, bool)> {
         /// The trailing name of `lhs`: `x` / `sp.x` / `x[i]` -> the name.
         fn name_of(lhs: &str) -> Option<&str> {
+            let lhs = lhs.trim();
+            // A subscript holds spaces of its own — `sp.x[sp.today & sp.xMask]`
+            // is the extrema tiers' store — so the last SPACE-separated token
+            // is part of the index there, not the name.
+            if lhs.ends_with(']') {
+                let n = ident_before(lhs, lhs.len());
+                return (!n.is_empty()).then_some(n);
+            }
             // The declared name is the LAST token; strip its subscript there,
             // not over the whole left side — `double[] x = ...` carries a `[`
             // in the TYPE, and cutting at it would name the type instead.
-            let last = lhs.trim().rsplit(' ').next()?;
+            let last = lhs.rsplit(' ').next()?;
             let last = last.split_once('[').map_or(last, |(h, _)| h);
             (!last.is_empty() && last.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '.'))
                 .then_some(last)
@@ -825,8 +833,11 @@ fn no_java_peek_copies_the_handle() {
             let lhs = &l[..eq];
             let compound = lhs.ends_with(OPS);
             let lhs = lhs.trim_end_matches(OPS);
-            // A declaration is `<type> <name> =`; a compound store never one.
-            let declares = !compound && lhs.trim().split(' ').count() > 1;
+            // A declaration is `<type> <name> =`; neither a compound store nor
+            // a subscripted target is ever one.
+            let declares = !compound
+                && !lhs.trim().ends_with(']')
+                && lhs.trim().split(' ').count() > 1;
             out.extend(name_of(lhs).map(|n| (n, declares)));
         }
 

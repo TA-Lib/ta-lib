@@ -1,10 +1,9 @@
 //! Java and C# stream-emitter properties that no runtime gate can see.
 //!
-//! The two managed backends share a shape the other two do not: a multi-output
-//! handle writes a caller-owned sink instead of returning a value, and a peek
-//! frame carries the transition in locals. Three properties follow from that,
-//! and each is invisible to `stream_verify` because each is about text the
-//! emitter did NOT produce -- an absent seed, an absent cache, an ordering.
+//! The two managed backends share a shape the other two do not: a peek frame
+//! carries the transition in locals rather than in the handle. Two properties
+//! follow from that, and each is invisible to `stream_verify` because each is
+//! about text the emitter did NOT produce -- an absent seed, an ordering.
 //! A gate on absence has to be swept, and it has to prove it swept something.
 
 use std::collections::{BTreeSet, HashMap};
@@ -205,38 +204,6 @@ fn no_throwing_sub_call_follows_the_cur_capture_in_a_managed_step() {
             shipped, expected,
             "the set of multi-output handles driving a sub-stream moved in {lang} — the pin is \
              stale or the sweep has gone vacuous"
-        );
-    }
-}
-/// A multi-output handle stores no `Value` instance (#310): `update`, `peek` and
-/// `value` each write a caller-owned `<N>Out` / `<N>Value`, so there is nothing
-/// held on the handle to go stale against `outRange()`.
-///
-/// The property is an ABSENCE, so it is swept rather than asserted at one site,
-/// and swept over both managed backends so neither grows a cache back. The
-/// per-function suites pin the presence of the sink; only this pins that the
-/// handle keeps no copy of it.
-#[test]
-fn no_managed_handle_caches_the_multi_output_value() {
-    for (func, lang) in [
-        ("bbands", "java"),
-        ("macd", "java"),
-        ("stoch", "java"),
-        ("bbands", "csharp"),
-    ] {
-        let sect = section(func, lang);
-        assert!(
-            !sect.contains("cachedValue"),
-            "{func}/{lang} still declares or writes a cached value"
-        );
-    }
-
-    // Non-vacuity: these are multi-output handles, so they DO have an out type
-    // to have cached. A single-output handle proves nothing here.
-    for (func, lang, ty) in [("bbands", "java", "BbandsOut"), ("bbands", "csharp", "BbandsValue")] {
-        assert!(
-            section(func, lang).contains(ty),
-            "{func}/{lang} has no {ty}, so its lack of a cache is not evidence"
         );
     }
 }
